@@ -233,11 +233,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 .file-preview .file-del{color:var(--red);cursor:pointer;font-size:16px;flex-shrink:0;}
 
 /* LIGHTBOX */
-#lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99990;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.94);z-index:99990;display:none;align-items:center;justify-content:center;flex-direction:column;gap:0;padding:60px 16px 80px;}
 #lightbox.open{display:flex;}
-#lightbox img{max-width:90vw;max-height:80vh;border-radius:var(--r-md);object-fit:contain;}
-#lightbox-close{position:absolute;top:20px;right:20px;width:40px;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-#lightbox-dl{padding:10px 20px;background:var(--grad-main);color:white;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;}
+#lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r-sm);box-shadow:0 8px 40px rgba(0,0,0,0.6);}
+#lightbox-close{position:absolute;top:16px;right:16px;width:44px;height:44px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;color:var(--text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1;}
+#lightbox-toolbar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(13,26,46,0.9);padding:10px 16px;border-radius:var(--r-xl);border:1px solid var(--border);}
+#lightbox-name{position:absolute;top:16px;left:16px;font-size:12px;color:var(--text2);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* YEŞİL YILDIZ */
 .star-btn{font-size:16px;cursor:pointer;padding:4px;transition:transform 0.3s var(--ease-back);color:var(--text3);flex-shrink:0;}
@@ -268,8 +269,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <div id="toast"><span class="toast-dot" id="toast-dot"></span><span id="toast-msg"></span></div>
 <div id="lightbox">
   <button id="lightbox-close" onclick="closeLightbox()">✕</button>
-  <img id="lightbox-img" src="" alt="">
-  <a id="lightbox-dl" download>⬇ İndir</a>
+  <div id="lightbox-name"></div>
+  <img id="lightbox-img" src="" alt="" style="display:none;">
+  <div id="lightbox-pdf-msg" style="display:none;color:white;text-align:center;"><div style="font-size:48px;margin-bottom:12px;">📄</div><div id="lightbox-pdf-name" style="font-size:14px;margin-bottom:16px;"></div></div>
+  <div id="lightbox-toolbar">
+    <a id="lightbox-dl" style="padding:10px 18px;background:var(--grad-main);color:white;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;">⬇ İndir</a>
+  </div>
 </div>
 
 <!-- GİRİŞ -->
@@ -1451,8 +1456,8 @@ function showIslemDetay(id){
     eklerHtml=`<div style="margin-top:8px;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Belgeler</div>
     ${ekler.map(e=>{
       const isImg=e.dosyaTipi==='resim'||/\.(jpg|jpeg|png|gif|webp)$/i.test(e.dosyaUrl||'');
-      if(isImg){return `<div style="margin-bottom:8px;position:relative;"><img src="${e.dosyaUrl}" alt="${e.dosyaAdi}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--r-sm);cursor:pointer;" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')"><div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;"><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="background:rgba(0,0,0,0.6);color:white;padding:4px 8px;border-radius:6px;font-size:12px;text-decoration:none;">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:rgba(232,128,128,0.85);color:white;border:none;padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;">🗑</button></div></div>`;}
-      return `<div class="file-preview"><span class="file-icon" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;">📄</span><span class="file-name" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;">${e.dosyaAdi}</span><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="color:var(--blue);font-size:13px;">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:2px;">🗑</button></div>`;
+      if(isImg){return `<div style="margin-bottom:8px;position:relative;background:#000;border-radius:var(--r-sm);overflow:hidden;"><img src="${e.dosyaUrl}" alt="${e.dosyaAdi}" style="width:100%;max-height:300px;object-fit:contain;display:block;cursor:pointer;background:#111;" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')"><div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;"><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;" onclick="event.stopPropagation()">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:rgba(200,50,50,0.85);color:white;border:none;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">🗑</button></div></div>`;}
+      return `<div class="file-preview"><span class="file-icon" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;">📄</span><span class="file-name" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;flex:1;">${e.dosyaAdi}</span><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="color:var(--blue);font-size:13px;flex-shrink:0;">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:2px;flex-shrink:0;">🗑</button></div>`;
     }).join('')}</div>`;
   }
   const editBtn=USER_ROL!=='goruntule'?`<button class="btn btn-secondary" style="flex:1" onclick="closeModal('modal-islem-detay');editIslem(${i.id},null)">✏️ Düzenle</button>`:'';
@@ -1481,23 +1486,54 @@ function showIslemDetay(id){
 function row(lbl,val,color=''){return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);">${lbl}</span><span style="font-size:13px;font-weight:500;${color?'color:'+color:''}">${val}</span></div>`;}
 
 function openLightbox(url,name){
-  const lb=document.getElementById('lightbox');const img=document.getElementById('lightbox-img');const dl=document.getElementById('lightbox-dl');
-  const isImg=/\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-  if(isImg){img.src=url;img.style.display='block';}else{img.style.display='none';window.open(url,'_blank');return;}
-  dl.href=url;dl.download=name||'belge';lb.classList.add('open');
+  const lb=document.getElementById('lightbox');
+  const img=document.getElementById('lightbox-img');
+  const dl=document.getElementById('lightbox-dl');
+  const nameEl=document.getElementById('lightbox-name');
+  const pdfMsg=document.getElementById('lightbox-pdf-msg');
+  const pdfName=document.getElementById('lightbox-pdf-name');
+  const isImg=e=>(/\.(jpg|jpeg|png|gif|webp)$/i.test(e)||e.startsWith('data:image'));
+  const isPdf=/\.pdf$/i.test(url);
+  nameEl.textContent=name||'';
+  dl.href=url;dl.download=name||'belge';
+  if(isImg(url)){
+    img.src=url;img.style.display='block';
+    if(pdfMsg)pdfMsg.style.display='none';
+  }else if(isPdf){
+    img.style.display='none';
+    if(pdfMsg){pdfMsg.style.display='block';if(pdfName)pdfName.textContent=name||'Belge';}
+  }else{
+    img.style.display='none';
+    if(pdfMsg){pdfMsg.style.display='block';if(pdfName)pdfName.textContent=name||'Belge';}
+  }
+  lb.classList.add('open');
 }
-function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+function closeLightbox(){
+  const lb=document.getElementById('lightbox');lb.classList.remove('open');
+  const img=document.getElementById('lightbox-img');if(img){img.src='';img.style.display='none';}
+}
 document.getElementById('lightbox').addEventListener('click',e=>{if(e.target===document.getElementById('lightbox'))closeLightbox();});
 
 async function deleteEk(id,event){
   if(event)event.stopPropagation();
-  showConfirm('Belgeyi Sil','Bu belge kalıcı olarak silinecek.',async()=>{
+  showConfirm('Belgeyi Sil','Bu belge ve dosya kalıcı olarak silinecek.',async()=>{
     try{
+      // Önce URL'yi bul
+      const ek=DB.ekler.find(e=>e.id===id);
+      // Tablodan sil
       await sbFetch('ekler?id=eq.'+id,{method:'DELETE'});
+      // Storage'dan da sil (URL public storage URL'si ise)
+      if(ek?.dosyaUrl&&ek.dosyaUrl.includes('/storage/v1/object/public/')){
+        try{
+          const path=ek.dosyaUrl.split('/storage/v1/object/public/')[1];// ekler/dosya.jpg
+          await fetch(SB_URL+'/storage/v1/object/'+path,{
+            method:'DELETE',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}
+          });
+        }catch(e){console.warn('Storage silme hatası:',e);}
+      }
       await loadDB();
-      // Detay modalını yenile
-      const detay=document.getElementById('islem-detay-content');
-      if(detay&&detay.innerHTML)closeModal('modal-islem-detay');
+      closeModal('modal-islem-detay');
       showToast('Belge silindi','amber');
     }catch(e){showToast('Hata!','red');}
   },'🗑');
