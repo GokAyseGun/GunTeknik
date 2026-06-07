@@ -1015,10 +1015,29 @@ async function tryRefreshToken(){
   }catch(e){return false;}
 }
 async function sbStorage(bucket,file){
-  const ext=file.name.split('.').pop();const fname=Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
-  const res=await fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+fname,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN,'Content-Type':file.type},body:file});
-  if(!res.ok)throw new Error('Dosya yükleme başarısız');
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const fname=Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+  // Önce multipart dene, sonra binary
+  const res=await fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+fname,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN,'Content-Type':file.type||'application/octet-stream'},
+    body:file
+  });
+  if(!res.ok){
+    const errTxt=await res.text().catch(()=>'');
+    throw new Error('Storage hatası ('+res.status+'): '+errTxt.substring(0,120));
+  }
   return SB_URL+'/storage/v1/object/public/'+bucket+'/'+fname;
+}
+
+// Dosyayı base64'e çevirir (Storage yoksa fallback)
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);// data:image/jpeg;base64,...
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
 }
 
 // ============================================================ GİRİŞ
@@ -1672,9 +1691,25 @@ async function saveIslem(btn){
     const seciliPersoneller=getSeciliPersoneller();
     const yardimciChk=document.getElementById('mi-yardimci-chk')?.checked;
     const personelIds=yardimciChk?seciliPersoneller.map(p=>p.id):[];
-    // Dosya
-    let dosyaUrl=null;
-    if(selectedFile&&SB_TOKEN){try{dosyaUrl=await sbStorage('ekler',selectedFile);}catch(e){console.warn('Dosya:',e);}}
+    // Dosya yükleme
+    let dosyaUrl=null;let dosyaBase64=null;let storageHata=false;
+    if(selectedFile&&SB_TOKEN){
+      try{
+        dosyaUrl=await sbStorage('ekler',selectedFile);
+      }catch(e){
+        console.warn('Storage hatası, base64 deneniyor:',e.message);
+        storageHata=true;
+        try{
+          // 2MB altı dosyalar için base64 fallback
+          if(selectedFile.size<2*1024*1024){
+            dosyaBase64=await fileToBase64(selectedFile);
+            dosyaUrl=dosyaBase64;// data URL olarak kaydet
+          }else{
+            showToast('Dosya yuklenemedi: Supabase Storage bucket eksik. Storage bolumunden "ekler" bucket olusturun.','red');
+          }
+        }catch(e2){showToast('Dosya okunamadı','red');}
+      }
+    }
     if(eId){
       await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:tarih.toISOString(),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds})});
       showToast('Güncellendi','green');
@@ -1698,7 +1733,11 @@ async function saveIslem(btn){
         const s=DB.stok.find(x=>x.id===parseInt(stokSec));if(s)await sbFetch('stok?id=eq.'+stokSec,{method:'PATCH',body:JSON.stringify({miktar:Math.max(0,s.miktar-stokMiktar)})});
       }
       // Ek
-      if(dosyaUrl&&result&&result[0]){await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({islem_id:result[0].id,dosya_url:dosyaUrl,dosya_adi:selectedFile.name,dosya_tipi:selectedFile.type.includes('image')?'resim':'belge'})});}
+      if(dosyaUrl&&result&&result[0]){
+        const tipi=selectedFile.type.includes('image')?'resim':'belge';
+        await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({islem_id:result[0].id,dosya_url:dosyaUrl,dosya_adi:selectedFile.name,dosya_tipi:tipi})});
+        if(storageHata&&dosyaBase64)showToast('Dosya yerel olarak kaydedildi (Storage bucket eksik)','amber');
+      }
       showToast('İşlem kaydedildi','green');
     }
     await loadDB();closeModal('modal-islem');
