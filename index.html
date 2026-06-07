@@ -986,27 +986,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
-<!-- Kullanıcı Ekle -->
-<div class="modal-ov" id="modal-kullanici">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>Kullanıcı Ekle</h3><button class="modal-close" onclick="closeModal('modal-kullanici')">✕</button></div>
-    <div class="modal-body fg">
-      <div class="fi"><label>E-posta</label><input type="email" id="ku-email" placeholder="kullanici@email.com"></div>
-      <div class="fi"><label>Şifre</label><input type="password" id="ku-sifre" placeholder="En az 6 karakter"></div>
-      <div class="fi"><label>İsim</label><input type="text" id="ku-isim" placeholder="Ad Soyad"></div>
-      <div class="fi"><label>Rol</label>
-        <select id="ku-rol" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="goruntule">Görüntüleyici</option><option value="editor">Editör</option><option value="admin">Admin</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-kullanici')">İptal</button>
-      <button class="btn btn-primary btn-full" onclick="saveKullanici(this)">Kaydet</button>
-    </div>
-  </div>
-</div>
-
 <script>
 "use strict";
 // ============================================================ SUPABASE
@@ -1183,7 +1162,7 @@ const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.is
 function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'Genel Özet',islemler:'Tüm İşlemler',takvim:'Takvim & Ajanda',rehber:'Kişi & Kurum Rehberi',cari:'Açık Hesaplar',personel:'Personel Takibi',stok:'Stok & Malzeme',irsaliye:'İrsaliye & Fiş',raporlar:'Raporlar',kullanicilar:'Kullanıcı Yönetimi'};
+const PAGE_TITLES={dashboard:'Genel Özet',islemler:'Tüm İşlemler',takvim:'Takvim & Ajanda',rehber:'Kişi & Kurum Rehberi',cari:'Açık Hesaplar',personel:'Personel Takibi',stok:'Stok & Malzeme',irsaliye:'İrsaliye & Fiş',raporlar:'Raporlar'};
 
 function goPage(id,navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2559,57 +2538,6 @@ function renderSablonlar(){
     </div>`;
   }).join('');
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
-}
-
-// ============================================================ KULLANICILAR
-async function renderKullanicilar(){
-  const list=document.getElementById('list-kullanicilar');if(!list)return;
-  list.innerHTML='<div class="skel skel-card"></div>'.repeat(3);
-  try{
-    const res=await fetch(SB_URL+'/auth/v1/admin/users',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}});
-    if(res.status===403){list.innerHTML='<div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Bu bilgilere sadece Service Role anahtarıyla erişilebilir</div><div class="empty-sub">Supabase Dashboard → Authentication → Users bölümünden kullanıcıları görüntüleyebilirsiniz.</div></div>';return;}
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const data=await res.json();const users=data.users||data||[];
-    const profiles=await sbFetch('kullanici_profiller?select=*').catch(()=>[]);
-    if(!users.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Kullanıcı yok</div></div>';return;}
-    list.innerHTML=users.map((u,i)=>{
-      const p=(profiles||[]).find(x=>x.id===u.id)||{};const isMe=CURRENT_USER&&u.id===CURRENT_USER.id;
-      return `<div class="stagger-item" style="animation-delay:${i*0.05}s;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${p.isim||u.email}${isMe?' <span class="badge bg-blue">Ben</span>':''}</div>
-            <div style="font-size:11px;color:var(--text2);">${u.email}</div>
-            <div style="font-size:11px;color:var(--text2);">Son giriş: ${u.last_sign_in_at?dtS(u.last_sign_in_at):'Hiç'}</div>
-          </div>
-          <span class="badge ${p.rol==='admin'?'bg-red':p.rol==='editor'?'bg-blue':'bg-teal'}">${p.rol||'goruntule'}</span>
-        </div>
-      </div>`;
-    }).join('');setStagger(list.querySelectorAll('.stagger-item'));
-  }catch(e){list.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Yükleme Hatası</div><div class="empty-sub">Supabase Dashboard'dan kullanıcıları görüntüleyin.<br><small>${e.message}</small></div></div>`;}
-}
-
-function openKullaniciModal(){
-  if(USER_ROL!=='admin')return;
-  ['ku-email','ku-sifre','ku-isim'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('ku-rol').value='goruntule';
-  openModal('modal-kullanici');
-}
-
-async function saveKullanici(btn){
-  if(btn)btn.disabled=true;
-  try{
-    const email=document.getElementById('ku-email').value.trim();const sifre=document.getElementById('ku-sifre').value;const isim=document.getElementById('ku-isim').value.trim();const rol=document.getElementById('ku-rol').value;
-    if(!email||!sifre){showToast('Email ve şifre gerekli','red');return;}
-    if(sifre.length<6){showToast('Şifre en az 6 karakter','red');return;}
-    // Admin API olmadan signup denemesi (anon sign up)
-    const res=await sbAuth('signup',{email,password:sifre});
-    if(res.error){showToast('Hata: '+res.error.message,'red');return;}
-    if(res.user){
-      await sbFetch('kullanici_profiller',{method:'POST',prefer:'return=minimal',body:JSON.stringify({id:res.user.id,isim:isim||email,rol})}).catch(()=>{});
-    }
-    closeModal('modal-kullanici');showToast('Kullanıcı oluşturuldu! E-posta doğrulaması gerekebilir.','green');
-    setTimeout(()=>renderKullanicilar(),1000);
-  }catch(e){showToast('Hata: '+String(e?.message||e).substring(0,60),'red');}
-  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
 // ============================================================ YARDIMCI
