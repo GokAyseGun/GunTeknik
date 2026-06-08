@@ -1543,7 +1543,29 @@ function dtS(d){if(!d)return '-';return new Date(d).toLocaleDateString('tr-TR',{
 function dtF(d){if(!d)return '-';return new Date(d).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function getKisi(id){return DB.kisiler.find(k=>String(k.id)===String(id));}
 function getPersonel(id){return DB.personeller.find(p=>String(p.id)===String(id));}
-function today(){return new Date().toISOString().slice(0,10);}
+// Yerel tarih yardımcıları - UTC kaymasını önler
+function today(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// ISO string'den yerel YYYY-MM-DD çıkar (UTC kaymasını önler)
+function localDateStr(tarih){
+  if(!tarih)return '';
+  const d=new Date(tarih);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// Yerel tarih ile ISO string üret (gece yarısı kaymasını önler)
+function localISOString(date){
+  const d=date||new Date();
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),g=String(d.getDate()).padStart(2,'0');
+  const s=String(d.getHours()).padStart(2,'0'),dk=String(d.getMinutes()).padStart(2,'0');
+  // Offset'i hesapla
+  const off=-d.getTimezoneOffset();
+  const offH=String(Math.floor(Math.abs(off)/60)).padStart(2,'0');
+  const offM=String(Math.abs(off)%60).padStart(2,'0');
+  const sign=off>=0?'+':'-';
+  return `${y}-${m}-${g}T${s}:${dk}:00${sign}${offH}:${offM}`;
+}
 
 let toastTimer;
 function showToast(msg,type='blue'){
@@ -1723,7 +1745,7 @@ function renderDashVade(){
 
 function renderDashBugun(){
   const el=document.getElementById('dash-bugun-list');if(!el)return;
-  const t=today();const list=DB.islemler.filter(i=>(i.tarih||'').startsWith(t)).slice(0,6);
+  const t=today();const list=DB.islemler.filter(i=>localDateStr(i.tarih)===t).slice(0,6);
   if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Bugün işlem yok</div></div>';return;}
   el.innerHTML=list.map((i,idx)=>{
     const k=getKisi(i.kisiId);const pos=i.tip==='Gelir';const renk=pos?'var(--green)':'var(--red)';
@@ -1990,8 +2012,9 @@ function openIslemModal(){
   selectedFile=null;
   document.getElementById('mi-dosya-preview').innerHTML='';
   ['mi-file-kamera','mi-file-galeri','mi-file-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  const dt=new Date();dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());
-  document.getElementById('mi-tarih').value=dt.toISOString().slice(0,16);
+  const dt=new Date();
+  const dtY=dt.getFullYear(),dtM=String(dt.getMonth()+1).padStart(2,'0'),dtD=String(dt.getDate()).padStart(2,'0'),dtH=String(dt.getHours()).padStart(2,'0'),dtMn=String(dt.getMinutes()).padStart(2,'0');
+  document.getElementById('mi-tarih').value=dtY+'-'+dtM+'-'+dtD+'T'+dtH+':'+dtMn;
   document.querySelectorAll('#modal-islem .pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.getElementById('mi-odeme').value='Nakit';
   stokSatirlariTemizle();
@@ -2429,14 +2452,14 @@ async function saveIslem(btn){
       }
     }
     if(eId){
-      await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:tarih.toISOString(),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds})});
+      await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:localISOString(tarih),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds})});
       showToast('Güncellendi','green');
     }else{
       const isTaksit=document.getElementById('mi-taksit-chk')?.checked;
       const tSayisi=statu==='Bekliyor'&&isTaksit?(parseInt(document.getElementById('mi-taksit-sayi').value)||2):1;
       const groupId=tSayisi>1?Date.now():null;const kayitlar=[];
-      if(statu==='Bekliyor'){const base=Math.round(tutar/tSayisi);for(let idx=0;idx<tSayisi;idx++){const sT=new Date(vTarih);sT.setMonth(sT.getMonth()+idx);kayitlar.push({group_id:groupId,tarih:sT.toISOString(),tip,statu:'Bekliyor',kisi_id:kId,kat,alt_kat:finalAltKat,tutar:base,malzeme_tutar:idx===0?malz:0,"not":(tSayisi>1?'['+(idx+1)+'/'+tSayisi+' Taksit] ':'')+notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}}
-      else{kayitlar.push({tarih:tarih.toISOString(),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}
+      if(statu==='Bekliyor'){const base=Math.round(tutar/tSayisi);for(let idx=0;idx<tSayisi;idx++){const sT=new Date(vTarih);sT.setMonth(sT.getMonth()+idx);kayitlar.push({group_id:groupId,tarih:localISOString(sT),tip,statu:'Bekliyor',kisi_id:kId,kat,alt_kat:finalAltKat,tutar:base,malzeme_tutar:idx===0?malz:0,"not":(tSayisi>1?'['+(idx+1)+'/'+tSayisi+' Taksit] ':'')+notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}}
+      else{kayitlar.push({tarih:localISOString(tarih),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}
       const result=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(kayitlar)});
       // Personel hak ediş
       if(yardimciChk&&tip==='Gelir'&&kat==='İşletme Geliri'&&result&&result[0]&&seciliPersoneller.length){
@@ -2487,8 +2510,9 @@ function openBorcModal(){
   ['mb-anapara','mb-toplamgeri','mb-not'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('mb-taksit').value='1';
   document.getElementById('mb-tip').value='Alındı';
-  const dt=new Date();dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());
-  document.getElementById('mb-tarih').value=dt.toISOString().slice(0,16);
+  const dt2=new Date();
+  const dt2Y=dt2.getFullYear(),dt2M=String(dt2.getMonth()+1).padStart(2,'0'),dt2D=String(dt2.getDate()).padStart(2,'0'),dt2H=String(dt2.getHours()).padStart(2,'0'),dt2Mn=String(dt2.getMinutes()).padStart(2,'0');
+  document.getElementById('mb-tarih').value=dt2Y+'-'+dt2M+'-'+dt2D+'T'+dt2H+':'+dt2Mn;
   acReset('mb-ac');
   openModal('modal-borc');
 }
@@ -2519,7 +2543,7 @@ async function saveBorc(btn){
     // Borç verildiyse = kasadan para çıktı = Gider gibi davranır
     const anaKayit={
       group_id:groupId,
-      tarih:bTarih.toISOString(),
+      tarih:localISOString(bTarih),
       tip:yon==='Alındı'?'Gelir':'Gider',
       statu:'Tamamlandı',
       kisi_id:kisiId,
@@ -2539,7 +2563,7 @@ async function saveBorc(btn){
       const tT=new Date(bTarih);tT.setMonth(tT.getMonth()+(i+1));
       taksitKayitlar.push({
         group_id:groupId,
-        tarih:tT.toISOString(),
+        tarih:localISOString(tT),
         tip:yon==='Alındı'?'Gider':'Gelir',// Borç alındıysa ileride geri ödeyeceğiz=Gider, verdiyse tahsil edeceğiz=Gelir
         statu:'Bekliyor',
         kisi_id:kisiId,
@@ -3038,8 +3062,8 @@ function renderCalendar(){
   for(let i=0;i<offset;i++)grid.innerHTML+=`<div></div>`;
   for(let d=1;d<=days;d++){
     const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const dayIs=DB.islemler.filter(i=>(i.tarih||'').substring(0,10)===ds);
-    const dayTk=DB.takvim.filter(t=>(t.tarih||'').substring(0,10)===ds);
+    const dayIs=DB.islemler.filter(i=>localDateStr(i.tarih)===ds);
+    const dayTk=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
     const isToday=isCur&&d===now.getDate();
     const hasGelir=dayIs.some(i=>i.tip==='Gelir'&&i.kat!=='İşletme Geliri');
     const hasIs=dayIs.some(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri');
@@ -3097,9 +3121,9 @@ async function deleteTakvim(id){
 }
 
 function showDayDetails(ds){
-  const islemler=DB.islemler.filter(i=>(i.tarih||'').substring(0,10)===ds);
-  const takvim=DB.takvim.filter(t=>(t.tarih||'').substring(0,10)===ds);
-  const odemeler=DB.odemeler.filter(o=>(o.tarih||'').substring(0,10)===ds);
+  const islemler=DB.islemler.filter(i=>localDateStr(i.tarih)===ds);
+  const takvim=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
+  const odemeler=DB.odemeler.filter(o=>localDateStr(o.tarih)===ds);
   const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};let html='';
   takvim.forEach(t=>{const c={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};html+=`<div style="padding:12px;border-left:3px solid ${c[t.tip]||'var(--blue)'};background:var(--bg2);border-radius:var(--r-sm);"><div style="font-weight:600;font-size:13px;">${t.baslik||t.detay}</div><div style="font-size:11px;color:var(--text2);">${t.tip}</div></div>`;});
   islemler.forEach(i=>{const k=getKisi(i.kisiId);const pos=i.tip==='Gelir';html+=`<div style="padding:12px;border-left:3px solid ${pos?'var(--green)':'var(--red)'};background:var(--surface);border-radius:var(--r-sm);cursor:pointer;" onclick="closeModal('modal-gun-detay');showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;"><div><div style="font-weight:600;font-size:12px;">${k?.isim||i.kat||'—'}</div><div style="font-size:11px;color:var(--text2);">${i.tip} · ${oyIcon[i.odemeYontemi]||''} · ${i.statu}</div></div><div style="font-weight:700;color:${pos?'var(--green)':'var(--red)'};" class="num">${fmt(i.tutar)}</div></div></div>`;});
