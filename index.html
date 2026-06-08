@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="Gün Teknik">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- Barkod okuma kütüphanesi - önceden yükle -->
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <title>Gün Teknik · ERP</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -646,16 +648,19 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div class="fi">
             <label>Fatura Görseli / Belgesi</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-              <button type="button" onclick="triggerFileInput('kamera','vf-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+              <label for="vf-file-kamera" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
                 <span style="font-size:24px;">📷</span>Kamera
-              </button>
-              <button type="button" onclick="triggerFileInput('galeri','vf-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+              </label>
+              <label for="vf-file-galeri" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
                 <span style="font-size:24px;">🖼️</span>Galeri
-              </button>
-              <button type="button" onclick="triggerFileInput('belge','vf-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+              </label>
+              <label for="vf-file-belge" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
                 <span style="font-size:24px;">📄</span>Belge
-              </button>
+              </label>
             </div>
+            <input type="file" id="vf-file-kamera" style="display:none;" accept="image/*" capture="environment" onchange="onDosyaSec(this,'vf-dosya-preview');selectedVfFile=this.files[0];">
+            <input type="file" id="vf-file-galeri" style="display:none;" accept="image/*" onchange="onDosyaSec(this,'vf-dosya-preview');selectedVfFile=this.files[0];">
+            <input type="file" id="vf-file-belge" style="display:none;" accept="application/pdf,.pdf,.doc,.docx" onchange="onDosyaSec(this,'vf-dosya-preview');selectedVfFile=this.files[0];">
             <div id="vf-dosya-preview"></div>
           </div>
         </div>
@@ -824,16 +829,19 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fi">
         <label>Belge / Fotoğraf Ekle</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <button type="button" onclick="triggerFileInput('kamera','mi-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+          <label for="mi-file-kamera" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
             <span style="font-size:24px;">📷</span>Kamera
-          </button>
-          <button type="button" onclick="triggerFileInput('galeri','mi-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+          </label>
+          <label for="mi-file-galeri" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
             <span style="font-size:24px;">🖼️</span>Galeri
-          </button>
-          <button type="button" onclick="triggerFileInput('belge','mi-dosya-preview')" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;">
+          </label>
+          <label for="mi-file-belge" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
             <span style="font-size:24px;">📄</span>Belge
-          </button>
+          </label>
         </div>
+        <input type="file" id="mi-file-kamera" style="display:none;" accept="image/*" capture="environment" onchange="onDosyaSec(this,'mi-dosya-preview')">
+        <input type="file" id="mi-file-galeri" style="display:none;" accept="image/*" onchange="onDosyaSec(this,'mi-dosya-preview')">
+        <input type="file" id="mi-file-belge" style="display:none;" accept="application/pdf,.pdf,.doc,.docx" onchange="onDosyaSec(this,'mi-dosya-preview')">
         <div id="mi-dosya-preview"></div>
       </div>
       <div class="fi" id="div-mi-kdv" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
@@ -1844,7 +1852,7 @@ function openIslemModal(){
   const kdvTutar=document.getElementById('mi-kdv-tutar');if(kdvTutar)kdvTutar.value='';
   selectedFile=null;
   document.getElementById('mi-dosya-preview').innerHTML='';
-  ['mi-dosya-kamera','mi-dosya-galeri','mi-dosya-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mi-file-kamera','mi-file-galeri','mi-file-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const dt=new Date();dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());
   document.getElementById('mi-tarih').value=dt.toISOString().slice(0,16);
   document.querySelectorAll('#modal-islem .pay-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
@@ -3450,34 +3458,57 @@ async function openBarkodKamera(targetInputId){
       barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;return;
     }
     if(video){video.srcObject=barkodStream;await video.play();}
-    if(res)res.textContent='Barkodu mavi çerçeveye göster...';
     barkodActive=true;
-    // jsQR yükle (güvenilir, her tarayıcıda çalışır)
-    await loadJsQR();
+    let okumaYapildi=false;
     const canvas=document.createElement('canvas');
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    // setInterval ile düzenli tarama - RAF yerine daha güvenilir
-    barkodScanTimer=setInterval(()=>{
-      if(!barkodActive||!video||video.readyState<2)return;
+
+    // BarcodeDetector destekleniyor mu kontrol et
+    let bdDetector=null;
+    if(window.BarcodeDetector){
+      try{
+        const desteklenen=await BarcodeDetector.getSupportedFormats();
+        bdDetector=new BarcodeDetector({formats:desteklenen});
+        if(res)res.textContent='✅ Tüm barkodlar destekleniyor (Chrome). Göster...';
+      }catch(e){
+        bdDetector=null;
+        if(res)res.textContent='📷 QR kod taranıyor...';
+      }
+    }else{
+      if(res)res.textContent='📷 QR kod taranıyor...';
+    }
+
+    barkodScanTimer=setInterval(async()=>{
+      if(!barkodActive||okumaYapildi)return;
+      if(!video||video.readyState<4||video.videoWidth===0)return;
       try{
         canvas.width=video.videoWidth;
         canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
-        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        // Önce BarcodeDetector (varsa, daha hızlı)
-        if(window.BarcodeDetector&&!window._bdFailed){
-          window._bdDetector=window._bdDetector||new BarcodeDetector();
-          window._bdDetector.detect(video).then(results=>{
-            if(results&&results.length>0){barkodOkundu(results[0].rawValue);}
-          }).catch(()=>{window._bdFailed=true;});
+
+        // 1. BarcodeDetector - Chrome'da tüm formatlar (canvas üzerinde)
+        if(bdDetector){
+          try{
+            const results=await bdDetector.detect(canvas);
+            if(results&&results.length>0&&!okumaYapildi){
+              okumaYapildi=true;
+              barkodOkundu(results[0].rawValue);
+              return;
+            }
+          }catch(e){bdDetector=null;}// desteklenmiyorsa kapat
         }
-        // jsQR ile QR tarama (her zaman çalışır)
-        if(window.jsQR){
-          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
-          if(code&&code.data){barkodOkundu(code.data);return;}
+
+        // 2. jsQR fallback - QR kod okuma
+        if(!okumaYapildi&&window.jsQR){
+          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
+          if(code&&code.data){
+            okumaYapildi=true;
+            barkodOkundu(code.data);
+          }
         }
       }catch(e){}
-    },150);// 150ms = ~6fps
+    },200);
   }catch(e){
     const m=String(e);
     if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
