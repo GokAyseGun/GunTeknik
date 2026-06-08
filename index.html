@@ -1164,12 +1164,21 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <!-- Barkod Kamera Modal -->
 <div class="modal-ov" id="modal-barkod-kamera" style="z-index:10001;">
   <div class="modal" style="max-width:400px;"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>📷 Barkod Tara</h3><button class="modal-close" onclick="stopBarkodKamera()">✕</button></div>
+    <div class="modal-head">
+      <h3>📷 Barkod Tara</h3>
+      <button class="modal-close" onclick="stopBarkodKamera()">✕</button>
+    </div>
     <div class="modal-body" style="padding:16px;">
-      <!-- html5-qrcode buraya render eder -->
-      <div id="barkod-video-wrap" style="border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;background:#000;min-height:200px;"></div>
-      <div id="barkod-result" style="text-align:center;font-size:13px;color:var(--text2);min-height:24px;padding:8px;background:var(--bg2);border-radius:var(--r-sm);font-family:monospace;"></div>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;">Barkodu kameraya göster · Otomatik okuyacak</div>
+      <div style="position:relative;background:#000;border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;">
+        <video id="barkod-video" style="width:100%;display:block;max-height:300px;object-fit:cover;" playsinline muted></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <div style="width:200px;height:100px;border:2px solid rgba(126,179,240,0.8);border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,0.4);"></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;">
+          <div id="barkod-result" style="display:inline-block;background:rgba(0,0,0,0.7);color:white;font-size:12px;padding:4px 12px;border-radius:20px;font-family:monospace;">Başlatılıyor...</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;">Barkodu mavi çerçeveye göster · Otomatik okuyacak</div>
     </div>
   </div>
 </div>
@@ -3409,136 +3418,102 @@ document.addEventListener('click',e=>{
 });
 
 // ============================================================ BARKOD SİSTEMİ
-
 let barkodTargetInputId=null;
-let html5QrCode=null;
+let barkodStream=null;
+let barkodRAF=null;
+let barkodActive=false;
 
-// Sayfa yüklenirken html5-qrcode'u ön yükle
 function preloadHtml5QR(){
-  if(window.Html5Qrcode)return;
-  const s=document.createElement('script');
-  s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-  s.onerror=()=>{
-    const s2=document.createElement('script');
-    s2.src='https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
-    document.head.appendChild(s2);
-  };
-  document.head.appendChild(s);
-}
-
-async function waitHtml5QR(ms=8000){
-  if(window.Html5Qrcode)return true;
-  const start=Date.now();
-  return new Promise(resolve=>{
-    const t=setInterval(()=>{
-      if(window.Html5Qrcode){clearInterval(t);resolve(true);}
-      if(Date.now()-start>ms){clearInterval(t);resolve(false);}
-    },200);
-  });
+  // Artık native kamera kullanıyoruz, kütüphane gerekmez
 }
 
 async function openBarkodKamera(targetInputId){
   barkodTargetInputId=targetInputId;
-  // Önce eski instance temizle
-  await _stopQR();
-  // Wrap div'i temizle
-  const wrap=document.getElementById('barkod-video-wrap');
-  if(wrap)wrap.innerHTML='';
+  barkodActive=false;
+  // Önce durdur
+  if(barkodRAF){cancelAnimationFrame(barkodRAF);barkodRAF=null;}
+  if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
   const res=document.getElementById('barkod-result');
-  if(res)res.textContent='Kütüphane yükleniyor...';
-  // Modalı aç
-  openModal('modal-barkod-kamera');
-  // Kütüphane hazır mı bekle (ön yükleme başarısızsa tekrar dene)
-  if(!window.Html5Qrcode){
-    preloadHtml5QR();
-    const ok=await waitHtml5QR(10000);
-    if(!ok){
-      if(res)res.textContent='Kütüphane yüklenemedi!';
-      showToast('İnternet bağlantısı gerekli','red');
-      return;
-    }
-  }
+  const video=document.getElementById('barkod-video');
+  if(video)video.srcObject=null;
   if(res)res.textContent='Kamera başlatılıyor...';
-  // Modal DOM'a yerleştikten sonra başlat
-  setTimeout(async()=>{
-    try{
-      html5QrCode=new Html5Qrcode('barkod-video-wrap');
-      await html5QrCode.start(
-        {facingMode:'environment'},
-        {fps:10,qrbox:{width:240,height:140}},
-        (kod)=>{barkodOkundu(kod);},
-        ()=>{}
-      );
-      if(res)res.textContent='Barkodu kameraya göster...';
-    }catch(e){
-      const msg=String(e);
-      if(msg.includes('permission')||msg.includes('NotAllowed')){
-        if(res)res.textContent='❌ Kamera izni reddedildi';
-        showToast('Kamera izni verin','red');
-      }else if(msg.includes('NotFound')||msg.includes('no camera')){
-        if(res)res.textContent='❌ Kamera bulunamadı';
-        showToast('Kamera bulunamadı','red');
-      }else{
-        if(res)res.textContent='❌ Hata: '+msg.slice(0,60);
-        showToast('Kamera hatası','red');
-      }
+  openModal('modal-barkod-kamera');
+  try{
+    barkodStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    if(!document.getElementById('modal-barkod-kamera').classList.contains('open')){
+      barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;return;
     }
-  },300);
+    if(video){video.srcObject=barkodStream;await video.play();}
+    if(res)res.textContent='Barkodu mavi çerçeveye göster...';
+    barkodActive=true;
+    // BarcodeDetector API - modern Chrome/Safari destekliyor
+    if(window.BarcodeDetector){
+      const detector=new BarcodeDetector({formats:['qr_code','code_128','ean_13','ean_8','code_39','upc_a','upc_e','itf','data_matrix','pdf417','aztec','code_93']});
+      const scan=async()=>{
+        if(!barkodActive)return;
+        try{
+          const results=await detector.detect(video);
+          if(results&&results.length>0){
+            barkodOkundu(results[0].rawValue);
+            return;
+          }
+        }catch(e){}
+        barkodRAF=requestAnimationFrame(scan);
+      };
+      barkodRAF=requestAnimationFrame(scan);
+    } else {
+      // Fallback: QR only with jsQR
+      await loadJsQR();
+      const scan=()=>{
+        if(!barkodActive)return;
+        if(!video||video.readyState<2){barkodRAF=requestAnimationFrame(scan);return;}
+        const canvas=document.createElement('canvas');
+        canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+        ctx.drawImage(video,0,0);
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        if(window.jsQR){
+          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
+          if(code&&code.data){barkodOkundu(code.data);return;}
+        }
+        barkodRAF=requestAnimationFrame(scan);
+      };
+      barkodRAF=requestAnimationFrame(scan);
+      if(res)res.textContent='QR kod taranıyor... (Diğer barkodlar için BarcodeDetector gerekli)';
+    }
+  }catch(e){
+    const m=String(e);
+    if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
+    showToast('Kamera açılamadı','red');
+  }
+}
+
+async function loadJsQR(){
+  if(window.jsQR)return;
+  return new Promise(res=>{
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
+    s.onload=res;s.onerror=res;
+    document.head.appendChild(s);
+  });
 }
 
 async function _stopQR(){
-  if(html5QrCode){
-    try{
-      const s=html5QrCode.getState?.();
-      if(s===2||s===3)await html5QrCode.stop();
-    }catch(e){}
-    try{await html5QrCode.clear();}catch(e){}
-    html5QrCode=null;
-  }
+  barkodActive=false;
+  if(barkodRAF){cancelAnimationFrame(barkodRAF);barkodRAF=null;}
+  if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
+  const v=document.getElementById('barkod-video');
+  if(v){v.srcObject=null;}
 }
 
 async function stopBarkodKamera(silent=false){
   await _stopQR();
-  const wrap=document.getElementById('barkod-video-wrap');
-  if(wrap)wrap.innerHTML='';
   if(!silent)closeModal('modal-barkod-kamera');
 }
 
-function barkodOkundu(kod){
-  stopBarkodKamera();
-  if(!barkodTargetInputId)return;
-  // Satır bazlı barkod seçimi
-  if(barkodTargetInputId.startsWith('satir:')){
-    const satirId=barkodTargetInputId.slice(6);
-    const s=DB.stok.find(x=>x.barkod===kod);
-    if(s){
-      const sel=document.getElementById(satirId+'-sec');
-      if(sel)sel.value=s.id;
-      showToast(s.ad+' seçildi','green');
-    }else{
-      showConfirm('Barkod Bulunamadı','Bu barkod stokta kayıtlı değil. Eklemek ister misiniz?',()=>goStokEkle(),'🔍');
-    }
-    return;
-  }
-  // Diğer hedefler
-  const el=document.getElementById(barkodTargetInputId);
-  if(el){el.value=kod;el.dispatchEvent(new Event('input'));}
-  if(barkodTargetInputId==='stok-barkod'){
-    document.getElementById('stok-barkod').value=kod;
-  }else if(barkodTargetInputId==='stok-ara-barkod'){
-    onStokBarkodAra(kod);
-  }
-  showToast('Barkod okundu: '+kod,'green');
-}
-
-function stopBarkodKamera(){
-  if(barkodAnimFrame)cancelAnimationFrame(barkodAnimFrame);
-  if(barkodStream)barkodStream.getTracks().forEach(t=>t.stop());
-  barkodStream=null;barkodReader=null;barkodAnimFrame=null;
-  const v=document.getElementById('barkod-video');if(v)v.srcObject=null;
-  closeModal('modal-barkod-kamera');
-}
-
+// Stok sayfasında barkodla arama
 // Stok sayfasında barkodla arama
 function onStokBarkodAra(kod){
   if(!kod)return;
