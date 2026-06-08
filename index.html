@@ -511,9 +511,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
         <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📲 Cihaz Takvimine Aktar</div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Tüm ajanda ve işlem kayıtları .ics formatında cihazınızın takvimine aktarılır. iOS, Android, Mac ve Windows desteklenir.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="takvimiAktar('hepsi')" style="flex:1;">📅 Tüm Takvimi Aktar</button>
-          <button class="btn btn-secondary" onclick="takvimiAktar('vade')" style="flex:1;">💰 Sadece Vadeli İşlemler</button>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-primary btn-full" onclick="takvimiAktar('vade')">💰 Vadeli İşlemleri Aktar</button>
+          <button class="btn btn-secondary btn-full" onclick="takvimiAktar('genel')">🔔 Genel Uyarı Aktar</button>
+          <button class="btn btn-secondary btn-full" onclick="takvimiAktar('hepsi')">📅 Tüm Takvimi Aktar</button>
         </div>
       </div>
     </div>
@@ -4494,96 +4495,120 @@ function _yaklaşanSatir(i,k,pos,renk,etiket=''){
 // ============================================================ TAKVİM AKTARMA (.ICS)
 
 function takvimiAktar(mod){
-  const now=new Date();
-  const satirlar=[];
+  // Tüm etkinlikleri ve hangi günlerde alarm olacağını topla
+  const etkinlikler = [];   // {tarihStr, baslik, aciklama, alarmVar}
+  const alarmGunleri = new Set(); // YYYYMMDD formatında — o gün alarm kurulacak
 
-  // ICS başlığı
+  // ── YARDIMCI ──────────────────────────────────────────────
+  function ekle(tarih, baslik, aciklama, alarmKur, uid){
+    const ds = icsDateStr(new Date(tarih));
+    etkinlikler.push({ds, baslik, aciklama, uid: uid||('auto-'+ds+'-'+baslik.slice(0,10))});
+    if(alarmKur) alarmGunleri.add(ds);
+  }
+
+  // ── 1. VADELİ İŞLEMLER (Bekliyor) ────────────────────────
+  if(mod==='vade'||mod==='genel'||mod==='hepsi'){
+    DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
+      const k = getKisi(i.kisiId);
+      const pos = i.tip==='Gelir';
+      const tip = pos ? 'Alacak' : 'Ödeme';
+      const isim = k?.isim||'—';
+      const tutar = fmt(i.tutar);
+      ekle(i.tarih,
+        tip+': '+isim+' · '+tutar,
+        isim+' | '+tutar+(i.not?' | '+i.not:''),
+        true,
+        'islem-'+i.id+'@gunteknik'
+      );
+    });
+  }
+
+  // ── 2. TAKVİM KAYITLARI ───────────────────────────────────
+  if(mod==='genel'||mod==='hepsi'){
+    // Alacak, Verecek, İş, Not
+    const alarmTipler = ['Alacak','Verecek','İş','Bilgi'];
+    DB.takvim.forEach(t=>{
+      const alarmVar = alarmTipler.includes(t.tip);
+      const baslik = (t.baslik||t.detay||t.tip);
+      ekle(t.tarih, baslik, t.detay||baslik, alarmVar, 'takvim-'+t.id+'@gunteknik');
+    });
+  }
+
+  // ── 3. TÜM İŞLEMLER (Gelir/Gider Tamamlandı) ─────────────
+  if(mod==='hepsi'){
+    DB.islemler.filter(i=>i.statu==='Tamamlandı').forEach(i=>{
+      const k = getKisi(i.kisiId);
+      const pos = i.tip==='Gelir';
+      const isim = k?.isim||'—';
+      const tutar = fmt(i.tutar);
+      // Gelir/gider için alarm YOK (sadece kayıt)
+      ekle(i.tarih,
+        (pos?'Gelir':'Gider')+': '+isim+' · '+tutar,
+        isim+' | '+tutar+(i.not?' | '+i.not:''),
+        false,
+        'islem-'+i.id+'@gunteknik'
+      );
+    });
+    // Takvim kayıtları henüz eklenmemişse (genel mod dahil değil)
+    // Sadece hepsi modunda aynı takvim kayıtları — yukarıda eklendi
+  }
+
+  if(!etkinlikler.length){showToast('Aktarılacak kayıt bulunamadı','amber');return;}
+
+  // ── ICS OLUŞTUR ───────────────────────────────────────────
+  const satirlar = [];
   satirlar.push('BEGIN:VCALENDAR');
   satirlar.push('VERSION:2.0');
-  satirlar.push('PRODID:-//Gün Teknik ERP//TR');
+  satirlar.push('PRODID:-//Gun Teknik ERP//TR');
   satirlar.push('CALSCALE:GREGORIAN');
   satirlar.push('METHOD:PUBLISH');
-  satirlar.push('X-WR-CALNAME:Gün Teknik');
+  satirlar.push('X-WR-CALNAME:Gun Teknik');
   satirlar.push('X-WR-TIMEZONE:Europe/Istanbul');
 
-  // Takvim ajanda kayıtları
-  if(mod==='hepsi'||mod==='ajanda'){
-    DB.takvim.forEach(t=>{
-      const tarih=new Date(t.tarih);
-      const icsDate=icsDateStr(tarih);
-      const renkMap={İş:'🔧',Alacak:'💰',Verecek:'💸',Bilgi:'📌'};
-      const emoji=renkMap[t.tip]||'📅';
-      satirlar.push('BEGIN:VEVENT');
-      satirlar.push('UID:takvim-'+t.id+'@gunteknik');
-      satirlar.push('DTSTART;VALUE=DATE:'+icsDate);
-      satirlar.push('DTEND;VALUE=DATE:'+icsDate);
-      satirlar.push('SUMMARY:'+icsEscape(emoji+' '+(t.baslik||t.detay||t.tip)));
-      if(t.detay)satirlar.push('DESCRIPTION:'+icsEscape(t.detay));
-      satirlar.push('CATEGORIES:'+t.tip);
-      // Alarm — gün başında hatırlat
-      satirlar.push('BEGIN:VALARM');
-      satirlar.push('TRIGGER:-PT0M');
-      satirlar.push('ACTION:DISPLAY');
-      satirlar.push('DESCRIPTION:'+icsEscape((t.baslik||t.tip)+' hatırlatıcısı'));
-      satirlar.push('END:VALARM');
-      satirlar.push('END:VEVENT');
-    });
-  }
+  // Her gün için TEK alarm etkinliği — saat 09:00
+  alarmGunleri.forEach(ds=>{
+    const uid = 'alarm-'+ds+'@gunteknik';
+    // O günün 09:00 zamanı
+    const alarmDt = ds.slice(0,4)+ds.slice(4,6)+ds.slice(6,8)+'T090000';
+    satirlar.push('BEGIN:VEVENT');
+    satirlar.push('UID:'+uid);
+    satirlar.push('DTSTART;TZID=Europe/Istanbul:'+alarmDt);
+    satirlar.push('DTEND;TZID=Europe/Istanbul:'+ds.slice(0,4)+ds.slice(4,6)+ds.slice(6,8)+'T093000');
+    satirlar.push('SUMMARY:Takvime Bak');
+    satirlar.push('BEGIN:VALARM');
+    satirlar.push('TRIGGER:PT0S');
+    satirlar.push('ACTION:DISPLAY');
+    satirlar.push('DESCRIPTION:Takvime Bak');
+    satirlar.push('END:VALARM');
+    satirlar.push('END:VEVENT');
+  });
 
-  // Vadeli işlemler (Bekliyor)
-  if(mod==='hepsi'||mod==='vade'){
-    DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
-      const k=getKisi(i.kisiId);
-      const tarih=new Date(i.tarih);
-      const icsDate=icsDateStr(tarih);
-      const pos=i.tip==='Gelir';
-      const emoji=pos?'💰':'💸';
-      const tip=pos?'Alacak':'Ödeme';
-      const ozet=emoji+' '+tip+': '+(k?.isim||'—')+' — '+fmt(i.tutar);
-      const aciklama=`${tip}: ${fmt(i.tutar)}\\n`+
-        `Kişi: ${k?.isim||'—'}\\n`+
-        `Kategori: ${i.kat||''}\\n`+
-        `Ödeme: ${i.odemeYontemi||''}\\n`+
-        `Fiş: ${fmtId(i.id)}`;
-      satirlar.push('BEGIN:VEVENT');
-      satirlar.push('UID:islem-'+i.id+'@gunteknik');
-      satirlar.push('DTSTART;VALUE=DATE:'+icsDate);
-      satirlar.push('DTEND;VALUE=DATE:'+icsDate);
-      satirlar.push('SUMMARY:'+icsEscape(ozet));
-      satirlar.push('DESCRIPTION:'+icsEscape(aciklama));
-      satirlar.push('CATEGORIES:'+(pos?'Alacak':'Ödeme'));
-      // 1 gün önce alarm
-      satirlar.push('BEGIN:VALARM');
-      satirlar.push('TRIGGER:-P1D');
-      satirlar.push('ACTION:DISPLAY');
-      satirlar.push('DESCRIPTION:'+icsEscape('Yarın: '+ozet));
-      satirlar.push('END:VALARM');
-      // Gün başında alarm
-      satirlar.push('BEGIN:VALARM');
-      satirlar.push('TRIGGER:-PT0M');
-      satirlar.push('ACTION:DISPLAY');
-      satirlar.push('DESCRIPTION:'+icsEscape('Bugün: '+ozet));
-      satirlar.push('END:VALARM');
-      satirlar.push('END:VEVENT');
-    });
-  }
+  // Asıl etkinlikler — alarm YOK (alarm ayrı kayıtta)
+  etkinlikler.forEach(e=>{
+    satirlar.push('BEGIN:VEVENT');
+    satirlar.push('UID:'+e.uid);
+    satirlar.push('DTSTART;VALUE=DATE:'+e.ds);
+    satirlar.push('DTEND;VALUE=DATE:'+e.ds);
+    satirlar.push('SUMMARY:'+icsEscape(e.baslik));
+    if(e.aciklama) satirlar.push('DESCRIPTION:'+icsEscape(e.aciklama));
+    satirlar.push('END:VEVENT');
+  });
 
   satirlar.push('END:VCALENDAR');
 
-  const icsMetin=satirlar.join('\r\n');
-  const blob=new Blob([icsMetin],{type:'text/calendar;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='gunteknik-takvim.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const blob = new Blob([satirlar.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const modAd = mod==='vade'?'vadeli':mod==='genel'?'genel':'tum';
+  a.download = 'gunteknik-'+modAd+'.ics';
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
 
-  const toplam=(mod==='hepsi'?DB.takvim.length:0)+(mod==='hepsi'||mod==='vade'?DB.islemler.filter(i=>i.statu==='Bekliyor').length:0);
-  showToast(toplam+' kayıt takvime aktarıldı','green');
+  const alarmMesaj = alarmGunleri.size>0?' ('+alarmGunleri.size+' gün için alarm)':'';
+  showToast(etkinlikler.length+' kayıt aktarıldı'+alarmMesaj,'green');
 }
+
 
 function icsDateStr(d){
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
