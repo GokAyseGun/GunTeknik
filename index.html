@@ -54,6 +54,22 @@ a{text-decoration:none;color:inherit;}
 @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
+/* DESEN GİRİŞ EKRANI */
+#desen-screen{position:fixed;inset:0;background:var(--bg);z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px 24px;animation:fadeIn 0.4s var(--ease);}
+#desen-screen.active{display:flex;}
+.desen-baslik{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center;}
+.desen-alt{font-size:13px;color:var(--text3);margin-bottom:32px;text-align:center;}
+.desen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:28px;position:relative;}
+.desen-nokta-wrap{display:flex;align-items:center;justify-content:center;width:56px;height:56px;}
+.desen-nokta{width:18px;height:18px;border-radius:50%;background:var(--border2);border:2px solid var(--border2);transition:all 0.2s var(--ease);cursor:pointer;position:relative;z-index:2;}
+.desen-nokta.secili{background:var(--blue);border-color:var(--blue);transform:scale(1.3);box-shadow:0 0 0 6px var(--blue-lt);}
+.desen-nokta.yanlis{background:var(--red);border-color:var(--red);box-shadow:0 0 0 6px var(--red-lt);}
+.desen-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.desen-durum{font-size:13px;color:var(--text2);text-align:center;min-height:20px;margin-bottom:16px;}
+.desen-haklar{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+.desen-hak{width:8px;height:8px;border-radius:50%;background:var(--border2);}
+.desen-hak.yanlis{background:var(--red);}
+
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--nav-h) + 20px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);color:var(--text);padding:14px 24px;border-radius:var(--r-xl);border:1px solid var(--border2);box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;z-index:99999;opacity:0;pointer-events:none;transition:all 0.5s var(--ease);max-width:90vw;text-align:center;display:flex;align-items:center;gap:10px;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -297,6 +313,34 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   <div id="lightbox-toolbar">
     <a id="lightbox-dl" style="padding:10px 18px;background:var(--grad-main);color:white;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;">⬇ İndir</a>
   </div>
+</div>
+
+<!-- DESEN GİRİŞ EKRANI -->
+<div id="desen-screen">
+  <div style="width:56px;height:56px;border-radius:var(--r-md);background:var(--blue-lt);border:1px solid var(--blue-md);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;">⚡</div>
+  <div class="desen-baslik" id="desen-baslik">Gün Teknik</div>
+  <div class="desen-alt" id="desen-alt">Devam etmek için deseninizi çizin</div>
+  <div style="position:relative;width:220px;">
+    <svg class="desen-svg" id="desen-svg" viewBox="0 0 220 220"></svg>
+    <div class="desen-grid" id="desen-grid">
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="0"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="1"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="2"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="3"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="4"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="5"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="6"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="7"></div></div>
+      <div class="desen-nokta-wrap"><div class="desen-nokta" data-i="8"></div></div>
+    </div>
+  </div>
+  <div class="desen-durum" id="desen-durum"></div>
+  <div class="desen-haklar" id="desen-haklar">
+    <div class="desen-hak"></div>
+    <div class="desen-hak"></div>
+    <div class="desen-hak"></div>
+  </div>
+  <button class="btn btn-secondary" onclick="desenVazgec()" id="btn-desen-vazgec" style="font-size:12px;padding:8px 16px;">Farklı hesapla giriş yap</button>
 </div>
 
 <!-- GİRİŞ -->
@@ -728,6 +772,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="btn btn-secondary btn-full" onclick="exportData()">💾 Yedeği İndir</button>
       <button class="btn btn-secondary btn-full" id="btn-pwa-install" onclick="installPWA()" style="display:none;">📲 Uygulamayı Yükle</button>
       <button class="btn btn-secondary btn-full" onclick="showPWAManualGuide()">📲 Uygulama Kurulum Rehberi</button>
+      <div style="height:1px;background:var(--border);"></div>
+      <button class="btn btn-secondary btn-full" id="btn-desen-ayar" onclick="closeModal('modal-ayarlar');desenAyarla()">🔐 Giriş Deseni Belirle</button>
+      <button class="btn btn-secondary btn-full" id="btn-desen-sil" onclick="desenSifirla()" style="display:none;">🗑 Deseni Kaldır</button>
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-danger btn-full" onclick="doLogout()">🔒 Çıkış Yap</button>
     </div>
@@ -1328,7 +1375,9 @@ async function doLogin(){
     if(d.error||!d.access_token){loginAttempts++;if(loginAttempts>=5){lockUntil=Date.now()+30000;loginAttempts=0;document.getElementById('auth-attempts').textContent='5 hatalı giriş! 30sn kilit.';}else{document.getElementById('auth-attempts').textContent='Hatalı giriş ('+loginAttempts+'/5)';}document.getElementById('err-pass').textContent='E-posta veya şifre hatalı';return;}
     loginAttempts=0;SB_TOKEN=d.access_token;SB_REFRESH_TOKEN=d.refresh_token;CURRENT_USER=d.user;
     localStorage.setItem('sb_token',SB_TOKEN);localStorage.setItem('sb_refresh_token',d.refresh_token||'');localStorage.setItem('sb_user',JSON.stringify(CURRENT_USER));
-    await loadUserRol();await startApp();
+    await loadUserRol();
+    // Desen varsa doğrulat, yoksa direkt başlat
+    await desenKontrol(async()=>{await startApp();});
   }catch(e){document.getElementById('err-pass').textContent='Bağlantı hatası';}
   finally{btn.disabled=false;btn.textContent='Giriş Yap';}
 }
@@ -1350,8 +1399,10 @@ async function checkSession(){
   try{
     const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}});
     if(!res.ok){const ok=await tryRefreshToken();if(!ok){showAuthScreen();return;}}
-    await loadUserRol();await startApp();
-  }catch(e){if(CURRENT_USER){USER_ROL='admin';await startApp();}else{showAuthScreen();}}
+    await loadUserRol();
+    // Desen kontrolü — desen varsa önce onu sor
+    await desenKontrol(async()=>{await startApp();});
+  }catch(e){if(CURRENT_USER){USER_ROL='admin';await desenKontrol(async()=>{await startApp();});}else{showAuthScreen();}}
 }
 
 function showAuthScreen(){document.getElementById('auth-screen').style.display='flex';document.getElementById('app').classList.remove('active');}
@@ -1365,11 +1416,22 @@ async function doLogout(){
 
 async function startApp(){
   document.getElementById('auth-screen').style.display='none';
+  document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
   document.getElementById('fab-container').classList.add('visible');
   if(USER_ROL==='goruntule')document.getElementById('fab-container').classList.remove('visible');
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
+  // Desen butonlarını güncelle
+  const btnSil=document.getElementById('btn-desen-sil');
+  const btnAyar=document.getElementById('btn-desen-ayar');
+  if(desenVarMi()){
+    if(btnSil)btnSil.style.display='flex';
+    if(btnAyar)btnAyar.textContent='🔐 Deseni Değiştir';
+  }else{
+    if(btnSil)btnSil.style.display='none';
+    if(btnAyar)btnAyar.textContent='🔐 Giriş Deseni Belirle';
+  }
   await loadDB();
 }
 
@@ -3699,6 +3761,221 @@ function printEtiket(){
   }
   window.print();
   setTimeout(()=>{if(printArea)printArea.style.display='none';},1000);
+}
+
+// ============================================================ DESEN SİSTEMİ
+const DESEN_KEY='gt_desen_hash';
+const DESEN_MIN=4;// minimum 4 nokta
+let desenSekans=[];// çizilen desen indeksleri
+let desenMod='giris';// 'giris' | 'belirle1' | 'belirle2'
+let desenIlkSekans=[];// belirlemede ilk çizim
+let desenYanlisSayisi=0;
+let desenCiziliyor=false;
+let desenStartCB=null;// desen doğrulandıktan sonra çağrılacak
+
+// SHA-256 hash (desen güvenliği için)
+async function hashDesen(sekans){
+  const str=sekans.join('-')+'_gt_salt_2024';
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function desenVarMi(){return !!localStorage.getItem(DESEN_KEY);}
+
+// checkSession'dan sonra çağrılır
+async function desenKontrol(devamCB){
+  desenStartCB=devamCB;
+  if(!desenVarMi()){
+    // Desen yok — direkt devam
+    devamCB();return;
+  }
+  // Desen var — doğrulama ekranı
+  desenMod='giris';desenYanlisSayisi=0;
+  document.getElementById('desen-baslik').textContent='Gün Teknik';
+  document.getElementById('desen-alt').textContent='Devam etmek için deseninizi çizin';
+  document.getElementById('btn-desen-vazgec').style.display='flex';
+  desenHaklariGuncelle();
+  desenEkraniAc();
+}
+
+function desenEkraniAc(){
+  desenTemizle();
+  document.getElementById('desen-screen').classList.add('active');
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').classList.remove('active');
+  desenEventleriBagla();
+}
+
+function desenEkraniKapat(){
+  document.getElementById('desen-screen').classList.remove('active');
+  desenEventleriKaldir();
+}
+
+function desenVazgec(){
+  desenEkraniKapat();
+  // Farklı hesapla giriş — oturumu kapat ve login göster
+  SB_TOKEN=null;CURRENT_USER=null;
+  localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh_token');localStorage.removeItem('sb_user');
+  showAuthScreen();
+}
+
+// Ayarlar'dan desen belirleme
+function desenAyarla(){
+  desenMod='belirle1';desenIlkSekans=[];
+  document.getElementById('desen-baslik').textContent='Desen Belirle';
+  document.getElementById('desen-alt').textContent='Yeni deseninizi çizin (min. 4 nokta)';
+  document.getElementById('btn-desen-vazgec').style.display='none';
+  document.getElementById('desen-durum').textContent='';
+  desenEkraniAc();
+}
+
+function desenSifirla(){
+  showConfirm('Deseni Kaldır','Giriş deseni silinecek. Emin misiniz?',()=>{
+    localStorage.removeItem(DESEN_KEY);
+    showToast('Desen kaldırıldı','amber');
+    const btn=document.getElementById('btn-desen-sil');if(btn)btn.style.display='none';
+    const btn2=document.getElementById('btn-desen-ayar');if(btn2)btn2.textContent='🔐 Giriş Deseni Belirle';
+  },'🗑');
+}
+
+// Dokunma/fare olayları
+let _desenHandlers={};
+function desenEventleriBagla(){
+  const grid=document.getElementById('desen-grid');
+  if(!grid)return;
+  const onStart=e=>{e.preventDefault();desenCiziliyor=true;desenTemizle();desenNoktaIsle(e);};
+  const onMove=e=>{e.preventDefault();if(!desenCiziliyor)return;desenNoktaIsle(e);};
+  const onEnd=e=>{e.preventDefault();if(!desenCiziliyor)return;desenCiziliyor=false;desenTamamla();};
+  grid.addEventListener('touchstart',onStart,{passive:false});
+  grid.addEventListener('touchmove',onMove,{passive:false});
+  grid.addEventListener('touchend',onEnd,{passive:false});
+  grid.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+  _desenHandlers={grid,onStart,onMove,onEnd};
+}
+
+function desenEventleriKaldir(){
+  const {grid,onStart,onMove,onEnd}=_desenHandlers;
+  if(!grid)return;
+  grid.removeEventListener('touchstart',onStart);
+  grid.removeEventListener('touchmove',onMove);
+  grid.removeEventListener('touchend',onEnd);
+  grid.removeEventListener('mousedown',onStart);
+  document.removeEventListener('mousemove',onMove);
+  document.removeEventListener('mouseup',onEnd);
+}
+
+function desenNoktaIsle(e){
+  const touch=e.touches?e.touches[0]:e;
+  const noktalar=document.querySelectorAll('.desen-nokta');
+  noktalar.forEach(n=>{
+    const rect=n.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const dx=touch.clientX-cx,dy=touch.clientY-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<28){
+      const i=parseInt(n.getAttribute('data-i'));
+      if(!desenSekans.includes(i)){
+        desenSekans.push(i);
+        n.classList.add('secili');
+        desenCizgiGuncelle();
+      }
+    }
+  });
+}
+
+function desenCizgiGuncelle(){
+  const svg=document.getElementById('desen-svg');
+  const grid=document.getElementById('desen-grid');
+  if(!svg||!grid)return;
+  const gridRect=grid.getBoundingClientRect();
+  svg.innerHTML='';
+  if(desenSekans.length<2)return;
+  const noktaKonumlari=[];
+  document.querySelectorAll('.desen-nokta').forEach(n=>{
+    const r=n.getBoundingClientRect();
+    noktaKonumlari[parseInt(n.getAttribute('data-i'))]={
+      x:(r.left+r.width/2-gridRect.left)/gridRect.width*220,
+      y:(r.top+r.height/2-gridRect.top)/gridRect.height*220
+    };
+  });
+  for(let i=0;i<desenSekans.length-1;i++){
+    const a=noktaKonumlari[desenSekans[i]],b=noktaKonumlari[desenSekans[i+1]];
+    if(!a||!b)continue;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','var(--blue)');line.setAttribute('stroke-width','3');
+    line.setAttribute('stroke-linecap','round');line.setAttribute('opacity','0.7');
+    svg.appendChild(line);
+  }
+}
+
+function desenTemizle(){
+  desenSekans=[];
+  document.querySelectorAll('.desen-nokta').forEach(n=>n.classList.remove('secili','yanlis'));
+  const svg=document.getElementById('desen-svg');if(svg)svg.innerHTML='';
+  document.getElementById('desen-durum').textContent='';
+}
+
+async function desenTamamla(){
+  if(desenSekans.length<DESEN_MIN){
+    document.getElementById('desen-durum').textContent='En az '+DESEN_MIN+' nokta bağlayın';
+    setTimeout(desenTemizle,1200);return;
+  }
+  const hash=await hashDesen(desenSekans);
+  if(desenMod==='giris'){
+    const kayitli=localStorage.getItem(DESEN_KEY);
+    if(hash===kayitli){
+      // Doğru desen
+      desenYanlisSayisi=0;
+      document.getElementById('desen-durum').textContent='✅ Doğrulandı';
+      setTimeout(()=>{desenEkraniKapat();if(desenStartCB)desenStartCB();},400);
+    }else{
+      // Yanlış desen
+      desenYanlisSayisi++;
+      document.querySelectorAll('.desen-nokta.secili').forEach(n=>n.classList.replace('secili','yanlis'));
+      const svg=document.getElementById('desen-svg');
+      if(svg){Array.from(svg.querySelectorAll('line')).forEach(l=>l.setAttribute('stroke','var(--red)'));}
+      desenHaklariGuncelle();
+      if(desenYanlisSayisi>=3){
+        document.getElementById('desen-durum').textContent='❌ 3 hatalı giriş — oturum kapatıldı';
+        setTimeout(()=>{desenEkraniKapat();doLogout();},1500);
+      }else{
+        document.getElementById('desen-durum').textContent='❌ Yanlış desen ('+(3-desenYanlisSayisi)+' hak kaldı)';
+        setTimeout(desenTemizle,1200);
+      }
+    }
+  }else if(desenMod==='belirle1'){
+    // İlk çizim — tekrar sor
+    desenIlkSekans=[...desenSekans];
+    desenMod='belirle2';
+    document.getElementById('desen-alt').textContent='Onaylamak için aynı deseni tekrar çizin';
+    setTimeout(desenTemizle,600);
+  }else if(desenMod==='belirle2'){
+    // İkinci çizim — karşılaştır
+    const hash1=await hashDesen(desenIlkSekans);
+    if(hash===hash1){
+      // Eşleşti — kaydet
+      localStorage.setItem(DESEN_KEY,hash);
+      document.getElementById('desen-durum').textContent='✅ Desen kaydedildi!';
+      // Ayarlar butonunu güncelle
+      const btn=document.getElementById('btn-desen-sil');if(btn)btn.style.display='flex';
+      const btn2=document.getElementById('btn-desen-ayar');if(btn2)btn2.textContent='🔐 Deseni Değiştir';
+      setTimeout(()=>{desenEkraniKapat();if(desenStartCB)desenStartCB();},800);
+    }else{
+      document.getElementById('desen-durum').textContent='❌ Desenler uyuşmadı, tekrar deneyin';
+      desenMod='belirle1';desenIlkSekans=[];
+      document.getElementById('desen-alt').textContent='Yeni deseninizi çizin (min. 4 nokta)';
+      setTimeout(desenTemizle,1200);
+    }
+  }
+}
+
+function desenHaklariGuncelle(){
+  const haklar=document.querySelectorAll('.desen-hak');
+  haklar.forEach((h,i)=>h.classList.toggle('yanlis',i<desenYanlisSayisi));
 }
 
 // ============================================================ BAŞLAT
