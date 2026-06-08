@@ -507,6 +507,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="sec-title">Yaklaşan Ajanda</div>
       <div class="stagger-wrap" id="tk-list"></div>
+      <!-- Takvim Senkronizasyon Butonu -->
+      <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📲 Cihaz Takvimine Aktar</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Tüm ajanda ve işlem kayıtları .ics formatında cihazınızın takvimine aktarılır. iOS, Android, Mac ve Windows desteklenir.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="takvimiAktar('hepsi')" style="flex:1;">📅 Tüm Takvimi Aktar</button>
+          <button class="btn btn-secondary" onclick="takvimiAktar('vade')" style="flex:1;">💰 Sadece Vadeli İşlemler</button>
+        </div>
+      </div>
     </div>
 
     <!-- REHBER -->
@@ -1309,6 +1318,25 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </style>
 <div id="etiket-print-area" style="display:none;"></div>
 
+<!-- Yaklaşan Ödemeler Uyarı Modalı -->
+<div class="modal-ov" id="modal-yaklasan" style="z-index:10002;">
+  <div class="modal" style="max-width:480px;max-height:85vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-head" style="border-bottom:2px solid var(--amber);">
+      <div>
+        <h3 style="color:var(--amber);">⏰ Yaklaşan Vadeler</h3>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="yaklasan-alt-baslik"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-yaklasan')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:8px;" id="yaklasan-content"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-yaklasan')">Kapat</button>
+      <button class="btn btn-primary btn-full" onclick="closeModal('modal-yaklasan');goPage('takvim')">📅 Takvime Git</button>
+    </div>
+  </div>
+</div>
+
 <!-- Vergi Detay -->
 <div class="modal-ov" id="modal-vergi-detay">
   <div class="modal"><div class="modal-handle"></div>
@@ -1493,6 +1521,8 @@ async function startApp(){
     if(btnAyar)btnAyar.textContent='🔐 Giriş Deseni Belirle';
   }
   await loadDB();
+  // Giriş sonrası yaklaşan ödeme uyarısını göster
+  setTimeout(()=>yaklaşanUyariGoster(),800);
 }
 
 // ============================================================ VERİTABANI
@@ -2332,26 +2362,65 @@ window.parseTutarSafe=function(val){
   return parseTutar(val);
 };
 
-function onDosyaSec(input, previewId){
+async function onDosyaSec(input, previewId){
   const file=input.files[0];if(!file)return;
-  // Hangi form için?
-  if(previewId==='vf-dosya-preview'){
-    selectedVfFile=file;
-  }else{
-    selectedFile=file;
-  }
   const prev=document.getElementById(previewId||'mi-dosya-preview');if(!prev)return;
   const isImg=file.type.includes('image');
+
   if(isImg){
-    // Resim önizleme
+    // Görseli sıkıştır — max 1200px, JPEG %75 kalite
+    const sikistirilmis=await gorselSikistir(file,1200,0.75);
+    if(previewId==='vf-dosya-preview'){selectedVfFile=sikistirilmis;}
+    else{selectedFile=sikistirilmis;}
+
+    // Önizleme
     const reader=new FileReader();
     reader.onload=e=>{
-      prev.innerHTML=`<div style="position:relative;margin-top:8px;"><img src="${e.target.result}" style="width:100%;max-height:180px;object-fit:contain;border-radius:var(--r-sm);background:#111;"><button onclick="${previewId==='vf-dosya-preview'?'selectedVfFile=null':'selectedFile=null'};document.getElementById('${previewId||'mi-dosya-preview'}').innerHTML='';" style="position:absolute;top:6px;right:6px;background:rgba(200,50,50,0.9);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">✕</button></div>`;
+      const orgKB=Math.round(file.size/1024);
+      const yeniKB=Math.round(sikistirilmis.size/1024);
+      prev.innerHTML=`<div style="position:relative;margin-top:8px;">
+        <img src="${e.target.result}" style="width:100%;max-height:180px;object-fit:contain;border-radius:var(--r-sm);background:#111;">
+        <div style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#aaa;font-size:10px;padding:2px 6px;border-radius:4px;">${orgKB}KB → ${yeniKB}KB</div>
+        <button onclick="${previewId==='vf-dosya-preview'?'selectedVfFile=null':'selectedFile=null'};document.getElementById('${previewId||'mi-dosya-preview'}').innerHTML='';" style="position:absolute;top:6px;right:6px;background:rgba(200,50,50,0.9);color:white;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">✕</button>
+      </div>`;
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(sikistirilmis);
   }else{
+    if(previewId==='vf-dosya-preview'){selectedVfFile=file;}
+    else{selectedFile=file;}
     prev.innerHTML=`<div class="file-preview" style="margin-top:8px;"><span class="file-icon">📄</span><span class="file-name">${file.name}</span><span class="file-del" onclick="${previewId==='vf-dosya-preview'?'selectedVfFile=null':'selectedFile=null'};document.getElementById('${previewId||'mi-dosya-preview'}').innerHTML='';">✕</span></div>`;
   }
+}
+
+// Görsel sıkıştırma — canvas ile boyut ve kalite düşür
+async function gorselSikistir(file, maxPx=1200, kalite=0.75){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        // Boyut sınırla
+        if(w>maxPx||h>maxPx){
+          if(w>h){h=Math.round(h*maxPx/w);w=maxPx;}
+          else{w=Math.round(w*maxPx/h);h=maxPx;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(blob=>{
+          if(!blob){resolve(file);return;}
+          // Sıkıştırılmış dosya orijinalden büyükse orijinali kullan
+          if(blob.size>=file.size){resolve(file);return;}
+          resolve(new File([blob],file.name.replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'}));
+        },'image/jpeg',kalite);
+      };
+      img.onerror=()=>resolve(file);
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>resolve(file);
+    reader.readAsDataURL(file);
+  });
 }
 
 function renderStokSelect(){
@@ -2776,7 +2845,7 @@ async function saveFinDuzenle(btn){
     const tutar=parseTutar(document.getElementById('fd-tutar').value);
     if(tutar<=0){showToast('Tutar girin','red');return;}
     await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({
-      tarih:new Date(document.getElementById('fd-tarih').value).toISOString(),
+      tarih:localISOString(new Date(document.getElementById('fd-tarih').value)),
       tutar,
       odeme_yontemi:document.getElementById('fd-odeme').value,
       statu:document.getElementById('fd-statu').value,
@@ -2861,7 +2930,7 @@ async function saveOdeme(btn){
   if(btn)btn.disabled=true;
   try{
     const t=parseTutar(document.getElementById('mo-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
-    await sbFetch('odemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:new Date().toISOString(),kisi_id:parseInt(document.getElementById('mo-kisi-id').value),islem_tipi:document.getElementById('mo-tip').value,tutar:t,"not":document.getElementById('mo-not').value,odeme_yontemi:document.getElementById('mo-odeme').value||'Nakit'})});
+    await sbFetch('odemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:localISOString(new Date()),kisi_id:parseInt(document.getElementById('mo-kisi-id').value),islem_tipi:document.getElementById('mo-tip').value,tutar:t,"not":document.getElementById('mo-not').value,odeme_yontemi:document.getElementById('mo-odeme').value||'Nakit'})});
     await loadDB();closeModal('modal-odeme');showToast('Kaydedildi','green');
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -2911,7 +2980,7 @@ async function saveAvans(btn){
   try{
     const t=parseTutar(document.getElementById('ma-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     const tip=document.getElementById('ma-tip').value;const personelId=parseInt(document.getElementById('ma-personel-sec').value)||null;
-    await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:new Date().toISOString(),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
+    await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:localISOString(new Date()),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
     await loadDB();closeModal('modal-avans');showToast('Kaydedildi','green');
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -3465,7 +3534,7 @@ async function saveSablon(btn){
           let cur=new Date(bas);
           while(cur<=bit){
             const d=new Date(cur.getFullYear(),cur.getMonth(),Math.min(gun,28));
-            kayitlar.push({tarih:d.toISOString().slice(0,10),tip:tkTip,baslik:isim,not:isim+(tutar?' — '+fmt(tutar):'')+(not?' — '+not:'')});
+            kayitlar.push({tarih:localDateStr(d),tip:tkTip,baslik:isim,not:isim+(tutar?' — '+fmt(tutar):'')+(not?' — '+not:'')});
             cur.setMonth(cur.getMonth()+1);
           }
         }
@@ -3475,7 +3544,7 @@ async function saveSablon(btn){
         if(basT&&bitT){
           let cur=new Date(basT);const bit=new Date(bitT);
           while(cur<=bit){
-            if(cur.getDay()===hedefGun)kayitlar.push({tarih:cur.toISOString().slice(0,10),tip:tkTip,baslik:isim,not:isim+(tutar?' — '+fmt(tutar):'')});
+            if(cur.getDay()===hedefGun)kayitlar.push({tarih:localDateStr(cur),tip:tkTip,baslik:isim,not:isim+(tutar?' — '+fmt(tutar):'')});
             cur.setDate(cur.getDate()+1);
           }
         }
@@ -3539,7 +3608,7 @@ function renderSablonlar(){
 function goWhatsapp(tel){const t=(tel||'').replace(/\D/g,'');const num='90'+(t.startsWith('0')?t.slice(1):t);window.open('https://wa.me/'+num,'_blank');}
 
 function exportData(){
-  const data={tarih:new Date().toISOString(),islemler:DB.islemler,kisiler:DB.kisiler,odemeler:DB.odemeler,stok:DB.stok,personeller:DB.personeller};
+  const data={tarih:localISOString(new Date()),islemler:DB.islemler,kisiler:DB.kisiler,odemeler:DB.odemeler,stok:DB.stok,personeller:DB.personeller};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='guntek-yedek-'+today()+'.json';a.click();
   showToast('Yedek alındı','green');
@@ -4358,6 +4427,170 @@ async function desenTamamla(){
 function desenHaklariGuncelle(){
   const haklar=document.querySelectorAll('.desen-hak');
   haklar.forEach((h,i)=>h.classList.toggle('yanlis',i<desenYanlisSayisi));
+}
+
+// ============================================================ YAKLAŞAN ÖDEME UYARISI
+
+function yaklaşanUyariGoster(){
+  const now=new Date();
+  const hafta=new Date(now.getTime()+7*24*60*60*1000);
+
+  // Vadeli işlemleri filtrele — 7 gün içinde veya geçmiş
+  const yaklasanlar=DB.islemler.filter(i=>{
+    if(i.statu!=='Bekliyor')return false;
+    const t=new Date(i.tarih);
+    return t<=hafta;// Geçmiş veya 7 gün içi
+  }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+
+  if(!yaklasanlar.length)return;// Yaklaşan yoksa modal açma
+
+  const gecmis=yaklasanlar.filter(i=>new Date(i.tarih)<now);
+  const yakin=yaklasanlar.filter(i=>new Date(i.tarih)>=now);
+
+  const altBaslik=`${gecmis.length>0?gecmis.length+' vadesi geçmiş · ':''}${yakin.length} yaklaşan işlem`;
+  document.getElementById('yaklasan-alt-baslik').textContent=altBaslik;
+
+  const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
+  let html='';
+
+  if(gecmis.length){
+    html+=`<div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:4px;">⚠️ Vadesi Geçmiş</div>`;
+    gecmis.forEach(i=>{
+      const k=getKisi(i.kisiId);
+      const pos=i.tip==='Gelir';
+      html+=_yaklaşanSatir(i,k,pos,'var(--red)');
+    });
+  }
+  if(yakin.length){
+    html+=`<div style="font-size:11px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:${gecmis.length?'8px':0} 0 4px;">📅 Bu Hafta</div>`;
+    yakin.forEach(i=>{
+      const k=getKisi(i.kisiId);
+      const pos=i.tip==='Gelir';
+      const gunFark=Math.ceil((new Date(i.tarih)-now)/(24*60*60*1000));
+      const etiket=gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra';
+      html+=_yaklaşanSatir(i,k,pos,'var(--amber)',etiket);
+    });
+  }
+
+  document.getElementById('yaklasan-content').innerHTML=html;
+  openModal('modal-yaklasan');
+}
+
+function _yaklaşanSatir(i,k,pos,renk,etiket=''){
+  const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${renk};border-radius:var(--r-sm);cursor:pointer;gap:8px;"
+    onclick="closeModal('modal-yaklasan');showIslemDetay(${i.id})">
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k?.isim||'—'}</div>
+      <div style="font-size:11px;color:var(--text2);">${dtS(i.tarih)} · ${i.kat||i.tip} · ${oyIcon[i.odemeYontemi]||''}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0;">
+      <div style="font-weight:700;font-size:15px;color:${renk};" class="num">${fmt(i.tutar)}</div>
+      ${etiket?`<div style="font-size:10px;color:var(--text3);">${etiket}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ============================================================ TAKVİM AKTARMA (.ICS)
+
+function takvimiAktar(mod){
+  const now=new Date();
+  const satirlar=[];
+
+  // ICS başlığı
+  satirlar.push('BEGIN:VCALENDAR');
+  satirlar.push('VERSION:2.0');
+  satirlar.push('PRODID:-//Gün Teknik ERP//TR');
+  satirlar.push('CALSCALE:GREGORIAN');
+  satirlar.push('METHOD:PUBLISH');
+  satirlar.push('X-WR-CALNAME:Gün Teknik');
+  satirlar.push('X-WR-TIMEZONE:Europe/Istanbul');
+
+  // Takvim ajanda kayıtları
+  if(mod==='hepsi'||mod==='ajanda'){
+    DB.takvim.forEach(t=>{
+      const tarih=new Date(t.tarih);
+      const icsDate=icsDateStr(tarih);
+      const renkMap={İş:'🔧',Alacak:'💰',Verecek:'💸',Bilgi:'📌'};
+      const emoji=renkMap[t.tip]||'📅';
+      satirlar.push('BEGIN:VEVENT');
+      satirlar.push('UID:takvim-'+t.id+'@gunteknik');
+      satirlar.push('DTSTART;VALUE=DATE:'+icsDate);
+      satirlar.push('DTEND;VALUE=DATE:'+icsDate);
+      satirlar.push('SUMMARY:'+icsEscape(emoji+' '+(t.baslik||t.detay||t.tip)));
+      if(t.detay)satirlar.push('DESCRIPTION:'+icsEscape(t.detay));
+      satirlar.push('CATEGORIES:'+t.tip);
+      // Alarm — gün başında hatırlat
+      satirlar.push('BEGIN:VALARM');
+      satirlar.push('TRIGGER:-PT0M');
+      satirlar.push('ACTION:DISPLAY');
+      satirlar.push('DESCRIPTION:'+icsEscape((t.baslik||t.tip)+' hatırlatıcısı'));
+      satirlar.push('END:VALARM');
+      satirlar.push('END:VEVENT');
+    });
+  }
+
+  // Vadeli işlemler (Bekliyor)
+  if(mod==='hepsi'||mod==='vade'){
+    DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
+      const k=getKisi(i.kisiId);
+      const tarih=new Date(i.tarih);
+      const icsDate=icsDateStr(tarih);
+      const pos=i.tip==='Gelir';
+      const emoji=pos?'💰':'💸';
+      const tip=pos?'Alacak':'Ödeme';
+      const ozet=emoji+' '+tip+': '+(k?.isim||'—')+' — '+fmt(i.tutar);
+      const aciklama=`${tip}: ${fmt(i.tutar)}\\n`+
+        `Kişi: ${k?.isim||'—'}\\n`+
+        `Kategori: ${i.kat||''}\\n`+
+        `Ödeme: ${i.odemeYontemi||''}\\n`+
+        `Fiş: ${fmtId(i.id)}`;
+      satirlar.push('BEGIN:VEVENT');
+      satirlar.push('UID:islem-'+i.id+'@gunteknik');
+      satirlar.push('DTSTART;VALUE=DATE:'+icsDate);
+      satirlar.push('DTEND;VALUE=DATE:'+icsDate);
+      satirlar.push('SUMMARY:'+icsEscape(ozet));
+      satirlar.push('DESCRIPTION:'+icsEscape(aciklama));
+      satirlar.push('CATEGORIES:'+(pos?'Alacak':'Ödeme'));
+      // 1 gün önce alarm
+      satirlar.push('BEGIN:VALARM');
+      satirlar.push('TRIGGER:-P1D');
+      satirlar.push('ACTION:DISPLAY');
+      satirlar.push('DESCRIPTION:'+icsEscape('Yarın: '+ozet));
+      satirlar.push('END:VALARM');
+      // Gün başında alarm
+      satirlar.push('BEGIN:VALARM');
+      satirlar.push('TRIGGER:-PT0M');
+      satirlar.push('ACTION:DISPLAY');
+      satirlar.push('DESCRIPTION:'+icsEscape('Bugün: '+ozet));
+      satirlar.push('END:VALARM');
+      satirlar.push('END:VEVENT');
+    });
+  }
+
+  satirlar.push('END:VCALENDAR');
+
+  const icsMetin=satirlar.join('\r\n');
+  const blob=new Blob([icsMetin],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='gunteknik-takvim.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  const toplam=(mod==='hepsi'?DB.takvim.length:0)+(mod==='hepsi'||mod==='vade'?DB.islemler.filter(i=>i.statu==='Bekliyor').length:0);
+  showToast(toplam+' kayıt takvime aktarıldı','green');
+}
+
+function icsDateStr(d){
+  return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+
+function icsEscape(str){
+  return String(str||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n').replace(/\r/g,'');
 }
 
 // ============================================================ BAŞLAT
