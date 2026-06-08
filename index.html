@@ -3460,6 +3460,7 @@ async function openBarkodKamera(targetInputId){
     if(video){video.srcObject=barkodStream;await video.play();}
     barkodActive=true;
     let okumaYapildi=false;
+    let taramaSayisi=0;
     const canvas=document.createElement('canvas');
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
 
@@ -3469,46 +3470,57 @@ async function openBarkodKamera(targetInputId){
       try{
         const desteklenen=await BarcodeDetector.getSupportedFormats();
         bdDetector=new BarcodeDetector({formats:desteklenen});
-        if(res)res.textContent='✅ Tüm barkodlar destekleniyor (Chrome). Göster...';
+        if(res)res.textContent='✅ Chrome: '+desteklenen.length+' format. Barkodu göster...';
       }catch(e){
         bdDetector=null;
-        if(res)res.textContent='📷 QR kod taranıyor...';
+        if(res)res.textContent='📷 QR mod aktif. Barkodu göster...';
       }
     }else{
-      if(res)res.textContent='📷 QR kod taranıyor...';
+      if(res)res.textContent='📷 QR mod aktif. Barkodu göster...';
     }
+
+    // Video tamamen hazır olana kadar bekle
+    await new Promise(r=>{
+      if(video.readyState>=2)r();
+      else video.oncanplay=r;
+    });
+    if(res)res.textContent='📡 Taranıyor...';
 
     barkodScanTimer=setInterval(async()=>{
       if(!barkodActive||okumaYapildi)return;
-      if(!video||video.readyState<4||video.videoWidth===0)return;
+      if(!video||video.videoWidth===0)return;
+      taramaSayisi++;
       try{
         canvas.width=video.videoWidth;
         canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
 
-        // 1. BarcodeDetector - Chrome'da tüm formatlar (canvas üzerinde)
+        // 1. BarcodeDetector (Chrome - QR + CODE128 + EAN + hepsi)
         if(bdDetector){
-          try{
-            const results=await bdDetector.detect(canvas);
-            if(results&&results.length>0&&!okumaYapildi){
-              okumaYapildi=true;
-              barkodOkundu(results[0].rawValue);
-              return;
-            }
-          }catch(e){bdDetector=null;}// desteklenmiyorsa kapat
+          const results=await bdDetector.detect(canvas).catch(()=>[]);
+          if(results.length>0&&!okumaYapildi){
+            okumaYapildi=true;
+            barkodOkundu(results[0].rawValue);
+            return;
+          }
+          if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
         }
 
-        // 2. jsQR fallback - QR kod okuma
+        // 2. jsQR fallback (QR kod)
         if(!okumaYapildi&&window.jsQR){
           const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
           const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
-          if(code&&code.data){
+          if(code&&code.data&&!okumaYapildi){
             okumaYapildi=true;
             barkodOkundu(code.data);
+            return;
           }
+          if(!bdDetector&&res)res.textContent='📡 QR #'+taramaSayisi+'...';
         }
-      }catch(e){}
-    },200);
+      }catch(e){
+        if(res)res.textContent='⚠️ '+String(e).slice(0,50);
+      }
+    },150);
   }catch(e){
     const m=String(e);
     if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
