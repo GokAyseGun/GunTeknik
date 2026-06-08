@@ -1317,6 +1317,40 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
+<!-- Finansman Düzenle -->
+<div class="modal-ov" id="modal-fin-duzenle">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 style="color:var(--purple)">İşlem Düzenle</h3><button class="modal-close" onclick="closeModal('modal-fin-duzenle')">✕</button></div>
+    <div class="modal-body fg">
+      <input type="hidden" id="fd-id">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:4px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">İşlem</div>
+        <div style="font-size:14px;font-weight:600;" id="fd-baslik">—</div>
+      </div>
+      <div class="fi"><label>Tarih</label><input type="datetime-local" id="fd-tarih"></div>
+      <div class="fi"><label>Tutar (₺)</label><input type="number" id="fd-tutar" inputmode="numeric" placeholder="0.00"></div>
+      <div class="fi"><label>Ödeme Yöntemi</label>
+        <select id="fd-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="Nakit">💵 Nakit</option>
+          <option value="Kart">💳 Kart</option>
+          <option value="İBAN">🏦 İBAN</option>
+        </select>
+      </div>
+      <div class="fi"><label>Statü</label>
+        <select id="fd-statu" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="Tamamlandı">Tamamlandı</option>
+          <option value="Bekliyor">Bekliyor</option>
+        </select>
+      </div>
+      <div class="fi"><label>Not</label><textarea id="fd-not" rows="2" placeholder="Not..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-fin-duzenle')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveFinDuzenle(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <!-- Gün Detay -->
 <div class="modal-ov" id="modal-gun-detay">
   <div class="modal"><div class="modal-handle"></div>
@@ -2611,27 +2645,69 @@ function renderRehber(){
 function showKisiDetay(id){
   const k=getKisi(id);if(!k)return;
   const c=calcFinans();const cD=c.cD[id];const bakiye=cD?cD.bakiyeAll:0;
-  const renk=bakiye>0?'var(--green)':bakiye<0?'var(--red)':'var(--blue)';const durum=bakiye>0?'Bize Borçlu':bakiye<0?'Biz Borçluyuz':'Hesap Kapalı';
+  const renk=bakiye>0?'var(--green)':bakiye<0?'var(--red)':'var(--blue)';
+  const durum=bakiye>0?'Bize Borçlu':bakiye<0?'Biz Borçluyuz':'Hesap Kapalı';
   const islemler=DB.islemler.filter(i=>String(i.kisiId)===String(id)).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   const odemeler=DB.odemeler.filter(o=>String(o.kisiId)===String(id)).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
+
+  let html='';
+  // Kişi bilgi kutusu
+  html+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:16px;">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+  html+='<div><div style="font-size:12px;color:var(--text3);">'+k.tip+' · '+fmtKId(k.id)+'</div>';
+  html+='<div style="font-weight:700;font-size:18px;">'+k.isim+'</div></div>';
+  html+='<div style="text-align:right;"><div style="font-size:11px;color:var(--text3);">'+durum+'</div>';
+  html+='<div style="font-weight:700;font-size:20px;color:'+renk+';" class="num">'+fmt(Math.abs(bakiye))+'</div></div></div>';
+    if(k.tel){const telSafe=k.tel.replace(/'/g,'');html+='<a href="#" onclick="goWhatsapp(\"'+telSafe+'\")" style="display:flex;align-items:center;gap:8px;color:var(--green);font-weight:600;font-size:13px;margin-bottom:4px;">💬 '+k.tel+'</a>';}
+  if(k.adres)html+='<div style="font-size:12px;color:var(--text2);">📍 '+k.adres+'</div>';
+  if(k.not)html+='<div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:var(--r-sm);margin-top:8px;font-size:12px;color:var(--text2);">📝 '+k.not+'</div>';
+  html+='</div>';
+
+  // Tahsilat butonu
+  if(USER_ROL!=='goruntule')html+='<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal(\'modal-kisi-detay\');openOdemeModal('+id+')">💳 Tahsilat / Ödeme Ekle</button>';
+
+  // Ödemeler
+  if(odemeler.length){
+    html+='<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Ödemeler</div>';
+    odemeler.slice(0,5).forEach(o=>{
+      const oc=o.islemTipi==='Tahsilat'?'var(--green)':'var(--red)';
+      html+='<div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;display:flex;justify-content:space-between;">';
+      html+='<div><div style="font-weight:600;font-size:12px;">'+o.islemTipi+'</div>';
+      html+='<div style="font-size:11px;color:var(--text2);">'+dtS(o.tarih)+' · '+(oyIcon[o.odemeYontemi]||'')+' '+(o.odemeYontemi||'')+'</div></div>';
+      html+='<div style="font-weight:700;color:'+oc+';" class="num">'+fmt(o.tutar)+'</div></div>';
+    });
+  }
+
+  // İşlem geçmişi
+  if(islemler.length){
+    html+='<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 8px;">İşlem Geçmişi ('+islemler.length+')</div>';
+    islemler.forEach(i=>{
+      const pos=i.tip==='Gelir';
+      const iRenk=pos?'var(--green)':'var(--red)';
+      const statuRenk=i.statu==='Bekliyor'?'var(--amber)':'var(--blue)';
+      const editBtn=USER_ROL!=='goruntule'?'<button onclick="event.stopPropagation();openFinDuzenle('+i.id+')" style="background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;padding:2px 5px;">✏️</button>':'';
+      const delBtn=USER_ROL==='admin'?'<button onclick="event.stopPropagation();deleteIslemCari('+i.id+','+id+')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 5px;">🗑</button>':'';
+      html+='<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;" onclick="closeModal(\'modal-kisi-detay\');showIslemDetay('+i.id+')">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html+='<div style="flex:1;min-width:0;">';
+      html+='<div style="font-weight:600;font-size:12px;">'+(i.kat||i.tip)+' <span class="id-badge">'+fmtId(i.id)+'</span></div>';
+      html+='<div style="font-size:11px;color:var(--text2);">'+dtS(i.tarih)+' · '+(oyIcon[i.odemeYontemi]||'')+' · <span style="color:'+statuRenk+'">'+i.statu+'</span></div>';
+      html+='</div>';
+      html+='<div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">';
+      html+='<div style="font-weight:700;color:'+iRenk+';font-size:13px;" class="num">'+fmt(i.tutar)+'</div>';
+      html+='<div onclick="event.stopPropagation()">'+editBtn+delBtn+'</div>';
+      html+='</div></div></div>';
+    });
+  }else{
+    html+='<div class="empty-state"><div class="empty-title">İşlem yok</div></div>';
+  }
+
   document.getElementById('kisi-detay-title').textContent=k.isim;
-  document.getElementById('kisi-detay-content').innerHTML=`
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div><div style="font-size:12px;color:var(--text3);">${k.tip} · ${fmtKId(k.id)}</div><div style="font-weight:700;font-size:18px;">${k.isim}</div></div>
-        <div style="text-align:right;"><div style="font-size:11px;color:var(--text3);">${durum}</div><div style="font-weight:700;font-size:20px;color:${renk};" class="num">${fmt(Math.abs(bakiye))}</div></div>
-      </div>
-      ${k.tel?`<a href="#" onclick="goWhatsapp('${k.tel}')" style="display:flex;align-items:center;gap:8px;color:var(--green);font-weight:600;font-size:13px;margin-bottom:4px;">💬 ${k.tel}</a>`:''}
-      ${k.adres?`<div style="font-size:12px;color:var(--text2);">📍 ${k.adres}</div>`:''}
-      ${k.not?`<div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:var(--r-sm);margin-top:8px;font-size:12px;color:var(--text2);">📝 ${k.not}</div>`:''}
-    </div>
-    ${USER_ROL!=='goruntule'?`<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal('modal-kisi-detay');openOdemeModal(${id})">💳 Tahsilat / Ödeme Ekle</button>`:''}
-    ${odemeler.length?`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Ödemeler</div>${odemeler.slice(0,5).map(o=>`<div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;display:flex;justify-content:space-between;"><div><div style="font-weight:600;font-size:12px;">${o.islemTipi}</div><div style="font-size:11px;color:var(--text2);">${dtS(o.tarih)} · ${oyIcon[o.odemeYontemi]||''} ${o.odemeYontemi||''}</div></div><div style="font-weight:700;color:${o.islemTipi==='Tahsilat'?'var(--green)':'var(--red)'};" class="num">${fmt(o.tutar)}</div></div>`).join('')}`:''}
-    ${islemler.length?`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 8px;">İşlem Geçmişi (${islemler.length})</div>${islemler.map(i=>{const pos=i.tip==='Gelir';return `<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;" onclick="closeModal('modal-kisi-detay');showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;"><div><div style="font-weight:600;font-size:12px;">${i.kat||i.tip} <span class="id-badge">${fmtId(i.id)}</span></div><div style="font-size:11px;color:var(--text2);">${dtS(i.tarih)} · ${oyIcon[i.odemeYontemi]||''} · <span style="color:${i.statu==='Bekliyor'?'var(--amber)':'var(--blue)'}">${i.statu}</span></div></div><div style="font-weight:700;color:${pos?'var(--green)':'var(--red)'};" class="num">${fmt(i.tutar)}</div></div></div>`;}).join('')}`:'<div class="empty-state"><div class="empty-title">İşlem yok</div></div>'}
-  `;
+  document.getElementById('kisi-detay-content').innerHTML=html;
   openModal('modal-kisi-detay');
 }
+
 
 // ============================================================ CARİ
 function renderCari(c){
@@ -2653,6 +2729,98 @@ function renderCari(c){
     </div>`;
   }).join('');
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
+}
+
+// ============================================================ FİNANSMAN DÜZENLE / SİL
+
+function openFinDuzenle(islemId){
+  const i=DB.islemler.find(x=>x.id===islemId);if(!i)return;
+  document.getElementById('fd-id').value=i.id;
+  document.getElementById('fd-baslik').textContent=(i.kat||i.tip)+' — '+fmtId(i.id);
+  document.getElementById('fd-tarih').value=(i.tarih||'').slice(0,16);
+  document.getElementById('fd-tutar').value=i.tutar;
+  document.getElementById('fd-odeme').value=i.odemeYontemi||'İBAN';
+  document.getElementById('fd-statu').value=i.statu||'Tamamlandı';
+  document.getElementById('fd-not').value=i.not||'';
+  openModal('modal-fin-duzenle');
+}
+
+async function saveFinDuzenle(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const id=document.getElementById('fd-id').value;
+    const tutar=parseTutar(document.getElementById('fd-tutar').value);
+    if(tutar<=0){showToast('Tutar girin','red');return;}
+    await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({
+      tarih:new Date(document.getElementById('fd-tarih').value).toISOString(),
+      tutar,
+      odeme_yontemi:document.getElementById('fd-odeme').value,
+      statu:document.getElementById('fd-statu').value,
+      "not":document.getElementById('fd-not').value
+    })});
+    await loadDB();
+    closeModal('modal-fin-duzenle');
+    showToast('Güncellendi','green');
+  }catch(e){showToast('Hata: '+String(e?.message||e).slice(0,50),'red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function deleteIslemCari(islemId,kisiId){
+  const i=DB.islemler.find(x=>x.id===islemId);if(!i)return;
+  // Grup ile geldi mi? (finansman taksitleri)
+  const grupVarmi=i.groupId&&DB.islemler.filter(x=>String(x.groupId)===String(i.groupId)).length>1;
+  const mesaj=grupVarmi
+    ?`"${fmtId(islemId)}" numaralı işlem silinecek. Bu finansmanın diğer taksitlerini de silmek ister misiniz?`
+    :`"${fmtId(islemId)}" numaralı işlem silinecek.`;
+
+  if(grupVarmi){
+    // 3 seçenekli: sadece bu, tümü, vazgeç
+    const diyalog=document.createElement('div');
+    diyalog.style.cssText='position:fixed;inset:0;background:rgba(4,10,20,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    diyalog.innerHTML=`
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xl);padding:28px 24px;max-width:340px;width:100%;box-shadow:var(--shadow-lg);">
+        <div style="font-size:28px;text-align:center;margin-bottom:12px;">🗑</div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:8px;text-align:center;">İşlem Sil</div>
+        <p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:20px;">Bu işlem bir finansman grubuna ait. Ne silmek istiyorsunuz?</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="doSilFinansman(${islemId},false,${kisiId})" class="btn btn-secondary btn-full">Sadece Bu Taksiti Sil</button>
+          <button onclick="doSilFinansman(${islemId},true,${kisiId})" class="btn btn-danger btn-full">Tüm Finansmanı Sil (${DB.islemler.filter(x=>String(x.groupId)===String(i.groupId)).length} işlem)</button>
+          <button onclick="this.closest('[style]').remove()" class="btn btn-secondary btn-full">Vazgeç</button>
+        </div>
+      </div>`;
+    document.body.appendChild(diyalog);
+  }else{
+    showConfirm('İşlemi Sil',mesaj,async()=>{
+      await doSilFinansman(islemId,false,kisiId);
+    },'🗑');
+  }
+}
+
+async function doSilFinansman(islemId,tumGrubu,kisiId){
+  // Dialog varsa kapat
+  document.querySelectorAll('[style*="z-index:99999"]').forEach(el=>{
+    if(el.id!=='toast'&&el.id!=='lightbox'&&el.id!=='modal-confirm')el.remove();
+  });
+  try{
+    if(tumGrubu){
+      const i=DB.islemler.find(x=>x.id===islemId);
+      if(i?.groupId){
+        // Gruptaki tüm işlemleri sil
+        const grupIslems=DB.islemler.filter(x=>String(x.groupId)===String(i.groupId));
+        for(const gi of grupIslems){
+          await sbFetch('islemler?id=eq.'+gi.id,{method:'DELETE'});
+        }
+        showToast(grupIslems.length+' işlem silindi','amber');
+      }
+    }else{
+      await sbFetch('islemler?id=eq.'+islemId,{method:'DELETE'});
+      showToast('İşlem silindi','amber');
+    }
+    await loadDB();
+    // Kişi detay modalını yenile
+    closeModal('modal-kisi-detay');
+    setTimeout(()=>showKisiDetay(kisiId),300);
+  }catch(e){showToast('Hata!','red');}
 }
 
 // ============================================================ ÖDEME
