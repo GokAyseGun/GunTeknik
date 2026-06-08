@@ -282,10 +282,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </head>
 <body>
 <div id="toast"><span class="toast-dot" id="toast-dot"></span><span id="toast-msg"></span></div>
-<!-- Global file input'lar - modal dışında, her zaman çalışır -->
-<input type="file" id="global-file-kamera" style="position:fixed;left:-9999px;opacity:0;" accept="image/*" capture="environment">
-<input type="file" id="global-file-galeri"  style="position:fixed;left:-9999px;opacity:0;" accept="image/*">
-<input type="file" id="global-file-belge"   style="position:fixed;left:-9999px;opacity:0;" accept="application/pdf,.pdf,.doc,.docx">
+<!-- Global file input'lar -->
+<input type="file" id="global-file-kamera" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="image/*" capture="environment">
+<input type="file" id="global-file-galeri"  style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="image/*">
+<input type="file" id="global-file-belge"   style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="application/pdf,.pdf,.doc,.docx">
 
 <div id="lightbox">
   <button id="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -2038,22 +2038,26 @@ let selectedFile=null;
 let selectedVfFile=null;
 let _filePreviewTarget='mi-dosya-preview';
 
-// Modal içinde .click() çalışmadığı için global input kullanıyoruz
+// Dosya seçme - modal içinde güvenilir çalışan yöntem
 function triggerFileInput(tip, previewId){
   _filePreviewTarget=previewId;
   const ids={kamera:'global-file-kamera',galeri:'global-file-galeri',belge:'global-file-belge'};
   const el=document.getElementById(ids[tip]);
-  if(el){el.value='';el.click();}
+  if(!el)return;
+  el.value='';
+  // Önce event listener'ı tek seferlik ekle
+  const handler=function(){
+    if(this.files&&this.files[0])onDosyaSec(this,_filePreviewTarget);
+    el.removeEventListener('change',handler);
+  };
+  el.addEventListener('change',handler);
+  // Doğrudan click - user gesture zincirinde
+  try{el.click();}catch(e){console.warn('click failed:',e);}
 }
 
-// Global file input handler'ları sayfa yüklenince bağla
+// Global file input'ları başlat
 function initGlobalFileInputs(){
-  ['kamera','galeri','belge'].forEach(tip=>{
-    const el=document.getElementById('global-file-'+tip);
-    if(el)el.addEventListener('change',function(){
-      if(this.files[0])onDosyaSec(this,_filePreviewTarget);
-    });
-  });
+  // Handler'lar artık triggerFileInput içinde dinamik ekleniyor
   preloadHtml5QR();
 }
 
@@ -3420,7 +3424,7 @@ document.addEventListener('click',e=>{
 // ============================================================ BARKOD SİSTEMİ
 let barkodTargetInputId=null;
 let barkodStream=null;
-let barkodRAF=null;
+let barkodScanTimer=null;
 let barkodActive=false;
 
 function preloadHtml5QR(){
@@ -3431,7 +3435,7 @@ async function openBarkodKamera(targetInputId){
   barkodTargetInputId=targetInputId;
   barkodActive=false;
   // Önce durdur
-  if(barkodRAF){cancelAnimationFrame(barkodRAF);barkodRAF=null;}
+  if(barkodScanTimer){clearInterval(barkodScanTimer);barkodScanTimer=null;}
   if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
   const res=document.getElementById('barkod-result');
   const video=document.getElementById('barkod-video');
@@ -3448,41 +3452,32 @@ async function openBarkodKamera(targetInputId){
     if(video){video.srcObject=barkodStream;await video.play();}
     if(res)res.textContent='Barkodu mavi çerçeveye göster...';
     barkodActive=true;
-    // BarcodeDetector API - modern Chrome/Safari destekliyor
-    if(window.BarcodeDetector){
-      const detector=new BarcodeDetector({formats:['qr_code','code_128','ean_13','ean_8','code_39','upc_a','upc_e','itf','data_matrix','pdf417','aztec','code_93']});
-      const scan=async()=>{
-        if(!barkodActive)return;
-        try{
-          const results=await detector.detect(video);
-          if(results&&results.length>0){
-            barkodOkundu(results[0].rawValue);
-            return;
-          }
-        }catch(e){}
-        barkodRAF=requestAnimationFrame(scan);
-      };
-      barkodRAF=requestAnimationFrame(scan);
-    } else {
-      // Fallback: QR only with jsQR
-      await loadJsQR();
-      const scan=()=>{
-        if(!barkodActive)return;
-        if(!video||video.readyState<2){barkodRAF=requestAnimationFrame(scan);return;}
-        const canvas=document.createElement('canvas');
-        canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    // jsQR yükle (güvenilir, her tarayıcıda çalışır)
+    await loadJsQR();
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    // setInterval ile düzenli tarama - RAF yerine daha güvenilir
+    barkodScanTimer=setInterval(()=>{
+      if(!barkodActive||!video||video.readyState<2)return;
+      try{
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
         const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        // Önce BarcodeDetector (varsa, daha hızlı)
+        if(window.BarcodeDetector&&!window._bdFailed){
+          window._bdDetector=window._bdDetector||new BarcodeDetector();
+          window._bdDetector.detect(video).then(results=>{
+            if(results&&results.length>0){barkodOkundu(results[0].rawValue);}
+          }).catch(()=>{window._bdFailed=true;});
+        }
+        // jsQR ile QR tarama (her zaman çalışır)
         if(window.jsQR){
           const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'dontInvert'});
           if(code&&code.data){barkodOkundu(code.data);return;}
         }
-        barkodRAF=requestAnimationFrame(scan);
-      };
-      barkodRAF=requestAnimationFrame(scan);
-      if(res)res.textContent='QR kod taranıyor... (Diğer barkodlar için BarcodeDetector gerekli)';
-    }
+      }catch(e){}
+    },150);// 150ms = ~6fps
   }catch(e){
     const m=String(e);
     if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
@@ -3495,14 +3490,15 @@ async function loadJsQR(){
   return new Promise(res=>{
     const s=document.createElement('script');
     s.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
-    s.onload=res;s.onerror=res;
+    s.onload=()=>{console.log('jsQR yüklendi');res();}
+    s.onerror=res;
     document.head.appendChild(s);
   });
 }
 
 async function _stopQR(){
   barkodActive=false;
-  if(barkodRAF){cancelAnimationFrame(barkodRAF);barkodRAF=null;}
+  if(barkodScanTimer){clearInterval(barkodScanTimer);barkodScanTimer=null;}
   if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
   const v=document.getElementById('barkod-video');
   if(v){v.srcObject=null;}
