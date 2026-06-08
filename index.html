@@ -83,6 +83,13 @@ a{text-decoration:none;color:inherit;}
 .desen-hak{width:8px;height:8px;border-radius:50%;background:var(--border2);}
 .desen-hak.yanlis{background:var(--red);}
 
+/* İSİM ALANLARI — her kelimenin ilk harfi büyük */
+input.isim-input{text-transform:capitalize;}
+/* TUTAR ALANLARI */
+.tutar-wrap{position:relative;display:flex;align-items:center;}
+.tutar-wrap input{padding-right:28px!important;text-align:right;}
+.tutar-wrap .tl-simge{position:absolute;right:12px;font-size:14px;color:var(--text3);pointer-events:none;font-weight:500;}
+
 /* TOAST */
 #toast{position:fixed;bottom:calc(var(--nav-h) + 20px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);color:var(--text);padding:14px 24px;border-radius:var(--r-xl);border:1px solid var(--border2);box-shadow:var(--shadow-lg);font-size:13px;font-weight:500;z-index:99999;opacity:0;pointer-events:none;transition:all 0.5s var(--ease);max-width:90vw;text-align:center;display:flex;align-items:center;gap:10px;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -674,7 +681,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
             <input type="hidden" id="vf-kisi-id">
             <div style="display:flex;gap:8px;align-items:flex-start;">
               <div class="kisi-ac-wrap" style="flex:1;" id="vf-ac-wrap">
-                <input type="text" class="kisi-ac-input" id="vf-ac-input" placeholder="İsim yazarak ara..."
+                <input type="text" class="kisi-ac-input" id="vf-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
                   oninput="acSearchVergi()" onfocus="acSearchVergi()" autocomplete="off">
                 <div id="vf-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClearVergi()">
                   <span class="ac-name" id="vf-ac-sel-text"></span>
@@ -825,7 +832,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <input type="hidden" id="mi-kisi">
         <div style="display:flex;gap:8px;align-items:flex-start;">
           <div class="kisi-ac-wrap" style="flex:1;" id="mi-ac-wrap">
-            <input type="text" class="kisi-ac-input" id="mi-ac-input" placeholder="İsim yazarak ara..."
+            <input type="text" class="kisi-ac-input" id="mi-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
               oninput="acSearch('mi-ac')" onfocus="acSearch('mi-ac')" autocomplete="off">
             <div id="mi-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('mi-ac')">
               <span class="ac-name" id="mi-ac-sel-text"></span>
@@ -945,7 +952,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <input type="hidden" id="mb-kisi">
         <div style="display:flex;gap:8px;align-items:flex-start;">
           <div class="kisi-ac-wrap" style="flex:1;" id="mb-ac-wrap">
-            <input type="text" class="kisi-ac-input" id="mb-ac-input" placeholder="İsim yazarak ara..."
+            <input type="text" class="kisi-ac-input" id="mb-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
               oninput="acSearch('mb-ac')" onfocus="acSearch('mb-ac')" autocomplete="off">
             <div id="mb-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('mb-ac')">
               <span class="ac-name" id="mb-ac-sel-text"></span>
@@ -985,7 +992,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <option value="Hepsi">Hem Gelir Hem Gider</option><option value="Gelir">Sadece Gelir</option><option value="Gider">Sadece Gider</option>
         </select>
       </div>
-      <div class="fi"><label>İsim / Unvan</label><input type="text" id="mk-isim" placeholder="Ad Soyad"></div>
+      <div class="fi"><label>İsim / Unvan</label><input type="text" id="mk-isim" placeholder="Ad Soyad" autocapitalize="words" class="isim-input"></div>
       <div class="fi"><label>Vergi / T.C. No</label><input type="text" id="mk-vergino" placeholder="12345678901" inputmode="numeric"></div>
       <div class="fi"><label>Telefon</label><input type="tel" id="mk-tel" placeholder="05xx xxx xx xx"></div>
       <div class="fi"><label>Adres</label><textarea id="mk-adres" rows="2" placeholder="Adres..."></textarea></div>
@@ -1034,7 +1041,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-head"><h3 id="pe-title">Personel Ekle</h3><button class="modal-close" onclick="closeModal('modal-personel-ekle')">✕</button></div>
     <div class="modal-body fg">
       <input type="hidden" id="pe-id">
-      <div class="fi"><label>Personel Adı Soyadı</label><input type="text" id="pe-isim" placeholder="Ad Soyad"></div>
+      <div class="fi"><label>Personel Adı Soyadı</label><input type="text" id="pe-isim" placeholder="Ad Soyad" autocapitalize="words" class="isim-input"></div>
       <div class="fi"><label>Telefon</label><input type="tel" id="pe-tel" placeholder="05xx xxx xx xx"></div>
       <div class="fi"><label>Pozisyon</label><input type="text" id="pe-pozisyon" placeholder="Usta, Çırak, Teknisyen..."></div>
       <div class="fi"><label>Kâr Payı Oranı (%)</label><input type="number" id="pe-oran" value="30" min="0" max="100"></div>
@@ -1093,7 +1100,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-head"><h3 id="stok-modal-title">Malzeme Ekle</h3><button class="modal-close" onclick="closeModal('modal-stok')">✕</button></div>
     <div class="modal-body fg">
       <input type="hidden" id="stok-id">
-      <div class="fi"><label>Malzeme Adı</label><input type="text" id="stok-ad" placeholder="Malzeme adı"></div>
+      <div class="fi"><label>Malzeme Adı</label><input type="text" id="stok-ad" placeholder="Malzeme adı" autocapitalize="words"></div>
       <div class="fi"><label>Kategori</label>
         <select id="stok-kat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Elektrik">Elektrik</option>
@@ -2150,9 +2157,112 @@ function triggerFileInput(tip, previewId){
 
 // Global file input'ları başlat
 function initGlobalFileInputs(){
-  // Handler'lar artık triggerFileInput içinde dinamik ekleniyor
   preloadHtml5QR();
+  initInputFormatlama();
 }
+
+// ============================================================ INPUT FORMATLAMA
+
+function initInputFormatlama(){
+  // Sayfa yüklendikten sonra tüm inputları izle
+  // MutationObserver ile dinamik eklenen inputları da yakala
+  const observer=new MutationObserver(()=>baglaInputlar());
+  observer.observe(document.body,{childList:true,subtree:true});
+  baglaInputlar();
+}
+
+function baglaInputlar(){
+  // İSİM ALANLARI — capitalize
+  const isimIds=['mk-isim','pe-isim','vf-firma','vf-ac-input','mi-ac-input','mb-ac-input',
+    'stok-ad','pe-isim','auth-email'];
+  isimIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&!el._isimBagli){
+      el._isimBagli=true;
+      el.classList.add('isim-input');
+      el.addEventListener('input',capitalizeInput);
+      el.addEventListener('blur',capitalizeInput);
+    }
+  });
+
+  // TUTAR ALANLARI — noktalı format + ₺ simgesi
+  const tutarIds=['mi-tutar','mi-malzeme','mi-kdv-tutar','mb-anapara','mb-toplamgeri',
+    'mo-tutar','ma-tutar','sb-tutar','vf-tutar','vf-kdv','hd-tutar',
+    'stok-fiyat','stok-miktar','stok-kritik','mi-stok-miktar'];
+  tutarIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&!el._tutarBagli){
+      el._tutarBagli=true;
+      baglatutarInput(el);
+    }
+  });
+
+  // Dinamik stok satırlarındaki miktar inputları
+  document.querySelectorAll('[id$="-miktar"]:not([_tutarBagli])').forEach(el=>{
+    if(el.type==='number'&&!el._tutarBagli){
+      el._tutarBagli=true;
+      baglatutarInput(el);
+    }
+  });
+}
+
+function capitalizeInput(e){
+  const el=e.target;
+  const pos=el.selectionStart;
+  const val=el.value;
+  // Her kelimenin ilk harfini büyük yap
+  const yeni=val.replace(/(^|\s)\S/g,c=>c.toLocaleUpperCase('tr-TR'));
+  if(val!==yeni){el.value=yeni;el.setSelectionRange(pos,pos);}
+}
+
+function baglatutarInput(el){
+  // Wrap div oluştur
+  const parent=el.parentNode;
+  if(parent&&parent.classList.contains('tutar-wrap'))return;
+  const wrap=document.createElement('div');
+  wrap.className='tutar-wrap';
+  parent.insertBefore(wrap,el);
+  wrap.appendChild(el);
+  const simge=document.createElement('span');
+  simge.className='tl-simge';simge.textContent='₺';
+  wrap.appendChild(simge);
+  // Format: binlik nokta, kuruş yok
+  el.addEventListener('focus',function(){
+    // Focus'ta sadece saf sayı göster
+    const raw=parseTutar(this.value);
+    this.value=raw||'';
+    this.type='number';
+    this.style.textAlign='right';
+  });
+  el.addEventListener('blur',function(){
+    const raw=parseTutar(this.value);
+    if(raw>0){
+      this.type='text';
+      this.value=formatTutar(raw);
+    }else{
+      this.type='number';
+      this.value='';
+    }
+  });
+}
+
+function parseTutar(val){
+  if(!val&&val!==0)return 0;
+  // Noktaları (binlik ayraç) kaldır, virgülü noktaya çevir
+  const temiz=String(val).replace(/\./g,'').replace(',','.');
+  return parseFloat(temiz)||0;
+}
+
+function formatTutar(n){
+  // Binlik nokta, kuruş yok
+  return Math.round(n||0).toLocaleString('tr-TR');
+}
+
+// saveIslem, saveBorc vb. tutar okumalarını güncelle — parseFloat yerine parseTutar kullan
+const _origParseFloat=parseFloat;
+window.parseTutarSafe=function(val){
+  return parseTutar(val);
+};
 
 function onDosyaSec(input, previewId){
   const file=input.files[0];if(!file)return;
@@ -2238,11 +2348,11 @@ async function saveIslem(btn){
   if(USER_ROL==='goruntule')return;if(btn)btn.disabled=true;
   try{
     const eId=document.getElementById('mi-id').value;
-    const tutar=parseFloat(document.getElementById('mi-tutar').value)||0;
+    const tutar=parseTutar(document.getElementById('mi-tutar').value);
     if(tutar<=0){showToast('Geçerli tutar girin','red');return;}
     const tip=document.getElementById('mi-tip').value;const kat=document.getElementById('mi-kat').value;
     const statu=document.getElementById('mi-statu').value;const kId=parseInt(document.getElementById('mi-kisi').value)||null;
-    const malz=parseFloat(document.getElementById('mi-malzeme').value)||0;
+    const malz=parseTutar(document.getElementById('mi-malzeme').value);
     const notDetay=document.getElementById('mi-not').value;const odemeY=document.getElementById('mi-odeme').value||'Nakit';
     const dtVal=document.getElementById('mi-tarih').value;
     let tarih=new Date(dtVal);if(isNaN(tarih))tarih=new Date();
@@ -2345,15 +2455,15 @@ async function saveBorc(btn){
     const yon=document.getElementById('mb-tip').value;
     const kisiId=parseInt(document.getElementById('mb-kisi').value)||0;
     if(!kisiId){showToast('Kişi seçin','red');return;}
-    const anaPara=parseFloat(document.getElementById('mb-anapara').value)||0;
-    const toplamGeri=parseFloat(document.getElementById('mb-toplamgeri').value)||0;
+    const anaPara=parseTutar(document.getElementById('mb-anapara').value);
+    const toplamGeri=parseTutar(document.getElementById('mb-toplamgeri').value);
     const taksit=parseInt(document.getElementById('mb-taksit').value)||1;
     if(anaPara<=0){showToast('Ana para tutarı girin','red');return;}
     if(toplamGeri<=0){showToast('Geri ödenecek tutarı girin','red');return;}
     const dtVal=document.getElementById('mb-tarih').value;
     let bTarih=new Date(dtVal);if(isNaN(bTarih.getTime()))bTarih=new Date();
     const groupId=Date.now();const notDetay=document.getElementById('mb-not').value||'';
-    const kayitlar=[{group_id:groupId,tarih:bTarih.toISOString(),tip:'Kasa Hareketi',alt_tip:yon==='Alındı'?'Alınan Borç Ana Para':'Verilen Borç Ana Para',statu:'Tamamlandı',kisi_id:kisiId,kat:'Finansman',alt_kat:'-',tutar:anaPara,malzeme_tutar:0,"not":notDetay,odeme_yontemi:'İBAN',personel_ids:[]}];
+    const kayitlar=[{group_id:groupId,tarih:bTarih.toISOString(),tip:'Kasa Hareketi',statu:'Tamamlandı',kisi_id:kisiId,kat:'Finansman',alt_kat:yon==='Alındı'?'Alınan Borç':'Verilen Borç',tutar:anaPara,malzeme_tutar:0,"not":notDetay,odeme_yontemi:'İBAN',personel_ids:[]}];
     const tTutar=Math.round(toplamGeri/taksit);
     for(let i=0;i<taksit;i++){
       const tT=new Date(bTarih);tT.setMonth(tT.getMonth()+(i+1));
@@ -2509,7 +2619,7 @@ function openOdemeModal(id){
 async function saveOdeme(btn){
   if(btn)btn.disabled=true;
   try{
-    const t=parseFloat(document.getElementById('mo-tutar').value)||0;if(t<=0){showToast('Tutar girin','red');return;}
+    const t=parseTutar(document.getElementById('mo-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     await sbFetch('odemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:new Date().toISOString(),kisi_id:parseInt(document.getElementById('mo-kisi-id').value),islem_tipi:document.getElementById('mo-tip').value,tutar:t,"not":document.getElementById('mo-not').value,odeme_yontemi:document.getElementById('mo-odeme').value||'Nakit'})});
     await loadDB();closeModal('modal-odeme');showToast('Kaydedildi','green');
   }catch(e){showToast('Hata!','red');}
@@ -2558,7 +2668,7 @@ function avansModal(){
 async function saveAvans(btn){
   if(btn)btn.disabled=true;
   try{
-    const t=parseFloat(document.getElementById('ma-tutar').value)||0;if(t<=0){showToast('Tutar girin','red');return;}
+    const t=parseTutar(document.getElementById('ma-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     const tip=document.getElementById('ma-tip').value;const personelId=parseInt(document.getElementById('ma-personel-sec').value)||null;
     await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:new Date().toISOString(),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
     await loadDB();closeModal('modal-avans');showToast('Kaydedildi','green');
@@ -2575,7 +2685,7 @@ function editHareket(id){
 async function saveHareketDuzenle(btn){
   if(btn)btn.disabled=true;
   try{
-    const id=document.getElementById('hd-id').value;const t=parseFloat(document.getElementById('hd-tutar').value)||0;if(t<=0){showToast('Tutar girin','red');return;}
+    const id=document.getElementById('hd-id').value;const t=parseTutar(document.getElementById('hd-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     await sbFetch('yardimci_islemleri?id=eq.'+id,{method:'PATCH',body:JSON.stringify({tutar:t,"not":document.getElementById('hd-not').value})});
     await loadDB();closeModal('modal-hareket-duzenle');showToast('Güncellendi','green');
   }catch(e){showToast('Hata!','red');}
@@ -2648,7 +2758,7 @@ async function saveStok(btn){
   try{
     const id=document.getElementById('stok-id').value;const ad=document.getElementById('stok-ad').value.trim();if(!ad){showToast('Malzeme adı gerekli','red');return;}
     const barkod=document.getElementById('stok-barkod').value.trim()||null;
-    const payload={ad,kategori:document.getElementById('stok-kat').value||'Genel',birim:document.getElementById('stok-birim').value||'Adet',miktar:parseFloat(document.getElementById('stok-miktar').value)||0,kritik_seviye:parseFloat(document.getElementById('stok-kritik').value)||5,birim_fiyat:parseFloat(document.getElementById('stok-fiyat').value)||0,"not":document.getElementById('stok-not').value,barkod};
+    const payload={ad,kategori:document.getElementById('stok-kat').value||'Genel',birim:document.getElementById('stok-birim').value||'Adet',miktar:parseTutar(document.getElementById('stok-miktar').value),kritik_seviye:parseFloat(document.getElementById('stok-kritik').value)||5,birim_fiyat:parseTutar(document.getElementById('stok-fiyat').value),"not":document.getElementById('stok-not').value,barkod};
     let result;
     if(id){await sbFetch('stok?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});result={id:parseInt(id)};}
     else{const r=await sbFetch('stok',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});result=r&&r[0];}
@@ -3086,7 +3196,7 @@ async function saveSablon(btn){
   try{
     const isim=document.getElementById('sb-isim').value.trim();if(!isim){showToast('Şablon adı gerekli','red');return;}
     const tip=document.getElementById('sb-tip').value;const kat=document.getElementById('sb-kat').value;
-    const tutar=parseFloat(document.getElementById('sb-tutar').value)||0;
+    const tutar=parseTutar(document.getElementById('sb-tutar').value);
     const odeme=document.getElementById('sb-odeme').value||'Nakit';
     const not=document.getElementById('sb-not').value;
     const dongü=document.getElementById('sb-dongü').value;
@@ -3410,8 +3520,8 @@ async function saveVergiFatura(btn){
   try{
     const tip=document.getElementById('vf-tip').value;
     const tarih=document.getElementById('vf-tarih').value;if(!tarih){showToast('Tarih gerekli','red');return;}
-    const kdv=parseFloat(document.getElementById('vf-kdv').value)||0;if(kdv<=0){showToast('KDV tutarı girin','red');return;}
-    const tutar=parseFloat(document.getElementById('vf-tutar').value)||0;
+    const kdv=parseTutar(document.getElementById('vf-kdv').value);if(kdv<=0){showToast('KDV tutarı girin','red');return;}
+    const tutar=parseTutar(document.getElementById('vf-tutar').value);
     // Dosya yükle
     let dosyaUrl=null;
     if(selectedVfFile&&SB_TOKEN){
