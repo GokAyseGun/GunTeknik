@@ -3452,7 +3452,7 @@ async function openBarkodKamera(targetInputId){
   openModal('modal-barkod-kamera');
   try{
     barkodStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}}
     });
     if(!document.getElementById('modal-barkod-kamera').classList.contains('open')){
       barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;return;
@@ -3495,10 +3495,13 @@ async function openBarkodKamera(targetInputId){
         canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
 
-        // 1. BarcodeDetector (Chrome - QR + CODE128 + EAN + hepsi)
+        // 1. BarcodeDetector - video'ya direkt uygula (daha iyi sonuç)
         if(bdDetector){
-          const results=await bdDetector.detect(canvas).catch(()=>[]);
-          if(results.length>0&&!okumaYapildi){
+          // Önce video'ya dene
+          let results=await bdDetector.detect(video).catch(()=>null);
+          // Olmadıysa canvas'a dene
+          if(!results){results=await bdDetector.detect(canvas).catch(()=>[]);}
+          if(results&&results.length>0&&!okumaYapildi){
             okumaYapildi=true;
             barkodOkundu(results[0].rawValue);
             return;
@@ -3520,7 +3523,7 @@ async function openBarkodKamera(targetInputId){
       }catch(e){
         if(res)res.textContent='⚠️ '+String(e).slice(0,50);
       }
-    },150);
+    },100);
   }catch(e){
     const m=String(e);
     if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
