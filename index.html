@@ -947,6 +947,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <option value="Alındı">Borç Alındı (Kasaya Girer)</option><option value="Verildi">Borç Verildi (Kasadan Çıkar)</option>
         </select>
       </div>
+      <div class="fi"><label>Hangi Kasayı Etkiler?</label>
+        <select id="mb-kasa-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="isletme">İşletme Kasası</option>
+          <option value="sahsi">Şahsi Kasa</option>
+        </select>
+      </div>
       <div class="fi">
         <label>İlgili Kişi</label>
         <input type="hidden" id="mb-kisi">
@@ -1526,8 +1532,13 @@ function showConfirm(title,msg,cb,icon='⚠️'){
 function closeConfirm(ok){closeModal('modal-confirm');if(ok&&confirmCB)confirmCB();confirmCB=null;}
 
 function animateCount(el,target){
-  if(!el)return;const dur=1200;const start=Date.now();const abs=Math.abs(target||0);
-  function step(){const el2=el;if(!el2)return;const p=Math.min((Date.now()-start)/dur,1);const e=1-Math.pow(1-p,3);el2.textContent=fmt(Math.round(abs*e));if(p<1)requestAnimationFrame(step);}
+  if(!el)return;
+  const dur=1200;const start=Date.now();const abs=Math.abs(target||0);const isNeg=(target||0)<0;
+  // Renk güncelle
+  if(isNeg){el.style.color='var(--red)';}
+  else if(el.style.color==='var(--red)'&&target>=0){el.style.color='';}
+  function step(){const el2=el;if(!el2)return;const p=Math.min((Date.now()-start)/dur,1);const e=1-Math.pow(1-p,3);
+    el2.textContent=(isNeg?'- ':'')+fmt(Math.round(abs*e));if(p<1)requestAnimationFrame(step);}
   requestAnimationFrame(step);
 }
 
@@ -2453,6 +2464,7 @@ async function saveBorc(btn){
   if(btn)btn.disabled=true;
   try{
     const yon=document.getElementById('mb-tip').value;
+    const kasaTipi=document.getElementById('mb-kasa-tipi').value;// 'isletme' veya 'sahsi'
     const kisiId=parseInt(document.getElementById('mb-kisi').value)||0;
     if(!kisiId){showToast('Kişi seçin','red');return;}
     const anaPara=parseTutar(document.getElementById('mb-anapara').value);
@@ -2463,13 +2475,51 @@ async function saveBorc(btn){
     const dtVal=document.getElementById('mb-tarih').value;
     let bTarih=new Date(dtVal);if(isNaN(bTarih.getTime()))bTarih=new Date();
     const groupId=Date.now();const notDetay=document.getElementById('mb-not').value||'';
-    const kayitlar=[{group_id:groupId,tarih:bTarih.toISOString(),tip:'Kasa Hareketi',statu:'Tamamlandı',kisi_id:kisiId,kat:'Finansman',alt_kat:yon==='Alındı'?'Alınan Borç':'Verilen Borç',tutar:anaPara,malzeme_tutar:0,"not":notDetay,odeme_yontemi:'İBAN',personel_ids:[]}];
+
+    // Kasa kategorisi — işletme mi şahsi mi
+    const anaKat=kasaTipi==='isletme'?'İşletme Geliri':'Şahsi Gelir';
+    const giderKat=kasaTipi==='isletme'?'İşletme Gideri':'Şahsi Gider';
+
+    // Ana para kaydı — kasayı ANINDA etkiler (Tamamlandı)
+    // Borç alındıysa = kasaya para girdi = Gelir gibi davranır
+    // Borç verildiyse = kasadan para çıktı = Gider gibi davranır
+    const anaKayit={
+      group_id:groupId,
+      tarih:bTarih.toISOString(),
+      tip:yon==='Alındı'?'Gelir':'Gider',
+      statu:'Tamamlandı',
+      kisi_id:kisiId,
+      kat:yon==='Alındı'?anaKat:giderKat,
+      alt_kat:yon==='Alındı'?'Alınan Borç / Finansman':'Verilen Borç / Finansman',
+      tutar:anaPara,
+      malzeme_tutar:0,
+      "not":notDetay,
+      odeme_yontemi:'İBAN',
+      personel_ids:[]
+    };
+
+    // Taksit kayıtları — gelecekteki ödeme/tahsilat (Bekliyor)
     const tTutar=Math.round(toplamGeri/taksit);
+    const taksitKayitlar=[];
     for(let i=0;i<taksit;i++){
       const tT=new Date(bTarih);tT.setMonth(tT.getMonth()+(i+1));
-      kayitlar.push({group_id:groupId,tarih:tT.toISOString(),tip:yon==='Alındı'?'Ödenecek Borç':'Tahsil Edilecek Alacak',statu:'Bekliyor',kisi_id:kisiId,kat:'Taksit/Kredi',alt_kat:'-',tutar:tTutar,malzeme_tutar:0,"not":'['+(i+1)+'/'+taksit+' Taksit] '+notDetay,odeme_yontemi:'İBAN',personel_ids:[]});
+      taksitKayitlar.push({
+        group_id:groupId,
+        tarih:tT.toISOString(),
+        tip:yon==='Alındı'?'Gider':'Gelir',// Borç alındıysa ileride geri ödeyeceğiz=Gider, verdiyse tahsil edeceğiz=Gelir
+        statu:'Bekliyor',
+        kisi_id:kisiId,
+        kat:yon==='Alındı'?giderKat:anaKat,
+        alt_kat:yon==='Alındı'?'Borç Geri Ödemesi':'Borç Tahsilatı',
+        tutar:tTutar,
+        malzeme_tutar:0,
+        "not":'['+(i+1)+'/'+taksit+' Taksit] '+notDetay,
+        odeme_yontemi:'İBAN',
+        personel_ids:[]
+      });
     }
-    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(kayitlar)});
+
+    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify([anaKayit,...taksitKayitlar])});
     await loadDB();closeModal('modal-borc');showToast('Finansman oluşturuldu','green');
   }catch(e){console.error(e);showToast('Hata: '+String(e?.message||e).substring(0,60),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -2826,11 +2876,18 @@ function renderCalendar(){
     const isToday=isCur&&d===now.getDate();
     const hasGelir=dayIs.some(i=>i.tip==='Gelir'&&i.kat!=='İşletme Geliri');
     const hasIs=dayIs.some(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri');
-    const hasGider=dayIs.some(i=>i.tip==='Gider');const hasNot=dayTk.length>0;
+    const hasGider=dayIs.some(i=>i.tip==='Gider');
+    const hasNot=dayTk.some(t=>t.tip==='Bilgi');
+    const hasIsAjanda=dayTk.some(t=>t.tip==='İş');
+    const hasAlacak=dayTk.some(t=>t.tip==='Alacak');
+    const hasVerecek=dayTk.some(t=>t.tip==='Verecek');
     let dots='';
-    if(hasGelir||hasIs)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>`;
-    if(hasIs&&!hasGelir)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
+    if(hasGelir)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>`;
+    if(hasIs)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
     if(hasGider)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--red);"></div>`;
+    if(hasAlacak)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>`;
+    if(hasVerecek)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--red);"></div>`;
+    if(hasIsAjanda)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
     if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:#555;"></div>`;
     grid.innerHTML+=`<div onclick="showDayDetails('${ds}')" style="text-align:center;padding:6px 2px;border-radius:var(--r-sm);cursor:pointer;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:${isToday?'var(--blue)':'var(--bg2)'};border:1px solid ${isToday?'var(--blue)':'var(--border)'};color:${isToday?'#fff':'var(--text)'};font-weight:${isToday?'700':'500'};font-size:13px;transition:all 0.3s var(--ease);">
       <span>${d}</span><div style="display:flex;gap:2px;margin-top:4px;justify-content:center;flex-wrap:wrap;">${dots}</div>
@@ -3810,6 +3867,17 @@ function goStokEkle(){
 }
 
 // ============================================================ BARKOD ETİKET
+
+// Otomatik barkod üret ve stok modalına yaz
+function barkodOlustur(){
+  const prefix='GT';
+  const ts=Date.now().toString().slice(-8);
+  const rand=Math.floor(Math.random()*100).toString().padStart(2,'0');
+  const kod=prefix+ts+rand;
+  const el=document.getElementById('stok-barkod');
+  if(el){el.value=kod;}
+  showToast('Barkod oluşturuldu: '+kod,'green');
+}
 
 function showBarkodEtiket(stok){
   if(!stok||!stok.barkod){showToast('Bu ürünün barkodu yok','amber');return;}
