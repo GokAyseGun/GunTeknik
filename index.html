@@ -758,6 +758,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </div>
       </div>
 
+      <!-- VERGİ TAKVİMİ -->
+      <div class="sec-title">🗓️ Vergi Takvimi & Beyanname</div>
+      <div id="vergi-takvim-wrap" style="margin-bottom:16px;"></div>
       <!-- FATURA LİSTESİ -->
       <div class="sec-title">Fatura Listesi</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -2918,6 +2921,7 @@ function renderRehber(){
           <div style="font-size:12px;color:var(--text2);">${k.tip}${k.tel?' · '+k.tel:''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="showMusteriAnaliz(${k.id})" style="width:28px;height:28px;font-size:13px;" title="Müşteri Analizi">📊</button>
           <span class="star-btn ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)" title="${k.favori?'Favoriden çıkar':'Favoriye ekle'}">★</span>
           ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editKisi(${k.id},event)" style="width:28px;height:28px;font-size:13px;">✏️</button>`:''}
           ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteKisi(${k.id},event)" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:''}
@@ -3921,6 +3925,7 @@ function renderVergiDash(){
 }
 
 function renderVergi(){
+  renderVergiTakvimi();
   // İşlemlerden gelen KDV kayıtları + manuel fatura kayıtları
   const islemKDV=DB.islemler.filter(i=>i.kdvVar&&i.kdvTutar>0).map(i=>({
     id:'i-'+i.id,tarih:i.tarih,
@@ -4919,6 +4924,7 @@ function showProjeDetay(id){
   if(USER_ROL!=='goruntule')html+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje-detay');openProjeModal(${id})">✏️ Düzenle</button>`;
   html+=`<button class="btn btn-primary btn-full" onclick="closeModal('modal-proje-detay');projeIslemEkle(${id})">+ İşlem Ekle</button>`;
   html+=`</div>`;
+  html+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="openIsRaporuModal(${id})">📋 İş Raporu Oluştur</button>`;
   if(USER_ROL==='admin')html+=`<button class="btn btn-danger btn-full" style="margin-top:8px;" onclick="deleteProje(${id})">🗑 Projeyi Sil</button>`;
   document.getElementById('proje-detay-baslik').textContent=p.isim;
   document.getElementById('proje-detay-content').innerHTML=html;
@@ -5080,6 +5086,7 @@ function showTeklifDetay(id){
     footer+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
     footer+=`<button class="btn btn-primary btn-full" onclick="teklifPdfIndir(${id})">📄 PDF İndir</button>`;
     if(t.durum!=='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Gönderildi')">📤 Gönderildi İşaretle</button>`;
+    if(t.durum==='Gönderildi'||t.durum==='Taslak')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifOnayLinki(${id})">🔗 Dijital Onay Linki Gönder</button>`;
     if(t.durum==='Gönderildi')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Onaylandı')">✅ Onaylandı İşaretle</button>`;
     if(t.durum==='Onaylandı')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifIslemeCevir(${id})">💰 İşleme Dönüştür</button>`;
     if(USER_ROL==='admin')footer+=`<button class="btn btn-danger btn-full" style="margin-top:8px;" onclick="deleteTeklif(${id})">🗑 Sil</button>`;
@@ -5451,6 +5458,279 @@ function generateProjeRapor(){
   const a=document.createElement('a');a.href=url;a.download='proje-raporu.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   showToast('Rapor indirildi','green');
+}
+
+// ============================================================ FOTOĞRAFLI İŞ RAPORU (11)
+
+function openIsRaporuModal(projeId){
+  const p=DB.projeler.find(x=>x.id===projeId);if(!p)return;
+  const k=getKisi(p.musteriId);
+  const islemler=DB.islemler.filter(i=>i.projeId===projeId&&i.statu==='Tamamlandı');
+  const ciro=islemler.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+  const gider=islemler.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+  const isListesi=islemler.map(i=>`• ${dtS(i.tarih)}: ${i.kat||i.tip} — ${fmt(i.tutar)} ₺`).join('\n');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>İş Raporu</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:40px;color:#222;max-width:750px;margin:0 auto;}
+    h1{color:#1a73e8;font-size:22px;margin-bottom:4px;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:16px;border-bottom:2px solid #1a73e8;}
+    .section{margin:24px 0;}
+    .section h3{color:#1a73e8;font-size:14px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+    .card{background:#f8f9fa;border-radius:8px;padding:14px;margin-bottom:10px;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0;}
+    .stat{text-align:center;background:#f8f9fa;border-radius:8px;padding:14px;}
+    .stat-val{font-size:20px;font-weight:700;margin-top:4px;}
+    .foto-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px;}
+    .foto-grid img{width:100%;height:180px;object-fit:cover;border-radius:6px;}
+    .imza-kutusu{border:1px dashed #ccc;border-radius:8px;padding:20px;text-align:center;color:#999;margin-top:16px;min-height:80px;}
+    @media print{body{padding:20px;}@page{size:A4;margin:1cm;}}
+  </style></head><body>
+  <div class="header">
+    <div><h1>GÜN TEKNİK</h1><div style="font-size:13px;color:#666;">İş Tamamlama Raporu</div></div>
+    <div style="text-align:right;font-size:13px;color:#666;">Tarih: ${new Date().toLocaleDateString('tr-TR')}</div>
+  </div>
+  <div class="section">
+    <h3>Proje Bilgileri</h3>
+    <div class="card">
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px;">${p.isim}</div>
+      ${k?`<div style="font-size:13px;color:#555;">Müşteri: ${k.isim}${k.tel?' · '+k.tel:''}</div>`:''}
+      ${p.baslangic?`<div style="font-size:13px;color:#555;margin-top:4px;">Süre: ${p.baslangic} → ${p.bitis||'Devam Ediyor'}</div>`:''}
+      ${p.aciklama?`<div style="font-size:13px;color:#666;margin-top:8px;">${p.aciklama}</div>`:''}
+    </div>
+  </div>
+  ${islemler.length?`<div class="section">
+    <h3>Özet</h3>
+    <div class="stats">
+      <div class="stat"><div style="color:#666;font-size:12px;">Toplam Ciro</div><div class="stat-val" style="color:#2e7d32;">${fmt(ciro)} ₺</div></div>
+      <div class="stat"><div style="color:#666;font-size:12px;">Toplam Gider</div><div class="stat-val" style="color:#c62828;">${fmt(gider)} ₺</div></div>
+      <div class="stat"><div style="color:#666;font-size:12px;">Net Kâr</div><div class="stat-val" style="color:${ciro-gider>=0?'#2e7d32':'#c62828'};">${fmt(ciro-gider)} ₺</div></div>
+    </div>
+    <h3>Yapılan İşler</h3>
+    <div class="card" style="white-space:pre-line;font-size:13px;line-height:1.8;">${isListesi}</div>
+  </div>`:''}
+  <div class="section">
+    <h3>Fotoğraflar</h3>
+    <div class="foto-grid" id="rapor-foto-grid">
+      <div style="background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;height:180px;color:#999;font-size:13px;">Önce fotoğraf yok</div>
+      <div style="background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;height:180px;color:#999;font-size:13px;">Sonra fotoğraf yok</div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#999;">Fotoğrafları yazdırmadan önce üzerine tıklayıp değiştirebilirsiniz.</div>
+  </div>
+  <div class="section">
+    <h3>Müşteri Onayı</h3>
+    <div class="imza-kutusu">
+      <p style="font-size:13px;margin-bottom:24px;">Yukarıda belirtilen işler eksiksiz tamamlanmış olup teslim edilmiştir.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:16px;">
+        <div style="border-top:1px solid #ccc;padding-top:8px;font-size:12px;">Müşteri İmzası<br>${k?k.isim:''}</div>
+        <div style="border-top:1px solid #ccc;padding-top:8px;font-size:12px;">Yetkili İmzası<br>Gün Teknik</div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:11px;color:#999;margin-top:8px;">💡 Tarayıcıda açın ve fotoğraf alanlarına tıklayarak değiştirebilirsiniz.</p>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`is-raporu-${p.isim.replace(/\s/g,'-')}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('İş raporu indirildi — tarayıcıda aç ve yazdır','green');
+}
+
+// ============================================================ MÜŞTERİ ANALİZİ (15)
+
+function showMusteriAnaliz(kisiId){
+  const k=getKisi(kisiId);if(!k)return;
+  const now=new Date();
+  const tamam=DB.islemler.filter(i=>String(i.kisiId)===String(kisiId)&&i.statu==='Tamamlandı');
+  const bekleyen=DB.islemler.filter(i=>String(i.kisiId)===String(kisiId)&&i.statu==='Bekliyor');
+  const gelirler=tamam.filter(i=>i.tip==='Gelir');
+  const giderler=tamam.filter(i=>i.tip==='Gider');
+  const topGelir=gelirler.reduce((a,i)=>a+i.tutar,0);
+  const topGider=giderler.reduce((a,i)=>a+i.tutar,0);
+  const netKar=topGelir-topGider;
+  const ilkIslem=tamam.length?new Date(Math.min(...tamam.map(i=>new Date(i.tarih)))):null;
+  const sonIslem=tamam.length?new Date(Math.max(...tamam.map(i=>new Date(i.tarih)))):null;
+  const gunSecSon=sonIslem?Math.floor((now-sonIslem)/(24*60*60*1000)):null;
+  // Aylık dağılım - son 6 ay
+  const aylik=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const ayGelir=gelirler.filter(x=>filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0);
+    aylik.push({ay:d.toLocaleString('tr-TR',{month:'short'}),gelir:ayGelir});
+  }
+  const maxAylik=Math.max(...aylik.map(a=>a.gelir),1);
+
+  let html='';
+  // Özet kartlar
+  html+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Toplam Ciro</div><div class="num" style="font-weight:700;font-size:16px;color:var(--green);">${fmt(topGelir)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Net Kâr</div><div class="num" style="font-weight:700;font-size:16px;color:${netKar>=0?'var(--green)':'var(--red)'};">${fmt(netKar)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">İşlem Sayısı</div><div style="font-weight:700;font-size:16px;">${tamam.length}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Ortalama İşlem</div><div class="num" style="font-weight:700;font-size:16px;">${tamam.length?fmt(topGelir/gelirler.length||0):'—'}</div></div>`;
+  html+=`</div>`;
+  // Müşteri profili
+  html+=`<div class="card" style="margin-bottom:12px;">`;
+  if(ilkIslem)html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">📅 İlk iş: ${dtS(ilkIslem.toISOString())}</div>`;
+  if(sonIslem)html+=`<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">🕒 Son iş: ${dtS(sonIslem.toISOString())} (${gunSecSon} gün önce)</div>`;
+  if(bekleyen.length)html+=`<div style="font-size:12px;color:var(--amber);margin-bottom:4px;">⏳ ${bekleyen.length} bekleyen işlem: ${fmt(bekleyen.reduce((a,i)=>a+i.tutar,0))} ₺</div>`;
+  // Uyarı
+  if(gunSecSon!==null&&gunSecSon>90)html+=`<div style="font-size:12px;color:var(--red);margin-top:6px;padding:6px 10px;background:rgba(255,80,80,0.1);border-radius:var(--r-sm);">⚠️ ${gunSecSon} gündür yeni iş yapılmamış</div>`;
+  html+=`</div>`;
+  // 6 aylık grafik
+  html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Son 6 Ay Ciro</div>`;
+  html+=`<div style="display:flex;gap:6px;align-items:flex-end;height:80px;margin-bottom:16px;">`;
+  aylik.forEach(a=>{
+    const h=Math.max(4,(a.gelir/maxAylik*76));
+    html+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="width:100%;height:${h}px;background:var(--blue);border-radius:3px 3px 0 0;"></div>
+      <div style="font-size:9px;color:var(--text3);">${a.ay}</div></div>`;
+  });
+  html+=`</div>`;
+  // En sık kategori
+  const katSayac={};tamam.forEach(i=>{const k=i.kat||i.tip;katSayac[k]=(katSayac[k]||0)+1;});
+  const enSikKat=Object.entries(katSayac).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  if(enSikKat.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">En Sık Kategoriler</div>`;
+    enSikKat.forEach(([kat,sayi])=>{html+=`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:4px;font-size:12px;"><span>${kat}</span><span style="color:var(--text2);">${sayi} işlem</span></div>`;});
+  }
+  // Butonlar
+  html+=`<div style="display:flex;gap:8px;margin-top:14px;">`;
+  if(k.tel)html+=`<button class="btn btn-secondary btn-full" onclick="whatsappHatirlatici(${kisiId})" style="background:rgba(37,211,102,0.1);color:#25d166;border-color:rgba(37,211,102,0.3);">💬 WhatsApp</button>`;
+  html+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-info');showKisiDetay(${kisiId})">📋 Hesap Detayı</button>`;
+  html+=`</div>`;
+  showInfoModal(`📊 ${k.isim} Analizi`,html);
+}
+
+// Rehber listesine analiz butonu eklemek için renderRehber'i hook ediyoruz
+const _origRenderRehber=window.renderRehber;
+
+// ============================================================ DİJİTAL İMZA (16)
+
+function teklifOnayLinki(teklifId){
+  const t=DB.teklifler.find(x=>x.id===teklifId);if(!t)return;
+  const k=getKisi(t.kisiId);
+  if(!t.onayToken){showToast('Önce teklifi kaydedin','amber');return;}
+  // Onay sayfası URL'si — kendi sitenizin onay endpoint'i
+  const baseUrl=window.location.origin+window.location.pathname.replace('index.html','');
+  const onayUrl=`${baseUrl}onay.html?token=${t.onayToken}&tid=${teklifId}`;
+  // Basit share
+  const mesaj=`Merhaba ${k?k.isim:''},\n\nGün Teknik teklifi için onay bağlantısı:\n${onayUrl}\n\nToplam: ${fmt(t.toplam)} ₺`;
+  navigator.clipboard.writeText(onayUrl).then(()=>{
+    showToast('Onay linki panoya kopyalandı','green');
+  }).catch(()=>{});
+  // WhatsApp ile gönder
+  if(k?.tel){
+    const waUrl='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+    window.open(waUrl,'_blank');
+  }
+}
+
+// Onay sayfası oluştur ve indir
+function onayHtmlIndir(){
+  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teklif Onayı</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;background:#f5f7fa;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+    .card{background:white;border-radius:16px;padding:32px;max-width:480px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,0.1);text-align:center;}
+    h1{color:#1a73e8;font-size:22px;margin-bottom:8px;}
+    input{width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px;margin:12px 0;outline:none;}
+    input:focus{border-color:#1a73e8;}
+    button{width:100%;padding:14px;background:#1a73e8;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;}
+    button:hover{background:#1557b0;}
+    .success{background:#e8f5e9;border-radius:8px;padding:20px;margin-top:16px;display:none;}
+    .success h2{color:#2e7d32;}
+  </style></head><body>
+  <div class="card">
+    <div style="font-size:48px;margin-bottom:16px;">📋</div>
+    <h1>Teklif Onayı</h1>
+    <p id="teklif-bilgi" style="color:#666;font-size:14px;margin:12px 0;">Lütfen adınızı girerek teklifi onaylayın.</p>
+    <input type="text" id="onaylayan-isim" placeholder="Adınız Soyadınız" autocapitalize="words">
+    <button onclick="onayla()">✅ Teklifi Onaylıyorum</button>
+    <div class="success" id="basari">
+      <h2>✅ Onaylandı!</h2>
+      <p style="color:#555;margin-top:8px;">Onayınız kaydedildi. En kısa sürede iletişime geçeceğiz.</p>
+    </div>
+  </div>
+  <'+'script>
+    const params=new URLSearchParams(window.location.search);
+    const token=params.get('token');const tid=params.get('tid');
+    function onayla(){
+      const isim=document.getElementById('onaylayan-isim').value.trim();
+      if(!isim){alert('Lütfen adınızı girin');return;}
+      // Supabase'e kaydet
+      const SB_URL='${window.SB_URL||'https://zfflnrerdevnflchscqe.supabase.co'}';
+      const SB_KEY='${window.SB_KEY||''}';
+      fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+token,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({durum:'Onaylandı',onay_tarihi:new Date().toISOString(),onaylayan_isim:isim})})
+        .then(()=>{document.getElementById('basari').style.display='block';document.querySelector('button').style.display='none';document.getElementById('onaylayan-isim').style.display='none';})
+        .catch(()=>alert('Hata oluştu, lütfen tekrar deneyin.'));
+    }
+  </'+'script></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='onay.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('onay.html indirildi — GitHub\'a yükle','green');
+}
+
+// ============================================================ VERGİ TAKVİMİ (18)
+
+function renderVergiTakvimi(){
+  const el=document.getElementById('vergi-takvim-wrap');if(!el)return;
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+
+  // KDV matrahı hesapla
+  const gelirKDV=DB.vergiFaturalari.filter(v=>v.tip==='giden').reduce((a,v)=>a+v.kdvTutar,0);
+  const giderKDV=DB.vergiFaturalari.filter(v=>v.tip==='gelen').reduce((a,v)=>a+v.kdvTutar,0);
+  const netKDV=gelirKDV-giderKDV;
+
+  // Beyanname tarihleri (her ayın 26'sı)
+  const beyanAy=new Date(yil,ay+1,26);
+  const gunKalan=Math.ceil((beyanAy-now)/(24*60*60*1000));
+  const gecikti=gunKalan<0;
+  const acil=gunKalan<=5&&gunKalan>=0;
+
+  el.innerHTML=`
+    <div class="card" style="border-left:3px solid ${gecikti?'var(--red)':acil?'var(--amber)':'var(--blue)'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-weight:600;font-size:14px;">🏛️ KDV Beyannamesi</div>
+        <span style="font-size:11px;font-weight:600;color:${gecikti?'var(--red)':acil?'var(--amber)':'var(--blue)'};">${gecikti?'GECİKTİ':acil?gunKalan+' GÜN KALDI':gunKalan+' gün'}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Son tarih: ${beyanAy.toLocaleDateString('tr-TR')}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Hesaplanan</div><div class="num" style="font-weight:700;color:var(--red);">${fmt(gelirKDV)} ₺</div></div>
+        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">İndirilecek</div><div class="num" style="font-weight:700;color:var(--green);">${fmt(giderKDV)} ₺</div></div>
+        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Ödenecek</div><div class="num" style="font-weight:700;color:${netKDV>0?'var(--amber)':'var(--green)'};">${fmt(Math.max(0,netKDV))} ₺</div></div>
+      </div>
+      ${acil||gecikti?`<div style="margin-top:10px;padding:8px 10px;background:${gecikti?'rgba(255,80,80,0.1)':'rgba(255,180,0,0.1)'};border-radius:var(--r-sm);font-size:12px;color:${gecikti?'var(--red)':'var(--amber)'};">
+        ${gecikti?'⚠️ Beyanname tarihi geçti! Muhasebeciye danışın.':'⏰ Beyanname tarihi yaklaşıyor!'}</div>`:''}
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Yıllık Vergi Takvimi</div>
+    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>{
+      const mAdi=new Date(yil,m-1,1).toLocaleString('tr-TR',{month:'long'});
+      const gecti=m-1<ay||(m-1===ay&&now.getDate()>26);
+      const buAyMi=m-1===ay;
+      const ayKDV=DB.vergiFaturalari.filter(v=>{const d=new Date(v.tarih);return d.getMonth()===m-1&&d.getFullYear()===yil&&v.tip==='giden';}).reduce((a,v)=>a+v.kdvTutar,0);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:${buAyMi?'var(--surface)':'var(--bg2)'};border:1px solid ${buAyMi?'var(--blue)':'var(--border)'};border-radius:var(--r-sm);margin-bottom:4px;">
+        <div style="font-size:12px;font-weight:${buAyMi?'600':'400'};">${mAdi} <span style="color:var(--text3);font-size:10px;">· 26 Beyanname</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${ayKDV>0?`<span class="num" style="font-size:12px;color:var(--red);">${fmt(ayKDV)} ₺</span>`:''}
+          <span style="font-size:11px;color:${gecti?'var(--green)':buAyMi?'var(--amber)':'var(--text3)'};">${gecti?'✓':buAyMi?'→':'○'}</span>
+        </div>
+      </div>`;
+    }).join('')}
+    <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="exportKDVRaporu()">📊 KDV Raporu İndir</button>`;
+}
+
+function exportKDVRaporu(){
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+  const gelirKDV=DB.vergiFaturalari.filter(v=>v.tip==='giden');
+  const giderKDV=DB.vergiFaturalari.filter(v=>v.tip==='gelen');
+  const topGelir=gelirKDV.reduce((a,v)=>a+v.kdvTutar,0);
+  const topGider=giderKDV.reduce((a,v)=>a+v.kdvTutar,0);
+  const satirlar=[...gelirKDV.map(v=>`${dtS(v.tarih)},${v.firma||'—'},Hesaplanan KDV,${fmt(v.tutar)},${fmt(v.kdvTutar)}`),...giderKDV.map(v=>`${dtS(v.tarih)},${v.firma||'—'},İndirilecek KDV,${fmt(v.tutar)},${fmt(v.kdvTutar)}`)].join('\n');
+  const csv=`Tarih,Firma,Tip,Fatura Tutarı,KDV Tutarı\n${satirlar}\n\nHesaplanan KDV Toplamı,,,,${fmt(topGelir)}\nİndirilecek KDV Toplamı,,,,${fmt(topGider)}\nÖdenecek Net KDV,,,,${fmt(Math.max(0,topGelir-topGider))}`;
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`kdv-raporu-${yil}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('KDV raporu indirildi','green');
 }
 
 // ============================================================ BAŞLAT
