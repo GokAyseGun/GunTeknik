@@ -607,8 +607,22 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           </div>
           <div class="fi">
             <label>Firma / Kişi</label>
-            <input type="text" id="vf-firma" placeholder="Faturayı kesen firma adı">
+            <input type="hidden" id="vf-kisi-id">
+            <div style="display:flex;gap:8px;align-items:flex-start;">
+              <div class="kisi-ac-wrap" style="flex:1;" id="vf-ac-wrap">
+                <input type="text" class="kisi-ac-input" id="vf-ac-input" placeholder="İsim yazarak ara..."
+                  oninput="acSearchVergi()" onfocus="acSearchVergi()" autocomplete="off">
+                <div id="vf-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClearVergi()">
+                  <span class="ac-name" id="vf-ac-sel-text"></span>
+                  <span class="ac-clear">✕</span>
+                </div>
+                <div class="kisi-ac-dropdown" id="vf-ac-drop"></div>
+              </div>
+              <button type="button" onclick="openKisiModalVergi()" style="padding:0 14px;height:48px;flex-shrink:0;" class="btn btn-primary btn-sm">+</button>
+            </div>
+            <div id="vf-vergi-no" style="font-size:11px;color:var(--text3);margin-top:4px;display:none;">VKN/TCKN: <span id="vf-vergi-no-text"></span></div>
           </div>
+          <input type="hidden" id="vf-firma">
           <div style="display:flex;gap:8px;">
             <div class="fi" style="flex:1">
               <label>Fatura Tutarı (₺)</label>
@@ -1153,14 +1167,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   <div class="modal" style="max-width:400px;"><div class="modal-handle"></div>
     <div class="modal-head"><h3>📷 Barkod Tara</h3><button class="modal-close" onclick="stopBarkodKamera()">✕</button></div>
     <div class="modal-body" style="padding:16px;">
-      <div style="position:relative;background:#000;border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;">
-        <video id="barkod-video" style="width:100%;display:block;max-height:280px;object-fit:cover;" playsinline autoplay muted></video>
-        <!-- Tarama çizgisi animasyonu -->
-        <div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;">
-          <div style="position:absolute;left:10%;right:10%;top:20%;bottom:20%;border:2px solid rgba(126,179,240,0.7);border-radius:8px;"></div>
-          <div id="barkod-scan-line" style="position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:scanLine 2s linear infinite;top:30%;"></div>
-        </div>
-      </div>
+      <!-- html5-qrcode buraya render eder -->
+      <div id="barkod-video-wrap" style="border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;background:#000;min-height:200px;"></div>
       <div id="barkod-result" style="text-align:center;font-size:13px;color:var(--text2);min-height:24px;padding:8px;background:var(--bg2);border-radius:var(--r-sm);font-family:monospace;"></div>
       <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;">Barkodu kameraya göster · Otomatik okuyacak</div>
     </div>
@@ -2264,6 +2272,7 @@ async function saveKisi(btn){
       const src=document.getElementById('mk-source').value;
       if(newK&&src==='islem'){await loadDB();acSelect('mi-ac',newK.id,newK.isim,newK.tip);}
       else if(newK&&src==='borc'){await loadDB();acSelect('mb-ac',newK.id,newK.isim,newK.tip);}
+      else if(newK&&src==='vergi'){await loadDB();acSelectVergi({id:newK.id,isim:newK.isim,tip:newK.tip,vergiNo:newK.vergi_no||''});}
       showToast('Eklendi','green');
     }
     await loadDB();closeModal('modal-kisi');
@@ -3297,6 +3306,7 @@ async function saveVergiFatura(btn){
     })});
     // Formu temizle
     ['vf-no','vf-firma','vf-tutar','vf-kdv','vf-not'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    acClearVergi();document.getElementById('vf-kisi-id').value='';
     selectedVfFile=null;
     document.getElementById('vf-dosya-preview').innerHTML='';
     ['vf-dosya-kamera','vf-dosya-galeri','vf-dosya-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -3312,75 +3322,153 @@ async function deleteVergiFatura(id){
   },'🗑');
 }
 
+// ============================================================ VERGİ FORMU KİŞİ SEÇİMİ
+
+function acSearchVergi(){
+  const input=document.getElementById('vf-ac-input');
+  const drop=document.getElementById('vf-ac-drop');
+  if(!input||!drop)return;
+  const ara=input.value.toLowerCase().trim();
+  const list=DB.kisiler.filter(k=>!ara||(k.isim||'').toLowerCase().includes(ara)||(k.vergiNo||'').includes(ara));
+  drop.innerHTML='';
+  if(!list.length){
+    drop.innerHTML='<div class="kisi-ac-empty">Sonuç bulunamadı</div>';
+  }else{
+    list.slice(0,10).forEach(k=>{
+      const div=document.createElement('div');
+      div.className='kisi-ac-item';
+      div.innerHTML=`<div>${k.isim}</div><div class="ac-sub">${k.tip}${k.vergiNo?' · VKN: '+k.vergiNo:''}</div>`;
+      div.addEventListener('mousedown',e=>{e.preventDefault();acSelectVergi(k);});
+      drop.appendChild(div);
+    });
+  }
+  drop.classList.add('open');
+}
+
+function acSelectVergi(k){
+  document.getElementById('vf-kisi-id').value=k.id;
+  document.getElementById('vf-firma').value=k.isim;
+  const selText=document.getElementById('vf-ac-sel-text');
+  const sel=document.getElementById('vf-ac-sel');
+  const input=document.getElementById('vf-ac-input');
+  const drop=document.getElementById('vf-ac-drop');
+  if(selText)selText.textContent=k.isim+' ('+k.tip+')';
+  if(sel)sel.style.display='flex';
+  if(input)input.style.display='none';
+  if(drop)drop.classList.remove('open');
+  // Vergi no göster
+  if(k.vergiNo){
+    document.getElementById('vf-vergi-no').style.display='block';
+    document.getElementById('vf-vergi-no-text').textContent=k.vergiNo;
+  }else{
+    document.getElementById('vf-vergi-no').style.display='none';
+  }
+}
+
+function acClearVergi(){
+  document.getElementById('vf-kisi-id').value='';
+  document.getElementById('vf-firma').value='';
+  const sel=document.getElementById('vf-ac-sel');
+  const input=document.getElementById('vf-ac-input');
+  const drop=document.getElementById('vf-ac-drop');
+  if(sel)sel.style.display='none';
+  if(input){input.style.display='block';input.value='';input.focus();}
+  if(drop)drop.classList.remove('open');
+  document.getElementById('vf-vergi-no').style.display='none';
+}
+
+function openKisiModalVergi(){
+  document.getElementById('mk-source').value='vergi';
+  openKisiModal('Firma');
+}
+
+// Dropdown dışı tıklamada vergi AC kapat
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('vf-ac-wrap');
+  const drop=document.getElementById('vf-ac-drop');
+  if(wrap&&drop&&!wrap.contains(e.target))drop.classList.remove('open');
+});
+
 // ============================================================ BARKOD SİSTEMİ
 
 let barkodTargetInputId=null;
-let barkodStream=null;
-let barkodAnimFrame=null;
-let barkodReader=null;
+let html5QrCode=null;
 
-// ZXing kütüphanesini lazy load et
-async function loadZXing(){
-  if(window.ZXing)return true;
+// html5-qrcode kütüphanesini lazy load et
+async function loadHtml5QR(){
+  if(window.Html5Qrcode)return true;
   return new Promise(resolve=>{
     const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.20.0/zxing.min.js';
-    s.onload=()=>resolve(!!window.ZXing);
-    s.onerror=()=>resolve(false);
+    s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+    s.onload=()=>resolve(!!window.Html5Qrcode);
+    s.onerror=()=>{
+      // Fallback: cdnjs
+      const s2=document.createElement('script');
+      s2.src='https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+      s2.onload=()=>resolve(!!window.Html5Qrcode);
+      s2.onerror=()=>resolve(false);
+      document.head.appendChild(s2);
+    };
     document.head.appendChild(s);
   });
 }
 
 async function openBarkodKamera(targetInputId){
   barkodTargetInputId=targetInputId;
+  // Önce kütüphaneyi yükle
+  document.getElementById('barkod-result').textContent='Kütüphane yükleniyor...';
   openModal('modal-barkod-kamera');
+  const ok=await loadHtml5QR();
+  if(!ok){
+    showToast('Barkod kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.','red');
+    closeModal('modal-barkod-kamera');
+    return;
+  }
+  // Önceki tarayıcıyı temizle
+  await stopBarkodKamera(true);
   document.getElementById('barkod-result').textContent='Kamera başlatılıyor...';
-  const ok=await loadZXing();
-  if(!ok){showToast('ZXing kütüphanesi yüklenemedi','red');closeModal('modal-barkod-kamera');return;}
   try{
-    barkodStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
-    const video=document.getElementById('barkod-video');
-    video.srcObject=barkodStream;
-    await video.play();
+    html5QrCode=new Html5Qrcode('barkod-video-wrap');
+    const config={
+      fps:10,
+      qrbox:{width:220,height:120},
+      formatsToSupport:[
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.DATA_MATRIX,
+      ]
+    };
+    await html5QrCode.start(
+      {facingMode:'environment'},
+      config,
+      (kod)=>{barkodOkundu(kod);},
+      ()=>{}
+    );
     document.getElementById('barkod-result').textContent='Barkodu kameraya göster...';
-    // ZXing ile okuma
-    const hints=new Map();
-    const formats=[
-      ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,
-      ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.DATA_MATRIX,
-      ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E
-    ];
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);
-    barkodReader=new ZXing.MultiFormatReader();
-    barkodReader.setHints(hints);
-    scanFrame();
   }catch(e){
-    document.getElementById('barkod-result').textContent='Kamera erişimi reddedildi';
-    showToast('Kamera izni gerekli','red');
+    document.getElementById('barkod-result').textContent='Kamera hatası: '+e;
+    showToast('Kamera izni verin veya HTTPS gerekli','red');
   }
 }
 
-function scanFrame(){
-  const video=document.getElementById('barkod-video');
-  if(!video||!barkodStream)return;
-  if(video.readyState<video.HAVE_ENOUGH_DATA){barkodAnimFrame=requestAnimationFrame(scanFrame);return;}
-  const canvas=document.createElement('canvas');
-  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-  const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0);
-  try{
-    const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-    const luminance=new ZXing.RGBLuminanceSource(imgData.data,canvas.width,canvas.height);
-    const binary=new ZXing.HybridBinarizer(luminance);
-    const bitmap=new ZXing.BinaryBitmap(binary);
-    const result=barkodReader.decode(bitmap);
-    if(result){
-      const kod=result.getText();
-      barkodOkundu(kod);
-      return;
-    }
-  }catch(e){/* devam et */}
-  barkodAnimFrame=requestAnimationFrame(scanFrame);
+async function stopBarkodKamera(silent=false){
+  if(html5QrCode){
+    try{
+      const state=html5QrCode.getState();
+      if(state===Html5QrcodeScannerState.SCANNING||state===Html5QrcodeScannerState.PAUSED){
+        await html5QrCode.stop();
+      }
+    }catch(e){}
+    try{await html5QrCode.clear();}catch(e){}
+    html5QrCode=null;
+  }
+  if(!silent)closeModal('modal-barkod-kamera');
 }
 
 function barkodOkundu(kod){
