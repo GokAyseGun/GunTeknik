@@ -616,7 +616,19 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
     <!-- RAPORLAR -->
     <div class="page" id="page-raporlar">
-      <div class="sec-title mt0">Rapor Oluştur</div>
+      <div class="sec-title mt0">📊 Akıllı Rapor & Analiz</div>
+      <!-- Akıllı İçgörüler -->
+      <div id="rapor-icgoru" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <!-- Gelir Tahmini -->
+      <div class="card" style="margin-bottom:16px;" id="rapor-tahmin-kart">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-weight:600;font-size:14px;">📈 Gelir Tahmini</div>
+          <span style="font-size:11px;color:var(--text3);">Son 3 aya göre</span>
+        </div>
+        <div id="rapor-tahmin-content"></div>
+      </div>
+      <!-- Rapor kartları -->
+      <div class="sec-title">Rapor Oluştur</div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="card" onclick="generatePDF()">
           <div style="display:flex;align-items:center;gap:14px;">
@@ -634,6 +646,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👥</div>
             <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Cari Hesap Raporu (A4)</div><div style="font-size:12px;color:var(--text2);">Müşteri bakiyeleri, alacak ve borç özetleri</div></div>
+          </div>
+        </div>
+        <div class="card" onclick="generateProjeRapor()">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--amber-lt,rgba(255,180,0,0.15));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏗️</div>
+            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Proje Kâr/Zarar Raporu</div><div style="font-size:12px;color:var(--text2);">Tüm projeler bazında ciro, gider ve net kâr</div></div>
           </div>
         </div>
       </div>
@@ -1914,7 +1932,7 @@ function renderAll(){
     if(pid==='personel')renderPersonel(c);
     if(pid==='stok')renderStok();
     if(pid==='irsaliye')renderIrsaliye();
-    if(pid==='raporlar')renderSablonlar();
+    if(pid==='raporlar'){renderSablonlar();renderRaporIcgoru();}
     if(pid==='vergi')renderVergi();
     if(pid==='projeler')renderProjeler();
     if(pid==='teklifler')renderTeklifler();
@@ -2935,6 +2953,7 @@ function showKisiDetay(id){
 
   // Tahsilat butonu
   if(USER_ROL!=='goruntule')html+='<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal(\'modal-kisi-detay\');openOdemeModal('+id+')">💳 Tahsilat / Ödeme Ekle</button>';
+  if(k.tel)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Hatırlatıcı Gönder</button>';
 
   // Ödemeler
   if(odemeler.length){
@@ -3196,12 +3215,13 @@ function renderPersonel(c){
       const b=c.personelBakiye[p.id]||0;const renk=b>=0?'var(--green)':'var(--red)';
       const editBtn=USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="openPersonelEkleModal(${p.id})" style="width:28px;height:28px;font-size:13px;">✏️</button>`:'';
       const delBtn=USER_ROL==='admin'?`<button class="icon-btn" onclick="deletePersonel(${p.id},event)" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:'';
+      const maasBtn=`<button class="icon-btn" onclick="renderMaasModal(${p.id})" style="width:28px;height:28px;font-size:13px;" title="Maaş Durumu">💼</button>`;
       return `<div class="stagger-item" style="animation-delay:${i*0.05}s;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <div style="flex:1;"><div style="font-weight:600;font-size:14px;margin-bottom:2px;">${p.isim}</div><div style="font-size:12px;color:var(--text2);">${p.pozisyon||'Personel'} · %${p.oran} Kâr Payı</div></div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="font-weight:700;font-size:16px;color:${renk};" class="num">${fmt(Math.abs(b))}</div>
-            <div onclick="event.stopPropagation()">${editBtn}${delBtn}</div>
+            <div onclick="event.stopPropagation()">${maasBtn}${editBtn}${delBtn}</div>
           </div>
         </div>
       </div>`;
@@ -5184,6 +5204,253 @@ function butceAsimiKontrol(){
     const msg=asimlar.map(a=>`${a.kat}: %${a.oran} (${fmt(a.harcama)}/${fmt(a.limit)} ₺)`).join('\n');
     showToast('⚠️ Bütçe uyarısı: '+asimlar[0].kat+' %'+asimlar[0].oran,'amber');
   }
+}
+
+// ============================================================ AKILLI RAPOR & İÇGÖRÜLER
+
+function renderRaporIcgoru(){
+  const el=document.getElementById('rapor-icgoru');if(!el)return;
+  const icgorular=hesaplaIcgoru();
+  el.innerHTML=icgorular.map(ig=>`
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:${ig.bg||'var(--bg2)'};border:1px solid ${ig.border||'var(--border)'};border-radius:var(--r-md);border-left:3px solid ${ig.renk};">
+      <div style="font-size:22px;flex-shrink:0;">${ig.ikon}</div>
+      <div><div style="font-weight:600;font-size:13px;margin-bottom:3px;">${ig.baslik}</div><div style="font-size:12px;color:var(--text2);">${ig.aciklama}</div></div>
+    </div>`).join('');
+  renderGelirTahmini();
+}
+
+function hesaplaIcgoru(){
+  const icgorular=[];
+  const now=new Date();
+  const buAy=now.getMonth();const buYil=now.getFullYear();
+  const gecenAy=(buAy===0?11:buAy-1);const gecenYil=(buAy===0?buYil-1:buYil);
+
+  // Tamamlanan işlemler
+  const tamam=DB.islemler.filter(i=>i.statu==='Tamamlandı');
+  const buAyGelir=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+  const buAyGider=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+  const gecenAyGelir=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+  const gecenAyGider=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+
+  // Gelir karşılaştırma
+  if(gecenAyGelir>0){
+    const fark=((buAyGelir-gecenAyGelir)/gecenAyGelir*100).toFixed(1);
+    const artti=buAyGelir>=gecenAyGelir;
+    icgorular.push({ikon:artti?'📈':'📉',baslik:`Gelir geçen aya göre %${Math.abs(fark)} ${artti?'arttı':'azaldı'}`,aciklama:`Bu ay: ${fmt(buAyGelir)} ₺ · Geçen ay: ${fmt(gecenAyGelir)} ₺`,renk:artti?'var(--green)':'var(--red)'});
+  }else if(buAyGelir>0){
+    icgorular.push({ikon:'💰',baslik:`Bu ay ${fmt(buAyGelir)} ₺ gelir`,aciklama:'Geçen ay veri yok',renk:'var(--green)'});
+  }
+
+  // Gider karşılaştırma
+  if(gecenAyGider>0){
+    const fark=((buAyGider-gecenAyGider)/gecenAyGider*100).toFixed(1);
+    const artti=buAyGider>gecenAyGider;
+    if(artti&&parseFloat(fark)>15)icgorular.push({ikon:'⚠️',baslik:`Gider geçen aya göre %${fark} arttı`,aciklama:`Bu ay: ${fmt(buAyGider)} ₺ · Geçen ay: ${fmt(gecenAyGider)} ₺`,renk:'var(--amber)'});
+  }
+
+  // En kârlı müşteri
+  const musteriKar={};
+  tamam.forEach(i=>{if(!i.kisiId)return;const k=i.tip==='Gelir'?i.tutar:-i.tutar;musteriKar[i.kisiId]=(musteriKar[i.kisiId]||0)+k;});
+  const enKarli=Object.entries(musteriKar).sort((a,b)=>b[1]-a[1])[0];
+  if(enKarli&&enKarli[1]>0){
+    const k=getKisi(parseInt(enKarli[0]));
+    if(k)icgorular.push({ikon:'🏆',baslik:`En kârlı müşteri: ${k.isim}`,aciklama:`Net: ${fmt(enKarli[1])} ₺`,renk:'var(--blue)'});
+  }
+
+  // 6 aydır işlem yapılmayan müşteriler
+  const altiAyOnce=new Date(now.getTime()-180*24*60*60*1000);
+  const aktifMusteri=new Set(tamam.filter(i=>new Date(i.tarih)>altiAyOnce).map(i=>i.kisiId).filter(Boolean));
+  const pasifMusteri=DB.kisiler.filter(k=>!aktifMusteri.has(k.id)&&tamam.some(i=>i.kisiId===k.id));
+  if(pasifMusteri.length>0)icgorular.push({ikon:'😴',baslik:`${pasifMusteri.length} müşteri 6 aydır sessiz`,aciklama:pasifMusteri.slice(0,3).map(k=>k.isim).join(', ')+(pasifMusteri.length>3?' ve diğerleri':''),renk:'var(--text3)'});
+
+  // Nakit akışı uyarısı
+  const bekleyenGider=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+  const c=calcFinans();
+  if(bekleyenGider>c.kasa*0.5)icgorular.push({ikon:'💸',baslik:'Bekleyen ödemeler kasanın yarısından fazla',aciklama:`Kasa: ${fmt(c.kasa)} ₺ · Bekleyen gider: ${fmt(bekleyenGider)} ₺`,renk:'var(--red)'});
+
+  if(!icgorular.length)icgorular.push({ikon:'✅',baslik:'Her şey yolunda görünüyor',aciklama:'Dikkat çeken bir durum tespit edilmedi',renk:'var(--green)'});
+  return icgorular;
+}
+
+function filterByMonth(tarih,ay,yil){
+  const d=new Date(tarih);return d.getMonth()===ay&&d.getFullYear()===yil;
+}
+
+function renderGelirTahmini(){
+  const el=document.getElementById('rapor-tahmin-content');if(!el)return;
+  const now=new Date();
+  const aylar=[];
+  // Son 3 ayın verisini al
+  for(let i=2;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const gelir=DB.islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı'&&filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0);
+    aylar.push({ay:d.toLocaleString('tr-TR',{month:'short'}),gelir});
+  }
+  // Basit lineer tahmin: son 3 ayın ortalaması + trend
+  const ort=aylar.reduce((a,x)=>a+x.gelir,0)/3;
+  const trend=(aylar[2].gelir-aylar[0].gelir)/2;
+  const tahmin=Math.max(0,ort+trend);
+  const maxVal=Math.max(...aylar.map(a=>a.gelir),tahmin,1);
+  const bars=aylar.map(a=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+      <div style="font-size:10px;color:var(--text2);text-align:center;" class="num">${fmt(a.gelir)}</div>
+      <div style="width:100%;background:var(--border);border-radius:4px;height:60px;display:flex;align-items:flex-end;overflow:hidden;">
+        <div style="width:100%;background:var(--blue);border-radius:4px 4px 0 0;height:${(a.gelir/maxVal*100)||2}%;transition:height 0.5s;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);">${a.ay}</div>
+    </div>`).join('');
+  const tahminBar=`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+      <div style="font-size:10px;color:var(--green);text-align:center;font-weight:600;" class="num">${fmt(tahmin)}</div>
+      <div style="width:100%;background:var(--border);border-radius:4px;height:60px;display:flex;align-items:flex-end;overflow:hidden;">
+        <div style="width:100%;background:var(--green);border-radius:4px 4px 0 0;height:${(tahmin/maxVal*100)||2}%;transition:height 0.5s;opacity:0.8;background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,255,255,0.1) 4px,rgba(255,255,255,0.1) 8px);"></div>
+      </div>
+      <div style="font-size:11px;color:var(--green);font-weight:600;">Tahmin</div>
+    </div>`;
+  el.innerHTML=`<div style="display:flex;gap:8px;align-items:flex-end;">${bars}${tahminBar}</div><div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center;">Son 3 aya göre doğrusal tahmin</div>`;
+}
+
+// ============================================================ WHATSAPP HATIRLATICI
+
+function whatsappHatirlatici(kisiId){
+  const k=getKisi(kisiId);if(!k||!k.tel)return;
+  const c=calcFinans();const cD=c.cD[kisiId];if(!cD)return;
+  const bakiye=cD.bakiyeAll;
+  if(bakiye===0){showToast('Bu müşteriyle açık hesap yok','amber');return;}
+  const vadeli=DB.islemler.filter(i=>String(i.kisiId)===String(kisiId)&&i.statu==='Bekliyor').sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  let mesaj=`Merhaba ${k.isim},\n\n`;
+  if(bakiye>0){
+    mesaj+=`Hesabınızda ${fmt(bakiye)} ₺ alacağımız bulunmaktadır.\n`;
+    if(vadeli.length){
+      mesaj+=`\nYaklaşan ödemeler:\n`;
+      vadeli.slice(0,3).forEach(i=>{mesaj+=`• ${dtS(i.tarih)}: ${fmt(i.tutar)} ₺\n`;});
+    }
+    mesaj+=`\nÖdeme kolaylığı için iletişime geçebilirsiniz.\n\nGün Teknik`;
+  }else{
+    mesaj+=`Bilginize: Hesabınızda ${fmt(Math.abs(bakiye))} ₺ borcunuz bulunmaktadır.\n\nGün Teknik`;
+  }
+  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+  window.open(url,'_blank');
+}
+
+function whatsappBorcListesi(){
+  // Vadesi geçmiş tüm alacaklar için toplu mesaj
+  const now=new Date();
+  const gecmisler=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<now);
+  if(!gecmisler.length){showToast('Vadesi geçmiş alacak yok','green');return;}
+  const msg=['Vadesi Geçmiş Alacaklar:'];
+  const gruplu={};
+  gecmisler.forEach(i=>{const k=getKisi(i.kisiId);const isim=k?k.isim:'—';if(!gruplu[isim])gruplu[isim]=0;gruplu[isim]+=i.tutar;});
+  Object.entries(gruplu).sort((a,b)=>b[1]-a[1]).forEach(([isim,tutar])=>{msg.push(`• ${isim}: ${fmt(tutar)} ₺`);});
+  const toplam=gecmisler.reduce((a,i)=>a+i.tutar,0);
+  msg.push(`\nToplam: ${fmt(toplam)} ₺`);
+  navigator.clipboard.writeText(msg.join('\n')).then(()=>showToast('Panoya kopyalandı','green')).catch(()=>showToast(msg.join('\n').slice(0,80)+'...','blue'));
+}
+
+// ============================================================ PERSONEL MAAŞ
+
+function renderMaasModal(personelId){
+  const p=DB.personeller.find(x=>x.id===personelId);if(!p)return;
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+  // Bu ay hak edişleri
+  const hakEdisler=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&filterByMonth(y.tarih,ay,yil));
+  const topHakEdis=hakEdisler.reduce((a,y)=>a+y.tutar,0);
+  // Önceki ödemeler
+  const odemeler=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&y.tip==='Avans Ödemesi'&&filterByMonth(y.tarih,ay,yil));
+  const topOdeme=odemeler.reduce((a,y)=>a+y.tutar,0);
+  const kalan=topHakEdis-topOdeme;
+  const ayAdi=now.toLocaleString('tr-TR',{month:'long',year:'numeric'});
+  let html=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:12px;">`;
+  html+=`<div style="font-weight:700;font-size:15px;margin-bottom:4px;">${p.isim}</div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);">${p.pozisyon||'Personel'} · ${ayAdi}</div></div>`;
+  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Hak Ediş</div><div class="num" style="font-weight:700;color:var(--green);">${fmt(topHakEdis)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Ödenen</div><div class="num" style="font-weight:700;color:var(--blue);">${fmt(topOdeme)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Kalan</div><div class="num" style="font-weight:700;color:${kalan>0?'var(--amber)':'var(--green)'};">${fmt(kalan)}</div></div>`;
+  html+=`</div>`;
+  // Hak ediş detayı
+  if(hakEdisler.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Bu Ay Hak Edişler</div>`;
+    hakEdisler.forEach(h=>{
+      html+=`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;">`;
+      html+=`<div style="font-size:12px;">${h.not||h.tip} <span style="color:var(--text3);font-size:11px;">${dtS(h.tarih)}</span></div>`;
+      html+=`<div class="num" style="font-weight:600;color:var(--green);">${fmt(h.tutar)}</div></div>`;
+    });
+  }
+  // Bordro PDF
+  html+=`<div style="display:flex;gap:8px;margin-top:12px;">`;
+  html+=`<button class="btn btn-primary btn-full" onclick="bordroPdfIndir(${personelId})">📄 Bordro PDF</button>`;
+  html+=`<button class="btn btn-secondary btn-full" onclick="openAvansModal(${personelId})">💸 Avans Ver</button>`;
+  html+=`</div>`;
+  // Önceki ayların özeti
+  html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Son 3 Ay</div>`;
+  for(let i=1;i<=3;i++){
+    const d=new Date(yil,ay-i,1);
+    const ayHak=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&filterByMonth(y.tarih,d.getMonth(),d.getFullYear())&&y.tip!=='Avans Ödemesi').reduce((a,y)=>a+y.tutar,0);
+    const ayOde=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&filterByMonth(y.tarih,d.getMonth(),d.getFullYear())&&y.tip==='Avans Ödemesi').reduce((a,y)=>a+y.tutar,0);
+    const ayAdiKisa=d.toLocaleString('tr-TR',{month:'short',year:'numeric'});
+    html+=`<div style="display:flex;justify-content:space-between;padding:6px 12px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">`;
+    html+=`<span>${ayAdiKisa}</span><span class="num">${fmt(ayHak)} hak / ${fmt(ayOde)} ödendi</span></div>`;
+  }
+  showInfoModal('💼 '+p.isim+' Maaş Durumu',html);
+}
+
+function bordroPdfIndir(personelId){
+  const p=DB.personeller.find(x=>x.id===personelId);if(!p)return;
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+  const hakEdisler=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&filterByMonth(y.tarih,ay,yil));
+  const topHak=hakEdisler.reduce((a,y)=>a+y.tutar,0);
+  const topOde=DB.yardimciIslemleri.filter(y=>y.personelId===personelId&&y.tip==='Avans Ödemesi'&&filterByMonth(y.tarih,ay,yil)).reduce((a,y)=>a+y.tutar,0);
+  const kalan=topHak-topOde;
+  const ayAdi=now.toLocaleString('tr-TR',{month:'long',year:'numeric'});
+  const satirlar=hakEdisler.map(h=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${h.not||h.tip}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${dtS(h.tarih)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${fmt(h.tutar)} ₺</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bordro</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;max-width:600px;margin:0 auto;}h1{color:#1a73e8;font-size:20px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e8f5e9;}.footer{margin-top:40px;font-size:11px;color:#888;text-align:center;}</style></head><body>
+  <h1>GÜN TEKNİK — BORDRO</h1>
+  <p><strong>Personel:</strong> ${p.isim}<br><strong>Dönem:</strong> ${ayAdi}<br><strong>Pozisyon:</strong> ${p.pozisyon||'—'}</p>
+  <table><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right;">Tutar</th></tr></thead><tbody>${satirlar}</tbody></table>
+  <table><tbody><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:600;">Toplam Hak Ediş</td><td style="padding:10px 12px;text-align:right;font-weight:600;">${fmt(topHak)} ₺</td></tr><tr><td colspan="2" style="padding:8px 12px;color:#666;">Ödenen Avans</td><td style="padding:8px 12px;text-align:right;color:#666;">${fmt(topOde)} ₺</td></tr><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:700;color:#1a73e8;">Ödenecek Net</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#1a73e8;">${fmt(kalan)} ₺</td></tr></tbody></table>
+  <div class="footer">Gün Teknik ERP · ${now.toLocaleDateString('tr-TR')}</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`bordro-${p.isim.replace(/\s/g,'-')}-${ayAdi}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('Bordro indirildi','green');
+}
+
+function showInfoModal(baslik,icerik){
+  // Genel bilgi modalı
+  let modal=document.getElementById('modal-info');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-info';modal.className='modal-ov';
+    modal.innerHTML=`<div class="modal" style="max-height:90vh;"><div class="modal-handle"></div><div class="modal-head"><h3 id="modal-info-baslik"></h3><button class="modal-close" onclick="closeModal('modal-info')">✕</button></div><div class="modal-body" style="padding:16px;" id="modal-info-icerik"></div></div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('modal-info-baslik').textContent=baslik;
+  document.getElementById('modal-info-icerik').innerHTML=icerik;
+  openModal('modal-info');
+}
+
+// ============================================================ PROJE RAPORU
+
+function generateProjeRapor(){
+  if(!DB.projeler.length){showToast('Henüz proje yok','amber');return;}
+  const satirlar=DB.projeler.map(p=>{
+    const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı');
+    const ciro=is.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+    const gider=is.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+    const kar=ciro-gider;
+    const k=getKisi(p.musteriId);
+    return `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${p.isim}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${k?k.isim:'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${p.durum}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#2e7d32;">${fmt(ciro)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#c62828;">${fmt(gider)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;color:${kar>=0?'#2e7d32':'#c62828'};">${kar<0?'-':''}${fmt(Math.abs(kar))} ₺</td></tr>`;
+  }).join('');
+  const topCiro=DB.projeler.reduce((a,p)=>{const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı'&&i.tip==='Gelir');return a+is.reduce((b,i)=>b+i.tutar,0);},0);
+  const topGider=DB.projeler.reduce((a,p)=>{const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı'&&i.tip==='Gider');return a+is.reduce((b,i)=>b+i.tutar,0);},0);
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Proje Raporu</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e3f2fd;font-weight:700;}</style></head><body>
+  <h1>GÜN TEKNİK — PROJE KÂR/ZARAR RAPORU</h1><p>Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}</p>
+  <table><thead><tr><th>Proje</th><th>Müşteri</th><th>Durum</th><th style="text-align:right;">Ciro</th><th style="text-align:right;">Gider</th><th style="text-align:right;">Net Kâr</th></tr></thead><tbody>${satirlar}<tr class="total"><td colspan="3">TOPLAM</td><td style="text-align:right;padding:10px 12px;color:#2e7d32;">${fmt(topCiro)} ₺</td><td style="text-align:right;padding:10px 12px;color:#c62828;">${fmt(topGider)} ₺</td><td style="text-align:right;padding:10px 12px;color:${topCiro-topGider>=0?'#2e7d32':'#c62828'};">${fmt(topCiro-topGider)} ₺</td></tr></tbody></table></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='proje-raporu.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('Rapor indirildi','green');
 }
 
 // ============================================================ BAŞLAT
