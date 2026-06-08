@@ -3566,6 +3566,64 @@ async function stopBarkodKamera(silent=false){
   if(!silent)closeModal('modal-barkod-kamera');
 }
 
+// Barkod başarıyla okunduğunda çağrılır
+function barkodOkundu(kod){
+  stopBarkodKamera();
+  if(!barkodTargetInputId||!kod)return;
+  showToast('Barkod okundu: '+kod,'green');
+  // Satır bazlı seçim (işlem formundaki stok satırları)
+  if(barkodTargetInputId.startsWith('satir:')){
+    const satirId=barkodTargetInputId.slice(6);
+    const s=DB.stok.find(x=>x.barkod===kod);
+    if(s){
+      const sel=document.getElementById(satirId+'-sec');
+      if(sel)sel.value=s.id;
+      showToast(s.ad+' seçildi','green');
+    }else{
+      showConfirm('Barkod Bulunamadı','Bu barkod stokta kayıtlı değil. Eklemek ister misiniz?',()=>goStokEkle(),'🔍');
+    }
+    return;
+  }
+  // Stok sayfasında arama
+  if(barkodTargetInputId==='stok-ara-barkod'){
+    onStokBarkodAra(kod);return;
+  }
+  // Stok modalındaki barkod alanı
+  if(barkodTargetInputId==='stok-barkod'){
+    const el=document.getElementById('stok-barkod');
+    if(el)el.value=kod;
+    return;
+  }
+  // Diğer input'lar
+  const el=document.getElementById(barkodTargetInputId);
+  if(el){el.value=kod;el.dispatchEvent(new Event('input'));}
+}
+
+// Stok sayfasında barkodla arama
+function onStokBarkodAra(kod){
+  if(!kod)return;
+  const s=DB.stok.find(x=>x.barkod===kod);
+  if(s){showToast(s.ad+' bulundu','green');openStokModal(s.id);}
+  else{
+    showConfirm('Barkod Bulunamadı','Bu barkod kayıtlı değil. Yeni ürün eklemek ister misiniz?',()=>{
+      openStokModal();setTimeout(()=>{document.getElementById('stok-barkod').value=kod;},200);
+    },'🔍');
+  }
+}
+
+// İşlem formunda barkodla stok seçme
+function onIslemBarkodAra(kod){
+  if(!kod)return;
+  const s=DB.stok.find(x=>x.barkod===kod);
+  if(s){const sel=document.getElementById('mi-stok-sec');if(sel){sel.value=s.id;showToast(s.ad+' seçildi','green');}}
+  else{showConfirm('Barkod Bulunamadı','Stokta kayıtlı değil. Stok sayfasında eklemek ister misiniz?',()=>goStokEkle(),'🔍');}
+}
+
+// Stok ekleme sayfasına yönlendir
+function goStokEkle(){
+  closeModal('modal-islem');goPage('stok');setTimeout(()=>openStokModal(),300);
+}
+
 // ============================================================ BARKOD ETİKET
 
 function showBarkodEtiket(stok){
