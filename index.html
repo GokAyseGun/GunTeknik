@@ -3495,23 +3495,40 @@ async function openBarkodKamera(targetInputId){
         canvas.height=video.videoHeight;
         ctx.drawImage(video,0,0);
 
-        // 1. BarcodeDetector - video'ya direkt uygula (daha iyi sonuç)
+        // BarcodeDetector ve jsQR - ImageBitmap üzerinden
+        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+        // 1. BarcodeDetector (ImageBitmap - en geniş format desteği)
         if(bdDetector){
-          // Önce video'ya dene
-          let results=await bdDetector.detect(video).catch(()=>null);
-          // Olmadıysa canvas'a dene
-          if(!results){results=await bdDetector.detect(canvas).catch(()=>[]);}
-          if(results&&results.length>0&&!okumaYapildi){
-            okumaYapildi=true;
-            barkodOkundu(results[0].rawValue);
-            return;
+          try{
+            const bmp=await createImageBitmap(canvas);
+            const results=await bdDetector.detect(bmp);
+            bmp.close();
+            if(results&&results.length>0&&!okumaYapildi){
+              okumaYapildi=true;
+              barkodOkundu(results[0].rawValue);
+              return;
+            }
+            if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
+          }catch(e){
+            // ImageBitmap olmadıysa canvas dene
+            try{
+              const results2=await bdDetector.detect(canvas);
+              if(results2&&results2.length>0&&!okumaYapildi){
+                okumaYapildi=true;
+                barkodOkundu(results2[0].rawValue);
+                return;
+              }
+              if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
+            }catch(e2){
+              if(res)res.textContent='⚠️ BD devre dışı, QR moda geçildi';
+              bdDetector=null;
+            }
           }
-          if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
         }
 
-        // 2. jsQR fallback (QR kod)
+        // 2. jsQR fallback (QR kod - her tarayıcı)
         if(!okumaYapildi&&window.jsQR){
-          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
           const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
           if(code&&code.data&&!okumaYapildi){
             okumaYapildi=true;
