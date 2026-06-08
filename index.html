@@ -752,6 +752,42 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="stagger-wrap" id="list-vergi"></div>
     </div>
 
+    <!-- PROJELER -->
+    <div class="page" id="page-projeler">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">🏗️ Projeler</div>
+        <button class="btn btn-primary btn-sm" onclick="openProjeModal()">+ Proje</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="proje-filtre" onchange="renderProjeler()" style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;">
+          <option value="">Tüm Durumlar</option>
+          <option value="Devam Ediyor">Devam Ediyor</option>
+          <option value="Tamamlandı">Tamamlandı</option>
+          <option value="Beklemede">Beklemede</option>
+          <option value="İptal">İptal</option>
+        </select>
+      </div>
+      <div id="list-projeler" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- TEKLİFLER -->
+    <div class="page" id="page-teklifler">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">📋 Teklifler</div>
+        <button class="btn btn-primary btn-sm" onclick="openTeklifModal()">+ Teklif</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="teklif-filtre" onchange="renderTeklifler()" style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;">
+          <option value="">Tüm Durumlar</option>
+          <option value="Taslak">Taslak</option>
+          <option value="Gönderildi">Gönderildi</option>
+          <option value="Onaylandı">Onaylandı</option>
+          <option value="Reddedildi">Reddedildi</option>
+        </select>
+      </div>
+      <div id="list-teklifler" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" onclick="goPage('dashboard',this)"><span class="nav-icon">📊</span><span>Özet</span></div>
@@ -764,6 +800,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
+    <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
+    <div class="nav-item" onclick="goPage('teklifler',this)"><span class="nav-icon">📋</span><span>Teklif</span></div>
   </nav>
 </div>
 
@@ -805,6 +843,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-secondary btn-full" id="btn-desen-ayar" onclick="closeModal('modal-ayarlar');desenAyarla()">🔐 Giriş Deseni Belirle</button>
       <button class="btn btn-secondary btn-full" id="btn-desen-sil" onclick="desenSifirla()" style="display:none;">🗑 Deseni Kaldır</button>
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openButceModal()">💰 Bütçe Limitleri</button>
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-danger btn-full" onclick="doLogout()">🔒 Çıkış Yap</button>
     </div>
@@ -922,6 +961,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div id="mi-dosya-preview"></div>
       </div>
       <div class="fi" id="div-mi-kdv" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
+      <div class="fi" id="div-mi-proje">
+        <label>Projeye Bağla <span style="font-size:10px;color:var(--text3);">(isteğe bağlı)</span></label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="mi-proje-id" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;">
+            <option value="">— Proje seçme —</option>
+          </select>
+          <button type="button" onclick="closeModal('modal-islem');openProjeModal()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--blue);font-size:12px;cursor:pointer;flex-shrink:0;">+ Proje</button>
+        </div>
+      </div>
         <label class="check-row" style="margin-bottom:8px;">
           <input type="checkbox" id="mi-kdv-chk" onchange="onKdvChk()">
           <span style="font-size:13px;font-weight:600;">🧾 Fatura Var (KDV)</span>
@@ -1346,6 +1394,122 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
+<!-- Proje Modal -->
+<div class="modal-ov" id="modal-proje">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="proje-modal-baslik">Yeni Proje</h3><button class="modal-close" onclick="closeModal('modal-proje')">✕</button></div>
+    <div class="modal-body fg">
+      <input type="hidden" id="proje-id">
+      <div class="fi"><label>Proje Adı</label><input type="text" id="proje-isim" placeholder="Proje adı" autocapitalize="words"></div>
+      <div class="fi"><label>Müşteri</label>
+        <div style="display:flex;gap:8px;">
+          <div class="kisi-ac-wrap" style="flex:1" id="proje-ac-wrap">
+            <input type="text" class="kisi-ac-input" id="proje-ac-input" placeholder="Müşteri seç..." autocapitalize="words" oninput="acSearch('proje-ac')" onfocus="acSearch('proje-ac')" autocomplete="off">
+            <div id="proje-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('proje-ac')"><span class="ac-name" id="proje-ac-sel-text"></span><span class="ac-clear">✕</span></div>
+            <div class="kisi-ac-dropdown" id="proje-ac-drop"></div>
+          </div>
+          <input type="hidden" id="proje-kisi">
+        </div>
+      </div>
+      <div class="fi"><label>Durum</label>
+        <select id="proje-durum" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option>Devam Ediyor</option><option>Tamamlandı</option><option>Beklemede</option><option>İptal</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1"><label>Başlangıç</label><input type="date" id="proje-baslangic"></div>
+        <div class="fi" style="flex:1"><label>Bitiş</label><input type="date" id="proje-bitis"></div>
+      </div>
+      <div class="fi"><label>Açıklama</label><textarea id="proje-aciklama" rows="2" placeholder="Proje detayları..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveProje(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Proje Detay Modal -->
+<div class="modal-ov" id="modal-proje-detay">
+  <div class="modal" style="max-width:480px;max-height:90vh;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="proje-detay-baslik">Proje</h3><button class="modal-close" onclick="closeModal('modal-proje-detay')">✕</button></div>
+    <div class="modal-body" style="padding:16px;" id="proje-detay-content"></div>
+  </div>
+</div>
+
+<!-- Teklif Modal -->
+<div class="modal-ov" id="modal-teklif">
+  <div class="modal" style="max-height:92vh;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="teklif-modal-baslik">Yeni Teklif</h3><button class="modal-close" onclick="closeModal('modal-teklif')">✕</button></div>
+    <div class="modal-body fg">
+      <input type="hidden" id="teklif-id">
+      <div class="fi">
+        <label>Müşteri</label>
+        <div style="display:flex;gap:8px;">
+          <div class="kisi-ac-wrap" style="flex:1" id="teklif-ac-wrap">
+            <input type="text" class="kisi-ac-input" id="teklif-ac-input" placeholder="Müşteri seç..." autocapitalize="words" oninput="acSearch('teklif-ac')" onfocus="acSearch('teklif-ac')" autocomplete="off">
+            <div id="teklif-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('teklif-ac')"><span class="ac-name" id="teklif-ac-sel-text"></span><span class="ac-clear">✕</span></div>
+            <div class="kisi-ac-dropdown" id="teklif-ac-drop"></div>
+          </div>
+          <input type="hidden" id="teklif-kisi">
+          <button class="btn btn-primary btn-sm" onclick="openKisiModal()" style="padding:0 14px;height:48px;flex-shrink:0;">+</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1"><label>Teklif Tarihi</label><input type="date" id="teklif-tarih"></div>
+        <div class="fi" style="flex:1"><label>Geçerlilik Tarihi</label><input type="date" id="teklif-gecerlilik"></div>
+      </div>
+      <div class="fi"><label>Kalemler</label>
+        <div id="teklif-kalemler" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <button type="button" onclick="teklifKalemEkle()" style="width:100%;padding:9px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:transparent;color:var(--blue);font-size:13px;cursor:pointer;">+ Kalem Ekle</button>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:600;">Toplam</span>
+        <span style="font-weight:700;font-size:18px;color:var(--green);" class="num" id="teklif-toplam-goster">0 ₺</span>
+      </div>
+      <div class="fi"><label>Açıklama / Not</label><textarea id="teklif-aciklama" rows="2" placeholder="Teklif notları, ödeme koşulları..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveTeklif(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teklif Detay Modal -->
+<div class="modal-ov" id="modal-teklif-detay">
+  <div class="modal" style="max-width:480px;max-height:90vh;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="teklif-detay-baslik">Teklif</h3><button class="modal-close" onclick="closeModal('modal-teklif-detay')">✕</button></div>
+    <div class="modal-body" style="padding:16px;" id="teklif-detay-content"></div>
+    <div class="modal-foot" id="teklif-detay-footer"></div>
+  </div>
+</div>
+
+<!-- Bütçe Limit Modal -->
+<div class="modal-ov" id="modal-butce">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>💰 Bütçe Limitleri</h3><button class="modal-close" onclick="closeModal('modal-butce')">✕</button></div>
+    <div class="modal-body fg">
+      <div class="fi"><label>Kategori</label>
+        <select id="butce-kat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option>İşletme Gideri</option><option>Şahsi Gider</option><option>Kira</option><option>Personel</option><option>Malzeme</option><option>Akaryakıt</option><option>Diğer</option>
+        </select>
+      </div>
+      <div class="fi"><label>Limit Tutar (₺)</label><input type="number" id="butce-tutar" inputmode="numeric" placeholder="0.00"></div>
+      <div class="fi"><label>Dönem</label>
+        <select id="butce-donem" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option>Aylık</option><option>Yıllık</option>
+        </select>
+      </div>
+      <div id="list-butce-limitler" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-butce')">Kapat</button>
+      <button class="btn btn-primary btn-full" onclick="saveButceLimit(this)">Limit Ekle</button>
+    </div>
+  </div>
+</div>
+
 <!-- Finansman Düzenle -->
 <div class="modal-ov" id="modal-fin-duzenle">
   <div class="modal"><div class="modal-handle"></div>
@@ -1523,16 +1687,16 @@ async function startApp(){
   }
   await loadDB();
   // Giriş sonrası yaklaşan ödeme uyarısını göster
-  setTimeout(()=>yaklaşanUyariGoster(),800);
+  setTimeout(()=>{yaklaşanUyariGoster();butceAsimiKontrol();},800);
 }
 
 // ============================================================ VERİTABANI
-let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[]};
+let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[],projeler:[],teklifler:[],butceLimitler:[]};
 
 async function loadDB(){
   showLoading(true);
   try{
-    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller]=await Promise.all([
+    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler]=await Promise.all([
       sbFetch('kisiler?order=isim.asc&select=*'),
       sbFetch('islemler?order=tarih.desc&select=*'),
       sbFetch('odemeler?order=tarih.desc&select=*'),
@@ -1542,7 +1706,10 @@ async function loadDB(){
       sbFetch('stok_hareketleri?order=tarih.desc&select=*').catch(()=>[]),
       sbFetch('sablonlar?order=id.asc&select=*'),
       sbFetch('ekler?select=*').catch(()=>[]),
-      sbFetch('personeller?order=isim.asc&select=*').catch(()=>[])
+      sbFetch('personeller?order=isim.asc&select=*').catch(()=>[]),
+      sbFetch('projeler?order=created_at.desc&select=*').catch(()=>[]),
+      sbFetch('teklifler?order=created_at.desc&select=*').catch(()=>[]),
+      sbFetch('butce_limitler?select=*').catch(()=>[])
     ]);
     DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false}));
     DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[]}));
@@ -1552,8 +1719,11 @@ async function loadDB(){
     DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,isim:s.isim,tip:s.tip,kat:s.kat,altKat:s.alt_kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',not:s.not||''}));
-    DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi}));
+    DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
     DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||''}));
+    DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,createdAt:p.created_at}));
+    DB.teklifler=(teklifler||[]).map(t=>({id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler:t.kalemler||[],toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at}));
+    DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
     renderAll();
   }catch(e){
     console.error('loadDB:',e);
@@ -1746,6 +1916,8 @@ function renderAll(){
     if(pid==='irsaliye')renderIrsaliye();
     if(pid==='raporlar')renderSablonlar();
     if(pid==='vergi')renderVergi();
+    if(pid==='projeler')renderProjeler();
+    if(pid==='teklifler')renderTeklifler();
     // Dashboard vergi kartlarını her zaman güncelle
     renderVergiDash();
     observeStagger();
@@ -2043,6 +2215,9 @@ function openIslemModal(){
   selectedFile=null;
   document.getElementById('mi-dosya-preview').innerHTML='';
   ['mi-file-kamera','mi-file-galeri','mi-file-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Proje listesini güncelle
+  const projeSel=document.getElementById('mi-proje-id');
+  if(projeSel){projeSel.innerHTML='<option value="">— Proje seçme —</option>'+DB.projeler.filter(p=>p.durum==='Devam Ediyor').map(p=>`<option value="${p.id}">${p.isim}</option>`).join('');}
   const dt=new Date();
   const dtY=dt.getFullYear(),dtM=String(dt.getMonth()+1).padStart(2,'0'),dtD=String(dt.getDate()).padStart(2,'0'),dtH=String(dt.getHours()).padStart(2,'0'),dtMn=String(dt.getMinutes()).padStart(2,'0');
   document.getElementById('mi-tarih').value=dtY+'-'+dtM+'-'+dtD+'T'+dtH+':'+dtMn;
@@ -2522,14 +2697,14 @@ async function saveIslem(btn){
       }
     }
     if(eId){
-      await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:localISOString(tarih),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds})});
+      await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:localISOString(tarih),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId})});
       showToast('Güncellendi','green');
     }else{
       const isTaksit=document.getElementById('mi-taksit-chk')?.checked;
       const tSayisi=statu==='Bekliyor'&&isTaksit?(parseInt(document.getElementById('mi-taksit-sayi').value)||2):1;
       const groupId=tSayisi>1?Date.now():null;const kayitlar=[];
       if(statu==='Bekliyor'){const base=Math.round(tutar/tSayisi);for(let idx=0;idx<tSayisi;idx++){const sT=new Date(vTarih);sT.setMonth(sT.getMonth()+idx);kayitlar.push({group_id:groupId,tarih:localISOString(sT),tip,statu:'Bekliyor',kisi_id:kId,kat,alt_kat:finalAltKat,tutar:base,malzeme_tutar:idx===0?malz:0,"not":(tSayisi>1?'['+(idx+1)+'/'+tSayisi+' Taksit] ':'')+notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}}
-      else{kayitlar.push({tarih:localISOString(tarih),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}
+      else{kayitlar.push({tarih:localISOString(tarih),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId});}
       const result=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(kayitlar)});
       // Personel hak ediş
       if(yardimciChk&&tip==='Gelir'&&kat==='İşletme Geliri'&&result&&result[0]&&seciliPersoneller.length){
@@ -3657,8 +3832,11 @@ async function loadDB(){
     DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,isim:s.isim,tip:s.tip,kat:s.kat,altKat:s.alt_kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',not:s.not||''}));
-    DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi}));
+    DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
     DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||''}));
+    DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,createdAt:p.created_at}));
+    DB.teklifler=(teklifler||[]).map(t=>({id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler:t.kalemler||[],toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at}));
+    DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
     DB.vergiFaturalari=(vergiFat||[]).map(v=>({id:v.id,tarih:v.tarih,tip:v.tip,faturaNo:v.fatura_no||'',firma:v.firma||'',tutar:parseFloat(v.tutar)||0,kdvTutar:parseFloat(v.kdv_tutar)||0,not:v.aciklama||'',islemId:v.islem_id||null,kaynak:v.kaynak||'manuel',dosyaUrl:v.dosya_url||null,dosyaAdi:v.dosya_adi||null,dosyaTipi:v.dosya_tipi||null}));
     renderAll();
   }catch(e){
@@ -4616,6 +4794,396 @@ function icsDateStr(d){
 
 function icsEscape(str){
   return String(str||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n').replace(/\r/g,'');
+}
+
+// ============================================================ PROJELER
+
+function renderProjeler(){
+  const list=document.getElementById('list-projeler');if(!list)return;
+  const filtre=document.getElementById('proje-filtre')?.value||'';
+  const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
+  const projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
+  if(!projeler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Proje yok</div><div class="empty-sub">+ Proje butonuna bas</div></div>';return;}
+  list.innerHTML=projeler.map((p,i)=>{
+    const k=getKisi(p.musteriId);
+    const islemler=DB.islemler.filter(x=>x.projeId===p.id);
+    const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+    const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+    const kar=ciro-gider;
+    const renk=durumRenk[p.durum]||'var(--blue)';
+    return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;border-left:3px solid ${renk};" onclick="showProjeDetay(${p.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.isim}</div>
+          <div style="font-size:11px;color:var(--text2);">${k?k.isim:'Müşteri yok'} · ${islemler.length} işlem</div>
+        </div>
+        <span style="background:${renk}22;color:${renk};font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;">${p.durum}</span>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div><div style="font-size:10px;color:var(--text3);">Ciro</div><div style="font-weight:600;font-size:13px;color:var(--green);" class="num">${fmt(ciro)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);">Gider</div><div style="font-weight:600;font-size:13px;color:var(--red);" class="num">${fmt(gider)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);">Kâr</div><div style="font-weight:600;font-size:13px;color:${kar>=0?'var(--green)':'var(--red)'};" class="num">${kar<0?'- ':''} ${fmt(Math.abs(kar))}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProjeModal(id){
+  if(USER_ROL==='goruntule')return;
+  document.getElementById('proje-id').value=id||'';
+  document.getElementById('proje-modal-baslik').textContent=id?'Projeyi Düzenle':'Yeni Proje';
+  if(id){
+    const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+    document.getElementById('proje-isim').value=p.isim;
+    document.getElementById('proje-durum').value=p.durum;
+    document.getElementById('proje-baslangic').value=p.baslangic||'';
+    document.getElementById('proje-bitis').value=p.bitis||'';
+    document.getElementById('proje-aciklama').value=p.aciklama||'';
+    if(p.musteriId){const k=getKisi(p.musteriId);if(k)acSelect('proje-ac',k.id,k.isim,k.tip);}
+  }else{
+    ['proje-isim','proje-baslangic','proje-bitis','proje-aciklama'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('proje-durum').value='Devam Ediyor';
+    acClear('proje-ac');
+  }
+  openModal('modal-proje');
+}
+
+async function saveProje(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const id=document.getElementById('proje-id').value;
+    const isim=document.getElementById('proje-isim').value.trim();
+    if(!isim){showToast('Proje adı gerekli','red');return;}
+    const payload={isim,durum:document.getElementById('proje-durum').value,baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
+    if(id)await sbFetch('projeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    else await sbFetch('projeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    await loadDB();closeModal('modal-proje');showToast(id?'Güncellendi':'Proje eklendi','green');
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+function showProjeDetay(id){
+  const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+  const k=getKisi(p.musteriId);
+  const islemler=DB.islemler.filter(x=>x.projeId===id).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+  const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+  const kar=ciro-gider;
+  const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
+  const renk=durumRenk[p.durum]||'var(--blue)';
+  let html='';
+  html+=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:12px;">`;
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:16px;font-weight:700;">${p.isim}</div><span style="background:${renk}22;color:${renk};font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;">${p.durum}</span></div>`;
+  if(k)html+=`<div style="font-size:12px;color:var(--text2);">👤 ${k.isim}</div>`;
+  if(p.baslangic||p.bitis)html+=`<div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${p.baslangic||'?'} → ${p.bitis||'?'}</div>`;
+  if(p.aciklama)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px;padding:8px;background:rgba(0,0,0,0.2);border-radius:var(--r-sm);">${p.aciklama}</div>`;
+  html+=`</div>`;
+  // Özet
+  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Ciro</div><div class="num" style="font-weight:700;color:var(--green);">${fmt(ciro)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Gider</div><div class="num" style="font-weight:700;color:var(--red);">${fmt(gider)}</div></div>`;
+  html+=`<div class="card" style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Kâr</div><div class="num" style="font-weight:700;color:${kar>=0?'var(--green)':'var(--red)'};">${kar<0?'-':''} ${fmt(Math.abs(kar))}</div></div>`;
+  html+=`</div>`;
+  // İşlemler
+  if(islemler.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">İşlemler (${islemler.length})</div>`;
+    islemler.slice(0,8).forEach(i=>{
+      const pos=i.tip==='Gelir';
+      html+=`<div style="padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;display:flex;justify-content:space-between;cursor:pointer;" onclick="closeModal('modal-proje-detay');showIslemDetay(${i.id})">`;
+      html+=`<div><div style="font-size:12px;font-weight:600;">${i.kat||i.tip}</div><div style="font-size:11px;color:var(--text2);">${dtS(i.tarih)} · ${i.statu}</div></div>`;
+      html+=`<div style="font-weight:700;color:${pos?'var(--green)':'var(--red)'};" class="num">${fmt(i.tutar)}</div></div>`;
+    });
+  }
+  // Butonlar
+  html+=`<div style="display:flex;gap:8px;margin-top:12px;">`;
+  if(USER_ROL!=='goruntule')html+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje-detay');openProjeModal(${id})">✏️ Düzenle</button>`;
+  html+=`<button class="btn btn-primary btn-full" onclick="closeModal('modal-proje-detay');projeIslemEkle(${id})">+ İşlem Ekle</button>`;
+  html+=`</div>`;
+  if(USER_ROL==='admin')html+=`<button class="btn btn-danger btn-full" style="margin-top:8px;" onclick="deleteProje(${id})">🗑 Projeyi Sil</button>`;
+  document.getElementById('proje-detay-baslik').textContent=p.isim;
+  document.getElementById('proje-detay-content').innerHTML=html;
+  openModal('modal-proje-detay');
+}
+
+function projeIslemEkle(projeId){
+  openIslemModal();
+  setTimeout(()=>{
+    const el=document.getElementById('mi-proje-id');
+    if(el)el.value=projeId;
+  },200);
+}
+
+async function deleteProje(id){
+  showConfirm('Projeyi Sil','Bu proje silinecek. İşlemler etkilenmez.',async()=>{
+    await sbFetch('projeler?id=eq.'+id,{method:'DELETE'});
+    await loadDB();closeModal('modal-proje-detay');showToast('Proje silindi','amber');
+  },'🗑');
+}
+
+// ============================================================ TEKLİFLER
+
+let teklifKalemSay=0;
+
+function renderTeklifler(){
+  const list=document.getElementById('list-teklifler');if(!list)return;
+  const filtre=document.getElementById('teklif-filtre')?.value||'';
+  const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
+  const teklifler=DB.teklifler.filter(t=>!filtre||t.durum===filtre);
+  if(!teklifler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Teklif yok</div><div class="empty-sub">+ Teklif butonuna bas</div></div>';return;}
+  list.innerHTML=teklifler.map((t,i)=>{
+    const k=getKisi(t.kisiId);
+    const renk=durumRenk[t.durum]||'var(--text3)';
+    return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;" onclick="showTeklifDetay(${t.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div><div style="font-weight:600;font-size:14px;">${k?k.isim:'—'}</div><div style="font-size:11px;color:var(--text2);">${dtS(t.tarih)}${t.gecerlilikTarihi?' · Geçerli: '+t.gecerlilikTarihi:''}</div></div>
+        <div style="text-align:right;"><div style="font-weight:700;font-size:16px;" class="num">${fmt(t.toplam)}</div><span style="color:${renk};font-size:10px;font-weight:600;">${t.durum}</span></div>
+      </div>
+      ${t.aciklama?`<div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.aciklama}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openTeklifModal(id){
+  if(USER_ROL==='goruntule')return;
+  teklifKalemSay=0;
+  document.getElementById('teklif-id').value=id||'';
+  document.getElementById('teklif-modal-baslik').textContent=id?'Teklifi Düzenle':'Yeni Teklif';
+  const bugun=today();
+  document.getElementById('teklif-tarih').value=bugun;
+  // Geçerlilik = 30 gün sonra
+  const gecerlilik=new Date();gecerlilik.setDate(gecerlilik.getDate()+30);
+  document.getElementById('teklif-gecerlilik').value=localDateStr(gecerlilik);
+  document.getElementById('teklif-aciklama').value='';
+  document.getElementById('teklif-kalemler').innerHTML='';
+  acClear('teklif-ac');
+  if(id){
+    const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+    document.getElementById('teklif-tarih').value=localDateStr(t.tarih);
+    if(t.gecerlilikTarihi)document.getElementById('teklif-gecerlilik').value=t.gecerlilikTarihi;
+    document.getElementById('teklif-aciklama').value=t.aciklama||'';
+    if(t.kisiId){const k=getKisi(t.kisiId);if(k)acSelect('teklif-ac',k.id,k.isim,k.tip);}
+    (t.kalemler||[]).forEach(k=>teklifKalemEkle(k));
+  }else{
+    teklifKalemEkle();
+  }
+  hesaplaTeklifToplam();
+  openModal('modal-teklif');
+}
+
+function teklifKalemEkle(kalem){
+  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return;
+  const idx=teklifKalemSay++;
+  const id='tk-'+idx;
+  const div=document.createElement('div');
+  div.id=id;div.style.cssText='display:flex;gap:6px;align-items:flex-end;';
+  div.innerHTML=`
+    <div style="flex:2;"><input type="text" id="${id}-aciklama" placeholder="Açıklama" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words"></div>
+    <div style="flex:1;"><input type="number" id="${id}-miktar" placeholder="Miktar" value="${kalem?.miktar||1}" min="1" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
+    <div style="flex:1;"><input type="number" id="${id}-birim-fiyat" placeholder="Fiyat" value="${kalem?.birimFiyat||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
+    <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
+  wrap.appendChild(div);
+}
+
+function hesaplaTeklifToplam(){
+  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return;
+  let toplam=0;
+  Array.from(wrap.children).forEach(div=>{
+    const m=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||0;
+    const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    toplam+=m*f;
+  });
+  const el=document.getElementById('teklif-toplam-goster');
+  if(el)el.textContent=formatTutar(toplam)+' ₺';
+  return toplam;
+}
+
+function teklifKalemleriOku(){
+  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return[];
+  const kalemler=[];
+  Array.from(wrap.children).forEach(div=>{
+    const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
+    const miktar=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
+    const birimFiyat=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    if(aciklama&&birimFiyat>0)kalemler.push({aciklama,miktar,birimFiyat,toplam:miktar*birimFiyat});
+  });
+  return kalemler;
+}
+
+async function saveTeklif(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const id=document.getElementById('teklif-id').value;
+    const kisiId=parseInt(document.getElementById('teklif-kisi').value)||null;
+    if(!kisiId){showToast('Müşteri seçin','red');return;}
+    const kalemler=teklifKalemleriOku();
+    if(!kalemler.length){showToast('En az bir kalem girin','red');return;}
+    const toplam=kalemler.reduce((a,k)=>a+k.toplam,0);
+    const payload={kisi_id:kisiId,tarih:new Date(document.getElementById('teklif-tarih').value).toISOString(),gecerlilik_tarihi:document.getElementById('teklif-gecerlilik').value||null,kalemler:JSON.stringify(kalemler),toplam,aciklama:document.getElementById('teklif-aciklama').value};
+    if(id){await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});}
+    else{const r=await sbFetch('teklifler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});if(r&&r[0])await guncelOnayToken(r[0].id);}
+    await loadDB();closeModal('modal-teklif');showToast(id?'Güncellendi':'Teklif oluşturuldu','green');
+  }catch(e){showToast('Hata!','red');console.error(e);}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function guncelOnayToken(teklifId){
+  const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+  await sbFetch('teklifler?id=eq.'+teklifId,{method:'PATCH',body:JSON.stringify({onay_token:token})});
+  return token;
+}
+
+function showTeklifDetay(id){
+  const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+  const k=getKisi(t.kisiId);
+  const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
+  const renk=durumRenk[t.durum]||'var(--text3)';
+  let html='';
+  html+=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:12px;">`;
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-weight:700;font-size:15px;">${k?k.isim:'—'}</div><span style="color:${renk};font-size:11px;font-weight:600;">${t.durum}</span></div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);">📅 ${dtS(t.tarih)}${t.gecerlilikTarihi?' · Geçerli: '+t.gecerlilikTarihi:''}</div>`;
+  if(t.onaylayanIsim)html+=`<div style="font-size:12px;color:var(--green);margin-top:4px;">✅ ${t.onaylayanIsim} onayladı · ${dtS(t.onayTarihi)}</div>`;
+  html+=`</div>`;
+  // Kalemler
+  html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Kalemler</div>`;
+  (t.kalemler||[]).forEach(km=>{
+    html+=`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:5px;">`;
+    html+=`<div><div style="font-size:13px;font-weight:600;">${km.aciklama}</div><div style="font-size:11px;color:var(--text2);">${km.miktar} adet × ${fmt(km.birimFiyat)}</div></div>`;
+    html+=`<div style="font-weight:700;" class="num">${fmt(km.toplam)}</div></div>`;
+  });
+  html+=`<div style="display:flex;justify-content:flex-end;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:12px;"><span style="font-size:16px;font-weight:700;color:var(--green);" class="num">Toplam: ${fmt(t.toplam)}</span></div>`;
+  if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
+  document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
+  document.getElementById('teklif-detay-content').innerHTML=html;
+  // Footer butonlar
+  let footer='';
+  if(USER_ROL!=='goruntule'){
+    footer+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
+    footer+=`<button class="btn btn-primary btn-full" onclick="teklifPdfIndir(${id})">📄 PDF İndir</button>`;
+    if(t.durum!=='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Gönderildi')">📤 Gönderildi İşaretle</button>`;
+    if(t.durum==='Gönderildi')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Onaylandı')">✅ Onaylandı İşaretle</button>`;
+    if(t.durum==='Onaylandı')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifIslemeCevir(${id})">💰 İşleme Dönüştür</button>`;
+    if(USER_ROL==='admin')footer+=`<button class="btn btn-danger btn-full" style="margin-top:8px;" onclick="deleteTeklif(${id})">🗑 Sil</button>`;
+  }
+  document.getElementById('teklif-detay-footer').innerHTML=footer;
+  openModal('modal-teklif-detay');
+}
+
+async function teklifDurumGuncelle(id,durum){
+  await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({durum})});
+  await loadDB();closeModal('modal-teklif-detay');showToast('Durum güncellendi','green');
+}
+
+async function teklifIslemeCevir(id){
+  const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+  showConfirm('İşleme Dönüştür','Bu teklif Gelir işlemi olarak kaydedilecek.',async()=>{
+    const payload={tarih:localISOString(new Date()),tip:'Gelir',statu:'Tamamlandı',kisi_id:t.kisiId,kat:'Şahsi Gelir',alt_kat:'Teklif Onayı',tutar:t.toplam,malzeme_tutar:0,'not':'Teklif #'+fmtId(t.id)+' onaylandı',odeme_yontemi:'İBAN',personel_ids:[]};
+    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({durum:'Onaylandı'})});
+    await loadDB();closeModal('modal-teklif-detay');showToast('İşlem oluşturuldu','green');
+  },'💰');
+}
+
+function teklifPdfIndir(id){
+  const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+  const k=getKisi(t.kisiId);
+  const kalemlerHtml=(t.kalemler||[]).map(km=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${km.aciklama}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${km.miktar}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${fmt(km.birimFiyat)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(km.toplam)} ₺</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Teklif</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;max-width:700px;margin:0 auto;}h1{color:#1a73e8;font-size:22px;margin-bottom:4px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}td{font-size:13px;}.total{font-size:16px;font-weight:700;color:#1a73e8;}.footer{margin-top:40px;font-size:11px;color:#888;}</style></head><body>
+  <h1>GÜN TEKNİK</h1><div style="font-size:13px;color:#666;margin-bottom:30px;">Teklif #${fmtId(t.id)} · ${dtS(t.tarih)}</div>
+  <div style="margin-bottom:20px;"><strong>Müşteri:</strong> ${k?k.isim:'—'}${k?.tel?'<br><strong>Tel:</strong> '+k.tel:''}</div>
+  ${t.gecerlilikTarihi?`<div style="margin-bottom:20px;color:#e53;font-size:13px;">⏰ Teklif geçerlilik tarihi: ${t.gecerlilikTarihi}</div>`:''}
+  <table><thead><tr><th>Açıklama</th><th style="text-align:center;">Miktar</th><th style="text-align:right;">Birim Fiyat</th><th style="text-align:right;">Toplam</th></tr></thead><tbody>${kalemlerHtml}</tbody></table>
+  <div style="text-align:right;padding:12px;background:#f5f5f5;border-radius:4px;" class="total">TOPLAM: ${fmt(t.toplam)} ₺</div>
+  ${t.aciklama?`<div style="margin-top:20px;padding:12px;background:#f9f9f9;border-radius:4px;font-size:13px;">${t.aciklama}</div>`:''}
+  <div class="footer">Bu teklif Gün Teknik ERP sistemi tarafından oluşturulmuştur.</div>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`teklif-${fmtId(t.id)}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('PDF olarak açmak için tarayıcıda "Yazdır → PDF Kaydet" kullan','blue');
+}
+
+async function deleteTeklif(id){
+  showConfirm('Teklifi Sil','Bu teklif kalıcı olarak silinecek.',async()=>{
+    await sbFetch('teklifler?id=eq.'+id,{method:'DELETE'});
+    await loadDB();closeModal('modal-teklif-detay');showToast('Silindi','amber');
+  },'🗑');
+}
+
+// ============================================================ BÜTÇE LİMİTLERİ
+
+function openButceModal(){
+  renderButceLimitler();
+  openModal('modal-butce');
+}
+
+function renderButceLimitler(){
+  const list=document.getElementById('list-butce-limitler');if(!list)return;
+  if(!DB.butceLimitler.length){list.innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:12px;">Limit tanımlanmamış</div>';return;}
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+  list.innerHTML=DB.butceLimitler.map(b=>{
+    const harcama=DB.islemler.filter(i=>{
+      if(i.tip!=='Gider'||i.statu!=='Tamamlandı')return false;
+      if(!(i.kat||'').includes(b.kategori)&&!(i.altKat||'').includes(b.kategori))return false;
+      if(b.donem==='Aylık'){const d=new Date(i.tarih);return d.getMonth()===ay&&d.getFullYear()===yil;}
+      return new Date(i.tarih).getFullYear()===yil;
+    }).reduce((a,i)=>a+i.tutar,0);
+    const oran=Math.min(100,Math.round((harcama/b.limitTutar)*100));
+    const renk=oran>=100?'var(--red)':oran>=80?'var(--amber)':'var(--green)';
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;">${b.kategori} <span style="font-size:10px;color:var(--text3);">${b.donem}</span></div>
+        <button onclick="deleteButceLimit(${b.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">🗑</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;">
+        <span class="num">${fmt(harcama)} ₺ harcandı</span>
+        <span class="num">Limit: ${fmt(b.limitTutar)} ₺</span>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+        <div style="height:100%;width:${oran}%;background:${renk};border-radius:4px;transition:width 0.5s;"></div>
+      </div>
+      <div style="text-align:right;font-size:11px;margin-top:4px;color:${renk};">%${oran}</div>
+    </div>`;
+  }).join('');
+}
+
+async function saveButceLimit(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const kategori=document.getElementById('butce-kat').value;
+    const limitTutar=parseTutar(document.getElementById('butce-tutar').value);
+    if(limitTutar<=0){showToast('Limit tutarı girin','red');return;}
+    const donem=document.getElementById('butce-donem').value;
+    await sbFetch('butce_limitler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({kategori,limit_tutar:limitTutar,donem})});
+    await loadDB();renderButceLimitler();showToast('Limit eklendi','green');
+    document.getElementById('butce-tutar').value='';
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function deleteButceLimit(id){
+  await sbFetch('butce_limitler?id=eq.'+id,{method:'DELETE'});
+  await loadDB();renderButceLimitler();showToast('Limit kaldırıldı','amber');
+}
+
+// Bütçe aşım kontrolü — startApp'tan sonra çağrılır
+function butceAsimiKontrol(){
+  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
+  const asimlar=[];
+  DB.butceLimitler.filter(b=>b.aktif).forEach(b=>{
+    const harcama=DB.islemler.filter(i=>{
+      if(i.tip!=='Gider'||i.statu!=='Tamamlandı')return false;
+      if(!(i.kat||'').includes(b.kategori)&&!(i.altKat||'').includes(b.kategori))return false;
+      if(b.donem==='Aylık'){const d=new Date(i.tarih);return d.getMonth()===ay&&d.getFullYear()===yil;}
+      return new Date(i.tarih).getFullYear()===yil;
+    }).reduce((a,i)=>a+i.tutar,0);
+    const oran=(harcama/b.limitTutar)*100;
+    if(oran>=90)asimlar.push({kat:b.kategori,oran:Math.round(oran),harcama,limit:b.limitTutar});
+  });
+  if(asimlar.length){
+    const msg=asimlar.map(a=>`${a.kat}: %${a.oran} (${fmt(a.harcama)}/${fmt(a.limit)} ₺)`).join('\n');
+    showToast('⚠️ Bütçe uyarısı: '+asimlar[0].kat+' %'+asimlar[0].oran,'amber');
+  }
 }
 
 // ============================================================ BAŞLAT
