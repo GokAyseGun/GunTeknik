@@ -1177,16 +1177,26 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="modal-close" onclick="stopBarkodKamera()">✕</button>
     </div>
     <div class="modal-body" style="padding:16px;">
-      <div style="position:relative;background:#000;border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;">
+      <!-- Canlı kamera önizleme -->
+      <div style="position:relative;background:#000;border-radius:var(--r-md);overflow:hidden;margin-bottom:12px;" id="barkod-video-wrap">
         <video id="barkod-video" style="width:100%;display:block;max-height:300px;object-fit:cover;" playsinline muted></video>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
-          <div style="width:200px;height:100px;border:2px solid rgba(126,179,240,0.8);border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,0.4);"></div>
-        </div>
-        <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;">
-          <div id="barkod-result" style="display:inline-block;background:rgba(0,0,0,0.7);color:white;font-size:12px;padding:4px 12px;border-radius:20px;font-family:monospace;">Başlatılıyor...</div>
+          <div style="width:220px;height:110px;border:3px solid rgba(126,179,240,0.9);border-radius:10px;box-shadow:0 0 0 4000px rgba(0,0,0,0.45);"></div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text3);text-align:center;">Barkodu mavi çerçeveye göster · Otomatik okuyacak</div>
+      <!-- Fotoğraf çek butonu -->
+      <button onclick="barkodFotoOku()" id="btn-barkod-cek" class="btn btn-primary btn-full" style="margin-bottom:10px;font-size:15px;">
+        📸 Fotoğraf Çek ve Oku
+      </button>
+      <!-- Durum mesajı -->
+      <div id="barkod-result" style="text-align:center;font-size:13px;color:var(--text2);padding:6px;min-height:24px;"></div>
+      <!-- Alternatif: galeriden seç -->
+      <div style="text-align:center;margin-top:6px;">
+        <label for="barkod-foto-input" style="font-size:12px;color:var(--blue);cursor:pointer;text-decoration:underline;">
+          veya galeriden fotoğraf seç
+        </label>
+        <input type="file" id="barkod-foto-input" accept="image/*" style="display:none;" onchange="barkodFotoAnaliz(this.files[0])">
+      </div>
     </div>
   </div>
 </div>
@@ -3435,128 +3445,112 @@ let barkodStream=null;
 let barkodScanTimer=null;
 let barkodActive=false;
 
-function preloadHtml5QR(){
-  // Artık native kamera kullanıyoruz, kütüphane gerekmez
-}
+function preloadHtml5QR(){/* jsQR head'den yükleniyor */}
 
 async function openBarkodKamera(targetInputId){
   barkodTargetInputId=targetInputId;
-  barkodActive=false;
-  // Önce durdur
-  if(barkodScanTimer){clearInterval(barkodScanTimer);barkodScanTimer=null;}
-  if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
+  await _stopQR();
   const res=document.getElementById('barkod-result');
   const video=document.getElementById('barkod-video');
+  const btn=document.getElementById('btn-barkod-cek');
   if(video)video.srcObject=null;
   if(res)res.textContent='Kamera başlatılıyor...';
+  if(btn)btn.disabled=true;
   openModal('modal-barkod-kamera');
   try{
     barkodStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},focusMode:{ideal:'continuous'}}
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
     });
     if(!document.getElementById('modal-barkod-kamera').classList.contains('open')){
       barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;return;
     }
     if(video){video.srcObject=barkodStream;await video.play();}
-    barkodActive=true;
-    let okumaYapildi=false;
-    let taramaSayisi=0;
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d',{willReadFrequently:true});
-
-    // BarcodeDetector destekleniyor mu kontrol et
-    let bdDetector=null;
-    if(window.BarcodeDetector){
-      try{
-        const desteklenen=await BarcodeDetector.getSupportedFormats();
-        bdDetector=new BarcodeDetector({formats:desteklenen});
-        if(res)res.textContent='✅ Chrome: '+desteklenen.length+' format. Barkodu göster...';
-      }catch(e){
-        bdDetector=null;
-        if(res)res.textContent='📷 QR mod aktif. Barkodu göster...';
-      }
-    }else{
-      if(res)res.textContent='📷 QR mod aktif. Barkodu göster...';
-    }
-
-    // Video tamamen hazır olana kadar bekle
-    await new Promise(r=>{
-      if(video.readyState>=2)r();
-      else video.oncanplay=r;
-    });
-    if(res)res.textContent='📡 Taranıyor...';
-
-    barkodScanTimer=setInterval(async()=>{
-      if(!barkodActive||okumaYapildi)return;
-      if(!video||video.videoWidth===0)return;
-      taramaSayisi++;
-      try{
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0);
-
-        // BarcodeDetector ve jsQR - ImageBitmap üzerinden
-        const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-
-        // 1. BarcodeDetector (ImageBitmap - en geniş format desteği)
-        if(bdDetector){
-          try{
-            const bmp=await createImageBitmap(canvas);
-            const results=await bdDetector.detect(bmp);
-            bmp.close();
-            if(results&&results.length>0&&!okumaYapildi){
-              okumaYapildi=true;
-              barkodOkundu(results[0].rawValue);
-              return;
-            }
-            if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
-          }catch(e){
-            // ImageBitmap olmadıysa canvas dene
-            try{
-              const results2=await bdDetector.detect(canvas);
-              if(results2&&results2.length>0&&!okumaYapildi){
-                okumaYapildi=true;
-                barkodOkundu(results2[0].rawValue);
-                return;
-              }
-              if(res)res.textContent='📡 BD #'+taramaSayisi+'...';
-            }catch(e2){
-              if(res)res.textContent='⚠️ BD devre dışı, QR moda geçildi';
-              bdDetector=null;
-            }
-          }
-        }
-
-        // 2. jsQR fallback (QR kod - her tarayıcı)
-        if(!okumaYapildi&&window.jsQR){
-          const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
-          if(code&&code.data&&!okumaYapildi){
-            okumaYapildi=true;
-            barkodOkundu(code.data);
-            return;
-          }
-          if(!bdDetector&&res)res.textContent='📡 QR #'+taramaSayisi+'...';
-        }
-      }catch(e){
-        if(res)res.textContent='⚠️ '+String(e).slice(0,50);
-      }
-    },100);
+    if(res)res.textContent='Barkodu çerçeveye getir, fotoğraf çek';
+    if(btn)btn.disabled=false;
   }catch(e){
     const m=String(e);
-    if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':m.includes('ound')?'Kamera bulunamadı':'Kamera hatası: '+m.slice(0,50));
-    showToast('Kamera açılamadı','red');
+    if(res)res.textContent='❌ '+(m.includes('ermission')||m.includes('llowed')?'Kamera izni reddedildi':'Kamera hatası');
+    showToast('Kamera açılamadı — galeri seçeneğini dene','amber');
   }
 }
 
-async function loadJsQR(){
-  if(window.jsQR)return;
-  return new Promise(res=>{
-    const s=document.createElement('script');
-    s.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
-    s.onload=()=>{console.log('jsQR yüklendi');res();}
-    s.onerror=res;
-    document.head.appendChild(s);
-  });
+// Fotoğraf çek ve anında oku
+async function barkodFotoOku(){
+  const video=document.getElementById('barkod-video');
+  const res=document.getElementById('barkod-result');
+  const btn=document.getElementById('btn-barkod-cek');
+  if(!video||!barkodStream){showToast('Kamera hazır değil','red');return;}
+  if(btn){btn.disabled=true;btn.textContent='🔍 Analiz ediliyor...';}
+  if(res)res.textContent='🔍 Analiz ediliyor...';
+  try{
+    // Kameradan anlık kare al
+    const canvas=document.createElement('canvas');
+    canvas.width=video.videoWidth||1280;
+    canvas.height=video.videoHeight||720;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0);
+    // Analiz et
+    const kod=await analizEt(canvas);
+    if(kod){
+      barkodOkundu(kod);
+    }else{
+      if(res)res.textContent='❌ Barkod okunamadı. Tekrar dene.';
+      showToast('Barkod bulunamadı — yaklaş veya düzelt','amber');
+    }
+  }catch(e){
+    if(res)res.textContent='❌ Hata: '+String(e).slice(0,40);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='📸 Fotoğraf Çek ve Oku';}
+  }
+}
+
+// Galeriden seçilen fotoğrafı analiz et
+async function barkodFotoAnaliz(file){
+  if(!file)return;
+  const res=document.getElementById('barkod-result');
+  if(res)res.textContent='🔍 Analiz ediliyor...';
+  try{
+    const img=await new Promise((resolve,reject)=>{
+      const i=new Image();
+      const url=URL.createObjectURL(file);
+      i.onload=()=>{URL.revokeObjectURL(url);resolve(i);};
+      i.onerror=reject;
+      i.src=url;
+    });
+    const canvas=document.createElement('canvas');
+    canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+    canvas.getContext('2d').drawImage(img,0,0);
+    const kod=await analizEt(canvas);
+    if(kod){
+      barkodOkundu(kod);
+    }else{
+      if(res)res.textContent='❌ Barkod okunamadı.';
+      showToast('Barkod bulunamadı','amber');
+    }
+  }catch(e){
+    if(res)res.textContent='❌ Hata';
+  }
+}
+
+// Canvas üzerinden barkod analizi - tüm yöntemleri dener
+async function analizEt(canvas){
+  // 1. BarcodeDetector (Chrome/Edge - tüm barkod formatları)
+  if(window.BarcodeDetector){
+    try{
+      const formats=await BarcodeDetector.getSupportedFormats().catch(()=>[]);
+      const bd=new BarcodeDetector(formats.length?{formats}:{});
+      const results=await bd.detect(canvas);
+      if(results&&results.length>0)return results[0].rawValue;
+    }catch(e){}
+  }
+  // 2. jsQR (QR kod - tüm tarayıcılar)
+  if(window.jsQR){
+    const ctx=canvas.getContext('2d');
+    const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
+    if(code&&code.data)return code.data;
+  }
+  return null;
 }
 
 async function _stopQR(){
@@ -3564,59 +3558,12 @@ async function _stopQR(){
   if(barkodScanTimer){clearInterval(barkodScanTimer);barkodScanTimer=null;}
   if(barkodStream){barkodStream.getTracks().forEach(t=>t.stop());barkodStream=null;}
   const v=document.getElementById('barkod-video');
-  if(v){v.srcObject=null;}
+  if(v)v.srcObject=null;
 }
 
 async function stopBarkodKamera(silent=false){
   await _stopQR();
   if(!silent)closeModal('modal-barkod-kamera');
-}
-
-// Stok sayfasında barkodla arama
-// Stok sayfasında barkodla arama
-function onStokBarkodAra(kod){
-  if(!kod)return;
-  const s=DB.stok.find(x=>x.barkod===kod);
-  if(s){
-    showToast(s.ad+' bulundu','green');
-    openStokModal(s.id);
-  }else{
-    showConfirm('Barkod Bulunamadı','Bu barkod kayıtlı değil. Yeni ürün olarak eklemek ister misiniz?',()=>{
-      openStokModal();
-      setTimeout(()=>{document.getElementById('stok-barkod').value=kod;},200);
-    },'🔍');
-  }
-}
-
-// İşlem formunda barkodla stok seçme
-function onIslemBarkodAra(kod){
-  if(!kod)return;
-  const s=DB.stok.find(x=>x.barkod===kod);
-  if(s){
-    const sel=document.getElementById('mi-stok-sec');
-    if(sel){sel.value=s.id;showToast(s.ad+' seçildi','green');}
-  }else{
-    showConfirm('Barkod Bulunamadı','Bu barkod stokta kayıtlı değil. Stok sayfasında eklemek ister misiniz?',()=>{
-      goStokEkle();
-    },'🔍');
-  }
-}
-
-// İşlemden stok sayfasına yönlendirme
-function goStokEkle(){
-  closeModal('modal-islem');
-  goPage('stok');
-  setTimeout(()=>{openStokModal();},300);
-}
-
-// Otomatik barkod oluştur (CODE-128 uyumlu format)
-function barkodOlustur(){
-  const prefix='GT';
-  const ts=Date.now().toString().slice(-8);
-  const rand=Math.floor(Math.random()*100).toString().padStart(2,'0');
-  const kod=prefix+ts+rand;
-  document.getElementById('stok-barkod').value=kod;
-  showToast('Barkod oluşturuldu: '+kod,'green');
 }
 
 // ============================================================ BARKOD ETİKET
