@@ -2776,7 +2776,8 @@ async function deleteIslemCari(islemId,kisiId){
   if(grupVarmi){
     // 3 seçenekli: sadece bu, tümü, vazgeç
     const diyalog=document.createElement('div');
-    diyalog.style.cssText='position:fixed;inset:0;background:rgba(4,10,20,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    diyalog.id='fin-sil-dialog';
+    diyalog.style.cssText='position:fixed;inset:0;background:rgba(4,10,20,0.8);z-index:19999;display:flex;align-items:center;justify-content:center;padding:24px;';
     diyalog.innerHTML=`
       <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xl);padding:28px 24px;max-width:340px;width:100%;box-shadow:var(--shadow-lg);">
         <div style="font-size:28px;text-align:center;margin-bottom:12px;">🗑</div>
@@ -2785,7 +2786,7 @@ async function deleteIslemCari(islemId,kisiId){
         <div style="display:flex;flex-direction:column;gap:8px;">
           <button onclick="doSilFinansman(${islemId},false,${kisiId})" class="btn btn-secondary btn-full">Sadece Bu Taksiti Sil</button>
           <button onclick="doSilFinansman(${islemId},true,${kisiId})" class="btn btn-danger btn-full">Tüm Finansmanı Sil (${DB.islemler.filter(x=>String(x.groupId)===String(i.groupId)).length} işlem)</button>
-          <button onclick="this.closest('[style]').remove()" class="btn btn-secondary btn-full">Vazgeç</button>
+          <button onclick="document.getElementById('fin-sil-dialog').remove()" class="btn btn-secondary btn-full">Vazgeç</button>
         </div>
       </div>`;
     document.body.appendChild(diyalog);
@@ -2797,10 +2798,8 @@ async function deleteIslemCari(islemId,kisiId){
 }
 
 async function doSilFinansman(islemId,tumGrubu,kisiId){
-  // Dialog varsa kapat
-  document.querySelectorAll('[style*="z-index:99999"]').forEach(el=>{
-    if(el.id!=='toast'&&el.id!=='lightbox'&&el.id!=='modal-confirm')el.remove();
-  });
+  // Diyalogu kapat
+  const d=document.getElementById('fin-sil-dialog');if(d)d.remove();
   try{
     if(tumGrubu){
       const i=DB.islemler.find(x=>x.id===islemId);
