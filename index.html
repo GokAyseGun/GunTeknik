@@ -1803,7 +1803,12 @@ async function loadDB(){
     DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
     DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||''}));
     DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,createdAt:p.created_at}));
-    DB.teklifler=(teklifler||[]).map(t=>({id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler:t.kalemler||[],toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at}));
+    DB.teklifler=(teklifler||[]).map(t=>{
+      let kalemler=t.kalemler||[];
+      if(typeof kalemler==='string'){try{kalemler=JSON.parse(kalemler);}catch(e){kalemler=[];}}
+      if(!Array.isArray(kalemler))kalemler=[];
+      return {id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler,toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at};
+    });
     DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
     renderAll();
   }catch(e){
@@ -5846,7 +5851,7 @@ function exportKDVRaporu(){
 
 const AI_KEY = 'gt_ai_prefs';
 const AI_HAFIZA_KEY = 'gt_ai_memory';
-const AI_MODEL = 'gemini-1.5-flash-latest';
+const AI_MODEL = 'gemini-1.5-flash-8b';
 // Key localStorage'da saklanır — GitHub'a gömülmez
 
 let aiGecmis = [];
