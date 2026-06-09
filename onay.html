@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teklif Onayı — Gün Teknik</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .card{background:white;border-radius:20px;padding:36px 32px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+  .logo{font-size:13px;font-weight:700;letter-spacing:2px;color:#1a73e8;text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:22px;font-weight:800;color:#1a1a2e;margin-bottom:6px;}
+  .sub{font-size:14px;color:#666;margin-bottom:28px;}
+  .teklif-kutu{background:#f8faff;border:1px solid #e0e7ff;border-radius:12px;padding:20px;margin-bottom:24px;}
+  .teklif-satir{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eef2ff;font-size:14px;}
+  .teklif-satir:last-child{border:none;font-weight:700;font-size:16px;color:#1a73e8;padding-top:12px;}
+  .kalem{background:#fff;border:1px solid #e8f0fe;border-radius:8px;padding:12px;margin-bottom:8px;}
+  .kalem-ad{font-weight:600;font-size:13px;color:#222;}
+  .kalem-det{font-size:12px;color:#888;margin-top:3px;}
+  label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px;}
+  input{width:100%;padding:14px 16px;border:2px solid #e0e7ff;border-radius:10px;font-size:15px;outline:none;transition:border 0.2s;font-family:inherit;}
+  input:focus{border-color:#1a73e8;}
+  button{width:100%;padding:16px;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;transition:opacity 0.2s;}
+  button:hover{opacity:0.92;}
+  button:disabled{opacity:0.6;cursor:not-allowed;}
+  .success{background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:24px;text-align:center;display:none;margin-top:16px;}
+  .success h2{color:#15803d;font-size:20px;margin-bottom:8px;}
+  .success p{color:#555;font-size:14px;}
+  .hata{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;font-size:13px;color:#dc2626;margin-top:12px;display:none;}
+  .yukluyor{text-align:center;color:#666;font-size:14px;padding:40px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Gün Teknik</div>
+  <div id="icerik">
+    <div class="yukluyor">Teklif yükleniyor...</div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
+
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+function fmt(n){
+  if(!n&&n!==0) return '—';
+  return Number(n).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+async function yukle(){
+  if(!token){
+    document.getElementById('icerik').innerHTML = '<div class="hata" style="display:block">Geçersiz onay linki. Lütfen Gün Teknik ile iletişime geçin.</div>';
+    return;
+  }
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+token+'&select=*,kisiler(isim,tel,adres)',{
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}
+    });
+    const data = await res.json();
+    if(!data||!data.length){
+      document.getElementById('icerik').innerHTML = '<div class="hata" style="display:block">Teklif bulunamadı. Link geçersiz veya süresi dolmuş olabilir.</div>';
+      return;
+    }
+    const t = data[0];
+    if(t.durum === 'Onaylandı'){
+      document.getElementById('icerik').innerHTML = `
+        <div class="success" style="display:block">
+          <div style="font-size:48px;margin-bottom:12px;">✅</div>
+          <h2>Zaten Onaylandı</h2>
+          <p>Bu teklif daha önce <strong>${t.onaylayan_isim||''}</strong> tarafından onaylanmıştır.</p>
+          <p style="margin-top:8px;color:#888;font-size:12px;">${t.onay_tarihi?new Date(t.onay_tarihi).toLocaleDateString('tr-TR'):''}</p>
+        </div>`;
+      return;
+    }
+    // Kalemler
+    let kalemler = t.kalemler||[];
+    if(typeof kalemler==='string'){try{kalemler=JSON.parse(kalemler);}catch(e){kalemler=[];}}
+    const kalemHtml = kalemler.map(k=>`
+      <div class="kalem">
+        <div class="kalem-ad">${k.aciklama||'—'}</div>
+        <div class="kalem-det">${k.miktar||1} adet × ${fmt(k.birimFiyat)} ₺ = <strong>${fmt(k.toplam)} ₺</strong></div>
+      </div>`).join('');
+    const musteri = t.kisiler ? t.kisiler.isim : '—';
+    document.getElementById('icerik').innerHTML = `
+      <h1>Teklif Onayı</h1>
+      <div class="sub">Aşağıdaki teklifi inceleyip onaylayabilirsiniz.</div>
+      <div class="teklif-kutu">
+        <div class="teklif-satir"><span style="color:#888">Müşteri</span><span>${musteri}</span></div>
+        <div class="teklif-satir"><span style="color:#888">Tarih</span><span>${new Date(t.tarih).toLocaleDateString('tr-TR')}</span></div>
+        ${t.gecerlilik_tarihi?`<div class="teklif-satir"><span style="color:#e53">⏰ Geçerlilik</span><span style="color:#e53">${t.gecerlilik_tarihi}</span></div>`:''}
+      </div>
+      <div style="margin-bottom:16px;">${kalemHtml}</div>
+      <div class="teklif-kutu">
+        <div class="teklif-satir"><span>Toplam Tutar</span><span>${fmt(t.toplam)} ₺</span></div>
+      </div>
+      ${t.aciklama?`<div style="background:#f9f9f9;border-radius:10px;padding:14px;font-size:13px;color:#555;margin-bottom:16px;">${t.aciklama}</div>`:''}
+      <div style="margin-bottom:8px;">
+        <label for="onaylayan-isim">Adınız Soyadınız</label>
+        <input type="text" id="onaylayan-isim" placeholder="Onaylayan kişinin adı" autocapitalize="words">
+      </div>
+      <button onclick="onayla('${token}')">✅ Teklifi Onaylıyorum</button>
+      <div class="hata" id="hata-kutu"></div>
+      <div class="success" id="basari-kutu">
+        <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+        <h2>Teklif Onaylandı!</h2>
+        <p>Onayınız başarıyla kaydedildi. En kısa sürede iletişime geçeceğiz.</p>
+      </div>`;
+  }catch(err){
+    document.getElementById('icerik').innerHTML = '<div class="hata" style="display:block">Bağlantı hatası. Lütfen tekrar deneyin.</div>';
+  }
+}
+
+async function onayla(tok){
+  const isim = document.getElementById('onaylayan-isim')?.value?.trim();
+  const btn = document.querySelector('button');
+  const hata = document.getElementById('hata-kutu');
+  if(!isim){
+    if(hata){hata.textContent='Lütfen adınızı girin.';hata.style.display='block';}
+    return;
+  }
+  if(btn)btn.disabled=true;
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+tok,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,Prefer:'return=minimal'},
+      body:JSON.stringify({durum:'Onaylandı',onay_tarihi:new Date().toISOString(),onaylayan_isim:isim})
+    });
+    if(res.ok){
+      document.querySelector('.teklif-kutu')?.remove();
+      document.querySelectorAll('.kalem').forEach(el=>el.remove());
+      document.querySelectorAll('label,input,button,p').forEach(el=>el.style&&(el.style.display='none'));
+      document.getElementById('basari-kutu').style.display='block';
+      if(hata)hata.style.display='none';
+    } else {
+      throw new Error('Sunucu hatası: '+res.status);
+    }
+  }catch(err){
+    if(hata){hata.textContent='Kayıt hatası: '+err.message;hata.style.display='block';}
+    if(btn)btn.disabled=false;
+  }
+}
+
+yukle();
+</script>
+</body>
+</html>
