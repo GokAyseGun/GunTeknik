@@ -5848,9 +5848,6 @@ const AI_KEY = 'gt_ai_prefs';
 const AI_HAFIZA_KEY = 'gt_ai_memory';
 const AI_MODEL = 'gemini-2.0-flash';
 // Key localStorage'da saklanır — GitHub'a gömülmez
-function getGeminiKey(){
-  return localStorage.getItem('gt_gemini_key')||'';
-}
 
 let aiGecmis = [];
 let aiHafiza = {};
@@ -6513,7 +6510,9 @@ function aiKeyIste() {
 }
 
 function aiKeyKaydet() {
-  const key = document.getElementById('gemini-key-input')?.value?.trim();
+  // Tırnak, boşluk ve görünmez karakterleri temizle
+  const raw = document.getElementById('gemini-key-input')?.value || '';
+  const key = raw.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
   if (!key || key.length < 10) {
     showToast('Geçerli bir key girin', 'red'); return;
   }
@@ -6523,13 +6522,11 @@ function aiKeyKaydet() {
   showToast('AI Asistan aktif!', 'green');
 }
 
-// AI Ayarlar'da key sıfırlama
-function aiKeyTemizle() {
-  localStorage.removeItem('gt_gemini_key');
-  showToast('AI key kaldırıldı', 'amber');
-}
-
-// ── SESLİ GİRİŞ ──────────────────────────────────────────────────────────
+function getGeminiKey(){
+  const k = localStorage.getItem('gt_gemini_key') || '';
+  // Tırnak temizle
+  return k.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
+}// ── SESLİ GİRİŞ ──────────────────────────────────────────────────────────
 
 let aiSesliAktif = false;
 let aiSesRecognition = null;
