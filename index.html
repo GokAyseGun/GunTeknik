@@ -619,10 +619,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="sec-title mt0">📊 Akıllı Rapor & Analiz</div>
       <!-- Akıllı İçgörüler -->
       <div id="rapor-icgoru" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
-      <!-- Gelir Tahmini -->
+      <!-- Tahmin Grafikleri -->
       <div class="card" style="margin-bottom:16px;" id="rapor-tahmin-kart">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div style="font-weight:600;font-size:14px;">📈 Gelir Tahmini</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-weight:600;font-size:14px;">📈 Gelir & Gider Tahmini</div>
           <span style="font-size:11px;color:var(--text3);">Son 3 aya göre</span>
         </div>
         <div id="rapor-tahmin-content"></div>
@@ -832,6 +832,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="fab-item" id="fab-islem" onclick="openIslemModal();closeFab()">💸 İşlem Ekle</div>
     <div class="fab-item" id="fab-borc" onclick="openBorcModal();closeFab()">🏦 Finansman Ekle</div>
   </div>
+  <button class="fab-btn" onclick="openModal('modal-ai')" style="width:46px;height:46px;font-size:20px;background:linear-gradient(135deg,var(--blue),#8b5cf6);border:none;border-radius:50%;color:white;box-shadow:var(--shadow-md);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="AI Asistan">✦</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
 
@@ -865,6 +866,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="btn btn-secondary btn-full" id="btn-desen-ayar" onclick="closeModal('modal-ayarlar');desenAyarla()">🔐 Giriş Deseni Belirle</button>
       <button class="btn btn-secondary btn-full" id="btn-desen-sil" onclick="desenSifirla()" style="display:none;">🗑 Deseni Kaldır</button>
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openButceModal()">💰 Bütçe Limitleri</button>
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openAiAyarlar()">🤖 AI Asistan Ayarları</button>
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-danger btn-full" onclick="doLogout()">🔒 Çıkış Yap</button>
     </div>
@@ -1489,6 +1491,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <span style="font-weight:700;font-size:18px;color:var(--green);" class="num" id="teklif-toplam-goster">0 ₺</span>
       </div>
       <div class="fi"><label>Açıklama / Not</label><textarea id="teklif-aciklama" rows="2" placeholder="Teklif notları, ödeme koşulları..."></textarea></div>
+      <button type="button" onclick="aiFiyatOnerisiGoster()" class="btn btn-secondary btn-full" style="background:rgba(139,92,246,0.1);color:#8b5cf6;border-color:rgba(139,92,246,0.3);">✦ AI Fiyat Önerisi Al</button>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif')">İptal</button>
@@ -1527,6 +1530,41 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-butce')">Kapat</button>
       <button class="btn btn-primary btn-full" onclick="saveButceLimit(this)">Limit Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Asistan Modal -->
+<div class="modal-ov" id="modal-ai" style="z-index:10003;">
+  <div class="modal" style="max-width:520px;max-height:92vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div class="modal-head" style="border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple,#8b5cf6));display:flex;align-items:center;justify-content:center;font-size:18px;">✦</div>
+        <div><div style="font-weight:700;font-size:14px;">Gün Teknik Asistanı</div><div style="font-size:11px;color:var(--text3);">Verilerinizi anlıyor</div></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-ai')">✕</button>
+    </div>
+    <div id="ai-mesajlar" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:200px;"></div>
+    <div style="padding:12px;border-top:1px solid var(--border);flex-shrink:0;">
+      <!-- Hazır sorular -->
+      <div id="ai-hazir-sorular" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Bu ay nasıl gidiyor?</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">En kârlı müşteri?</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Vadesi yaklaşan?</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Stok durumu?</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Giderlerimi analiz et</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Kasa risklerim?</button>
+        <button onclick="aiSor(this.textContent)" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Bu ay tahmini kâr?</button>
+        <button onclick="aiSor('Önümüzdeki ay ne yapmalıyım?')" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">Önümüzdeki ay?</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="ai-input" placeholder="Sorunuzu yazın..." style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiGonder();}">
+        <button onclick="aiGonder()" class="btn btn-primary" style="padding:0 16px;flex-shrink:0;" id="ai-gonder-btn">
+          <span id="ai-gonder-ikon">➤</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1707,7 +1745,12 @@ async function startApp(){
     if(btnAyar)btnAyar.textContent='🔐 Giriş Deseni Belirle';
   }
   await loadDB();
-  // Giriş sonrası yaklaşan ödeme uyarısını göster
+  // AI sistemi başlat
+  aiBaslat();
+  aiMuhasebeBildirimKontrol();
+  aiKalipOgrenEn();
+  aiAySonuOzeti();
+  // Yaklaşan ödeme + bütçe kontrolü
   setTimeout(()=>{yaklaşanUyariGoster();butceAsimiKontrol();},800);
 }
 
@@ -1733,7 +1776,7 @@ async function loadDB(){
       sbFetch('butce_limitler?select=*').catch(()=>[])
     ]);
     DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false}));
-    DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[]}));
+    DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
     DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
     DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:t.tarih,tip:t.tip,baslik:t.baslik||t.not||'',detay:t.not||''}));
@@ -2766,6 +2809,9 @@ async function saveIslem(btn){
       showToast('İşlem kaydedildi','green');
     }
     await loadDB();closeModal('modal-islem');
+    // AI işlem sonrası analiz (arka planda)
+    const sonIslem=DB.islemler[0];
+    if(sonIslem)setTimeout(()=>aiIslemSonrasiAnaliz(sonIslem),1500);
   }catch(e){console.error(e);showToast('Kayıt hatası: '+String(e?.message||e).substring(0,60),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -2958,6 +3004,9 @@ function showKisiDetay(id){
   // Tahsilat butonu
   if(USER_ROL!=='goruntule')html+='<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal(\'modal-kisi-detay\');openOdemeModal('+id+')">💳 Tahsilat / Ödeme Ekle</button>';
   if(k.tel)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Hatırlatıcı Gönder</button>';
+  // Vadesi geçmiş varsa AI tahsilat stratejisi
+  const vadeGecmis=DB.islemler.filter(i=>String(i.kisiId)===String(id)&&i.statu==='Bekliyor'&&new Date(i.tarih)<new Date());
+  if(vadeGecmis.length)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);" onclick="aiTahsilatStratejisi('+id+')">✦ AI Tahsilat Stratejisi</button>';
 
   // Ödemeler
   if(odemeler.length){
@@ -3832,44 +3881,6 @@ const _origLoadDB = loadDB;
 DB.vergiFaturalari = [];
 
 // loadDB override - vergi tablosunu da çek
-async function loadDB(){
-  showLoading(true);
-  try{
-    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,vergiFat]=await Promise.all([
-      sbFetch('kisiler?order=isim.asc&select=*'),
-      sbFetch('islemler?order=tarih.desc&select=*'),
-      sbFetch('odemeler?order=tarih.desc&select=*'),
-      sbFetch('yardimci_islemleri?order=tarih.desc&select=*'),
-      sbFetch('takvim?order=tarih.asc&select=*'),
-      sbFetch('stok?order=ad.asc&select=*'),
-      sbFetch('stok_hareketleri?order=tarih.desc&select=*').catch(()=>[]),
-      sbFetch('sablonlar?order=id.asc&select=*'),
-      sbFetch('ekler?select=*').catch(()=>[]),
-      sbFetch('personeller?order=isim.asc&select=*').catch(()=>[]),
-      sbFetch('vergi_faturalari?order=tarih.desc&select=*').catch(()=>[])
-    ]);
-    DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false}));
-    DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',kdvVar:i.kdv_var||false}));
-    DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
-    DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
-    DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:t.tarih,tip:t.tip,baslik:t.baslik||t.not||'',detay:t.not||''}));
-    DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
-    DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
-    DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,isim:s.isim,tip:s.tip,kat:s.kat,altKat:s.alt_kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',not:s.not||''}));
-    DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
-    DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||''}));
-    DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,createdAt:p.created_at}));
-    DB.teklifler=(teklifler||[]).map(t=>({id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler:t.kalemler||[],toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at}));
-    DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
-    DB.vergiFaturalari=(vergiFat||[]).map(v=>({id:v.id,tarih:v.tarih,tip:v.tip,faturaNo:v.fatura_no||'',firma:v.firma||'',tutar:parseFloat(v.tutar)||0,kdvTutar:parseFloat(v.kdv_tutar)||0,not:v.aciklama||'',islemId:v.islem_id||null,kaynak:v.kaynak||'manuel',dosyaUrl:v.dosya_url||null,dosyaAdi:v.dosya_adi||null,dosyaTipi:v.dosya_tipi||null}));
-    renderAll();
-  }catch(e){
-    console.error('loadDB:',e);
-    const s=String(e?.message||'');
-    if(s.includes('JWT')||s.includes('401')){const ok=await tryRefreshToken();if(ok){await loadDB();return;}else{setTimeout(()=>doLogout(),1500);return;}}
-    showToast('Veri yükleme hatası','red');
-  }finally{showLoading(false);}
-}
 
 // KDV kutucuğu toggle
 function onKdvChk(){
@@ -5231,49 +5242,86 @@ function hesaplaIcgoru(){
   const now=new Date();
   const buAy=now.getMonth();const buYil=now.getFullYear();
   const gecenAy=(buAy===0?11:buAy-1);const gecenYil=(buAy===0?buYil-1:buYil);
-
-  // Tamamlanan işlemler
   const tamam=DB.islemler.filter(i=>i.statu==='Tamamlandı');
+
   const buAyGelir=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
   const buAyGider=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
   const gecenAyGelir=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
   const gecenAyGider=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
 
-  // Gelir karşılaştırma
+  // ── GELİR KARŞILAŞTIRMA
   if(gecenAyGelir>0){
     const fark=((buAyGelir-gecenAyGelir)/gecenAyGelir*100).toFixed(1);
     const artti=buAyGelir>=gecenAyGelir;
     icgorular.push({ikon:artti?'📈':'📉',baslik:`Gelir geçen aya göre %${Math.abs(fark)} ${artti?'arttı':'azaldı'}`,aciklama:`Bu ay: ${fmt(buAyGelir)} ₺ · Geçen ay: ${fmt(gecenAyGelir)} ₺`,renk:artti?'var(--green)':'var(--red)'});
-  }else if(buAyGelir>0){
-    icgorular.push({ikon:'💰',baslik:`Bu ay ${fmt(buAyGelir)} ₺ gelir`,aciklama:'Geçen ay veri yok',renk:'var(--green)'});
   }
 
-  // Gider karşılaştırma
+  // ── GİDER KARŞILAŞTIRMA
   if(gecenAyGider>0){
     const fark=((buAyGider-gecenAyGider)/gecenAyGider*100).toFixed(1);
     const artti=buAyGider>gecenAyGider;
-    if(artti&&parseFloat(fark)>15)icgorular.push({ikon:'⚠️',baslik:`Gider geçen aya göre %${fark} arttı`,aciklama:`Bu ay: ${fmt(buAyGider)} ₺ · Geçen ay: ${fmt(gecenAyGider)} ₺`,renk:'var(--amber)'});
+    if(artti&&parseFloat(fark)>15)icgorular.push({ikon:'⚠️',baslik:`Gider %${fark} arttı — dikkat`,aciklama:`Bu ay: ${fmt(buAyGider)} ₺ · Geçen ay: ${fmt(gecenAyGider)} ₺`,renk:'var(--amber)'});
+    else if(!artti)icgorular.push({ikon:'✂️',baslik:`Gider %${Math.abs(fark)} azaldı`,aciklama:`Bu ay: ${fmt(buAyGider)} ₺ · Geçen ay: ${fmt(gecenAyGider)} ₺`,renk:'var(--green)'});
   }
 
-  // En kârlı müşteri
+  // ── EN KÂRLI MÜŞTERİ
   const musteriKar={};
   tamam.forEach(i=>{if(!i.kisiId)return;const k=i.tip==='Gelir'?i.tutar:-i.tutar;musteriKar[i.kisiId]=(musteriKar[i.kisiId]||0)+k;});
-  const enKarli=Object.entries(musteriKar).sort((a,b)=>b[1]-a[1])[0];
-  if(enKarli&&enKarli[1]>0){
-    const k=getKisi(parseInt(enKarli[0]));
-    if(k)icgorular.push({ikon:'🏆',baslik:`En kârlı müşteri: ${k.isim}`,aciklama:`Net: ${fmt(enKarli[1])} ₺`,renk:'var(--blue)'});
+  const sirali=Object.entries(musteriKar).sort((a,b)=>b[1]-a[1]);
+  if(sirali[0]&&sirali[0][1]>0){
+    const k=getKisi(parseInt(sirali[0][0]));
+    if(k)icgorular.push({ikon:'🏆',baslik:`En kârlı: ${k.isim}`,aciklama:`Net: ${fmt(sirali[0][1])} ₺`,renk:'var(--blue)'});
   }
 
-  // 6 aydır işlem yapılmayan müşteriler
+  // ── EN ZARARLIM MÜŞTERİ (en çok gider çıkartılan)
+  const musteriGider={};
+  tamam.filter(i=>i.tip==='Gider'&&i.kisiId).forEach(i=>{musteriGider[i.kisiId]=(musteriGider[i.kisiId]||0)+i.tutar;});
+  const enPahali=Object.entries(musteriGider).sort((a,b)=>b[1]-a[1])[0];
+  if(enPahali&&enPahali[1]>0){
+    const k=getKisi(parseInt(enPahali[0]));
+    if(k)icgorular.push({ikon:'💸',baslik:`En çok gider: ${k.isim}`,aciklama:`Toplam gider: ${fmt(enPahali[1])} ₺`,renk:'var(--red)'});
+  }
+
+  // ── EN DÜŞÜK KÂRLI KATEGORİ
+  const katKar={};
+  tamam.forEach(i=>{const k=i.kat||'Diğer';if(!katKar[k])katKar[k]={gelir:0,gider:0};if(i.tip==='Gelir')katKar[k].gelir+=i.tutar;else katKar[k].gider+=i.tutar;});
+  const katSirali=Object.entries(katKar).map(([k,v])=>({kat:k,kar:v.gelir-v.gider})).sort((a,b)=>a.kar-b.kar);
+  if(katSirali[0]&&katSirali[0].kar<0)icgorular.push({ikon:'🔴',baslik:`Zarar eden kategori: ${katSirali[0].kat}`,aciklama:`Net: ${fmt(katSirali[0].kar)} ₺ — gözden geçir`,renk:'var(--red)'});
+
+  // ── NAKIT AKIŞI UYARISI
+  const bekleyenGider=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+  const c=calcFinans();
+  if(bekleyenGider>c.kasa*0.5)icgorular.push({ikon:'🚨',baslik:'Bekleyen ödemeler kasanın yarısından fazla',aciklama:`Kasa: ${fmt(c.kasa)} ₺ · Bekleyen gider: ${fmt(bekleyenGider)} ₺`,renk:'var(--red)'});
+
+  // ── EN ÇOK İŞ YAPAN PERSONEL
+  if(DB.yardimciIslemleri.length){
+    const perHak={};
+    DB.yardimciIslemleri.filter(y=>y.tip==='Hak Edis').forEach(y=>{perHak[y.personelId]=(perHak[y.personelId]||0)+y.tutar;});
+    const enCok=Object.entries(perHak).sort((a,b)=>b[1]-a[1])[0];
+    if(enCok){const p=DB.personeller.find(x=>x.id===parseInt(enCok[0]));if(p)icgorular.push({ikon:'👷',baslik:`En aktif personel: ${p.isim}`,aciklama:`Toplam hak ediş: ${fmt(enCok[1])} ₺`,renk:'var(--blue)'});}
+  }
+
+  // ── PROJE KÂR UYARISI
+  if(DB.projeler.length){
+    const projeKar=DB.projeler.map(p=>{
+      const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı');
+      const kar=is.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0)-is.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      return{isim:p.isim,kar};
+    }).sort((a,b)=>a.kar-b.kar);
+    if(projeKar[0]&&projeKar[0].kar<0)icgorular.push({ikon:'🏗️',baslik:`Zararda proje: ${projeKar[0].isim}`,aciklama:`Net: ${fmt(projeKar[0].kar)} ₺`,renk:'var(--red)'});
+  }
+
+  // ── 6 AYLI SESSIZ MÜŞTERİLER
   const altiAyOnce=new Date(now.getTime()-180*24*60*60*1000);
   const aktifMusteri=new Set(tamam.filter(i=>new Date(i.tarih)>altiAyOnce).map(i=>i.kisiId).filter(Boolean));
   const pasifMusteri=DB.kisiler.filter(k=>!aktifMusteri.has(k.id)&&tamam.some(i=>i.kisiId===k.id));
   if(pasifMusteri.length>0)icgorular.push({ikon:'😴',baslik:`${pasifMusteri.length} müşteri 6 aydır sessiz`,aciklama:pasifMusteri.slice(0,3).map(k=>k.isim).join(', ')+(pasifMusteri.length>3?' ve diğerleri':''),renk:'var(--text3)'});
 
-  // Nakit akışı uyarısı
-  const bekleyenGider=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
-  const c=calcFinans();
-  if(bekleyenGider>c.kasa*0.5)icgorular.push({ikon:'💸',baslik:'Bekleyen ödemeler kasanın yarısından fazla',aciklama:`Kasa: ${fmt(c.kasa)} ₺ · Bekleyen gider: ${fmt(bekleyenGider)} ₺`,renk:'var(--red)'});
+  // ── STOK UYARISI
+  const kritikte=DB.stok.filter(s=>s.miktar>0&&s.miktar<=s.kritikSeviye);
+  const bitti=DB.stok.filter(s=>s.miktar<=0);
+  if(bitti.length)icgorular.push({ikon:'📦',baslik:`${bitti.length} ürün stokta bitti`,aciklama:bitti.slice(0,3).map(s=>s.ad).join(', '),renk:'var(--red)'});
+  else if(kritikte.length)icgorular.push({ikon:'⚡',baslik:`${kritikte.length} ürün kritik seviyede`,aciklama:kritikte.slice(0,3).map(s=>s.ad).join(', '),renk:'var(--amber)'});
 
   if(!icgorular.length)icgorular.push({ikon:'✅',baslik:'Her şey yolunda görünüyor',aciklama:'Dikkat çeken bir durum tespit edilmedi',renk:'var(--green)'});
   return icgorular;
@@ -5287,34 +5335,50 @@ function renderGelirTahmini(){
   const el=document.getElementById('rapor-tahmin-content');if(!el)return;
   const now=new Date();
   const aylar=[];
-  // Son 3 ayın verisini al
   for(let i=2;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     const gelir=DB.islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı'&&filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0);
-    aylar.push({ay:d.toLocaleString('tr-TR',{month:'short'}),gelir});
+    const gider=DB.islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı'&&filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0);
+    aylar.push({ay:d.toLocaleString('tr-TR',{month:'short'}),gelir,gider});
   }
-  // Basit lineer tahmin: son 3 ayın ortalaması + trend
-  const ort=aylar.reduce((a,x)=>a+x.gelir,0)/3;
-  const trend=(aylar[2].gelir-aylar[0].gelir)/2;
-  const tahmin=Math.max(0,ort+trend);
-  const maxVal=Math.max(...aylar.map(a=>a.gelir),tahmin,1);
-  const bars=aylar.map(a=>`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
-      <div style="font-size:10px;color:var(--text2);text-align:center;" class="num">${fmt(a.gelir)}</div>
-      <div style="width:100%;background:var(--border);border-radius:4px;height:60px;display:flex;align-items:flex-end;overflow:hidden;">
-        <div style="width:100%;background:var(--blue);border-radius:4px 4px 0 0;height:${(a.gelir/maxVal*100)||2}%;transition:height 0.5s;"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text3);">${a.ay}</div>
-    </div>`).join('');
-  const tahminBar=`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
-      <div style="font-size:10px;color:var(--green);text-align:center;font-weight:600;" class="num">${fmt(tahmin)}</div>
-      <div style="width:100%;background:var(--border);border-radius:4px;height:60px;display:flex;align-items:flex-end;overflow:hidden;">
-        <div style="width:100%;background:var(--green);border-radius:4px 4px 0 0;height:${(tahmin/maxVal*100)||2}%;transition:height 0.5s;opacity:0.8;background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,255,255,0.1) 4px,rgba(255,255,255,0.1) 8px);"></div>
-      </div>
-      <div style="font-size:11px;color:var(--green);font-weight:600;">Tahmin</div>
-    </div>`;
-  el.innerHTML=`<div style="display:flex;gap:8px;align-items:flex-end;">${bars}${tahminBar}</div><div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center;">Son 3 aya göre doğrusal tahmin</div>`;
+  const gelirOrt=aylar.reduce((a,x)=>a+x.gelir,0)/3;
+  const giderOrt=aylar.reduce((a,x)=>a+x.gider,0)/3;
+  const gelirTrend=(aylar[2].gelir-aylar[0].gelir)/2;
+  const giderTrend=(aylar[2].gider-aylar[0].gider)/2;
+  const gelirTahmin=Math.max(0,gelirOrt+gelirTrend);
+  const giderTahmin=Math.max(0,giderOrt+giderTrend);
+  const maxVal=Math.max(...aylar.map(a=>Math.max(a.gelir,a.gider)),gelirTahmin,giderTahmin,1);
+
+  const buildBar=(vals,tahmin,renk,tahminRenk,etiket)=>{
+    const bars=vals.map((v,i)=>`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="font-size:9px;color:${renk};text-align:center;" class="num">${fmt(v)}</div>
+        <div style="width:100%;background:var(--border);border-radius:4px;height:50px;display:flex;align-items:flex-end;">
+          <div style="width:100%;background:${renk};border-radius:4px 4px 0 0;height:${(v/maxVal*100)||2}%;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);">${vals===aylar.map(a=>a.gelir)?aylar[i].ay:aylar[i].ay}</div>
+      </div>`).join('');
+    const tahminBar=`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="font-size:9px;color:${tahminRenk};font-weight:600;text-align:center;" class="num">${fmt(tahmin)}</div>
+        <div style="width:100%;background:var(--border);border-radius:4px;height:50px;display:flex;align-items:flex-end;">
+          <div style="width:100%;background:${tahminRenk};border-radius:4px 4px 0 0;height:${(tahmin/maxVal*100)||2}%;opacity:0.7;background-image:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,255,255,0.15) 3px,rgba(255,255,255,0.15) 6px);"></div>
+        </div>
+        <div style="font-size:10px;color:${tahminRenk};font-weight:600;">Tahmin</div>
+      </div>`;
+    return `<div style="margin-bottom:10px;"><div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">${etiket}</div><div style="display:flex;gap:6px;align-items:flex-end;">${bars}${tahminBar}</div></div>`;
+  };
+
+  const gelirVals=aylar.map(a=>a.gelir);
+  const giderVals=aylar.map(a=>a.gider);
+  el.innerHTML=
+    buildBar(gelirVals,gelirTahmin,'var(--green)','rgba(46,160,67,0.8)','📈 Gelir')+
+    buildBar(giderVals,giderTahmin,'var(--red)','rgba(200,50,50,0.8)','📉 Gider')+
+    `<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);margin-top:4px;">
+      <span style="font-size:12px;color:var(--text2);">Tahmini net kâr</span>
+      <span class="num" style="font-weight:700;color:${gelirTahmin-giderTahmin>=0?'var(--green)':'var(--red)'};">${gelirTahmin-giderTahmin>=0?'':'-'} ${fmt(Math.abs(gelirTahmin-giderTahmin))} ₺</span>
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;">Çizgili çubuklar doğrusal tahmin</div>`;
 }
 
 // ============================================================ WHATSAPP HATIRLATICI
@@ -5400,6 +5464,24 @@ function renderMaasModal(personelId){
     html+=`<span>${ayAdiKisa}</span><span class="num">${fmt(ayHak)} hak / ${fmt(ayOde)} ödendi</span></div>`;
   }
   showInfoModal('💼 '+p.isim+' Maaş Durumu',html);
+}
+
+async function aiFiyatOnerisiGoster(){
+  const kisiId=parseInt(document.getElementById('teklif-kisi').value)||null;
+  const kalemler=teklifKalemleriOku();
+  if(!kalemler.length){showToast('Önce kalem ekleyin','amber');return;}
+  showToast('AI fiyat analizi yapılıyor...','blue');
+  const oneri=await aiFiyatlandirmaOnerisi(kisiId,'Şahsi Gelir');
+  if(!oneri){showToast('Yeterli geçmiş veri yok','amber');return;}
+  showInfoModal('✦ AI Fiyat Önerisi',
+    `<div class="card" style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text3);">Önerilen Fiyat</div>
+      <div class="num" style="font-size:28px;font-weight:700;color:var(--green);">${fmt(oneri.oneriFiyat)} ₺</div>
+    </div>
+    ${row('Geçmiş ortalama',fmt(oneri.ortFiyat)+' ₺')}
+    ${row('Son fiyat',fmt(oneri.sonFiyat)+' ₺')}
+    ${row('Gider artışı','%'+oneri.giderArtis)}
+    ${row('Baz alınan işlem',oneri.islemSayisi+' işlem')}`);
 }
 
 function bordroPdfIndir(personelId){
@@ -5731,6 +5813,582 @@ function exportKDVRaporu(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`kdv-raporu-${yil}.csv`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   showToast('KDV raporu indirildi','green');
+}
+
+// ============================================================ AI SİSTEMİ
+// Tüm proaktif AI özellikleri: bildirim, analiz, hatırlatma, öğrenme, anomali tespiti
+
+const AI_KEY = 'gt_ai_prefs';
+const AI_HAFIZA_KEY = 'gt_ai_memory';
+const AI_MODEL = 'claude-sonnet-4-20250514';
+
+let aiGecmis = [];
+let aiHafiza = {};
+let aiPeriyodikTimer = null;
+let aiSessizMod = false;
+let aiIslemSayaci = 0;
+
+// ── BAŞLATMA ─────────────────────────────────────────────────────────────
+
+function aiBaslat() {
+  // Ayarları yükle
+  try { aiHafiza = JSON.parse(localStorage.getItem(AI_HAFIZA_KEY) || '{}'); } catch(e) { aiHafiza = {}; }
+  const prefs = JSON.parse(localStorage.getItem(AI_KEY) || '{"aktif":true,"sessiz":false}');
+  aiSessizMod = prefs.sessiz || false;
+  if (!prefs.aktif) return;
+  // Giriş özeti — 2 saniye sonra
+  setTimeout(() => aiGirisBildirimi(), 2000);
+  // Periyodik kontrol — her 30 dakika
+  aiPeriyodikTimer = setInterval(() => aiPeriyodikKontrol(), 30 * 60 * 1000);
+}
+
+function aiDurdur() {
+  if (aiPeriyodikTimer) { clearInterval(aiPeriyodikTimer); aiPeriyodikTimer = null; }
+}
+
+function aiHafizaKaydet() {
+  localStorage.setItem(AI_HAFIZA_KEY, JSON.stringify(aiHafiza));
+}
+
+// ── VERİ ÖZETİ ───────────────────────────────────────────────────────────
+
+function aiVeriOzeti() {
+  const c = calcFinans();
+  const now = new Date();
+  const buAy = now.getMonth(); const buYil = now.getFullYear();
+  const tamam = DB.islemler.filter(i => i.statu === 'Tamamlandı');
+  const buAyGelir = tamam.filter(i => i.tip === 'Gelir' && filterByMonth(i.tarih, buAy, buYil)).reduce((a, i) => a + i.tutar, 0);
+  const buAyGider = tamam.filter(i => i.tip === 'Gider' && filterByMonth(i.tarih, buAy, buYil)).reduce((a, i) => a + i.tutar, 0);
+  const bekleyen = DB.islemler.filter(i => i.statu === 'Bekliyor');
+  const gecmis = bekleyen.filter(i => new Date(i.tarih) < now);
+  const buHafta = bekleyen.filter(i => { const d = new Date(i.tarih); return d >= now && d <= new Date(now.getTime() + 7*24*60*60*1000); });
+  const stokKritik = DB.stok.filter(s => s.miktar > 0 && s.miktar <= s.kritikSeviye);
+  const stokBitti = DB.stok.filter(s => s.miktar <= 0);
+  // Müşteri kâr sıralaması
+  const musteriKar = {};
+  tamam.forEach(i => { if(!i.kisiId) return; musteriKar[i.kisiId] = (musteriKar[i.kisiId]||0) + (i.tip==='Gelir'?i.tutar:-i.tutar); });
+  const sirali = Object.entries(musteriKar).sort((a,b) => b[1]-a[1]);
+  const enKarli = sirali[0] ? getKisi(parseInt(sirali[0][0])) : null;
+  // Geciken alacaklar müşteri bazında
+  const gecenAlacaklar = {};
+  gecmis.filter(i=>i.tip==='Gelir').forEach(i=>{
+    const k=getKisi(i.kisiId);if(!k)return;
+    gecenAlacaklar[k.isim]=(gecenAlacaklar[k.isim]||0)+i.tutar;
+  });
+  return {
+    tarih: now.toLocaleDateString('tr-TR'),
+    saat: now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}),
+    kasa: c.kasa, kasaNakit: c.kasaNakit, kasaIBAN: c.kasaIBAN,
+    buAyGelir, buAyGider, buAyKar: buAyGelir - buAyGider,
+    isKar: c.isKar, shNet: c.shNet,
+    alacakTop: c.alacakTop, borcTop: c.borcTop,
+    bekleyenSayi: bekleyen.length, bekleyenTutar: bekleyen.reduce((a,i)=>a+i.tutar,0),
+    gecmisSayi: gecmis.length, gecmisTutar: gecmis.reduce((a,i)=>a+i.tutar,0),
+    buHaftaSayi: buHafta.length, buHaftaTutar: buHafta.reduce((a,i)=>a+i.tutar,0),
+    stokKritikSayi: stokKritik.length, stokBittiSayi: stokBitti.length,
+    stokBitenler: stokBitti.slice(0,3).map(s=>s.ad).join(', '),
+    musteriSayi: DB.kisiler.length, projeSayi: DB.projeler.length,
+    enKarliMusteri: enKarli ? enKarli.isim + ' (' + fmt(sirali[0][1]) + ' ₺)' : 'veri yok',
+    gecenAlacaklar: Object.entries(gecenAlacaklar).map(([k,v])=>`${k}: ${fmt(v)} ₺`).join(', ') || 'yok',
+    teklifBekleyen: DB.teklifler.filter(t=>t.durum==='Gönderildi').length,
+    personelBorc: c.topPersonelBakiye,
+    aktifProjeler: DB.projeler.filter(p=>p.durum==='Devam Ediyor').length,
+  };
+}
+
+function aiSistemPrompt(ekBilgi) {
+  const v = aiVeriOzeti();
+  const hafizaOzet = Object.entries(aiHafiza).slice(0,5).map(([k,val])=>`${k}: ${val}`).join('; ');
+  return `Sen Gün Teknik ERP sisteminin akıllı asistanısın. Türkçe, kısa, net ve uygulanabilir tavsiyeler ver. Gereksiz uzatma.
+
+📊 CANLI VERİ (${v.tarih} ${v.saat}):
+Kasa: ${fmt(v.kasa)} ₺ (Nakit: ${fmt(v.kasaNakit)}, IBAN: ${fmt(v.kasaIBAN)})
+Bu ay gelir: ${fmt(v.buAyGelir)} ₺ | gider: ${fmt(v.buAyGider)} ₺ | kâr: ${fmt(v.buAyKar)} ₺
+İşletme kâr: ${fmt(v.isKar)} ₺ | Şahsi net: ${fmt(v.shNet)} ₺
+Toplam alacak: ${fmt(v.alacakTop)} ₺ | Borç: ${fmt(v.borcTop)} ₺
+Vadesi geçmiş: ${v.gecmisSayi} işlem (${fmt(v.gecmisTutar)} ₺) | Bu hafta: ${v.buHaftaSayi} işlem
+Gecikmeli müşteriler: ${v.gecenAlacaklar}
+Stok kritik: ${v.stokKritikSayi} ürün | Biten: ${v.stokBittiSayi} (${v.stokBitenler})
+Bekleyen teklif: ${v.teklifBekleyen} | Aktif proje: ${v.aktifProjeler}
+En kârlı müşteri: ${v.enKarliMusteri}
+Personel borcu: ${fmt(v.personelBorc)} ₺
+${hafizaOzet ? '📝 Hafıza: ' + hafizaOzet : ''}
+${ekBilgi || ''}`;
+}
+
+// ── GİRİŞ BİLDİRİMİ ─────────────────────────────────────────────────────
+
+async function aiGirisBildirimi() {
+  if (aiSessizMod) return;
+  const v = aiVeriOzeti();
+  // Kritik bir şey yoksa bildirimi atla (veri azsa)
+  if (v.gecmisSayi === 0 && v.buHaftaSayi === 0 && v.stokBittiSayi === 0 && v.kasa > 0) {
+    // Basit hoşgeldin
+    const gun = new Date().getHours();
+    const selam = gun < 12 ? 'Günaydın' : gun < 18 ? 'İyi günler' : 'İyi akşamlar';
+    aiBildirimGoster('info', `${selam}! Kasa: ${fmt(v.kasa)} ₺ · Bu ay kâr: ${fmt(v.buAyKar)} ₺`, 6000);
+    return;
+  }
+  // Kritik durum varsa AI özeti al
+  try {
+    const prompt = `Günlük giriş özeti üret. 2-3 cümle max. Sadece en kritik konuları vurgula. Kısa tut.`;
+    const cevap = await aiApiCagri(prompt, [], false);
+    if (cevap) aiBildirimGoster(v.gecmisSayi > 0 ? 'uyari' : 'info', cevap, 10000);
+  } catch(e) {
+    // API hatası — basit özet göster
+    const mesajlar = [];
+    if (v.gecmisSayi > 0) mesajlar.push(`⚠️ ${v.gecmisSayi} vadesi geçmiş (${fmt(v.gecmisTutar)} ₺)`);
+    if (v.buHaftaSayi > 0) mesajlar.push(`📅 Bu hafta ${v.buHaftaSayi} vade`);
+    if (v.stokBittiSayi > 0) mesajlar.push(`📦 ${v.stokBittiSayi} ürün bitti`);
+    if (mesajlar.length) aiBildirimGoster('uyari', mesajlar.join(' · '), 8000);
+  }
+}
+
+// ── PERİYODİK KONTROL ────────────────────────────────────────────────────
+
+async function aiPeriyodikKontrol() {
+  if (aiSessizMod) return;
+  const v = aiVeriOzeti();
+  const uyarilar = [];
+  // Yeni vadesi geçmiş işlem var mı?
+  const sonKontrol = aiHafiza.sonPeriyodikKontrol ? new Date(aiHafiza.sonPeriyodikKontrol) : new Date(0);
+  const yeniGecen = DB.islemler.filter(i =>
+    i.statu === 'Bekliyor' && new Date(i.tarih) < new Date() &&
+    new Date(i.tarih) > sonKontrol
+  );
+  if (yeniGecen.length) uyarilar.push(`${yeniGecen.length} işlemin vadesi geçti`);
+  if (v.stokBittiSayi > 0) uyarilar.push(`${v.stokBitenler} stokta bitti`);
+  if (v.kasa < 0) uyarilar.push(`Kasa negatife düştü: ${fmt(v.kasa)} ₺`);
+  aiHafiza.sonPeriyodikKontrol = new Date().toISOString();
+  aiHafizaKaydet();
+  if (uyarilar.length) aiBildirimGoster('uyari', '⏰ ' + uyarilar.join(' · '), 8000);
+}
+
+// ── İŞLEM SONRASI ANALİZ ─────────────────────────────────────────────────
+
+async function aiIslemSonrasiAnaliz(islem) {
+  if (aiSessizMod) return;
+  aiIslemSayaci++;
+  // Her 5 işlemde bir veya kritik durumda çalış
+  const kisiId = islem.kisiId;
+  if (!kisiId) return;
+  const k = getKisi(kisiId);
+  if (!k) return;
+  // Müşteri geçmişi
+  const mIslemler = DB.islemler.filter(i => i.kisiId === kisiId && i.statu === 'Tamamlandı');
+  const gecikmeleri = DB.islemler.filter(i => i.kisiId === kisiId && i.statu === 'Bekliyor' && new Date(i.tarih) < new Date()).length;
+  if (gecikmeleri === 0 && mIslemler.length < 3) return; // Yeterli veri yok veya sorun yok
+  const ekBilgi = `
+Bu işlem: ${islem.tip} ${fmt(islem.tutar)} ₺, ${k.isim}
+${k.isim} gecikmeli işlem: ${gecikmeleri}
+${k.isim} toplam işlem: ${mIslemler.length}`;
+  try {
+    const cevap = await aiApiCagri(
+      `Bu işlem kaydedildi. Sadece dikkat çekecek kritik bir nokta varsa 1 cümle söyle. Yoksa boş döndür.`,
+      [], false, ekBilgi
+    );
+    if (cevap && cevap.trim().length > 5) aiBildirimGoster('bilgi', '✦ ' + cevap.trim(), 7000);
+  } catch(e) {}
+}
+
+// ── ANOMALİ TESPİTİ ──────────────────────────────────────────────────────
+
+async function aiAnomaliKontrol() {
+  if (aiSessizMod) return;
+  const now = new Date();
+  const buAy = now.getMonth(); const buYil = now.getFullYear();
+  const gecenAy = buAy === 0 ? 11 : buAy - 1;
+  const gecenYil = buAy === 0 ? buYil - 1 : buYil;
+  const anomaliler = [];
+  // Gider anomalisi — bu ay geçene göre %50 fazla
+  const buAyGider = DB.islemler.filter(i=>i.tip==='Gider'&&i.statu==='Tamamlandı'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+  const gecenGider = DB.islemler.filter(i=>i.tip==='Gider'&&i.statu==='Tamamlandı'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+  if (gecenGider > 0 && buAyGider > gecenGider * 1.5) anomaliler.push(`Gider geçen aya göre %${Math.round((buAyGider/gecenGider-1)*100)} arttı`);
+  // Müşteri sessizliği anomalisi
+  DB.kisiler.forEach(k => {
+    const sonIslem = DB.islemler.filter(i=>i.kisiId===k.id&&i.statu==='Tamamlandı').sort((a,b)=>new Date(b.tarih)-new Date(a.tarih))[0];
+    if (!sonIslem) return;
+    const gunFark = Math.floor((now - new Date(sonIslem.tarih)) / (24*60*60*1000));
+    const oncekiOrtalama = aiHafiza[`musteri_aralik_${k.id}`] || 0;
+    if (oncekiOrtalama > 0 && gunFark > oncekiOrtalama * 2) anomaliler.push(`${k.isim} normalden ${Math.round(gunFark/oncekiOrtalama)}x uzun süredir sessiz`);
+  });
+  // Stok hızlı tüketim
+  DB.stok.forEach(s => {
+    const hareketler = DB.stokHareketleri.filter(h=>h.stokId===s.id&&filterByMonth(h.tarih,buAy,buYil));
+    const gecenHareketler = DB.stokHareketleri.filter(h=>h.stokId===s.id&&filterByMonth(h.tarih,gecenAy,gecenYil));
+    const buAyTuketim = hareketler.reduce((a,h)=>a+h.miktar,0);
+    const gecenTuketim = gecenHareketler.reduce((a,h)=>a+h.miktar,0);
+    if (gecenTuketim > 0 && buAyTuketim > gecenTuketim * 2) anomaliler.push(`${s.ad} normalin 2 katı hızda tükeniyor`);
+  });
+  if (anomaliler.length > 0) {
+    const ilk = anomaliler[0];
+    aiBildirimGoster('uyari', '🔍 Anomali: ' + ilk, 9000);
+    // Hafızaya kaydet
+    aiHafiza.sonAnomali = ilk;
+    aiHafizaKaydet();
+  }
+}
+
+// ── FİYATLANDIRMA ÖNERİSİ ────────────────────────────────────────────────
+
+async function aiFiyatlandirmaOnerisi(kisiId, kategori) {
+  if (!kisiId || !kategori) return null;
+  const k = getKisi(kisiId);
+  const benzerIslemler = DB.islemler.filter(i =>
+    i.kisiId === kisiId && i.kat === kategori && i.tip === 'Gelir' && i.statu === 'Tamamlandı'
+  ).sort((a,b) => new Date(b.tarih) - new Date(a.tarih));
+  if (benzerIslemler.length === 0) return null;
+  const ortFiyat = benzerIslemler.reduce((a,i)=>a+i.tutar,0) / benzerIslemler.length;
+  const sonFiyat = benzerIslemler[0].tutar;
+  // Genel gider trendini hesapla
+  const now = new Date();
+  const buAy = now.getMonth(); const buYil = now.getFullYear();
+  const gecenAy = buAy === 0 ? 11 : buAy - 1; const gecenYil = buAy === 0 ? buYil - 1 : buYil;
+  const buAyGider = DB.islemler.filter(i=>i.tip==='Gider'&&i.statu==='Tamamlandı'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+  const gecenGider = DB.islemler.filter(i=>i.tip==='Gider'&&i.statu==='Tamamlandı'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+  const giderArtis = gecenGider > 0 ? ((buAyGider-gecenGider)/gecenGider*100) : 0;
+  const oneriFiyat = Math.round(ortFiyat * (1 + Math.max(0,giderArtis)/100));
+  return { ortFiyat, sonFiyat, oneriFiyat, giderArtis: giderArtis.toFixed(1), islemSayisi: benzerIslemler.length };
+}
+
+// ── DOĞAL DİL İŞLEM GİRİŞİ ──────────────────────────────────────────────
+
+async function aiDoğalDilParse(metin) {
+  const prompt = `Aşağıdaki Türkçe metni analiz et ve JSON formatında çıkar. Sadece JSON döndür, başka bir şey yazma.
+Metin: "${metin}"
+Format: {"tip": "Gelir"/"Gider", "tutar": sayı, "kisi": "isim veya null", "not": "açıklama", "odemeYontemi": "Nakit"/"Kart"/"İBAN", "takvimEkle": false}
+Örnekler:
+- "Ahmet'ten 3500 nakit aldım" → {"tip":"Gelir","tutar":3500,"kisi":"Ahmet","not":"Tahsilat","odemeYontemi":"Nakit","takvimEkle":false}
+- "Markete 250 lira harcadım" → {"tip":"Gider","tutar":250,"kisi":null,"not":"Market","odemeYontemi":"Nakit","takvimEkle":false}
+- "Yarın Barış'a 2000 havale hatırlat" → {"tip":"Gider","tutar":2000,"kisi":"Barış","not":"Ödeme","odemeYontemi":"İBAN","takvimEkle":true}`;
+  try {
+    const cevap = await aiApiCagri(prompt, [], true);
+    const temiz = cevap.replace(/```json|```/g,'').trim();
+    return JSON.parse(temiz);
+  } catch(e) { return null; }
+}
+
+async function aiHizliIslem(metin) {
+  if (!metin.trim()) return;
+  aiBildirimGoster('info', '⌛ Analiz ediliyor...', 2000);
+  const parsed = await aiDoğalDilParse(metin);
+  if (!parsed || !parsed.tutar) { aiBildirimGoster('uyari', 'Anlayamadım. Örnek: Ahmet 3500 nakit', 4000); return; }
+  // Kişiyi bul
+  let kisiId = null;
+  if (parsed.kisi) {
+    const bulunan = DB.kisiler.find(k => k.isim.toLowerCase().includes(parsed.kisi.toLowerCase()));
+    if (bulunan) kisiId = bulunan.id;
+  }
+  // Formu doldur
+  openIslemModal();
+  setTimeout(() => {
+    const tipSec = document.getElementById('mi-tip');
+    if (tipSec) { tipSec.value = parsed.tip; tipSec.dispatchEvent(new Event('change')); }
+    const tutar = document.getElementById('mi-tutar');
+    if (tutar) tutar.value = parsed.tutar;
+    const not = document.getElementById('mi-not');
+    if (not) not.value = parsed.not || '';
+    const odeme = document.getElementById('mi-odeme');
+    if (odeme) odeme.value = parsed.odemeYontemi || 'Nakit';
+    if (kisiId) acSelect('mi-ac', kisiId, DB.kisiler.find(k=>k.id===kisiId)?.isim, DB.kisiler.find(k=>k.id===kisiId)?.tip);
+    aiBildirimGoster('info', '✅ Form dolduruldu, kontrol edip kaydet', 5000);
+  }, 400);
+}
+
+// ── TAHSILAT STRATEJİSİ ──────────────────────────────────────────────────
+
+async function aiTahsilatStratejisi(kisiId) {
+  const k = getKisi(kisiId);
+  if (!k) return;
+  const gecmisHatirlatmalar = aiHafiza[`hatirlatma_${kisiId}`] || 0;
+  const vadeBekleyen = DB.islemler.filter(i => i.kisiId===kisiId && i.statu==='Bekliyor' && new Date(i.tarih)<new Date());
+  if (!vadeBekleyen.length) { showToast('Bu müşterinin vadesi geçmiş işlemi yok', 'amber'); return; }
+  const toplamBekleyen = vadeBekleyen.reduce((a,i)=>a+i.tutar,0);
+  const ekBilgi = `
+Müşteri: ${k.isim}
+Vadesi geçmiş: ${vadeBekleyen.length} işlem, ${fmt(toplamBekleyen)} ₺
+Önceki hatırlatma sayısı: ${gecmisHatirlatmalar}
+Müşteri tipi: ${k.tip}`;
+  const prompt = `Bu müşteriye en etkili tahsilat stratejisini öner. 2-3 cümle. Geçmiş hatırlatma sayısı ${gecmisHatirlatmalar} ise farklı yaklaşım öner.`;
+  aiBildirimGoster('info', '⌛ Strateji analiz ediliyor...', 3000);
+  try {
+    const cevap = await aiApiCagri(prompt, [], false, ekBilgi);
+    aiHafiza[`hatirlatma_${kisiId}`] = gecmisHatirlatmalar + 1;
+    aiHafizaKaydet();
+    showInfoModal(`💡 ${k.isim} - Tahsilat Stratejisi`,
+      `<div style="background:var(--bg2);border-radius:var(--r-md);padding:16px;margin-bottom:12px;"><div style="font-size:13px;line-height:1.7;color:var(--text);">${cevap.replace(/\n/g,'<br>')}</div></div>
+      <div style="font-size:12px;color:var(--text3);">Toplam: ${fmt(toplamBekleyen)} ₺ · ${vadeBekleyen.length} işlem · ${gecmisHatirlatmalar+1}. hatırlatma</div>
+      <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="whatsappHatirlatici(${kisiId});closeModal('modal-info')">💬 WhatsApp'tan Gönder</button>`);
+  } catch(e) { showToast('AI bağlantı hatası', 'red'); }
+}
+
+// ── HUKUKİ & MUHASEBE HATIRLATICI ────────────────────────────────────────
+
+function aiMuhasebeTakvimi() {
+  const now = new Date();
+  const ayGun = now.getDate();
+  const uyarilar = [];
+  // KDV beyanname (her ayın 26'sı)
+  const kdvSon = new Date(now.getFullYear(), now.getMonth(), 26);
+  const kdvKalan = Math.ceil((kdvSon - now) / (24*60*60*1000));
+  if (kdvKalan >= 0 && kdvKalan <= 5) uyarilar.push({ tip: 'kdv', mesaj: `KDV beyannamesi ${kdvKalan === 0 ? 'bugün' : kdvKalan + ' gün sonra'} (26 ${now.toLocaleString('tr-TR',{month:'long'})})`, renk: kdvKalan <= 2 ? 'var(--red)' : 'var(--amber)' });
+  // SGK bildirge (her ayın 23'ü)
+  const sgkSon = new Date(now.getFullYear(), now.getMonth(), 23);
+  const sgkKalan = Math.ceil((sgkSon - now) / (24*60*60*1000));
+  if (sgkKalan >= 0 && sgkKalan <= 5) uyarilar.push({ tip: 'sgk', mesaj: `SGK bildirge ${sgkKalan === 0 ? 'bugün' : sgkKalan + ' gün sonra'}`, renk: 'var(--amber)' });
+  // Geçici vergi (3 aylık dönem sonu)
+  const ay = now.getMonth();
+  if ((ay === 4 && ayGun >= 17 && ayGun <= 24) || (ay === 7 && ayGun >= 17 && ayGun <= 24) || (ay === 10 && ayGun >= 17 && ayGun <= 24)) {
+    uyarilar.push({ tip: 'gecici_vergi', mesaj: 'Geçici vergi beyanname dönemi yaklaşıyor', renk: 'var(--amber)' });
+  }
+  // Yanlış KDV kontrolü
+  const kdvSizGelir = DB.islemler.filter(i => i.tip==='Gelir' && i.statu==='Tamamlandı' && i.tutar > 10000 && !i.kdvVar);
+  if (kdvSizGelir.length > 0) uyarilar.push({ tip: 'kdv_eksik', mesaj: `${kdvSizGelir.length} yüksek tutarlı gelirde KDV kaydı eksik`, renk: 'var(--red)' });
+  return uyarilar;
+}
+
+function aiMuhasebeBildirimKontrol() {
+  if (aiSessizMod) return;
+  const uyarilar = aiMuhasebeTakvimi();
+  uyarilar.forEach((u, i) => {
+    setTimeout(() => aiBildirimGoster('uyari', '🏛️ ' + u.mesaj, 8000), i * 2000);
+  });
+}
+
+// ── KONUŞMA HAFIZASI ─────────────────────────────────────────────────────
+
+function aiHafizaGuncelle(konu, deger) {
+  aiHafiza[konu] = deger;
+  aiHafizaKaydet();
+}
+
+function aiKalipOgrenEn() {
+  // Hangi günlerde/saatlerde işlem giriliyor
+  const gunSayac = [0,0,0,0,0,0,0];
+  DB.islemler.slice(0,50).forEach(i => {
+    const g = new Date(i.tarih).getDay();
+    gunSayac[g]++;
+  });
+  const enAktifGun = gunSayac.indexOf(Math.max(...gunSayac));
+  const gunler = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+  aiHafizaGuncelle('en_aktif_gun', gunler[enAktifGun]);
+  // Ortalama işlem tutarı
+  const ortTutar = DB.islemler.filter(i=>i.statu==='Tamamlandı').reduce((a,i)=>a+i.tutar,0) / Math.max(1, DB.islemler.filter(i=>i.statu==='Tamamlandı').length);
+  aiHafizaGuncelle('ort_islem_tutari', Math.round(ortTutar));
+}
+
+// ── AY SONU ÖZETİ ────────────────────────────────────────────────────────
+
+async function aiAySonuOzeti() {
+  const now = new Date();
+  const ayGun = now.getDate();
+  const toplamGun = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  if (ayGun < toplamGun - 2) return; // Ay sonuna 3 günden fazla varsa atla
+  const sonKontrol = aiHafiza.sonAySonuOzeti;
+  const buAyStr = `${now.getFullYear()}-${now.getMonth()}`;
+  if (sonKontrol === buAyStr) return; // Bu ay zaten yapıldı
+  const prompt = `Bu ay için kısa bir değerlendirme yap. 3 cümle: ne iyi gitti, ne dikkat gerekiyor, önümüzdeki ay için 1 öneri.`;
+  try {
+    const cevap = await aiApiCagri(prompt, [], false);
+    aiHafiza.sonAySonuOzeti = buAyStr;
+    aiHafizaKaydet();
+    showInfoModal('📅 ' + now.toLocaleString('tr-TR',{month:'long'}) + ' Ay Sonu Özeti',
+      `<div style="background:var(--bg2);border-radius:var(--r-md);padding:16px;font-size:13px;line-height:1.7;">${cevap.replace(/\n/g,'<br>')}</div>`);
+  } catch(e) {}
+}
+
+// ── API ÇAĞRISI ───────────────────────────────────────────────────────────
+
+async function aiApiCagri(prompt, gecmis, jsonMode, ekBilgi) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: jsonMode ? 500 : 800,
+      system: aiSistemPrompt(ekBilgi),
+      messages: [...(gecmis||[]).slice(-8), { role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.[0]?.text || '';
+}
+
+// ── BİLDİRİM UI ──────────────────────────────────────────────────────────
+
+let aiBildirimQueue = [];
+let aiBildirimAktif = false;
+
+function aiBildirimGoster(tip, mesaj, sure) {
+  if (aiSessizMod) return;
+  aiBildirimQueue.push({ tip, mesaj, sure: sure || 6000 });
+  if (!aiBildirimAktif) aiSiraBildirim();
+}
+
+function aiSiraBildirim() {
+  if (!aiBildirimQueue.length) { aiBildirimAktif = false; return; }
+  aiBildirimAktif = true;
+  const { tip, mesaj, sure } = aiBildirimQueue.shift();
+  let bar = document.getElementById('ai-bildirim-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'ai-bildirim-bar';
+    bar.style.cssText = `position:fixed;bottom:calc(var(--nav-h,60px) + 80px);left:50%;transform:translateX(-50%);
+      z-index:9990;max-width:92vw;width:400px;padding:12px 16px 12px 14px;
+      border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+      display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+      animation:slideUpIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      font-size:13px;line-height:1.5;`;
+    bar.onclick = () => { bar.style.opacity='0'; bar.style.transform='translate(-50%,20px)'; setTimeout(()=>bar.remove(),300); };
+    document.body.appendChild(bar);
+  }
+  const renkler = { info: { bg:'var(--surface)', border:'var(--blue)', ikon:'✦' }, uyari: { bg:'rgba(255,170,0,0.15)', border:'var(--amber)', ikon:'⚠️' }, bilgi: { bg:'var(--surface)', border:'var(--purple,#8b5cf6)', ikon:'💡' } };
+  const r = renkler[tip] || renkler.info;
+  bar.style.cssText += `background:${r.bg};border:1px solid ${r.border};`;
+  bar.innerHTML = `<div style="font-size:18px;flex-shrink:0;margin-top:1px;">${r.ikon}</div><div style="flex:1;color:var(--text);">${mesaj}</div><div style="color:var(--text3);font-size:11px;flex-shrink:0;margin-top:2px;" onclick="event.stopPropagation();aiSessizAktifte()">✕</div>`;
+  clearTimeout(bar._timer);
+  bar._timer = setTimeout(() => {
+    bar.style.opacity='0';bar.style.transform='translate(-50%,20px)';bar.style.transition='all 0.3s';
+    setTimeout(() => { bar.remove(); setTimeout(aiSiraBildirim, 500); }, 300);
+  }, sure);
+}
+
+function aiSessizAktifte() {
+  const bar = document.getElementById('ai-bildirim-bar');
+  if (bar) bar.remove();
+  aiSessizMod = true;
+  const prefs = JSON.parse(localStorage.getItem(AI_KEY)||'{}');
+  prefs.sessiz = true;
+  localStorage.setItem(AI_KEY, JSON.stringify(prefs));
+  showToast('AI bildirimleri bu oturum için susturuldu', 'amber');
+}
+
+// CSS animasyonu
+if (!document.getElementById('ai-style')) {
+  const s = document.createElement('style');
+  s.id = 'ai-style';
+  s.textContent = `@keyframes slideUpIn{from{opacity:0;transform:translate(-50%,24px)}to{opacity:1;transform:translate(-50%,0)}}`;
+  document.head.appendChild(s);
+}
+
+// ── SOHBET EKRANI ────────────────────────────────────────────────────────
+
+async function aiGonder() {
+  const input = document.getElementById('ai-input');
+  const soru = input.value.trim();
+  if (!soru) return;
+  input.value = '';
+  const btn = document.getElementById('ai-gonder-btn');
+  const ikon = document.getElementById('ai-gonder-ikon');
+  if (btn) btn.disabled = true;
+  if (ikon) ikon.textContent = '⌛';
+  document.getElementById('ai-hazir-sorular').style.display = 'none';
+  aiMesajEkle('user', soru);
+  aiGecmis.push({ role: 'user', content: soru });
+  // Doğal dil işlem mi?
+  const islemKelime = /aldım|verdim|ödedim|tahsilat|gelir|gider|harcadım|yatırdım/i.test(soru);
+  if (islemKelime && soru.length < 80) {
+    const parsed = await aiDoğalDilParse(soru);
+    if (parsed && parsed.tutar) {
+      const cevap = `İşlem anladım: ${parsed.tip} · ${fmt(parsed.tutar)} ₺ · ${parsed.odemeYontemi}${parsed.kisi?(' · '+parsed.kisi):''}
+
+Formu doldurayım mı?`;
+      aiGecmis.push({ role: 'assistant', content: cevap });
+      aiMesajEkle('assistant', cevap);
+      aiMesajEkle('action', `<button onclick="aiHizliIslem('${soru.replace(/'/g,'')}')" class="btn btn-primary" style="font-size:12px;padding:7px 14px;margin-top:4px;">✅ Evet, formu doldur</button>`);
+      if (btn) btn.disabled = false;
+      if (ikon) ikon.textContent = '➤';
+      return;
+    }
+  }
+  try {
+    const cevap = await aiApiCagri(soru, aiGecmis.slice(-10), false);
+    aiGecmis.push({ role: 'assistant', content: cevap });
+    aiMesajEkle('assistant', cevap);
+    // Hafızaya öğrenme
+    aiKalipOgrenEn();
+  } catch(e) {
+    aiMesajEkle('assistant', '⚠️ Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (ikon) ikon.textContent = '➤';
+  }
+}
+
+function aiSor(soru) {
+  document.getElementById('ai-input').value = soru;
+  aiGonder();
+}
+
+function aiMesajEkle(rol, icerik) {
+  const mesajlar = document.getElementById('ai-mesajlar');
+  if (!mesajlar) return;
+  const isUser = rol === 'user';
+  const isAction = rol === 'action';
+  const div = document.createElement('div');
+  if (isAction) {
+    div.innerHTML = icerik;
+    mesajlar.appendChild(div);
+  } else {
+    div.style.cssText = `display:flex;gap:8px;${isUser ? 'flex-direction:row-reverse;' : ''}`;
+    div.innerHTML = `${!isUser ? `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;">✦</div>` : ''}
+      <div style="max-width:85%;padding:10px 14px;border-radius:${isUser?'16px 4px 16px 16px':'4px 16px 16px 16px'};background:${isUser?'var(--blue)':'var(--surface)'};color:${isUser?'white':'var(--text)'};font-size:13px;line-height:1.6;white-space:pre-wrap;">${icerik.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>`;
+    mesajlar.appendChild(div);
+  }
+  mesajlar.scrollTop = mesajlar.scrollHeight;
+}
+
+// Modal açılınca hoşgeldin
+document.addEventListener('DOMContentLoaded', () => {
+  const aiModal = document.getElementById('modal-ai');
+  if (aiModal) {
+    const obs = new MutationObserver(() => {
+      if (aiModal.classList.contains('open') && document.getElementById('ai-mesajlar')?.children.length === 0) {
+        const v = aiVeriOzeti ? aiVeriOzeti() : null;
+        aiMesajEkle('assistant', `Merhaba! Ben Gün Teknik asistanınım. 🏢
+
+Verilerinizi anlık analiz edebilir, işlem girebilir, tahsilat stratejisi önerebilir ve sorularınızı yanıtlayabilirim.
+
+${v && v.gecmisSayi > 0 ? `⚠️ Dikkat: ${v.gecmisSayi} vadesi geçmiş işlem var (${fmt(v.gecmisTutar)} ₺)
+
+` : ''}Ne yapmamı istersiniz?`);
+      }
+    });
+    obs.observe(aiModal, { attributes: true, attributeFilter: ['class'] });
+  }
+});
+
+// ── AI AYARLAR PANELİ ─────────────────────────────────────────────────────
+
+function openAiAyarlar() {
+  const prefs = JSON.parse(localStorage.getItem(AI_KEY)||'{"aktif":true,"sessiz":false}');
+  const hafizaOzet = Object.entries(aiHafiza).slice(0,8).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text3);">${k}</span><span>${v}</span></div>`).join('');
+  showInfoModal('🤖 AI Asistan Ayarları',
+    `<div class="fi"><label style="display:flex;justify-content:space-between;align-items:center;">
+      <span>AI Bildirimleri</span>
+      <input type="checkbox" id="ai-aktif-chk" ${prefs.aktif?'checked':''} onchange="aiAyarKaydet()">
+    </label></div>
+    <div class="fi"><label style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Sessiz Mod</span>
+      <input type="checkbox" id="ai-sessiz-chk" ${prefs.sessiz?'checked':''} onchange="aiAyarKaydet()">
+    </label></div>
+    <div style="margin-top:12px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Öğrenilen Bilgiler</div>
+      ${hafizaOzet || '<div style="font-size:12px;color:var(--text3);">Henüz veri yok</div>'}
+    </div>
+    <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="aiHafiza={};aiHafizaKaydet();showToast('Hafıza temizlendi','amber');closeModal('modal-info')">🗑 Hafızayı Temizle</button>
+    <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="aiAySonuOzeti();closeModal('modal-info')">📅 Ay Sonu Özeti Al</button>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="aiAnomaliKontrol();closeModal('modal-info')">🔍 Anomali Tara</button>`
+  );
+}
+
+function aiAyarKaydet() {
+  const aktif = document.getElementById('ai-aktif-chk')?.checked;
+  const sessiz = document.getElementById('ai-sessiz-chk')?.checked;
+  aiSessizMod = sessiz;
+  localStorage.setItem(AI_KEY, JSON.stringify({ aktif, sessiz }));
+  showToast('AI ayarları kaydedildi', 'green');
 }
 
 // ============================================================ BAŞLAT
