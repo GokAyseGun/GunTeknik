@@ -743,66 +743,80 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div class="fg">
           <div style="display:flex;gap:8px;">
             <div class="fi" style="flex:1">
-              <label>Fatura Tipi</label>
+              <label>Akış Tipi</label>
               <select id="vf-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
                 <option value="gelen">Gelen (İndirilecek KDV)</option>
                 <option value="giden">Giden (Hesaplanan KDV)</option>
               </select>
             </div>
             <div class="fi" style="flex:1">
-              <label>Tarih</label>
-              <input type="date" id="vf-tarih" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
+              <label>Fatura Tipi</label>
+              <select id="vf-fatura-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+                <option value="Satış">Satış Faturası</option>
+                <option value="İade">İade Faturası</option>
+                <option value="Tevkifatlı">Tevkifatlı Fatura</option>
+                <option value="İstisna">İstisna Faturası</option>
+              </select>
             </div>
           </div>
-          <div class="fi">
-            <label>Fatura No</label>
-            <input type="text" id="vf-no" placeholder="Örn: 2024/001">
+          <div style="display:flex;gap:8px;">
+            <div class="fi" style="flex:1">
+              <label>Fatura Tarihi</label>
+              <input type="date" id="vf-tarih" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
+            </div>
+            <div class="fi" style="flex:1">
+              <label>Fatura No</label>
+              <input type="text" id="vf-no" placeholder="Örn: 2024/001">
+            </div>
           </div>
+          <!-- Firma Bilgileri -->
           <div class="fi">
-            <label>Firma / Kişi</label>
+            <label>Ünvan / Ad Soyad</label>
             <input type="hidden" id="vf-kisi-id">
             <div style="display:flex;gap:8px;align-items:flex-start;">
               <div class="kisi-ac-wrap" style="flex:1;" id="vf-ac-wrap">
-                <input type="text" class="kisi-ac-input" id="vf-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
+                <input type="text" class="kisi-ac-input" id="vf-ac-input" placeholder="İsim yazarak ara..."
                   oninput="acSearchVergi()" onfocus="acSearchVergi()" autocomplete="off">
                 <div id="vf-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClearVergi()">
-                  <span class="ac-name" id="vf-ac-sel-text"></span>
-                  <span class="ac-clear">✕</span>
+                  <span class="ac-name" id="vf-ac-sel-text"></span><span class="ac-clear">✕</span>
                 </div>
                 <div class="kisi-ac-dropdown" id="vf-ac-drop"></div>
               </div>
               <button type="button" onclick="openKisiModalVergi()" style="padding:0 14px;height:48px;flex-shrink:0;" class="btn btn-primary btn-sm">+</button>
             </div>
-            <div id="vf-vergi-no" style="font-size:11px;color:var(--text3);margin-top:4px;display:none;">VKN/TCKN: <span id="vf-vergi-no-text"></span></div>
           </div>
           <input type="hidden" id="vf-firma">
           <div style="display:flex;gap:8px;">
-            <div class="fi" style="flex:1">
-              <label>Fatura Tutarı (₺)</label>
-              <input type="number" id="vf-tutar" inputmode="numeric" placeholder="0.00">
-            </div>
-            <div class="fi" style="flex:1">
-              <label>KDV Tutarı (₺)</label>
-              <input type="number" id="vf-kdv" inputmode="numeric" placeholder="0.00">
-            </div>
+            <div class="fi" style="flex:1"><label>Vergi Dairesi</label><input type="text" id="vf-vergi-dairesi" placeholder="Kadıköy V.D."></div>
+            <div class="fi" style="flex:1"><label>VKN / TCKN</label><input type="text" id="vf-vergi-no-input" placeholder="1234567890" inputmode="numeric"></div>
           </div>
-          <div class="fi">
-            <label>Açıklama</label>
-            <input type="text" id="vf-not" placeholder="İsteğe bağlı not...">
+          <div id="vf-vergi-no" style="font-size:11px;color:var(--text3);margin-top:-8px;margin-bottom:4px;display:none;">VKN/TCKN: <span id="vf-vergi-no-text"></span></div>
+          <!-- Mal/Hizmet -->
+          <div class="fi"><label>Mal / Hizmet Cinsi <span style="color:var(--text3);font-size:10px;">(isteğe bağlı)</span></label><input type="text" id="vf-not" placeholder="Elektrik tesisatı, malzeme vb..."></div>
+          <!-- Tutarlar -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Tutar Bilgileri</div>
+            <div style="display:flex;gap:8px;">
+              <div class="fi" style="flex:2"><label>KDV Hariç Tutar (₺)</label><input type="number" id="vf-kdvsiz-tutar" inputmode="numeric" placeholder="0.00" oninput="vfKdvHesapla()"></div>
+              <div class="fi" style="flex:1">
+                <label>KDV Oranı</label>
+                <select id="vf-kdv-oran" onchange="vfKdvHesapla()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+                  <option value="20">%20</option><option value="10">%10</option><option value="1">%1</option><option value="0">%0</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div class="fi" style="flex:1"><label>KDV Tutarı (₺)</label><input type="number" id="vf-kdv" inputmode="numeric" placeholder="0.00" oninput="vfGenelToplamHesapla()"></div>
+              <div class="fi" style="flex:1"><label>Genel Toplam — KDV dahil (₺)</label><input type="number" id="vf-tutar" inputmode="numeric" placeholder="0.00"></div>
+            </div>
           </div>
           <button class="btn btn-primary btn-full" onclick="saveVergiFatura(this)">Faturayı Kaydet</button>
           <div class="fi">
             <label>Fatura Görseli / Belgesi</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-              <label for="vf-file-kamera" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-                <span style="font-size:24px;">📷</span>Kamera
-              </label>
-              <label for="vf-file-galeri" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-                <span style="font-size:24px;">🖼️</span>Galeri
-              </label>
-              <label for="vf-file-belge" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-                <span style="font-size:24px;">📄</span>Belge
-              </label>
+              <label for="vf-file-kamera" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;"><span style="font-size:24px;">📷</span>Kamera</label>
+              <label for="vf-file-galeri" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;"><span style="font-size:24px;">🖼️</span>Galeri</label>
+              <label for="vf-file-belge" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;"><span style="font-size:24px;">📄</span>Belge</label>
             </div>
             <input type="file" id="vf-file-kamera" style="display:none;" accept="image/*" capture="environment" onchange="onDosyaSec(this,'vf-dosya-preview');selectedVfFile=this.files[0];">
             <input type="file" id="vf-file-galeri" style="display:none;" accept="image/*" onchange="onDosyaSec(this,'vf-dosya-preview');selectedVfFile=this.files[0];">
@@ -1237,6 +1251,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div class="fi" style="flex:1"><label>Vergi Dairesi</label><input type="text" id="mk-vergidairesi" placeholder="Kadıköy V.D." autocapitalize="words"></div>
       </div>
       <div class="fi"><label>Telefon</label><input type="tel" id="mk-tel" placeholder="05xx xxx xx xx"></div>
+      <div class="fi"><label>Banka Adı</label><input type="text" id="mk-banka-adi" placeholder="Ziraat, Garanti, İş Bankası..." autocapitalize="words"></div>
       <div class="fi"><label>IBAN</label><input type="text" id="mk-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:monospace;font-size:12px;letter-spacing:1px;" oninput="this.value=this.value.toUpperCase()"></div>
       <div class="fi"><label>E-Fatura Mükellefi</label>
         <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);">
@@ -1608,15 +1623,37 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <input type="hidden" id="proje-kisi">
         </div>
       </div>
-      <div class="fi"><label>Durum</label>
-        <select id="proje-durum" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option>Devam Ediyor</option><option>Tamamlandı</option><option>Beklemede</option><option>İptal</option>
-        </select>
+      <div class="fi"><label>Proje Adresi</label><input type="text" id="proje-adres" placeholder="İş yeri adresi" autocapitalize="words"></div>
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1"><label>Durum</label>
+          <select id="proje-durum" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+            <option>Devam Ediyor</option><option>Tamamlandı</option><option>Beklemede</option><option>İptal</option>
+          </select>
+        </div>
+        <div class="fi" style="flex:1"><label>Zorluk / Büyüklük</label>
+          <select id="proje-zorluk" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+            <option value="Küçük">Küçük</option><option value="Orta">Orta</option><option value="Büyük">Büyük</option><option value="Çok Büyük">Çok Büyük</option>
+          </select>
+        </div>
       </div>
       <div style="display:flex;gap:8px;">
-        <div class="fi" style="flex:1"><label>Başlangıç</label><input type="date" id="proje-baslangic"></div>
-        <div class="fi" style="flex:1"><label>Bitiş</label><input type="date" id="proje-bitis"></div>
+        <div class="fi" style="flex:1"><label>İş Başlangıç</label><input type="date" id="proje-baslangic"></div>
+        <div class="fi" style="flex:1"><label>İş Bitiş</label><input type="date" id="proje-bitis"></div>
       </div>
+      <!-- Fiyat Bilgileri -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:4px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Fiyat Bilgileri</div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>En İyi Fiyat (₺)</label><input type="number" id="proje-en-iyi-fiyat" inputmode="numeric" placeholder="0"></div>
+          <div class="fi" style="flex:1"><label>Teklif Ettiğimiz (₺)</label><input type="number" id="proje-teklif-fiyat" inputmode="numeric" placeholder="0"></div>
+        </div>
+        <div class="fi"><label>Müşterinin Teklifi (₺)</label><input type="number" id="proje-musteri-teklif" inputmode="numeric" placeholder="0"></div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Tahmini Malzeme (₺)</label><input type="number" id="proje-malzeme-tahmini" inputmode="numeric" placeholder="0"></div>
+          <div class="fi" style="flex:1"><label>Tahmini İşçilik (₺)</label><input type="number" id="proje-iscilik-tahmini" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="fi"><label>Gerekli Malzemeler</label><textarea id="proje-malzemeler" rows="2" placeholder="Kablo, sigorta, priz vb..."></textarea></div>
       <div class="fi"><label>Açıklama</label><textarea id="proje-aciklama" rows="2" placeholder="Proje detayları..."></textarea></div>
     </div>
     <div class="modal-foot">
@@ -1658,14 +1695,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="fi"><label>Kalemler</label>
         <div id="teklif-kalemler" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
-        <button type="button" onclick="teklifKalemEkle()" style="width:100%;padding:9px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:transparent;color:var(--blue);font-size:13px;cursor:pointer;">+ Kalem Ekle</button>
+        <button type="button" onclick="teklifKalemEkle()" style="width:100%;padding:9px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:transparent;color:var(--blue);font-size:13px;cursor:pointer;">+ Malzeme / Ürün Ekle</button>
+        <!-- İşçilik Bölümü -->
+        <div style="margin-top:10px;background:rgba(240,196,114,0.08);border:1px solid rgba(240,196,114,0.25);border-radius:var(--r-md);padding:12px;">
+          <div style="font-size:11px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">🔧 İşçilik</div>
+          <div id="teklif-iscilik-kalemler" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+          <button type="button" onclick="teklifIscilikEkle()" style="width:100%;padding:8px;border:2px dashed rgba(240,196,114,0.4);border-radius:var(--r-sm);background:transparent;color:var(--amber);font-size:13px;cursor:pointer;">+ İşçilik Kalemi Ekle</button>
+        </div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-weight:600;">Toplam</span>
         <span style="font-weight:700;font-size:18px;color:var(--green);" class="num" id="teklif-toplam-goster">0 ₺</span>
       </div>
-      <div class="fi"><label>Açıklama / Not</label><textarea id="teklif-aciklama" rows="2" placeholder="Teklif notları, ödeme koşulları..."></textarea></div>
-      <button type="button" onclick="aiFiyatOnerisiGoster()" class="btn btn-secondary btn-full" style="background:rgba(139,92,246,0.1);color:#8b5cf6;border-color:rgba(139,92,246,0.3);">✦ AI Fiyat Önerisi Al</button>
+      <div class="fi"><label>Açıklama / Not</label><textarea id="teklif-aciklama" rows="3" placeholder="Teklif notları, ödeme koşulları..."></textarea></div>
+      <button type="button" onclick="teklifAiAciklamaEkle()" class="btn btn-secondary btn-full" style="background:rgba(139,92,246,0.1);color:#b39ddb;border-color:rgba(139,92,246,0.3);">✦ AI Açıklama Ekle</button>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif')">İptal</button>
@@ -1949,8 +1992,10 @@ async function startApp(){
   aiAySonuOzeti();
   // Veri yedek hatırlatıcı
   setTimeout(()=>yedekHatirlatici(),5000);
+  // Teklif gerçek zamanlı takip
+  teklifPollBaslat();
   // Yaklaşan ödeme + bütçe kontrolü
-  setTimeout(()=>{yaklaşanUyariGoster();butceAsimiKontrol();},800);
+  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},800);
 }
 
 // ============================================================ VERİTABANI
@@ -3252,9 +3297,20 @@ function showKisiDetay(id){
 
   // Tahsilat butonu
   if(USER_ROL!=='goruntule')html+='<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal(\'modal-kisi-detay\');openOdemeModal('+id+')">💳 Tahsilat / Ödeme Ekle</button>';
-  if(k.tel)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Hatırlatıcı Gönder</button>';
-  // Vadesi geçmiş varsa AI tahsilat stratejisi
-  const vadeGecmis=DB.islemler.filter(i=>String(i.kisiId)===String(id)&&i.statu==='Bekliyor'&&new Date(i.tarih)<new Date());
+  // WhatsApp butonları — bakiyeye göre
+  if(k.tel){
+    const vadeGecmisAlacak=DB.islemler.filter(i=>String(i.kisiId)===String(id)&&i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<new Date());
+    if(bakiye>0){
+      // Bize borçlu — hatırlatıcı
+      html+='<button class="btn btn-secondary btn-full" style="margin-bottom:6px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Hatırlatıcı Gönder</button>';
+      if(vadeGecmisAlacak.length){
+        html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(232,128,128,0.15);color:var(--red);border-color:rgba(232,128,128,0.3);" onclick="whatsappGecmisIhtar('+id+')">⚠️ Geçmiş Borç İhtar Gönder</button>';
+      }
+    }else if(bakiye<0){
+      // Biz borçluyuz — bilgilendirme
+      html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Bilgilendirme Gönder</button>';
+    }
+  }
   if(vadeGecmis.length)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);" onclick="aiTahsilatStratejisi('+id+')">✦ AI Tahsilat Stratejisi</button>';
 
   // Ödemeler
@@ -5185,18 +5241,29 @@ function openProjeModal(id){
   if(USER_ROL==='goruntule')return;
   document.getElementById('proje-id').value=id||'';
   document.getElementById('proje-modal-baslik').textContent=id?'Projeyi Düzenle':'Yeni Proje';
+  // Tüm alanları temizle
+  ['proje-isim','proje-adres','proje-aciklama','proje-malzemeler'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+  ['proje-baslangic','proje-bitis'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+  ['proje-en-iyi-fiyat','proje-teklif-fiyat','proje-musteri-teklif','proje-malzeme-tahmini','proje-iscilik-tahmini'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+  document.getElementById('proje-durum').value='Devam Ediyor';
+  const zEl=document.getElementById('proje-zorluk');if(zEl)zEl.value='Orta';
+  acClear('proje-ac');
   if(id){
     const p=DB.projeler.find(x=>x.id===id);if(!p)return;
-    document.getElementById('proje-isim').value=p.isim;
-    document.getElementById('proje-durum').value=p.durum;
+    document.getElementById('proje-isim').value=p.isim||'';
+    document.getElementById('proje-durum').value=p.durum||'Devam Ediyor';
+    const zEl2=document.getElementById('proje-zorluk');if(zEl2)zEl2.value=p.zorluk||'Orta';
     document.getElementById('proje-baslangic').value=p.baslangic||'';
     document.getElementById('proje-bitis').value=p.bitis||'';
     document.getElementById('proje-aciklama').value=p.aciklama||'';
+    const adresEl=document.getElementById('proje-adres');if(adresEl)adresEl.value=p.adres||'';
+    const malzEl=document.getElementById('proje-malzemeler');if(malzEl)malzEl.value=p.malzemeler||'';
+    const enIyiEl=document.getElementById('proje-en-iyi-fiyat');if(enIyiEl)enIyiEl.value=p.enIyiFiyat||'';
+    const teklifEl=document.getElementById('proje-teklif-fiyat');if(teklifEl)teklifEl.value=p.teklifFiyat||'';
+    const musteriTekEl=document.getElementById('proje-musteri-teklif');if(musteriTekEl)musteriTekEl.value=p.musteriTeklif||'';
+    const malzTahEl=document.getElementById('proje-malzeme-tahmini');if(malzTahEl)malzTahEl.value=p.malzemeTahmini||'';
+    const iscTahEl=document.getElementById('proje-iscilik-tahmini');if(iscTahEl)iscTahEl.value=p.iscilikTahmini||'';
     if(p.musteriId){const k=getKisi(p.musteriId);if(k)acSelect('proje-ac',k.id,k.isim,k.tip);}
-  }else{
-    ['proje-isim','proje-baslangic','proje-bitis','proje-aciklama'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    document.getElementById('proje-durum').value='Devam Ediyor';
-    acClear('proje-ac');
   }
   openModal('modal-proje');
 }
@@ -5207,7 +5274,7 @@ async function saveProje(btn){
     const id=document.getElementById('proje-id').value;
     const isim=document.getElementById('proje-isim').value.trim();
     if(!isim){showToast('Proje adı gerekli','red');return;}
-    const payload={isim,durum:document.getElementById('proje-durum').value,baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
+    const payload={isim,durum:document.getElementById('proje-durum').value,zorluk:document.getElementById('proje-zorluk')?.value||'Orta',baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,adres:document.getElementById('proje-adres')?.value||'',malzemeler:document.getElementById('proje-malzemeler')?.value||'',en_iyi_fiyat:parseFloat(document.getElementById('proje-en-iyi-fiyat')?.value)||null,teklif_fiyat:parseFloat(document.getElementById('proje-teklif-fiyat')?.value)||null,musteri_teklif:parseFloat(document.getElementById('proje-musteri-teklif')?.value)||null,malzeme_tahmini:parseFloat(document.getElementById('proje-malzeme-tahmini')?.value)||null,iscilik_tahmini:parseFloat(document.getElementById('proje-iscilik-tahmini')?.value)||null,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
     if(id)await sbFetch('projeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
     else await sbFetch('projeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
     await loadDB();closeModal('modal-proje');showToast(id?'Güncellendi':'Proje eklendi','green');
@@ -5325,44 +5392,11 @@ function openTeklifModal(id){
   openModal('modal-teklif');
 }
 
-function teklifKalemEkle(kalem){
-  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return;
-  const idx=teklifKalemSay++;
-  const id='tk-'+idx;
-  const div=document.createElement('div');
-  div.id=id;div.style.cssText='display:flex;gap:6px;align-items:flex-end;';
-  div.innerHTML=`
-    <div style="flex:2;"><input type="text" id="${id}-aciklama" placeholder="Açıklama" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words"></div>
-    <div style="flex:1;"><input type="number" id="${id}-miktar" placeholder="Miktar" value="${kalem?.miktar||1}" min="1" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
-    <div style="flex:1;"><input type="number" id="${id}-birim-fiyat" placeholder="Fiyat" value="${kalem?.birimFiyat||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
-    <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
-  wrap.appendChild(div);
-}
+// teklifKalemEkle — yeni sürüm altta tanımlı
 
-function hesaplaTeklifToplam(){
-  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return;
-  let toplam=0;
-  Array.from(wrap.children).forEach(div=>{
-    const m=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||0;
-    const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
-    toplam+=m*f;
-  });
-  const el=document.getElementById('teklif-toplam-goster');
-  if(el)el.textContent=formatTutar(toplam)+' ₺';
-  return toplam;
-}
+// hesaplaTeklifToplam — yeni sürüm altta
 
-function teklifKalemleriOku(){
-  const wrap=document.getElementById('teklif-kalemler');if(!wrap)return[];
-  const kalemler=[];
-  Array.from(wrap.children).forEach(div=>{
-    const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
-    const miktar=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
-    const birimFiyat=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
-    if(aciklama&&birimFiyat>0)kalemler.push({aciklama,miktar,birimFiyat,toplam:miktar*birimFiyat});
-  });
-  return kalemler;
-}
+// teklifKalemleriOku — yeni sürüm altta
 
 async function saveTeklif(btn){
   if(btn)btn.disabled=true;
@@ -7877,6 +7911,269 @@ function emptyState(ikon,baslik,alt,butonLabel,butonAksiyon){
     if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
   });
 })();
+
+// ============================================================ TEKLİF KALEM (güncel)
+
+
+const BIRIM_SEC=['Adet','Metre','Boy','Koli','Litre','kg','m²','Saat'];
+
+function teklifKalemEkle(kalem,isIscilik){
+  const wrapId=isIscilik?'teklif-iscilik-kalemler':'teklif-kalemler';
+  const wrap=document.getElementById(wrapId);if(!wrap)return;
+  const idx=teklifKalemSay++;
+  const id='tk-'+idx;
+  const div=document.createElement('div');
+  div.id=id;div.style.cssText='display:flex;gap:5px;align-items:flex-end;';
+  const birimSec=BIRIM_SEC.map(b=>`<option${kalem?.birim===b?' selected':''}>${b}</option>`).join('');
+  div.innerHTML=`
+    <div style="flex:2.5;"><input type="text" id="${id}-aciklama" placeholder="${isIscilik?'İşçilik açıklaması':'Malzeme / ürün adı'}" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words" oninput="hesaplaTeklifToplam()"></div>
+    <div style="flex:1;"><input type="number" id="${id}-miktar" placeholder="Miktar" value="${kalem?.miktar||1}" min="0.01" step="any" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
+    <div style="flex:1;"><select id="${id}-birim" style="width:100%;padding:10px 6px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:12px;outline:none;appearance:none;">${birimSec}</select></div>
+    <div style="flex:1.2;position:relative;"><input type="number" id="${id}-birim-fiyat" placeholder="Fiyat" value="${kalem?.birimFiyat||''}" style="width:100%;padding:10px 24px 10px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">₺</span></div>
+    <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
+  wrap.appendChild(div);
+}
+
+function teklifIscilikEkle(kalem){teklifKalemEkle(kalem,true);}
+
+function hesaplaTeklifToplam(){
+  let toplam=0;
+  ['teklif-kalemler','teklif-iscilik-kalemler'].forEach(wid=>{
+    const wrap=document.getElementById(wid);if(!wrap)return;
+    Array.from(wrap.children).forEach(div=>{
+      const m=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||0;
+      const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+      toplam+=m*f;
+    });
+  });
+  const el=document.getElementById('teklif-toplam-goster');
+  if(el)el.textContent=formatTutar(toplam)+' ₺';
+  return toplam;
+}
+
+function teklifKalemleriOku(){
+  const kalemler=[];
+  ['teklif-kalemler','teklif-iscilik-kalemler'].forEach((wid,wi)=>{
+    const wrap=document.getElementById(wid);if(!wrap)return;
+    Array.from(wrap.children).forEach(div=>{
+      const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
+      const miktar=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
+      const birim=div.querySelector('[id$="-birim"]')?.value||'Adet';
+      const birimFiyat=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+      if(aciklama)kalemler.push({aciklama,miktar,birim,birimFiyat,toplam:miktar*birimFiyat,tip:wi===1?'iscilik':'malzeme'});
+    });
+  });
+  return kalemler;
+}
+
+function teklifAiAciklamaEkle(){
+  const kisiId=parseInt(document.getElementById('teklif-kisi')?.value)||null;
+  const k=kisiId?getKisi(kisiId):null;
+  const isim=k?k.isim:'Değerli Müşterimiz';
+  const metin=`Sayın ${isim},
+
+Talebinizi detaylı bir şekilde inceledik ve ihtiyacınız olan teknik desteği sağlamak için memnuniyetle yardımcı olmak isteriz. Uzman ekibimizle birlikte, beklentilerinizi karşılayacak birinci sınıf işçiliği, bütçenizi yormayacak en uygun fiyatlandırma ile sunuyoruz. Amacımız işinizi en kısa sürede, temiz ve eksiksiz bir biçimde teslim etmektir. Süreç hakkında detayları konuşmak ve aklınızdaki soruları yanıtlamak isterseniz bizimle her zaman iletişime geçebilirsiniz. İyi günler dileriz.`;
+  const el=document.getElementById('teklif-aciklama');
+  if(el)el.value=metin;
+  showToast('Açıklama eklendi','green');
+}
+
+// ============================================================ VERGİ FATURA HESAPLAMA
+
+function vfKdvHesapla(){
+  const kdvsiz=parseFloat(document.getElementById('vf-kdvsiz-tutar')?.value)||0;
+  const oran=parseInt(document.getElementById('vf-kdv-oran')?.value)||20;
+  const kdv=Math.round(kdvsiz*oran/100*100)/100;
+  const top=kdvsiz+kdv;
+  const kdvEl=document.getElementById('vf-kdv');if(kdvEl)kdvEl.value=kdv||'';
+  const topEl=document.getElementById('vf-tutar');if(topEl)topEl.value=top||'';
+}
+
+function vfGenelToplamHesapla(){
+  const kdvsiz=parseFloat(document.getElementById('vf-kdvsiz-tutar')?.value)||0;
+  const kdv=parseFloat(document.getElementById('vf-kdv')?.value)||0;
+  const topEl=document.getElementById('vf-tutar');if(topEl)topEl.value=(kdvsiz+kdv)||'';
+}
+
+// ============================================================ WhatsApp MESAJLARI (güncel)
+
+function whatsappHatirlatici(kisiId){
+  const k=getKisi(kisiId);if(!k||!k.tel)return;
+  const c=calcFinans();const cD=c.cD[kisiId];if(!cD)return;
+  const bakiye=cD.bakiyeAll;
+  if(bakiye===0){showToast('Bu müşteriyle açık hesap yok','amber');return;}
+  const isim=k.firmaUnvan||k.isim;
+  let mesaj='';
+  if(bakiye>0){
+    // Bize borçlular — hatırlatıcı
+    mesaj=`Sayın ${isim},\n\nKarşılıklı güvene dayalı iş birliğimiz kapsamında tarafınıza sağladığımız finansman desteğine ilişkin olarak size ulaşıyoruz. Kayıtlarımıza göre yaklaşan ödeme gününüzü hatırlatmak ister, daha önce karşılıklı olarak mutabık kaldığımız tarihte ilgili ödemenin eksiksiz bir şekilde hesaplarımıza aktarılmasını beklediğimizi belirtmek isteriz.\n\nSürece dair aklınıza takılan herhangi bir soru veya netleştirmek istediğiniz bir husus olursa, lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
+  }else{
+    // Biz borçluyuz — bilgilendirme
+    mesaj=`Sayın ${isim},\n\nFirmamıza sağlamış olduğunuz finansal destek ve güven için teşekkür ederiz. Yaklaşan ödeme dönemimiz ile ilgili olarak, borç ödememizin daha önce karşılıklı olarak mutabık kaldığımız tarihte, eksiksiz bir şekilde tarafınıza gerçekleştirileceğini teyit etmek isteriz.\n\nSürece dair aklınıza takılan herhangi bir soru veya netleştirmek istediğiniz bi husus olursa, lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
+  }
+  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+  window.open(url,'_blank');
+}
+
+function whatsappGecmisIhtar(kisiId){
+  const k=getKisi(kisiId);if(!k||!k.tel){showToast('Telefon numarası yok','amber');return;}
+  const isim=k.firmaUnvan||k.isim;
+  const mesaj=`Sayın ${isim},\n\nKarşılıklı güvene dayalı iş birliğimiz kapsamında tarafınıza sağladığımız finansman desteğine ilişkin olarak size ulaşıyoruz. Kayıtlarımızı incelediğimizde, daha önce karşılıklı olarak mutabık kaldığımız ödeme tarihinin geçmiş olmasına rağmen, ilgili tutarın hesaplarımıza henüz yansımadığını görmekteyiz.\n\nYaşanan bu gecikmenin anlık bir gözden kaçma durumundan kaynaklandığını umuyor, hesap mutabakatımızı sağlayabilmemiz adına ilgili ödemenin en kısa sürede eksiksiz bir şekilde tarafımıza gerçekleştirilmesini rica ediyoruz.\n\nSürece dair aklınıza takılan herhangi bir soru, karşılaştığınız beklenmedik bir durum veya netleştirmek istediğiniz bir husus olursa, çözüm odaklı ilerleyebilmemiz için lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
+  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+  window.open(url,'_blank');
+}
+
+// ============================================================ BARKOD ÜRETİCİ (tekrarsız)
+
+
+// ============================================================ TEKLİF GERÇEK ZAMANLI TAKİP
+
+let teklifPollTimer=null;
+let sonTeklifDurumlari={};
+
+function teklifPollBaslat(){
+  if(teklifPollTimer)clearInterval(teklifPollTimer);
+  // Mevcut durumları kaydet
+  DB.teklifler.forEach(t=>{sonTeklifDurumlari[t.id]=t.durum;});
+  teklifPollTimer=setInterval(async()=>{
+    try{
+      const res=await sbFetch('teklifler?select=id,durum,onaylayan_isim');
+      if(!res||!res.length)return;
+      res.forEach(t=>{
+        const eskiDurum=sonTeklifDurumlari[t.id];
+        if(eskiDurum&&eskiDurum!=='Onaylandı'&&t.durum==='Onaylandı'){
+          // YENİ ONAY!
+          const teklif=DB.teklifler.find(x=>x.id===t.id);
+          const k=teklif?getKisi(teklif.kisiId):null;
+          setTimeout(()=>window.animTeklifOnaylandi&&animTeklifOnaylandi(),100);
+          aiBildirimGoster('bilgi',`🎉 Teklif onaylandı! ${k?k.isim:''} - ${t.onaylayan_isim||''}`,10000);
+          loadDB(); // Listeyi güncelle
+        }
+        sonTeklifDurumlari[t.id]=t.durum;
+      });
+    }catch(e){}
+  },20000); // 20 saniyede bir kontrol
+}
+
+// ============================================================ AI SOHBET (gelişmiş)
+
+function aiKuralCevap(soru){
+  const s=soru.toLowerCase().trim();
+  const v=aiVeriOzeti();
+  const c=calcFinans();
+  const now=new Date();
+  const buAy=now.getMonth(),buYil=now.getFullYear();
+  const tamam=DB.islemler.filter(i=>i.statu==='Tamamlandı');
+
+  // Selamlama
+  if(/^(merhaba|selam|hey|hello|hi)/.test(s))
+    return `Merhaba! Size nasıl yardımcı olabilirim?\n\nKasa durumu: ${fmt(c.kasa)} ₺\nBu ay kâr: ${fmt(v.buAyKar)} ₺\nBekleyen: ${v.gecmisSayi} gecikmeli işlem`;
+
+  // Kasa
+  if(/kasa|nakit|bakiye|param|para/.test(s)){
+    const uyari=c.kasa<0?'\n\n🔴 DİKKAT: Kasa negatif! Acil nakit girişi gerekiyor.':c.kasa<5000?'\n\n⚠️ Kasa düşük seviyede, yakında sıkıntı çıkabilir.':'\n\n✅ Kasa durumu sağlıklı.';
+    return `Kasa detayı:\n• Nakit: ${fmt(c.kasaNakit)} ₺\n• Kart: ${fmt(c.kasaKart||0)} ₺\n• IBAN: ${fmt(c.kasaIBAN||0)} ₺\n• Toplam: ${fmt(c.kasa)} ₺${uyari}`;
+  }
+
+  // Gelir gider kâr
+  if(/gelir|gider|kâr|kar|bu ay|aylık|kazanç/.test(s)){
+    const gecenAy=buAy===0?11:buAy-1,gecenYil=buAy===0?buYil-1:buYil;
+    const gecGelir=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+    const fark=gecGelir>0?((v.buAyGelir-gecGelir)/gecGelir*100).toFixed(1):null;
+    let cevap=`Bu ayın finansal özeti:\n• Gelir: ${fmt(v.buAyGelir)} ₺\n• Gider: ${fmt(v.buAyGider)} ₺\n• Net kâr: ${fmt(v.buAyKar)} ₺`;
+    if(fark)cevap+=`\n\nGeçen aya göre gelir %${Math.abs(parseFloat(fark))} ${parseFloat(fark)>=0?'arttı 📈':'azaldı 📉'}`;
+    cevap+=v.buAyKar>0?'\n\n✅ Kârlı bir ay gidiyor.':'\n\n⚠️ Bu ay zararda. Giderleri kısmanız önerilir.';
+    return cevap;
+  }
+
+  // Alacak
+  if(/alacak|tahsil|borçlu|ödemedi|gecikm/.test(s)){
+    const gec=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<now);
+    if(!gec.length)return '✅ Harika! Vadesi geçmiş alacak yok. Tahsilat takibiniz başarılı görünüyor.';
+    const oz={};gec.forEach(i=>{const k=getKisi(i.kisiId);if(k)oz[k.isim]=(oz[k.isim]||0)+i.tutar;});
+    const top=gec.reduce((a,i)=>a+i.tutar,0);
+    const en=Object.entries(oz).sort((a,b)=>b[1]-a[1])[0];
+    return `💰 Vadesi geçmiş ${gec.length} alacak var:\nToplam: ${fmt(top)} ₺\n\nEn büyük: ${en?en[0]+' — '+fmt(en[1])+' ₺':''}\n\n${gec.length>3?'⚠️ Çoklu gecikme var, tahsilat baskısı yapmanız önerilir.':'Takip edin, uzarsa zorlaşır.'}`;
+  }
+
+  // Müşteri analizi
+  if(/müşteri|en.*(kârlı|iyi|fazla)|kârlı.*müşteri/.test(s)){
+    const mk={};tamam.filter(i=>i.kisiId).forEach(i=>{mk[i.kisiId]=(mk[i.kisiId]||0)+(i.tip==='Gelir'?i.tutar:-i.tutar);});
+    const top5=Object.entries(mk).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    if(!top5.length)return 'Henüz yeterli işlem geçmişi yok.';
+    return '🏆 En kârlı müşteriler:\n'+top5.map(([id,k],i)=>{const ki=getKisi(parseInt(id));return `${i+1}. ${ki?ki.isim:'—'}: ${fmt(k)} ₺`;}).join('\n');
+  }
+
+  // Stok
+  if(/stok|ürün|malzeme|bitmiş|biten/.test(s)){
+    const bt=DB.stok.filter(s=>s.miktar<=0);
+    const kr=DB.stok.filter(s=>s.miktar>0&&s.miktar<=s.kritikSeviye);
+    if(!bt.length&&!kr.length)return '✅ Tüm stoklar normal seviyede. Kritik bir durum yok.';
+    let r='Stok durumu:\n';
+    if(bt.length)r+=`❌ Biten (${bt.length}): ${bt.map(s=>s.ad).join(', ')}\n`;
+    if(kr.length)r+=`⚠️ Kritik (${kr.length}): ${kr.map(s=>s.ad+' ('+s.miktar+')').join(', ')}\n`;
+    r+='\nBu ürünler için sipariş vermeyi düşünün.';
+    return r;
+  }
+
+  // Personel
+  if(/personel|çalışan|maaş|hak.?ediş/.test(s)){
+    const borc=Object.entries(c.personelBakiye||{}).filter(([,v])=>v>0);
+    if(!borc.length)return '✅ Tüm personel ödemeleri güncel.';
+    const top=borc.reduce((a,[,v])=>a+v,0);
+    return `👷 Personele ${fmt(top)} ₺ bekleyen ödeme var.\n`+
+      borc.map(([id,v])=>{const p=DB.personeller.find(x=>x.id===parseInt(id));return `• ${p?p.isim:'—'}: ${fmt(v)} ₺`;}).join('\n');
+  }
+
+  // Proje
+  if(/proje/.test(s)){
+    const devam=DB.projeler.filter(p=>p.durum==='Devam Ediyor');
+    const tamam2=DB.projeler.filter(p=>p.durum==='Tamamlandı');
+    if(!DB.projeler.length)return 'Henüz proje kaydı yok.';
+    return `🏗️ Proje durumu:\n• Devam eden: ${devam.length}\n• Tamamlanan: ${tamam2.length}\n• Toplam: ${DB.projeler.length}\n`+
+      (devam.length?'\nAktif projeler:\n'+devam.slice(0,3).map(p=>`• ${p.isim}${p.musteriId?' ('+( getKisi(p.musteriId)?.isim||'')+')':''}`).join('\n'):'');
+  }
+
+  // Teklif
+  if(/teklif/.test(s)){
+    const d={Taslak:0,Gönderildi:0,Onaylandı:0,Reddedildi:0};
+    DB.teklifler.forEach(t=>d[t.durum]=(d[t.durum]||0)+1);
+    const oran=d.Onaylandı+d.Reddedildi>0?Math.round(d.Onaylandı/(d.Onaylandı+d.Reddedildi)*100):null;
+    return `📋 Teklif durumu:\n${Object.entries(d).filter(([,v])=>v).map(([k,v])=>`• ${k}: ${v}`).join('\n')}`+
+      (oran!==null?`\n\nOnay oranı: %${oran} ${oran>=70?'✅ İyi':'⚠️ Geliştirilebilir'}`:``);
+  }
+
+  // Tahmin
+  if(/tahmin|öngörü|gelecek|önümüzdeki|yatırım/.test(s)){
+    const aylar=[];
+    for(let i=2;i>=0;i--){
+      const d=new Date(buYil,buAy-i,1);
+      aylar.push(tamam.filter(x=>x.tip==='Gelir'&&filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0));
+    }
+    const ort=aylar.reduce((a,v)=>a+v,0)/3;
+    const trend=(aylar[2]-aylar[0])/2;
+    const tahmin=Math.max(0,ort+trend);
+    return `📈 Gelecek ay gelir tahmini: ${fmt(tahmin)} ₺\n\nSon 3 ay: ${aylar.map(v=>fmt(v)).join(' → ')} ₺\nOrtalama: ${fmt(ort)} ₺\nTrend: ${trend>=0?'+':''}${fmt(trend)} ₺\n\n${trend>0?'Yükseliş trendi var, ivmeyi koruyun.':'Düşüş trendi var, yeni iş arayışına girin.'}`;
+  }
+
+  // Tavsiye / ne yapmalıyım
+  if(/ne yapmalı|tavsiye|öneri|nasıl|yardım|sorun|problem/.test(s)){
+    const uyarilar=[];
+    if(c.kasa<0)uyarilar.push('🔴 Kasa negatif — acil nakit girişi yapın');
+    if(v.gecmisSayi>2)uyarilar.push(`⚠️ ${v.gecmisSayi} gecikmeli alacak var — tahsilat baskısı yapın`);
+    if(v.stokBittiSayi>0)uyarilar.push(`📦 ${v.stokBittiSayi} ürün bitti — sipariş verin`);
+    if(DB.teklifler.filter(t=>t.durum==='Gönderildi').length>2)uyarilar.push('📋 Birden fazla teklif yanıt bekliyor — takip edin');
+    if(!uyarilar.length)return '✅ Şu an kritik bir sorun görünmüyor. Düzenli takip etmeye devam edin.';
+    return `Dikkat etmeniz gerekenler:\n\n${uyarilar.join('\n\n')}`;
+  }
+
+  // Yardım menüsü
+  if(/yardım|ne yapabilir|özellik/.test(s))
+    return `Size şu konularda yardımcı olabilirim:\n\n💰 Kasa ve nakit durumu\n📊 Gelir-gider-kâr analizi\n💸 Alacak ve borç takibi\n📦 Stok durumu\n🏆 En kârlı müşteriler\n👷 Personel ödemeleri\n🏗️ Proje özeti\n📋 Teklif takibi\n📈 Gelir tahmini\n💡 Genel tavsiye\n\n"Ahmet'ten 5000 nakit aldım" gibi işlem de girebilirsiniz.`;
+
+  // Genel fallback
+  return `Anlıyorum, ancak bu konuda yeterli verim yok.\n\nŞu an bildiğim:\n• Kasa: ${fmt(c.kasa)} ₺\n• Bu ay kâr: ${fmt(v.buAyKar)} ₺\n• Bekleyen: ${v.gecmisSayi} gecikmeli\n\nDaha spesifik sorabilirsiniz: "kasa", "alacak", "stok", "müşteri", "tahmin", "tavsiye"`;
+}
 
 // ============================================================ BAŞLAT
 window.addEventListener('DOMContentLoaded',()=>{
