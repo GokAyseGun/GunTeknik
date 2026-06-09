@@ -148,7 +148,13 @@ input[type="month"].month-input:focus{border-color:var(--blue);}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;padding-bottom:calc(var(--nav-h) + 80px);}
 .page{display:none;padding:20px 16px;animation:pageIn 0.6s var(--ease) both;}
 .page.active{display:block;}
-#page-rehber.active{display:flex;padding:0;height:calc(100vh - var(--top-h) - var(--nav-h));overflow:hidden;}
+#page-rehber{padding:0;}
+#page-rehber.active{
+  display:flex;
+  flex-direction:column;
+  height:calc(var(--vh,100vh) - var(--top-h,60px) - var(--nav-h,68px));
+  overflow:hidden;
+}
 
 /* BOTTOM NAV */
 .bottom-nav{height:var(--nav-h);flex-shrink:0;background:rgba(13,26,46,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);position:fixed;bottom:0;left:0;right:0;z-index:100;overflow-x:auto;scrollbar-width:none;}
@@ -550,7 +556,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     </div>
 
     <!-- REHBER -->
-    <div class="page" id="page-rehber" style="display:flex;flex-direction:column;overflow:hidden;padding:0;">
+    <div class="page" id="page-rehber">
       <!-- Müşteriler & Şahıslar — üst yarı -->
       <div style="flex:1;display:flex;flex-direction:column;min-height:0;border-bottom:2px solid var(--border);padding:12px 16px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
@@ -3365,17 +3371,17 @@ function renderRehber(){
   const buildList=(list,elId)=>{
     const el=document.getElementById(elId);if(!el)return;
     if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Kayıt bulunamadı</div></div>';return;}
-    el.innerHTML=list.sort(sortFavori).map((k,i)=>`<div class="stagger-item" style="animation-delay:${i*0.05}s" onclick="showKisiDetay(${k.id})">
+    el.innerHTML=list.sort(sortFavori).map((k,i)=>`<div class="stagger-item" style="animation-delay:${i*0.05}s;min-height:56px;" onclick="showKisiDetay(${k.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:14px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.favori?'⭐ ':''}${k.isim} <span class="id-badge">${fmtKId(k.id)}</span></div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.favori?'⭐ ':''}${k.isim} <span class="id-badge">${fmtKId(k.id)}</span></div>
           <div style="font-size:12px;color:var(--text2);">${k.tip}${k.tel?' · '+k.tel:''}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">
-          <button class="icon-btn" onclick="showMusteriAnaliz(${k.id})" style="width:28px;height:28px;font-size:13px;" title="Müşteri Analizi">📊</button>
-          <span class="star-btn ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)" title="${k.favori?'Favoriden çıkar':'Favoriye ekle'}">★</span>
-          ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editKisi(${k.id},event)" style="width:28px;height:28px;font-size:13px;">✏️</button>`:''}
-          ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteKisi(${k.id},event)" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:''}
+        <div style="display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="showMusteriAnaliz(${k.id})" style="width:32px;height:32px;font-size:14px;" title="Müşteri Analizi">📊</button>
+          <span class="star-btn ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)" title="${k.favori?'Favoriden çıkar':'Favoriye ekle'}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">★</span>
+          ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editKisi(${k.id},event)" style="width:32px;height:32px;font-size:14px;">✏️</button>`:''}
+          ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteKisi(${k.id},event)" style="width:32px;height:32px;font-size:14px;color:var(--red);">🗑</button>`:''}
         </div>
       </div>
     </div>`).join('');
