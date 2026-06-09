@@ -426,16 +426,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
       <div class="sec-title mt0">İşletme Özeti</div>
       <div class="cards" id="dash-isletme">
-        <div class="card accent-blue" onclick="showDashDetay('isGelir')"><div class="lbl">📈 Dönem Geliri</div><div class="val c-blue num" id="d-is-gelir">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gelir')" class="ai-abs-btn">✦</button></div>
-        <div class="card accent-red" onclick="showDashDetay('isGider')"><div class="lbl">📉 Dönem Gideri</div><div class="val c-red num" id="d-is-gider">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gider')" class="ai-abs-btn">✦</button></div>
-        <div class="card accent-green" style="grid-column:span 2" onclick="showDashDetay('isKar')"><div class="lbl">🏆 Net İşletme Kârı</div><div class="val c-green num" id="d-is-kar">0 ₺</div></div>
+        <div class="card accent-blue" onclick="showDashDetay('isGelir')"><div class="lbl">📈 Dönem Geliri</div><div class="val c-blue num" id="d-is-gelir">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('isGelir')" class="ai-abs-btn">✦</button></div>
+        <div class="card accent-red" onclick="showDashDetay('isGider')"><div class="lbl">📉 Dönem Gideri</div><div class="val c-red num" id="d-is-gider">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('isGider')" class="ai-abs-btn">✦</button></div>
+        <div class="card accent-green" style="grid-column:span 2" onclick="showDashDetay('isKar')"><div class="lbl">🏆 Net İşletme Kârı</div><div class="val c-green num" id="d-is-kar">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('isKar')" class="ai-abs-btn">✦</button></div>
       </div>
 
       <div class="sec-title">Şahsi Özet</div>
       <div class="cards">
-        <div class="card" onclick="showDashDetay('shGelir')"><div class="lbl">💰 Şahsi Gelir</div><div class="val c-teal num" id="d-sh-gelir">0 ₺</div></div>
-        <div class="card" onclick="showDashDetay('shGider')"><div class="lbl">💸 Şahsi Gider</div><div class="val c-red num" id="d-sh-gider">0 ₺</div></div>
-        <div class="card" style="grid-column:span 2" onclick="showDashDetay('shNet')"><div class="lbl">📊 Şahsi Net</div><div class="val c-purple num" id="d-sh-net">0 ₺</div></div>
+        <div class="card" onclick="showDashDetay('shGelir')"><div class="lbl">💰 Şahsi Gelir</div><div class="val c-teal num" id="d-sh-gelir">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('shGelir')" class="ai-abs-btn">✦</button></div>
+        <div class="card" onclick="showDashDetay('shGider')"><div class="lbl">💸 Şahsi Gider</div><div class="val c-red num" id="d-sh-gider">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('shGider')" class="ai-abs-btn">✦</button></div>
+        <div class="card" style="grid-column:span 2" onclick="showDashDetay('shNet')"><div class="lbl">📊 Şahsi Net</div><div class="val c-purple num" id="d-sh-net">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('shNet')" class="ai-abs-btn">✦</button></div>
       </div>
 
       <div class="sec-title">Kasa Durumu</div>
@@ -446,21 +446,21 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="kasa-dagitim"></div>
           <button onclick="event.stopPropagation();aiOzetKutucukAnaliz('kasa')" class="ai-abs-btn">✦</button>
         </div>
-        <div class="card accent-green" onclick="showDashDetay('beklenen')"><div class="lbl">📅 Beklenen (Vadeler Dahil)</div><div class="val c-green num" id="d-beklenen">0 ₺</div></div>
+        <div class="card accent-green" onclick="showDashDetay('beklenen')"><div class="lbl">📅 Beklenen (Vadeler Dahil)</div><div class="val c-green num" id="d-beklenen">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('beklenen')" class="ai-abs-btn">✦</button></div>
       </div>
 
       <div class="sec-title">Alacak & Borç</div>
       <div class="cards">
         <div class="card" onclick="showDashDetay('alacak')"><div class="lbl">📥 Toplam Alacak</div><div class="val c-green num" id="d-alacak">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('alacak')" class="ai-abs-btn">✦</button></div>
-        <div class="card" onclick="showDashDetay('verecek')"><div class="lbl">📤 Toplam Verecek</div><div class="val c-red num" id="d-verecek">0 ₺</div></div>
-        <div class="card" onclick="goPage('personel')"><div class="lbl">👷 Tüm Personel Borcu</div><div class="val c-amber num" id="d-personel">0 ₺</div></div>
+        <div class="card" onclick="showDashDetay('verecek')"><div class="lbl">📤 Toplam Verecek</div><div class="val c-red num" id="d-verecek">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('verecek')" class="ai-abs-btn">✦</button></div>
+        <div class="card" onclick="goPage('personel')"><div class="lbl">👷 Tüm Personel Borcu</div><div class="val c-amber num" id="d-personel">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('personel')" class="ai-abs-btn">✦</button></div>
       </div>
 
       <div class="sec-title">Vergi Durumu (Bu Ay)</div>
       <div class="cards" style="margin-bottom:14px;">
-        <div class="card" onclick="goPage('vergi')"><div class="lbl">📥 Gelen Vergi</div><div class="val c-green num" id="d-v-gelen">0 ₺</div></div>
-        <div class="card" onclick="goPage('vergi')"><div class="lbl">📤 Giden Vergi</div><div class="val c-red num" id="d-v-giden">0 ₺</div></div>
-        <div class="card" style="grid-column:span 2" onclick="goPage('vergi')"><div class="lbl">🏛️ Tahmini Yükümlülük</div><div class="val c-amber num" id="d-v-yukum">0 ₺</div></div>
+        <div class="card" onclick="goPage('vergi')"><div class="lbl">📥 Gelen Vergi</div><div class="val c-green num" id="d-v-gelen">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('vGelen')" class="ai-abs-btn">✦</button></div>
+        <div class="card" onclick="goPage('vergi')"><div class="lbl">📤 Giden Vergi</div><div class="val c-red num" id="d-v-giden">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('vGiden')" class="ai-abs-btn">✦</button></div>
+        <div class="card" style="grid-column:span 2" onclick="goPage('vergi')"><div class="lbl">🏛️ Tahmini Yükümlülük</div><div class="val c-amber num" id="d-v-yukum">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('vYukum')" class="ai-abs-btn">✦</button></div>
       </div>
 
       <div class="sec-title">Yaklaşan Vadeler</div>
@@ -6842,31 +6842,224 @@ function aiIslemAnaliz(islemId){
 
 function aiOzetKutucukAnaliz(tip){
   const c=calcFinans();
-  const v=aiVeriOzeti();
-  const msgs=[];
-  switch(tip){
-    case 'kasa':
-      if(c.kasa<0)msgs.push('🔴 Kasa negatif! Acil nakit girişi gerekiyor.');
-      const bekGider=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
-      if(bekGider>c.kasa*0.5)msgs.push(`⚠️ Bekleyen giderler (${fmt(bekGider)} ₺) kasanın yarısından fazla`);
-      if(!msgs.length)msgs.push('✅ Kasa durumu sağlıklı görünüyor.');
-      break;
-    case 'alacak':
-      const gec=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<new Date());
-      if(gec.length)msgs.push(`💰 ${gec.length} vadesi geçmiş alacak: ${fmt(gec.reduce((a,i)=>a+i.tutar,0))} ₺`);
-      else msgs.push('✅ Tüm alacaklar güncel.');
-      break;
-    case 'gelir':
-      msgs.push(`Bu ay gelir: ${fmt(v.buAyGelir)} ₺`);
-      if(v.buAyKar<0)msgs.push('⚠️ Bu ay zararda!');
-      else msgs.push('✅ Kârlı ay gidiyor.');
-      break;
-    case 'gider':
-      msgs.push(`Bu ay gider: ${fmt(v.buAyGider)} ₺`);
-      break;
+  const now=new Date();
+  const buAy=now.getMonth(),buYil=now.getFullYear();
+  const gecenAy=buAy===0?11:buAy-1,gecenYil=buAy===0?buYil-1:buYil;
+  const tamam=DB.islemler.filter(i=>i.statu==='Tamamlandı');
+  const bek=DB.islemler.filter(i=>i.statu==='Bekliyor');
+
+  // Geçen ay karşılaştırma yardımcısı
+  function ayKarsilastir(tip,buAy2,gecenAy2){
+    if(gecenAy2===0)return null;
+    const fark=((buAy2-gecenAy2)/gecenAy2*100);
+    const artti=fark>0;
+    return {fark:Math.abs(fark).toFixed(1),artti,gecen:gecenAy2};
   }
-  showInfoModal('✦ '+tip.charAt(0).toUpperCase()+tip.slice(1)+' Analizi',
-    msgs.map(m=>`<div style="padding:10px;background:var(--bg2);border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;">${m}</div>`).join(''));
+
+  // 3 aylık trend
+  function trend3Ay(tipFn){
+    const aylar=[];
+    for(let i=2;i>=0;i--){
+      const d=new Date(buYil,buAy-i,1);
+      aylar.push(tipFn(d.getMonth(),d.getFullYear()));
+    }
+    return aylar;
+  }
+
+  let baslik='',satirlar=[];
+
+  switch(tip){
+    case 'isGelir':{
+      baslik='📈 Dönem Geliri Analizi';
+      const buG=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecG=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      const k=ayKarsilastir('gelir',buG,gecG);
+      const aylar=trend3Ay((ay,yl)=>tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,ay,yl)).reduce((a,i)=>a+i.tutar,0));
+      const tahmin=Math.max(0,(aylar.reduce((a,v)=>a+v,0)/3)+((aylar[2]-aylar[0])/2));
+      if(k)satirlar.push(k.artti?`✅ Geçen aya kıyasla %${k.fark} daha iyi bir dönem. Yükseliş devam ettirilmeli.`:`⚠️ Geçen ayın ${fmt(k.gecen)} ₺'sine göre %${k.fark} geride kalındı. Yeni iş takibi önerilir.`);
+      else satirlar.push('İlk ay verisi — karşılaştırma için bir ay daha gerekiyor.');
+      const kategoriGrup={};tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,buAy,buYil)).forEach(i=>{kategoriGrup[i.kat||'Diğer']=(kategoriGrup[i.kat||'Diğer']||0)+i.tutar;});
+      const eniyiKat=Object.entries(kategoriGrup).sort((a,b)=>b[1]-a[1])[0];
+      if(eniyiKat)satirlar.push(`💡 En kazançlı kategori bu ay: "${eniyiKat[0]}" (${fmt(eniyiKat[1])} ₺). Bu alandaki işleri büyütmek karlılığı artırır.`);
+      satirlar.push(`📊 3 aylık trend: ${aylar.map(v=>fmt(v)).join(' → ')} ₺`);
+      satirlar.push(`🔮 Gelecek ay tahmini: ${fmt(tahmin)} ₺ — mevcut trend devam ederse.`);
+      break;
+    }
+    case 'isGider':{
+      baslik='📉 Dönem Gideri Analizi';
+      const buG=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecG=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      const k=ayKarsilastir('gider',buG,gecG);
+      if(k)satirlar.push(k.artti?`⚠️ Giderler geçen aya göre %${k.fark} arttı. Hangi kategoride yükseldiğini incelemeye değer.`:`✅ Giderler %${k.fark} azaldı — verimlilik artıyor.`);
+      const katGrup={};tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).forEach(i=>{katGrup[i.kat||'Diğer']=(katGrup[i.kat||'Diğer']||0)+i.tutar;});
+      const siraliKat=Object.entries(katGrup).sort((a,b)=>b[1]-a[1]);
+      if(siraliKat[0])satirlar.push(`💸 En büyük gider kalemi: "${siraliKat[0][0]}" ${fmt(siraliKat[0][1])} ₺ — toplam giderin %${buG>0?Math.round(siraliKat[0][1]/buG*100):0}'i.`);
+      if(siraliKat.length>1)satirlar.push(`İkinci sırada: "${siraliKat[1][0]}" ${fmt(siraliKat[1][1])} ₺.`);
+      const bekGider=bek.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      if(bekGider>0)satirlar.push(`⏳ Bu aya ek olarak ${fmt(bekGider)} ₺ vadeli gider beklenyor — toplam gider yükü ${fmt(buG+bekGider)} ₺ olabilir.`);
+      const aylar=trend3Ay((ay,yl)=>tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,ay,yl)).reduce((a,i)=>a+i.tutar,0));
+      satirlar.push(`📊 Son 3 ay gider: ${aylar.map(v=>fmt(v)).join(' → ')} ₺`);
+      break;
+    }
+    case 'isKar':{
+      baslik='🏆 Net Kâr Analizi';
+      const buGel=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const buGid=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const kar=buGel-buGid;
+      const gecGel=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecGid=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecKar=gecGel-gecGid;
+      if(kar>0)satirlar.push(`✅ Karlı ay. Gelirin ${buGel>0?Math.round(kar/buGel*100):0}%'i net kâr olarak kalıyor — bu sağlıklı bir oran.`);
+      else satirlar.push(`🔴 Bu ay zararda. Gelir ${fmt(buGel)} ₺ iken gider ${fmt(buGid)} ₺ — fark kapatılmaz ise kasa erimesi kaçınılmaz.`);
+      if(gecKar!==0){
+        const fark=((kar-gecKar)/Math.abs(gecKar)*100).toFixed(1);
+        satirlar.push(`Geçen aya göre kâr ${kar>=gecKar?`%${fark} arttı 📈`:`%${Math.abs(parseFloat(fark))} azaldı 📉`}.`);
+      }
+      const marj=buGel>0?(kar/buGel*100).toFixed(1):0;
+      satirlar.push(`💡 Kar marjı: %${marj}. ${parseFloat(marj)>30?'Güçlü bir oran.':parseFloat(marj)>15?'Kabul edilebilir, geliştirilebilir.':'Düşük marj — maliyet optimizasyonu değerlendirilmeli.'}`);
+      const aylar=trend3Ay((ay,yl)=>{const g=tamam.filter(i=>i.tip==='Gelir'&&filterByMonth(i.tarih,ay,yl)).reduce((a,i)=>a+i.tutar,0);const gd=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,ay,yl)).reduce((a,i)=>a+i.tutar,0);return g-gd;});
+      const tahminKar=Math.round((aylar.reduce((a,v)=>a+v,0)/3)+((aylar[2]-aylar[0])/2));
+      satirlar.push(`🔮 Gelecek ay kâr tahmini: ${fmt(tahminKar)} ₺.`);
+      break;
+    }
+    case 'shGelir':{
+      baslik='💰 Şahsi Gelir Analizi';
+      const buG=tamam.filter(i=>i.tip==='Gelir'&&(i.kat||'').includes('Şahsi')&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecG=tamam.filter(i=>i.tip==='Gelir'&&(i.kat||'').includes('Şahsi')&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      satirlar.push(buG>0?`Bu ay ${fmt(buG)} ₺ şahsi gelir elde edildi.`:'Bu ay şahsi gelir kaydı yok.');
+      if(gecG>0){const f=((buG-gecG)/gecG*100).toFixed(1);satirlar.push(buG>=gecG?`✅ Geçen aya göre %${f} artış.`:`⚠️ Geçen aya göre %${Math.abs(parseFloat(f))} düşüş.`);}
+      const bekG=bek.filter(i=>i.tip==='Gelir'&&(i.kat||'').includes('Şahsi')).reduce((a,i)=>a+i.tutar,0);
+      if(bekG>0)satirlar.push(`📅 Beklenen ek şahsi gelir: ${fmt(bekG)} ₺.`);
+      break;
+    }
+    case 'shGider':{
+      baslik='💸 Şahsi Gider Analizi';
+      const buG=tamam.filter(i=>i.tip==='Gider'&&(i.kat||'').includes('Şahsi')&&filterByMonth(i.tarih,buAy,buYil)).reduce((a,i)=>a+i.tutar,0);
+      const gecG=tamam.filter(i=>i.tip==='Gider'&&(i.kat||'').includes('Şahsi')&&filterByMonth(i.tarih,gecenAy,gecenYil)).reduce((a,i)=>a+i.tutar,0);
+      satirlar.push(buG>0?`Bu ay ${fmt(buG)} ₺ şahsi gider yapıldı.`:'Bu ay şahsi gider kaydı yok.');
+      if(gecG>0&&buG>0){const f=((buG-gecG)/gecG*100);satirlar.push(f>20?`⚠️ Şahsi harcamalar %${f.toFixed(0)} arttı — bütçe gözden geçirilmeli.`:f<0?`✅ Şahsi harcamalar %${Math.abs(f).toFixed(0)} azaldı.`:`Geçen ayla benzer seviye.`);}
+      break;
+    }
+    case 'shNet':{
+      baslik='📊 Şahsi Net Analizi';
+      const net=c.shNet||0;
+      satirlar.push(net>0?`Bu ay şahsi olarak ${fmt(net)} ₺ net kazanç elde edildi.`:`Bu ay şahsi net ${fmt(Math.abs(net))} ₺ negatif — harcamalar gelirleri aştı.`);
+      if(net<0)satirlar.push('⚠️ Şahsi gelir-gider dengesi bozuk. Kısa vadede düzeltilemezse kişisel birikim eriyor demektir.');
+      if(net>0&&c.shNet>0)satirlar.push(`💡 Bu tutarın bir kısmını birikime yönlendirmek uzun vadede finansal güvenlik sağlar.`);
+      break;
+    }
+    case 'kasa':{
+      baslik='💰 Kasa Durumu Analizi';
+      const bekGider=bek.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      const bekGelir=bek.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+      if(c.kasa<0)satirlar.push(`🔴 Kasa negatif! Acil nakit girişi gerekiyor. Mevcut eksi bakiye ${fmt(Math.abs(c.kasa))} ₺.`);
+      else satirlar.push(`Mevcut kasa ${fmt(c.kasa)} ₺ — Nakit: ${fmt(c.kasaNakit)} ₺, Kart: ${fmt(c.kasaKart||0)} ₺, IBAN: ${fmt(c.kasaIBAN)} ₺.`);
+      if(bekGider>0)satirlar.push(`⏳ Bekleyen ödemeler ${fmt(bekGider)} ₺ — bu çıktıktan sonra kasa: ${fmt(c.kasa-bekGider)} ₺.`);
+      if(bekGelir>0)satirlar.push(`📥 Tahsil edilecek alacaklar ${fmt(bekGelir)} ₺ — bunlar geldikçe kasa ${fmt(c.kasa+bekGelir)} ₺'ye çıkabilir.`);
+      if(bekGider>c.kasa*0.6)satirlar.push(`⚠️ Bekleyen giderler kasanın %${Math.round(bekGider/c.kasa*100)}'ini oluşturuyor. Nakit akışı riski yüksek.`);
+      else if(c.kasa>0)satirlar.push(`✅ Kasa, bekleyen ödemeleri karşılayacak düzeyde.`);
+      break;
+    }
+    case 'beklenen':{
+      baslik='📅 Beklenen Nakit Akışı';
+      const bekGelir=bek.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+      const bekGider=bek.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      const net=bekGelir-bekGider;
+      satirlar.push(`Vadeli alacak: ${fmt(bekGelir)} ₺ · Vadeli ödeme: ${fmt(bekGider)} ₺ → Net beklenti: ${fmt(net)} ₺.`);
+      if(net<0)satirlar.push(`⚠️ Beklenen ödemeler tahsilattan ${fmt(Math.abs(net))} ₺ fazla. Bu farkı kapatmak için şimdiden tahsilat baskısı yapılmalı.`);
+      else satirlar.push(`✅ Beklenen tahsilatlar ödemeleri karşılıyor.`);
+      const gecmis=bek.filter(i=>new Date(i.tarih)<now);
+      if(gecmis.length)satirlar.push(`⚠️ ${gecmis.length} işlemin vadesi zaten geçmiş — gecikme uzadıkça tahsilat zorlaşır.`);
+      const buHafta=bek.filter(i=>{const d=new Date(i.tarih);return d>=now&&d<=new Date(now.getTime()+7*24*60*60*1000);});
+      if(buHafta.length)satirlar.push(`📅 Bu hafta içinde ${buHafta.length} vadeli işlem daha var.`);
+      break;
+    }
+    case 'alacak':{
+      baslik='📥 Alacak Analizi';
+      const gecmisAlacak=bek.filter(i=>i.tip==='Gelir'&&new Date(i.tarih)<now);
+      const topAlacak=bek.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+      if(gecmisAlacak.length===0)satirlar.push('✅ Vadesi geçmiş alacak yok — tahsilat takibi başarılı görünüyor.');
+      else{
+        const gecTop=gecmisAlacak.reduce((a,i)=>a+i.tutar,0);
+        satirlar.push(`⚠️ ${gecmisAlacak.length} alacağın vadesi geçti (${fmt(gecTop)} ₺) — bunlar toplam alacağın %${topAlacak>0?Math.round(gecTop/topAlacak*100):0}'i.`);
+        const enYaslı=gecmisAlacak.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih))[0];
+        const gun=Math.floor((now-new Date(enYaslı.tarih))/(24*60*60*1000));
+        const k=getKisi(enYaslı.kisiId);
+        satirlar.push(`En eski gecikme: ${k?k.isim:'—'}, ${gun} gün önce vadesi doldu.`);
+        if(gun>60)satirlar.push('🚨 60 günü aşan alacaklar tahsil edilmesi zorlaşmış demektir. Hukuki yol değerlendirilebilir.');
+      }
+      const musteriGrup={};bek.filter(i=>i.tip==='Gelir').forEach(i=>{const k=getKisi(i.kisiId);if(k)musteriGrup[k.isim]=(musteriGrup[k.isim]||0)+i.tutar;});
+      const en=Object.entries(musteriGrup).sort((a,b)=>b[1]-a[1])[0];
+      if(en)satirlar.push(`En büyük alacak: ${en[0]} — ${fmt(en[1])} ₺.`);
+      break;
+    }
+    case 'verecek':{
+      baslik='📤 Borç & Verecek Analizi';
+      const topBorc=bek.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      const gecmisBorc=bek.filter(i=>i.tip==='Gider'&&new Date(i.tarih)<now);
+      if(gecmisBorc.length)satirlar.push(`⚠️ ${gecmisBorc.length} ödemenin vadesi geçti (${fmt(gecmisBorc.reduce((a,i)=>a+i.tutar,0))} ₺). Geciken ödemeler faiz veya güven kaybına yol açabilir.`);
+      else satirlar.push('✅ Tüm ödemeler zamanında yapılmış.');
+      if(c.kasa<topBorc)satirlar.push(`🔴 Kasada ${fmt(c.kasa)} ₺ var, bekleyen borç ${fmt(topBorc)} ₺ — açık ${fmt(topBorc-c.kasa)} ₺. Ek gelir sağlanması gerekiyor.`);
+      else satirlar.push(`Kasa borçları karşılayabilecek durumda (Kasa ${fmt(c.kasa)} ₺ > Borç ${fmt(topBorc)} ₺).`);
+      break;
+    }
+    case 'personel':{
+      baslik='👷 Personel Borç Analizi';
+      const topBorc=Object.values(c.personelBakiye||{}).filter(v=>v>0).reduce((a,v)=>a+v,0);
+      if(topBorc===0){satirlar.push('✅ Tüm personele ödeme yapılmış, bekleyen borç yok.');break;}
+      satirlar.push(`Toplam personel borcu ${fmt(topBorc)} ₺ — ödenmemiş hak edişler.`);
+      const enFazla=Object.entries(c.personelBakiye||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
+      if(enFazla){const p=DB.personeller.find(x=>x.id===parseInt(enFazla[0]));if(p)satirlar.push(`En yüksek bekleyen: ${p.isim} — ${fmt(enFazla[1])} ₺.`);}
+      if(topBorc>c.kasa*0.3)satirlar.push("⚠️ Personel borcu kasanın %30'unu aşıyor. En kısa sürede ödeme planı yapılmalı.");
+      const maasliPersonel=DB.personeller.filter(p=>p.maasTutar>0);
+      if(maasliPersonel.length){const topMaas=maasliPersonel.reduce((a,p)=>a+p.maasTutar,0);satirlar.push(`📊 Aylık sabit maaş yükü: ${fmt(topMaas)} ₺ (${maasliPersonel.length} personel).`);}
+      break;
+    }
+    case 'vGelen':{
+      baslik='📥 İndirilecek KDV Analizi';
+      const gelen=DB.vergiFaturalari.filter(v=>v.tip==='gelen'&&filterByMonth(v.tarih,buAy,buYil));
+      const top=gelen.reduce((a,v)=>a+v.kdvTutar,0);
+      satirlar.push(`Bu ay ${gelen.length} faturadan ${fmt(top)} ₺ KDV indirilecek.`);
+      if(top>0)satirlar.push("💡 Bu tutar hesaplanan KDV'den düşülerek beyanname tutarını düşürür.");
+      if(gelen.length===0)satirlar.push('⚠️ Bu ay indirilecek KDV faturası girilmemiş. Harcama faturalarınızı kaydedin.');
+      break;
+    }
+    case 'vGiden':{
+      baslik='📤 Hesaplanan KDV Analizi';
+      const giden=DB.vergiFaturalari.filter(v=>v.tip==='giden'&&filterByMonth(v.tarih,buAy,buYil));
+      const top=giden.reduce((a,v)=>a+v.kdvTutar,0);
+      satirlar.push(`Bu ay müşterilerden ${fmt(top)} ₺ KDV tahsil edildi.`);
+      const indir=DB.vergiFaturalari.filter(v=>v.tip==='gelen'&&filterByMonth(v.tarih,buAy,buYil)).reduce((a,v)=>a+v.kdvTutar,0);
+      const odeme=Math.max(0,top-indir);
+      if(odeme>0)satirlar.push(`🏛️ Tahmini ödenecek KDV: ${fmt(odeme)} ₺ (hesaplanan - indirilecek).`);
+      const son26=new Date(buYil,buAy,26);
+      const kalan=Math.ceil((son26-now)/(24*60*60*1000));
+      if(kalan>=0&&kalan<=10)satirlar.push(`⏰ Beyanname tarihine ${kalan} gün kaldı!`);
+      break;
+    }
+    case 'vYukum':{
+      baslik='🏛️ KDV Yükümlülük Analizi';
+      const hes=DB.vergiFaturalari.filter(v=>v.tip==='giden').reduce((a,v)=>a+v.kdvTutar,0);
+      const ind=DB.vergiFaturalari.filter(v=>v.tip==='gelen').reduce((a,v)=>a+v.kdvTutar,0);
+      const net=Math.max(0,hes-ind);
+      satirlar.push(`Hesaplanan: ${fmt(hes)} ₺ · İndirilecek: ${fmt(ind)} ₺ → Ödenecek: ${fmt(net)} ₺.`);
+      if(net>0)satirlar.push(`💡 Bu tutarı beyanname tarihine kadar kasada tutun. Ödeme tarihi 26'sı.`);
+      if(net===0&&hes===0)satirlar.push('ℹ️ Henüz fatura kaydı girilmemiş. Düzenli fatura takibi için Vergi sayfasını kullanın.');
+      if(ind>hes)satirlar.push("✅ İndirilecek KDV, hesaplanan KDV'yi geçiyor — bu dönem KDV iadesi doğabilir.");
+      break;
+    }
+    default:
+      satirlar.push('Bu kutucuk için analiz verisi yok.');
+  }
+
+  const html=`<div style="display:flex;flex-direction:column;gap:10px;">
+    ${satirlar.map(s=>{
+      const renk=s.startsWith('✅')?'rgba(111,207,151,0.12)':s.startsWith('⚠️')||s.startsWith('🔴')||s.startsWith('🚨')?'rgba(232,128,128,0.12)':s.startsWith('💡')||s.startsWith('🔮')?'rgba(179,157,219,0.12)':'var(--bg2)';
+      const border=s.startsWith('✅')?'var(--green)':s.startsWith('⚠️')||s.startsWith('🔴')||s.startsWith('🚨')?'var(--red)':s.startsWith('💡')||s.startsWith('🔮')?'var(--purple)':'var(--border)';
+      return `<div style="padding:11px 14px;background:${renk};border-left:3px solid ${border};border-radius:var(--r-sm);font-size:13px;line-height:1.65;">${s}</div>`;
+    }).join('')}
+  </div>`;
+  showInfoModal(baslik,html);
 }
 
 function aiTakvimGunAnaliz(tarih){
