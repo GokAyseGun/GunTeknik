@@ -41,10 +41,24 @@
   --grad-main:linear-gradient(135deg,#7eb3f0 0%,#b39ddb 100%);
   --grad-success:linear-gradient(135deg,#6fcf97 0%,#7ecec4 100%);
   --grad-danger:linear-gradient(135deg,#e88080 0%,#f0a070 100%);
-  --r-sm:10px;--r-md:16px;--r-lg:22px;--r-xl:30px;
+  --grad-amber:linear-gradient(135deg,#f0c472 0%,#e88080 100%);
+  --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:28px;
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow-md:0 8px 24px rgba(0,0,0,0.4);--shadow-lg:0 20px 50px rgba(0,0,0,0.5);
   --nav-h:68px;--top-h:60px;
   --ease:cubic-bezier(0.16,1,0.3,1);--ease-back:cubic-bezier(0.34,1.56,0.64,1);
+}
+/* Açık tema */
+[data-tema="acik"]{
+  --bg:#f0f4f8;--bg2:#e4ecf4;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#d0dce8;--border2:#b8cce0;
+  --text:#0f1c2e;--text2:#4a6080;--text3:#7a9ab8;
+  --blue:#1a6fd4;--blue-lt:rgba(26,111,212,0.1);--blue-md:rgba(26,111,212,0.2);
+  --green:#1a8a52;--green-lt:rgba(26,138,82,0.1);
+  --red:#d42828;--red-lt:rgba(212,40,40,0.1);
+  --amber:#b07000;--amber-lt:rgba(176,112,0,0.1);
+  --purple:#6a3fb0;--purple-lt:rgba(106,63,176,0.1);
+  --teal:#1a8080;--teal-lt:rgba(26,128,128,0.1);
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.08);--shadow-md:0 8px 24px rgba(0,0,0,0.12);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{height:100%;}
@@ -151,14 +165,17 @@ input[type="month"].month-input:focus{border-color:var(--blue);}
 /* KARTLAR */
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
 .cards-1{grid-template-columns:1fr;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;position:relative;overflow:visible;transition:transform 0.4s var(--ease),box-shadow 0.4s var(--ease),border-color 0.4s var(--ease);cursor:pointer;}
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--border2);}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:transparent;transition:background 0.4s var(--ease);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;position:relative;overflow:hidden;transition:transform 0.4s var(--ease),box-shadow 0.4s var(--ease),border-color 0.4s var(--ease);cursor:pointer;}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--border2);}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;transition:background 0.4s var(--ease);border-radius:var(--r-lg) var(--r-lg) 0 0;}
 .card:hover::before{background:var(--grad-main);}
 .card.accent-green::before{background:var(--grad-success);}
 .card.accent-red::before{background:var(--grad-danger);}
 .card.accent-blue::before{background:var(--grad-main);}
-.card.accent-amber::before{background:linear-gradient(135deg,var(--amber) 0%,var(--teal) 100%);}
+.card.accent-amber::before{background:var(--grad-amber);}
+/* AI butonu için overflow clip — sadece kart içeriği kesilsin, ::before değil */
+.card .ai-abs-btn{position:absolute;top:8px;right:8px;background:rgba(139,92,246,0.18);border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#b39ddb;z-index:2;transition:background 0.2s;}
+.card .ai-abs-btn:hover{background:rgba(139,92,246,0.32);}
 .card .lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:8px;letter-spacing:0.3px;}
 .card .val{font-size:22px;font-weight:700;letter-spacing:-0.8px;}
 
@@ -245,10 +262,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 .vade-banner-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
 
 /* BOŞ DURUM */
-.empty-state{text-align:center;padding:48px 20px;}
-.empty-state .empty-icon{font-size:40px;margin-bottom:12px;opacity:0.5;}
-.empty-state .empty-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;}
-.empty-state .empty-sub{font-size:12px;color:var(--text3);line-height:1.6;}
+.empty-state{text-align:center;padding:48px 20px;animation:fadeIn 0.5s var(--ease);}
+.empty-state .empty-icon{font-size:48px;margin-bottom:14px;opacity:0.4;display:block;}
+.empty-state .empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:8px;}
+.empty-state .empty-sub{font-size:13px;color:var(--text3);line-height:1.7;max-width:260px;margin:0 auto;}
 
 /* MULTİ-SELECT HİZMET */
 .ms-container{border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);overflow:hidden;}
@@ -394,6 +411,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="month" class="month-input" id="global-month" onchange="onMonthChange()" title="Dönem filtresi">
       <button class="icon-btn" onclick="clearMonth()" title="Temizle">✕</button>
       <button class="icon-btn" onclick="openModal('modal-ayarlar')">⚙️</button>
+      <button class="icon-btn" onclick="openBildirimMerkezi()" style="position:relative;" title="Bildirimler">
+        🔔
+        <span id="bildirim-rozet" style="display:none;position:absolute;top:4px;right:4px;background:var(--red);color:white;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;line-height:1;"></span>
+      </button>
     </div>
   </div>
 
@@ -405,8 +426,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
       <div class="sec-title mt0">İşletme Özeti</div>
       <div class="cards" id="dash-isletme">
-        <div class="card accent-blue" onclick="showDashDetay('isGelir')"><div class="lbl">📈 Dönem Geliri</div><div class="val c-blue num" id="d-is-gelir">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gelir')" style="position:absolute;top:8px;right:8px;background:rgba(139,92,246,0.2);border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#8b5cf6;">✦</button></div>
-        <div class="card accent-red" onclick="showDashDetay('isGider')"><div class="lbl">📉 Dönem Gideri</div><div class="val c-red num" id="d-is-gider">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gider')" style="position:absolute;top:8px;right:8px;background:rgba(139,92,246,0.2);border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#8b5cf6;">✦</button></div>
+        <div class="card accent-blue" onclick="showDashDetay('isGelir')"><div class="lbl">📈 Dönem Geliri</div><div class="val c-blue num" id="d-is-gelir">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gelir')" class="ai-abs-btn">✦</button></div>
+        <div class="card accent-red" onclick="showDashDetay('isGider')"><div class="lbl">📉 Dönem Gideri</div><div class="val c-red num" id="d-is-gider">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('gider')" class="ai-abs-btn">✦</button></div>
         <div class="card accent-green" style="grid-column:span 2" onclick="showDashDetay('isKar')"><div class="lbl">🏆 Net İşletme Kârı</div><div class="val c-green num" id="d-is-kar">0 ₺</div></div>
       </div>
 
@@ -423,14 +444,14 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div class="lbl">💰 Toplam Kasa</div>
           <div class="val num" id="d-kasa" style="font-size:28px">0 ₺</div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="kasa-dagitim"></div>
-          <button onclick="event.stopPropagation();aiOzetKutucukAnaliz('kasa')" style="position:absolute;top:8px;right:8px;background:rgba(139,92,246,0.2);border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#8b5cf6;">✦</button>
+          <button onclick="event.stopPropagation();aiOzetKutucukAnaliz('kasa')" class="ai-abs-btn">✦</button>
         </div>
         <div class="card accent-green" onclick="showDashDetay('beklenen')"><div class="lbl">📅 Beklenen (Vadeler Dahil)</div><div class="val c-green num" id="d-beklenen">0 ₺</div></div>
       </div>
 
       <div class="sec-title">Alacak & Borç</div>
       <div class="cards">
-        <div class="card" onclick="showDashDetay('alacak')"><div class="lbl">📥 Toplam Alacak</div><div class="val c-green num" id="d-alacak">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('alacak')" style="position:absolute;top:8px;right:8px;background:rgba(139,92,246,0.2);border:none;border-radius:6px;padding:2px 6px;font-size:11px;cursor:pointer;color:#8b5cf6;">✦</button></div>
+        <div class="card" onclick="showDashDetay('alacak')"><div class="lbl">📥 Toplam Alacak</div><div class="val c-green num" id="d-alacak">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('alacak')" class="ai-abs-btn">✦</button></div>
         <div class="card" onclick="showDashDetay('verecek')"><div class="lbl">📤 Toplam Verecek</div><div class="val c-red num" id="d-verecek">0 ₺</div></div>
         <div class="card" onclick="goPage('personel')"><div class="lbl">👷 Tüm Personel Borcu</div><div class="val c-amber num" id="d-personel">0 ₺</div></div>
       </div>
@@ -463,7 +484,14 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
             <option value="">Tüm Statüler</option><option value="Tamamlandı">Tamamlandı</option><option value="Bekliyor">Bekliyor</option>
           </select>
         </div>
-        <input type="text" id="f-ara" placeholder="İsim, not veya fiş no ara..." oninput="renderIslemler()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="f-ara" placeholder="İsim, not veya fiş no ara..." oninput="renderIslemler()" style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
+          <button onclick="openModal('modal-gelismis-filtre')" class="btn btn-secondary" style="padding:0 14px;flex-shrink:0;font-size:12px;" id="btn-gelismis-filtre">🔍 Gelişmiş</button>
+        </div>
+        <div id="gf-aktif-bilgi" style="display:none;font-size:11px;color:var(--amber);background:rgba(240,196,114,0.1);border-radius:var(--r-sm);padding:6px 10px;display:flex;justify-content:space-between;align-items:center;">
+          <span>🔍 Gelişmiş filtre aktif</span>
+          <button onclick="gelismisFiltreTemizle();renderIslemler()" style="color:var(--red);background:none;border:none;font-size:11px;cursor:pointer;">✕ Temizle</button>
+        </div>
       </div>
       <div class="stagger-wrap" id="list-islemler"></div>
     </div>
@@ -878,14 +906,24 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <!-- Ayarlar -->
 <div class="modal-ov" id="modal-ayarlar">
   <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>Ayarlar</h3><button class="modal-close" onclick="closeModal('modal-ayarlar')">✕</button></div>
+    <div class="modal-head"><h3>⚙️ Ayarlar</h3><button class="modal-close" onclick="closeModal('modal-ayarlar')">✕</button></div>
     <div class="modal-body fg">
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
         <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">Giriş Yapan</div>
         <div style="font-size:14px;font-weight:600;" id="ayar-user-email">—</div>
         <div style="font-size:12px;color:var(--text2);margin-top:2px;" id="ayar-user-rol">—</div>
       </div>
-      <button class="btn btn-secondary btn-full" onclick="exportData()">💾 Yedeği İndir</button>
+      <!-- Tema Seçici -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">🎨 Tema</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button onclick="temaUygula('koyu')" id="tema-btn-koyu" class="btn btn-secondary" style="font-size:12px;padding:8px 4px;border-radius:10px;">🌙 Koyu</button>
+          <button onclick="temaUygula('acik')" id="tema-btn-acik" class="btn btn-secondary" style="font-size:12px;padding:8px 4px;border-radius:10px;">☀️ Açık</button>
+          <button onclick="temaUygula('sistem')" id="tema-btn-sistem" class="btn btn-secondary" style="font-size:12px;padding:8px 4px;border-radius:10px;">💻 Sistem</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-full" onclick="exportData()">💾 Veriyi Yedekle (JSON)</button>
+      <button class="btn btn-secondary btn-full" onclick="openBildirimMerkezi()">🔔 Bildirim Merkezi</button>
       <button class="btn btn-secondary btn-full" id="btn-pwa-install" onclick="installPWA()" style="display:none;">📲 Uygulamayı Yükle</button>
       <button class="btn btn-secondary btn-full" onclick="showPWAManualGuide()">📲 Uygulama Kurulum Rehberi</button>
       <div style="height:1px;background:var(--border);"></div>
@@ -895,6 +933,63 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openAiAyarlar()">🤖 AI Asistan Ayarları</button>
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-danger btn-full" onclick="doLogout()">🔒 Çıkış Yap</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bildirim Merkezi -->
+<div class="modal-ov" id="modal-bildirimler" style="z-index:10001;">
+  <div class="modal" style="max-width:480px;max-height:90vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">🔔</span>
+        <div><h3>Bildirim Merkezi</h3><div style="font-size:11px;color:var(--text3);" id="bildirim-say-lbl">—</div></div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="bildirimlerTemizle()" class="btn btn-secondary btn-sm">Temizle</button>
+        <button class="modal-close" onclick="closeModal('modal-bildirimler')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:12px;display:flex;flex-direction:column;gap:6px;" id="bildirim-listesi">
+      <div class="empty-state"><div class="empty-title">Bildirim yok</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Gelişmiş Filtre Modalı -->
+<div class="modal-ov" id="modal-gelismis-filtre">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>🔍 Gelişmiş Filtrele</h3><button class="modal-close" onclick="closeModal('modal-gelismis-filtre')">✕</button></div>
+    <div class="modal-body fg">
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1"><label>Başlangıç Tarihi</label><input type="date" id="gf-tarih-bas"></div>
+        <div class="fi" style="flex:1"><label>Bitiş Tarihi</label><input type="date" id="gf-tarih-bit"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1"><label>Min Tutar (₺)</label><input type="number" id="gf-min-tutar" placeholder="0" inputmode="numeric"></div>
+        <div class="fi" style="flex:1"><label>Max Tutar (₺)</label><input type="number" id="gf-max-tutar" placeholder="∞" inputmode="numeric"></div>
+      </div>
+      <div class="fi"><label>İşlem Tipi</label>
+        <select id="gf-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="">Tümü</option><option value="Gelir">Gelir</option><option value="Gider">Gider</option>
+        </select>
+      </div>
+      <div class="fi"><label>Durum</label>
+        <select id="gf-statu" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="">Tümü</option><option value="Tamamlandı">Tamamlandı</option><option value="Bekliyor">Bekliyor</option>
+        </select>
+      </div>
+      <div class="fi"><label>Ödeme Yöntemi</label>
+        <select id="gf-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="">Tümü</option><option value="Nakit">Nakit</option><option value="Kart">Kart</option><option value="İBAN">İBAN</option>
+        </select>
+      </div>
+      <div id="gf-sonuc-bilgi" style="font-size:13px;color:var(--text2);text-align:center;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="gelismisFiltreTemizle()">Temizle</button>
+      <button class="btn btn-primary btn-full" onclick="gelismisFiltreUygula()">Filtrele</button>
     </div>
   </div>
 </div>
@@ -1852,6 +1947,8 @@ async function startApp(){
   aiMuhasebeBildirimKontrol();
   aiKalipOgrenEn();
   aiAySonuOzeti();
+  // Veri yedek hatırlatıcı
+  setTimeout(()=>yedekHatirlatici(),5000);
   // Yaklaşan ödeme + bütçe kontrolü
   setTimeout(()=>{yaklaşanUyariGoster();butceAsimiKontrol();},800);
 }
@@ -1976,7 +2073,7 @@ const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.is
 function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'Genel Özet',islemler:'Tüm İşlemler',takvim:'Takvim & Ajanda',rehber:'Kişi & Kurum Rehberi',cari:'Açık Hesaplar',personel:'Personel Takibi',stok:'Stok & Malzeme',irsaliye:'İrsaliye & Fiş',raporlar:'Raporlar',vergi:'Vergi Takibi'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler'};
 
 function goPage(id,navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2189,7 +2286,7 @@ function showDashDetay(tip){
 function renderIslemler(){
   const fDate=getMonth(),fTur=document.getElementById('f-tur')?.value||'',fOdeme=document.getElementById('f-odeme')?.value||'',fStatu=document.getElementById('f-statu')?.value||'',fAra=(document.getElementById('f-ara')?.value||'').toLowerCase();
   const list=document.getElementById('list-islemler');if(!list)return;
-  const filtered=DB.islemler.filter(i=>{
+  let filtered=DB.islemler.filter(i=>{
     if(fDate&&!(i.tarih||'').startsWith(fDate))return false;
     if(fTur){if(fTur==='Finans'&&!['Ödenecek Borç','Tahsil Edilecek Alacak','Kasa Hareketi'].includes(i.tip))return false;if(fTur!=='Finans'&&i.tip!==fTur)return false;}
     if(fOdeme&&i.odemeYontemi!==fOdeme)return false;
@@ -2197,7 +2294,9 @@ function renderIslemler(){
     if(fAra){const k=getKisi(i.kisiId);if(!((k?.isim||'').toLowerCase().includes(fAra)||(i.not||'').toLowerCase().includes(fAra)||fmtId(i.id).toLowerCase().includes(fAra)))return false;}
     return true;
   });
-  if(!filtered.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sonuç bulunamadı</div></div>';return;}
+  // Gelişmiş filtre uygula
+  filtered=gelismisFiltreUygulaislem?gelismisFiltreUygulaislem(filtered):filtered;
+  if(!filtered.length){list.innerHTML=emptyState?emptyState('🔍','Sonuç bulunamadı','Filtre kriterlerinizi değiştirip tekrar deneyin','',''):'<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Sonuç bulunamadı</div></div>';return;}
   const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
   list.innerHTML=filtered.map((i,idx)=>{
     const k=getKisi(i.kisiId);const pos=i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak';const renk=pos?'var(--green)':'var(--red)';
@@ -2339,7 +2438,7 @@ async function deleteEk(id,event){
 async function statuDegistir(id,event){
   if(event)event.stopPropagation();
   showConfirm('Tahsil Edildi?','Bu işlem Tamamlandı olarak işaretlenecek.',async()=>{
-    try{await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({statu:'Tamamlandı'})});await loadDB();showToast('Güncellendi','green');}
+    try{await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({statu:'Tamamlandı'})});await loadDB();showToast('Tahsilat tamamlandı 🎉','green');setTimeout(()=>window.animTamamlandi&&animTamamlandi(),150);}
     catch(e){showToast('Hata!','red');}
   },'✅');
 }
@@ -2932,6 +3031,14 @@ async function saveIslem(btn){
       showToast('İşlem kaydedildi','green');
     }
     await loadDB();closeModal('modal-islem');
+    // Animasyon — gelir veya gider
+    try{
+      const _son=DB.islemler.find(i=>i.statu==='Tamamlandı')||DB.islemler[0];
+      if(_son){
+        if(_son.tip==='Gelir')setTimeout(()=>window.animGelir&&animGelir(_son.tutar),200);
+        else if(_son.tip==='Gider')setTimeout(()=>window.animGider&&animGider(_son.tutar),200);
+      }
+    }catch(e){}
     // AI işlem sonrası analiz (arka planda)
     const sonIslem=DB.islemler[0];
     if(sonIslem)setTimeout(()=>aiIslemSonrasiAnaliz(sonIslem),1500);
@@ -3409,7 +3516,7 @@ async function saveHareketDuzenle(btn){
   try{
     const id=document.getElementById('hd-id').value;const t=parseTutar(document.getElementById('hd-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     await sbFetch('yardimci_islemleri?id=eq.'+id,{method:'PATCH',body:JSON.stringify({tutar:t,"not":document.getElementById('hd-not').value})});
-    await loadDB();closeModal('modal-hareket-duzenle');showToast('Güncellendi','green');
+    await loadDB();closeModal('modal-hareket-duzenle');showToast('Güncellendi','green');setTimeout(()=>window.animMaas&&animMaas(),200);
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -5104,6 +5211,7 @@ async function saveProje(btn){
     if(id)await sbFetch('projeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
     else await sbFetch('projeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
     await loadDB();closeModal('modal-proje');showToast(id?'Güncellendi':'Proje eklendi','green');
+    if(document.getElementById('proje-durum')?.value==='Tamamlandı')setTimeout(()=>window.animProjeTamamlandi&&animProjeTamamlandi(),200);
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -5318,7 +5426,7 @@ function showTeklifDetay(id){
 
 async function teklifDurumGuncelle(id,durum){
   await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({durum})});
-  await loadDB();closeModal('modal-teklif-detay');showToast('Durum güncellendi','green');
+  await loadDB();closeModal('modal-teklif-detay');showToast('Durum güncellendi','green');if(durum==='Onaylandı')setTimeout(()=>window.animTeklifOnaylandi&&animTeklifOnaylandi(),200);
 }
 
 async function teklifIslemeCevir(id){
@@ -5950,21 +6058,30 @@ function teklifOnayLinki(teklifId){
   const t=DB.teklifler.find(x=>x.id===teklifId);if(!t)return;
   const k=getKisi(t.kisiId);
   if(!t.onayToken){showToast('Önce teklifi kaydedin','amber');return;}
-  // Onay sayfası URL'si — kendi sitenizin onay endpoint'i
-  const baseUrl=window.location.origin+window.location.pathname.replace('index.html','');
-  const onayUrl=`${baseUrl}onay.html?token=${t.onayToken}&tid=${teklifId}`;
-  // Basit share
-  const mesaj=`Merhaba ${k?k.isim:''},\n\nGün Teknik teklifi için onay bağlantısı:\n${onayUrl}\n\nToplam: ${fmt(t.toplam)} ₺`;
-  navigator.clipboard.writeText(onayUrl).then(()=>{
-    showToast('Onay linki panoya kopyalandı','green');
-  }).catch(()=>{});
-  // WhatsApp ile gönder
+  const onayUrl=`${location.origin}${location.pathname.replace('index.html','')}onay.html?token=${t.onayToken}`;
+  navigator.clipboard.writeText(onayUrl).then(()=>showToast('Link panoya kopyalandı','green')).catch(()=>{});
+  const gecerlilik=t.gecerlilikTarihi?`\nGeçerlilik tarihi: ${t.gecerlilikTarihi}`:'';
+  const kalemSayisi=(t.kalemler||[]).length;
+  const msg=`Sayın ${k?k.isim:'Müşterimiz'},
+
+Gün Teknik olarak hazırladığımız teklifiniz onayınıza sunulmuştur.
+
+Teklifimizde ${kalemSayisi} kalem yer almakta olup tüm detayları aşağıdaki bağlantıda inceleyebilirsiniz.${gecerlilik}
+
+Teklifinizi görüntülemek ve onaylamak için:
+${onayUrl}
+
+Herhangi bir sorunuz için bizimle iletişime geçebilirsiniz. İlginiz için teşekkür ederiz.
+
+Gün Teknik`;
   if(k?.tel){
-    const waUrl='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
-    window.open(waUrl,'_blank');
+    window.open('https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(msg),'_blank');
+  }else{
+    showInfoModal('🔗 Onay Linki',
+      '<div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Müşteri telefonu kayıtlı değil. Linki kopyalayıp manuel gönderin:</div>'+
+      '<div style="word-break:break-all;font-size:12px;padding:12px;background:var(--bg2);border-radius:var(--r-sm);">'+onayUrl+'</div>');
   }
 }
-
 // Onay sayfası oluştur ve indir
 function onayHtmlIndir(){
   const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teklif Onayı</title>
@@ -6585,20 +6702,6 @@ function teklifOnizlemePrint(){
   showToast('İndirildi — tarayıcıda aç, Ctrl+P → PDF','green');
 }
 
-function teklifOnayLinki(teklifId){
-  const t=DB.teklifler.find(x=>x.id===teklifId);if(!t)return;
-  const k=getKisi(t.kisiId);
-  if(!t.onayToken){showToast('Önce teklifi kaydedin','amber');return;}
-  // Onay için basit URL — kişiye gönderilir
-  const onayUrl=`${location.origin}${location.pathname.replace('index.html','')}onay.html?token=${t.onayToken}`;
-  navigator.clipboard.writeText(onayUrl).then(()=>showToast('Link panoya kopyalandı','green')).catch(()=>{});
-  if(k?.tel){
-    const msg=`Merhaba ${k.isim},\n\nGün Teknik teklifini onaylamak için linke tıklayın:\n${onayUrl}\n\nToplam: ${fmt(t.toplam)} ₺`;
-    window.open('https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(msg),'_blank');
-  }else{
-    showInfoModal('🔗 Onay Linki','<div style="word-break:break-all;font-size:12px;padding:12px;background:var(--bg2);border-radius:var(--r-sm);">'+onayUrl+'</div><div style="font-size:12px;color:var(--text2);margin-top:8px;">Bu linki müşteriye gönderin. onay.html dosyasını GitHub\'a yüklemeniz gerekiyor.</div>');
-  }
-}
 
 // ============================================================ PERSONEL DETAY & MAAŞ
 
@@ -6676,7 +6779,7 @@ async function sgkOdemesiKaydet(personelId,tutar){
   await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
     personel_id:personelId,tip:'SGK Ödemesi',tutar,tarih:localISOString(new Date()),not:'SGK '+new Date().toLocaleString('tr-TR',{month:'long',year:'numeric'})
   })});
-  await loadDB();showToast('SGK ödemesi kaydedildi','green');
+  await loadDB();showToast('SGK ödemesi kaydedildi','green');setTimeout(()=>window.animMaas&&animMaas(),200);
 }
 
 // AI Personel Analizi
@@ -6919,7 +7022,7 @@ function butceAsimiKontrol(){
     const sonKey='butce_uyari_'+b.id+'_'+ay+'_'+yil;
     const sonUyari=localStorage.getItem(sonKey)||0;
     if(oran>=100&&sonUyari<100){
-      aiBildirimGoster('uyari',`🚨 "${b.kategori}" bütçe limiti aşıldı! ${fmt(harcama)} ₺ / ${fmt(b.limitTutar)} ₺`,10000);
+      if(window.animLimitAsim)animLimitAsim();aiBildirimGoster('uyari',`🚨 "${b.kategori}" bütçe limiti aşıldı! ${fmt(harcama)} ₺ / ${fmt(b.limitTutar)} ₺`,10000);
       localStorage.setItem(sonKey,100);
     } else if(oran>=90&&sonUyari<90){
       aiBildirimGoster('uyari',`⚠️ "${b.kategori}" bütçesinin %${Math.round(oran)}'ı kullanıldı`,8000);
@@ -7089,8 +7192,505 @@ function aiStokGenelAnaliz(){
   showInfoModal('✦ Stok Genel Analizi',html);
 }
 
+// ============================================================ TEMA SİSTEMİ
+
+function temaUygula(tema){
+  localStorage.setItem('gt_tema',tema);
+  const root=document.documentElement;
+  if(tema==='acik'){
+    root.setAttribute('data-tema','acik');
+  }else if(tema==='koyu'){
+    root.removeAttribute('data-tema');
+  }else{
+    // Sistem teması
+    const tercih=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if(tercih)root.removeAttribute('data-tema');
+    else root.setAttribute('data-tema','acik');
+  }
+  // Butonları güncelle
+  ['koyu','acik','sistem'].forEach(t=>{
+    const btn=document.getElementById('tema-btn-'+t);
+    if(btn)btn.style.borderColor=t===tema?'var(--blue)':'';
+  });
+  showToast('Tema değiştirildi','green');
+}
+
+function temaYukle(){
+  const tema=localStorage.getItem('gt_tema')||'koyu';
+  temaUygula(tema);
+}
+
+// Sistem tema değişimini dinle
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+  if(localStorage.getItem('gt_tema')==='sistem')temaUygula('sistem');
+});
+
+// ============================================================ BİLDİRİM MERKEZİ
+
+const bildirimGecmis=[];
+const MAX_BILDIRIM=50;
+
+function bildirimEkle(tip,mesaj){
+  bildirimGecmis.unshift({
+    tip,mesaj,tarih:new Date().toISOString(),
+    id:Date.now()
+  });
+  if(bildirimGecmis.length>MAX_BILDIRIM)bildirimGecmis.pop();
+  // Bildirim rozeti güncelle
+  const rozet=document.getElementById('bildirim-rozet');
+  if(rozet){
+    const okunmamis=bildirimGecmis.filter(b=>!b.okundu).length;
+    rozet.textContent=okunmamis||'';
+    rozet.style.display=okunmamis?'flex':'none';
+  }
+}
+
+function openBildirimMerkezi(){
+  closeModal('modal-ayarlar');
+  const liste=document.getElementById('bildirim-listesi');
+  const say=document.getElementById('bildirim-say-lbl');
+  if(!liste)return;
+  bildirimGecmis.forEach(b=>b.okundu=true);
+  const rozet=document.getElementById('bildirim-rozet');
+  if(rozet)rozet.style.display='none';
+  if(!bildirimGecmis.length){
+    liste.innerHTML='<div class="empty-state"><div class="empty-icon">🔕</div><div class="empty-title">Bildirim yok</div><div class="empty-sub">Henüz bildirim oluşmadı</div></div>';
+    if(say)say.textContent='Boş';
+  }else{
+    if(say)say.textContent=bildirimGecmis.length+' bildirim';
+    const renk={info:'var(--blue)',uyari:'var(--amber)',bilgi:'var(--purple)'};
+    liste.innerHTML=bildirimGecmis.map(b=>`
+      <div style="padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);border-left:3px solid ${renk[b.tip]||'var(--blue)'};">
+        <div style="font-size:13px;line-height:1.5;">${b.mesaj}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">${new Date(b.tarih).toLocaleString('tr-TR')}</div>
+      </div>`).join('');
+  }
+  openModal('modal-bildirimler');
+}
+
+function bildirimlerTemizle(){
+  bildirimGecmis.length=0;
+  openBildirimMerkezi();
+  showToast('Bildirimler temizlendi','amber');
+}
+
+// aiBildirimGoster hook — tüm bildirimleri merkeze de ekle
+const _origAiBildirimGoster=aiBildirimGoster;
+// Override edildi — bildirim merkezi entegrasyonu
+window.aiBildirimGoster=function(tip,mesaj,sure){
+  bildirimEkle(tip,mesaj);
+  _origAiBildirimGoster(tip,mesaj,sure);
+};
+// Global referansı güncelle
+const aiBildirimGosterOrig=aiBildirimGoster;
+
+// ============================================================ GELİŞMİŞ FİLTRE
+
+let gelismisFiltreAktif={};
+
+function gelismisFiltreUygula(){
+  gelismisFiltreAktif={
+    tarihBas:document.getElementById('gf-tarih-bas')?.value||'',
+    tarihBit:document.getElementById('gf-tarih-bit')?.value||'',
+    minTutar:parseFloat(document.getElementById('gf-min-tutar')?.value)||0,
+    maxTutar:parseFloat(document.getElementById('gf-max-tutar')?.value)||0,
+    tip:document.getElementById('gf-tip')?.value||'',
+    statu:document.getElementById('gf-statu')?.value||'',
+    odeme:document.getElementById('gf-odeme')?.value||''
+  };
+  const aktif=Object.values(gelismisFiltreAktif).some(v=>v);
+  const bilgi=document.getElementById('gf-aktif-bilgi');
+  if(bilgi)bilgi.style.display=aktif?'flex':'none';
+  closeModal('modal-gelismis-filtre');
+  renderIslemler();
+}
+
+function gelismisFiltreTemizle(){
+  gelismisFiltreAktif={};
+  ['gf-tarih-bas','gf-tarih-bit','gf-min-tutar','gf-max-tutar'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['gf-tip','gf-statu','gf-odeme'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  const bilgi=document.getElementById('gf-aktif-bilgi');
+  if(bilgi)bilgi.style.display='none';
+  renderIslemler();
+}
+
+// renderIslemler'e gelişmiş filtre entegrasyonu
+function gelismisFiltreUygulaislem(islemler){
+  const f=gelismisFiltreAktif;
+  if(!f||!Object.values(f).some(v=>v))return islemler;
+  return islemler.filter(i=>{
+    if(f.tarihBas&&i.tarih.slice(0,10)<f.tarihBas)return false;
+    if(f.tarihBit&&i.tarih.slice(0,10)>f.tarihBit)return false;
+    if(f.minTutar&&i.tutar<f.minTutar)return false;
+    if(f.maxTutar&&i.tutar>f.maxTutar)return false;
+    if(f.tip&&i.tip!==f.tip)return false;
+    if(f.statu&&i.statu!==f.statu)return false;
+    if(f.odeme&&i.odemeYontemi!==f.odeme)return false;
+    return true;
+  });
+}
+
+// ============================================================ VERİ YEDEKLEME
+
+function exportData(){
+  const veri={
+    meta:{tarih:new Date().toISOString(),versiyon:'1.0',aciklama:'Gün Teknik ERP Yedeği'},
+    islemler:DB.islemler,
+    kisiler:DB.kisiler,
+    stok:DB.stok,
+    takvim:DB.takvim,
+    projeler:DB.projeler,
+    teklifler:DB.teklifler,
+    personeller:DB.personeller,
+    sablonlar:DB.sablonlar,
+    butceLimitler:DB.butceLimitler
+  };
+  const blob=new Blob([JSON.stringify(veri,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='gunteknik-yedek-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('Veri yedeği indirildi','green');
+  // Son yedek tarihini kaydet
+  localStorage.setItem('gt_son_yedek',new Date().toISOString());
+}
+
+function yedekHatirlatici(){
+  const son=localStorage.getItem('gt_son_yedek');
+  if(!son)return;
+  const gunFark=Math.floor((new Date()-new Date(son))/(24*60*60*1000));
+  if(gunFark>=30){
+    aiBildirimGosterOrig('bilgi',`💾 Son yedekten ${gunFark} gün geçti. Ayarlar → Veriyi Yedekle`,7000);
+  }
+}
+
+// ============================================================ BOŞ DURUM İYİLEŞTİRME
+
+function emptyState(ikon,baslik,alt,butonLabel,butonAksiyon){
+  return `<div class="empty-state">
+    <div class="empty-icon">${ikon}</div>
+    <div class="empty-title">${baslik}</div>
+    ${alt?`<div class="empty-sub">${alt}</div>`:''}
+    ${butonLabel?`<button class="btn btn-primary" style="margin-top:14px;padding:10px 20px;" onclick="${butonAksiyon}">${butonLabel}</button>`:''}
+  </div>`;
+}
+
+
+// ============================================================ ANİMASYON SİSTEMİ
+
+(function(){
+  let canvas, ctx, particles=[], animFrame=null, active=false;
+
+  function getCanvas(){
+    if(!canvas){
+      canvas=document.createElement('canvas');
+      canvas.id='anim-canvas';
+      canvas.style.cssText='position:fixed;inset:0;z-index:99998;pointer-events:none;';
+      document.body.appendChild(canvas);
+    }
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+    ctx=canvas.getContext('2d');
+    return canvas;
+  }
+
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function rnd(a,b){return a+Math.random()*(b-a);}
+  function rndInt(a,b){return Math.floor(rnd(a,b));}
+  function rndEl(arr){return arr[rndInt(0,arr.length)];}
+
+  // ── GELİR: Coin yağmuru + konfeti ────────────────────────────────────
+  function gelirAnimasyon(tutar){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const yogunluk=tutar<1000?30:tutar<10000?60:100;
+    const konfeti=['#6fcf97','#7eb3f0','#f0c472','#b39ddb','#7ecec4','#fff'];
+    const sure=tutar<1000?3000:tutar<10000?5000:7000;
+
+    for(let i=0;i<yogunluk;i++){
+      const tip=Math.random()<0.4?'coin':'konfeti';
+      if(tip==='coin'){
+        particles.push({
+          tip:'coin',x:rnd(0,W),y:rnd(-H*0.3,-20),
+          vx:rnd(-1.5,1.5),vy:rnd(2,6),
+          r:rnd(8,16),rot:rnd(0,Math.PI*2),vRot:rnd(-0.08,0.08),
+          alfa:1,birth:Date.now(),sure,
+          renk:Math.random()<0.6?'#f0c472':'#6fcf97',
+          ekose:Math.random()<0.5
+        });
+      }else{
+        particles.push({
+          tip:'konfeti',x:rnd(0,W),y:rnd(-H*0.2,-10),
+          vx:rnd(-2,2),vy:rnd(2.5,5),
+          w:rnd(6,14),h:rnd(4,10),rot:rnd(0,Math.PI),vRot:rnd(-0.12,0.12),
+          alfa:1,birth:Date.now(),sure,renk:rndEl(konfeti)
+        });
+      }
+    }
+    baslat();
+  }
+
+  // ── GİDER: Kırmızı parçacık düşüşü ─────────────────────────────────
+  function giderAnimasyon(tutar){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const yogunluk=tutar<1000?15:tutar<10000?30:55;
+    const sure=tutar<1000?2000:tutar<10000?3500:5000;
+
+    for(let i=0;i<yogunluk;i++){
+      particles.push({
+        tip:'gider_parca',
+        x:rnd(0,W),y:rnd(-50,0),
+        vx:rnd(-0.8,0.8),vy:rnd(3,7),
+        r:rnd(4,10),
+        alfa:0.85,birth:Date.now(),sure,
+        renk:rndEl(['#e88080','#f0a070','#c06060']),
+        titreme:rnd(0,Math.PI*2)
+      });
+    }
+    baslat();
+  }
+
+  // ── TAMAMLANDI: Daire dalgası + yeşil parçacıklar ───────────────────
+  function tamamlandiAnimasyon(){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const cx=W/2, cy=H/2;
+    const sure=1800;
+
+    // Dalgalar
+    for(let i=0;i<3;i++){
+      particles.push({
+        tip:'dalga',x:cx,y:cy,r:10,
+        hedefR:Math.min(W,H)*0.55,
+        alfa:0.7,birth:Date.now()+i*200,sure:sure+i*200,
+        renk:'#6fcf97'
+      });
+    }
+    // Parçacıklar
+    for(let i=0;i<28;i++){
+      const aci=(i/28)*Math.PI*2;
+      const hiz=rnd(3,7);
+      particles.push({
+        tip:'patlama',x:cx,y:cy,
+        vx:Math.cos(aci)*hiz,vy:Math.sin(aci)*hiz,
+        r:rnd(4,8),alfa:1,birth:Date.now(),sure,
+        renk:rndEl(['#6fcf97','#7eb3f0','#f0c472','#fff'])
+      });
+    }
+    baslat();
+  }
+
+  // ── TEKLİF ONAYLANDI: Büyük kutlama ─────────────────────────────────
+  function teklifOnayandiAnimasyon(){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const renkler=['#6fcf97','#7eb3f0','#f0c472','#b39ddb','#7ecec4','#e88080','#fff','#ffd700'];
+    const sure=6000;
+
+    for(let i=0;i<120;i++){
+      const delay=rnd(0,1500);
+      particles.push({
+        tip:'konfeti',x:rnd(0,W),y:rnd(-H*0.5,-10)-delay*0.2,
+        vx:rnd(-3,3),vy:rnd(3,8),
+        w:rnd(8,18),h:rnd(5,12),rot:rnd(0,Math.PI),vRot:rnd(-0.15,0.15),
+        alfa:1,birth:Date.now()+delay,sure,renk:rndEl(renkler)
+      });
+    }
+    // Merkez patlama
+    const cx=W/2,cy=H/2;
+    for(let i=0;i<50;i++){
+      const aci=rnd(0,Math.PI*2),hiz=rnd(4,12);
+      particles.push({
+        tip:'patlama',x:cx,y:cy,
+        vx:Math.cos(aci)*hiz,vy:Math.sin(aci)*hiz,
+        r:rnd(5,12),alfa:1,birth:Date.now(),sure:2500,
+        renk:rndEl(renkler)
+      });
+    }
+    baslat();
+  }
+
+  // ── LİMİT AŞILDI: Kırmızı titreme ───────────────────────────────────
+  function limitAsimAnimasyon(){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    particles.push({
+      tip:'flash',alfa:0.25,birth:Date.now(),sure:900,
+      renk:'#e83030',faz:0
+    });
+    baslat();
+  }
+
+  // ── MAAŞ ÖDENDİ: Para uçuşu ─────────────────────────────────────────
+  function maasAnimasyon(){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const sure=2500;
+    for(let i=0;i<20;i++){
+      const delay=rnd(0,600);
+      const hedefX=rnd(W*0.2,W*0.8);
+      particles.push({
+        tip:'emoji_ucu',
+        x:W/2+(rnd(-60,60)),y:H,
+        hedefX,hedefY:rnd(H*0.15,H*0.5),
+        alfa:1,birth:Date.now()+delay,sure,
+        emoji:rndEl(['💸','💰','💵']),
+        boyut:rnd(22,36),
+        faz:rnd(0,Math.PI*2)
+      });
+    }
+    baslat();
+  }
+
+  // ── PROJE TAMAMLANDI ─────────────────────────────────────────────────
+  function projeTamamlandiAnimasyon(){
+    getCanvas();
+    const W=canvas.width, H=canvas.height;
+    const sure=3000;
+    const emojiler=['🎉','⭐','✨','🏆','🎊'];
+    for(let i=0;i<18;i++){
+      const delay=rnd(0,800);
+      particles.push({
+        tip:'emoji_ucu',
+        x:rnd(0,W),y:rnd(-80,-20),
+        hedefX:rnd(0,W),hedefY:rnd(H*0.1,H*0.7),
+        alfa:1,birth:Date.now()+delay,sure,
+        emoji:rndEl(emojiler),
+        boyut:rnd(24,44),
+        faz:rnd(0,Math.PI*2)
+      });
+    }
+    baslat();
+  }
+
+  // ── RENDER DÖNGÜSÜ ───────────────────────────────────────────────────
+  function baslat(){
+    if(active)return;
+    active=true;
+    loop();
+  }
+
+  function loop(){
+    if(!ctx)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const now=Date.now();
+    const canvasW=canvas.width, canvasH=canvas.height;
+
+    particles=particles.filter(p=>{
+      if(now<p.birth)return true; // gecikmiş — henüz çizme, tut
+      const yas=now-p.birth;
+      if(yas>p.sure)return false;
+      const ilerleme=yas/p.sure;
+      const giderek=Math.max(0,1-ilerleme*1.4);
+
+      if(p.tip==='coin'){
+        p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.rot+=p.vRot;
+        p.alfa=giderek;
+        if(p.y>canvasH+40)return false;
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+        ctx.globalAlpha=p.alfa;
+        // Elips (perspektif)
+        const rx=p.r, ry=p.r*Math.abs(Math.cos(p.rot*2))*0.5+p.r*0.2;
+        ctx.beginPath();ctx.ellipse(0,0,rx,Math.max(2,ry),0,0,Math.PI*2);
+        const grd=ctx.createRadialGradient(-rx*0.3,-ry*0.3,0,0,0,rx);
+        grd.addColorStop(0,'#fff9');grd.addColorStop(0.4,p.renk);grd.addColorStop(1,p.renk+'99');
+        ctx.fillStyle=grd;ctx.fill();
+        if(p.ekose){ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;ctx.stroke();}
+        ctx.restore();
+
+      }else if(p.tip==='konfeti'){
+        p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.rot+=p.vRot;p.alfa=giderek;
+        if(p.y>canvasH+20)return false;
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+        ctx.globalAlpha=p.alfa;
+        ctx.fillStyle=p.renk;
+        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        ctx.restore();
+
+      }else if(p.tip==='gider_parca'){
+        p.titreme+=0.12;
+        p.x+=p.vx+Math.sin(p.titreme)*0.4;p.y+=p.vy;p.vy+=0.12;
+        p.alfa=giderek*0.8;
+        if(p.y>canvasH+20)return false;
+        ctx.save();ctx.globalAlpha=p.alfa;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=p.renk;ctx.fill();
+        ctx.restore();
+
+      }else if(p.tip==='dalga'){
+        if(now<p.birth)return true;
+        const t=(now-p.birth)/p.sure;
+        const r=lerp(10,p.hedefR,t);
+        ctx.save();ctx.globalAlpha=Math.max(0,(1-t)*0.6);
+        ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
+        ctx.strokeStyle=p.renk;ctx.lineWidth=3*(1-t)+1;ctx.stroke();
+        ctx.restore();
+
+      }else if(p.tip==='patlama'){
+        p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.vx*=0.97;p.alfa=giderek;
+        ctx.save();ctx.globalAlpha=p.alfa;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r*(1-ilerleme*0.5)+1,0,Math.PI*2);
+        ctx.fillStyle=p.renk;ctx.fill();
+        ctx.restore();
+
+      }else if(p.tip==='flash'){
+        p.faz+=0.25;
+        const intensity=Math.sin(p.faz)*0.5+0.5;
+        ctx.save();ctx.globalAlpha=p.alfa*intensity*(1-ilerleme);
+        ctx.fillStyle=p.renk;ctx.fillRect(0,0,canvasW,canvasH);
+        ctx.restore();
+
+      }else if(p.tip==='emoji_ucu'){
+        if(now<p.birth)return true;
+        const t=(now-p.birth)/p.sure;
+        const ease=1-Math.pow(1-t,3);
+        p.x=lerp(p.x,p.hedefX,0.02);
+        const curY=lerp(canvasH,p.hedefY,ease);
+        p.alfa=t<0.7?1:1-(t-0.7)/0.3;
+        ctx.save();ctx.globalAlpha=Math.max(0,p.alfa);
+        ctx.font=`${p.boyut}px serif`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(p.emoji,p.x,curY);
+        ctx.restore();
+      }
+      return true;
+    });
+
+    if(particles.length===0){
+      active=false;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }else{
+      animFrame=requestAnimationFrame(loop);
+    }
+  }
+
+  // ── GLOBAL API ────────────────────────────────────────────────────────
+  window.animGelir=gelirAnimasyon;
+  window.animGider=giderAnimasyon;
+  window.animTamamlandi=tamamlandiAnimasyon;
+  window.animTeklifOnaylandi=teklifOnayandiAnimasyon;
+  window.animLimitAsim=limitAsimAnimasyon;
+  window.animMaas=maasAnimasyon;
+  window.animProjeTamamlandi=projeTamamlandiAnimasyon;
+
+  // Canvas boyut güncellemesi
+  window.addEventListener('resize',()=>{
+    if(canvas){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+  });
+})();
+
 // ============================================================ BAŞLAT
-window.addEventListener('DOMContentLoaded',()=>{initGlobalFileInputs();checkSession();});
+window.addEventListener('DOMContentLoaded',()=>{
+  initGlobalFileInputs();
+  temaYukle();
+  checkSession();
+});
 </script>
 </body>
 </html>
