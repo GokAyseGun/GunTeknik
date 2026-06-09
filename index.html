@@ -6494,8 +6494,8 @@ function aiKeyIste() {
 
 function aiKeyKaydet() {
   const key = document.getElementById('gemini-key-input')?.value?.trim();
-  if (!key || !key.startsWith('AIza')) {
-    showToast('Geçerli bir key girin (AIza... ile başlar)', 'red'); return;
+  if (!key || key.length < 10) {
+    showToast('Geçerli bir key girin', 'red'); return;
   }
   localStorage.setItem('gt_gemini_key', key);
   document.getElementById('modal-gemini-key')?.classList.remove('open');
