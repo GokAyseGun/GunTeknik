@@ -558,22 +558,22 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <!-- REHBER -->
     <div class="page" id="page-rehber">
       <!-- Müşteriler & Şahıslar — üst yarı -->
-      <div style="flex:1;display:flex;flex-direction:column;min-height:0;border-bottom:2px solid var(--border);padding:12px 16px 0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
-          <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">👤 Müşteriler & Şahıslar</div>
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0;border-bottom:2px solid var(--border);padding:10px 14px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-shrink:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">👤 Müşteriler & Şahıslar</div>
           <button class="btn btn-secondary btn-sm" onclick="openKisiModal('Müşteri')">+ Ekle</button>
         </div>
-        <input type="text" id="r-ara-mus" placeholder="İsim veya cari no ara..." oninput="renderRehber()" style="padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;margin-bottom:8px;font-family:inherit;flex-shrink:0;">
-        <div class="stagger-wrap" id="r-list-mus" style="overflow-y:auto;flex:1;padding-bottom:8px;"></div>
+        <input type="text" id="r-ara-mus" placeholder="İsim veya cari no ara..." oninput="renderRehber()" style="padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;width:100%;margin-bottom:7px;font-family:inherit;flex-shrink:0;">
+        <div class="stagger-wrap" id="r-list-mus" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:6px;display:flex;flex-direction:column;gap:3px;"></div>
       </div>
       <!-- Firma & Kurumlar — alt yarı -->
-      <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding:12px 16px 0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
-          <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">🏢 Firma & Kurumlar</div>
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding:10px 14px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-shrink:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">🏢 Firma & Kurumlar</div>
           <button class="btn btn-secondary btn-sm" onclick="openKisiModal('Firma')">+ Ekle</button>
         </div>
-        <input type="text" id="r-ara-top" placeholder="İsim veya cari no ara..." oninput="renderRehber()" style="padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;margin-bottom:8px;font-family:inherit;flex-shrink:0;">
-        <div class="stagger-wrap" id="r-list-top" style="overflow-y:auto;flex:1;padding-bottom:12px;"></div>
+        <input type="text" id="r-ara-top" placeholder="İsim veya cari no ara..." oninput="renderRehber()" style="padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;width:100%;margin-bottom:7px;font-family:inherit;flex-shrink:0;">
+        <div class="stagger-wrap" id="r-list-top" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:10px;display:flex;flex-direction:column;gap:3px;"></div>
       </div>
     </div>
 
@@ -3381,17 +3381,17 @@ function renderRehber(){
   const buildList=(list,elId)=>{
     const el=document.getElementById(elId);if(!el)return;
     if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Kayıt bulunamadı</div></div>';return;}
-    el.innerHTML=list.sort(sortFavori).map((k,i)=>`<div class="stagger-item" style="animation-delay:${i*0.05}s;padding:12px 14px;" onclick="showKisiDetay(${k.id})">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;height:100%;">
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;">
-          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;">${k.favori?'⭐ ':''}${k.isim} <span class="id-badge">${fmtKId(k.id)}</span></div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.2;">${k.tip}${k.tel?' · '+k.tel:''}</div>
+    el.innerHTML=list.sort(sortFavori).map((k,i)=>`<div class="stagger-item" style="animation-delay:${i*0.05}s;padding:8px 10px;" onclick="showKisiDetay(${k.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;">
+          <div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;">${k.favori?'⭐ ':''}${k.isim} <span class="id-badge">${fmtKId(k.id)}</span></div>
+          <div style="font-size:10.5px;color:var(--text2);line-height:1.2;">${k.tip}${k.tel?' · '+k.tel:''}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
-          <button class="icon-btn" onclick="showMusteriAnaliz(${k.id})" style="width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;" title="Müşteri Analizi">📊</button>
-          <span class="star-btn ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;">★</span>
-          ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editKisi(${k.id},event)" style="width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;">✏️</button>`:''}
-          ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteKisi(${k.id},event)" style="width:32px;height:32px;font-size:14px;color:var(--red);display:flex;align-items:center;justify-content:center;">🗑</button>`:''}
+        <div style="display:flex;align-items:center;gap:0px;flex-shrink:0;" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="showMusteriAnaliz(${k.id})" style="width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0;" title="Müşteri Analizi">📊</button>
+          <span class="star-btn ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;padding:0;">★</span>
+          ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editKisi(${k.id},event)" style="width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0;">✏️</button>`:''}
+          ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteKisi(${k.id},event)" style="width:24px;height:24px;font-size:12px;color:var(--red);display:flex;align-items:center;justify-content:center;padding:0;">🗑</button>`:''}
         </div>
       </div>
     </div>`).join('');
