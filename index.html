@@ -5928,22 +5928,8 @@ function aiVeriOzeti() {
 
 function aiSistemPrompt(ekBilgi) {
   const v = aiVeriOzeti();
-  const hafizaOzet = Object.entries(aiHafiza).slice(0,5).map(([k,val])=>`${k}: ${val}`).join('; ');
-  return `Sen Gün Teknik ERP sisteminin akıllı asistanısın. Türkçe, kısa, net ve uygulanabilir tavsiyeler ver. Gereksiz uzatma.
-
-📊 CANLI VERİ (${v.tarih} ${v.saat}):
-Kasa: ${fmt(v.kasa)} ₺ (Nakit: ${fmt(v.kasaNakit)}, IBAN: ${fmt(v.kasaIBAN)})
-Bu ay gelir: ${fmt(v.buAyGelir)} ₺ | gider: ${fmt(v.buAyGider)} ₺ | kâr: ${fmt(v.buAyKar)} ₺
-İşletme kâr: ${fmt(v.isKar)} ₺ | Şahsi net: ${fmt(v.shNet)} ₺
-Toplam alacak: ${fmt(v.alacakTop)} ₺ | Borç: ${fmt(v.borcTop)} ₺
-Vadesi geçmiş: ${v.gecmisSayi} işlem (${fmt(v.gecmisTutar)} ₺) | Bu hafta: ${v.buHaftaSayi} işlem
-Gecikmeli müşteriler: ${v.gecenAlacaklar}
-Stok kritik: ${v.stokKritikSayi} ürün | Biten: ${v.stokBittiSayi} (${v.stokBitenler})
-Bekleyen teklif: ${v.teklifBekleyen} | Aktif proje: ${v.aktifProjeler}
-En kârlı müşteri: ${v.enKarliMusteri}
-Personel borcu: ${fmt(v.personelBorc)} ₺
-${hafizaOzet ? '📝 Hafıza: ' + hafizaOzet : ''}
-${ekBilgi || ''}`;
+  return `Sen Gün Teknik ERP asistanısın. Türkçe, kısa ve net cevap ver.
+Veri: Kasa=${fmt(v.kasa)}₺ | Bu ay gelir=${fmt(v.buAyGelir)}₺ gider=${fmt(v.buAyGider)}₺ kâr=${fmt(v.buAyKar)}₺ | Alacak=${fmt(v.alacakTop)}₺ borç=${fmt(v.borcTop)}₺ | Vadesi geçmiş=${v.gecmisSayi} işlem (${fmt(v.gecmisTutar)}₺) | Stok kritik=${v.stokKritikSayi} biten=${v.stokBittiSayi} | Müşteri=${v.musteriSayi} proje=${v.aktifProjeler}${ekBilgi?'\n'+ekBilgi:''}`;
 }
 
 // ── GİRİŞ BİLDİRİMİ ─────────────────────────────────────────────────────
@@ -6237,44 +6223,65 @@ async function aiApiCagri(prompt, gecmis, jsonMode, ekBilgi) {
     if (!GEMINI_KEY) throw new Error('API key girilmedi');
   }
   const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
-  // Sistem mesajını ve geçmişi Gemini formatına çevir
   const sistemMetni = aiSistemPrompt(ekBilgi);
-  // Gemini'de sohbet geçmişi
-  const parts = [];
-  // Geçmiş mesajlar
-  (gecmis||[]).slice(-8).forEach(m => {
-    parts.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
+
+  // Geçmiş mesajlar — Gemini formatı: user/model çiftleri olmalı
+  const contents = [];
+  const ge = (gecmis||[]).slice(-8);
+  ge.forEach(m => {
+    contents.push({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: String(m.content||'') }]
+    });
   });
   // Son kullanıcı mesajı
-  const sonMesaj = `${sistemMetni}\n\n${prompt}`;
+  contents.push({ role: 'user', parts: [{ text: String(prompt) }] });
+
+  // İlk mesaj user olmalı — model ile başlayamaz
+  const filteredContents = [];
+  let lastRole = null;
+  for (const c of contents) {
+    if (c.role === lastRole) {
+      // Aynı rol üst üste gelirse birleştir
+      filteredContents[filteredContents.length-1].parts[0].text += '\n' + c.parts[0].text;
+    } else {
+      filteredContents.push(c);
+      lastRole = c.role;
+    }
+  }
+  // model ile başlıyorsa başa user ekle
+  if (filteredContents[0]?.role === 'model') {
+    filteredContents.unshift({ role: 'user', parts: [{ text: '.' }] });
+  }
+
   const payload = {
-    contents: [
-      ...parts,
-      { role: 'user', parts: [{ text: sonMesaj }] }
-    ],
+    systemInstruction: { parts: [{ text: sistemMetni }] },
+    contents: filteredContents,
     generationConfig: {
-      maxOutputTokens: jsonMode ? 500 : 800,
+      maxOutputTokens: jsonMode ? 400 : 700,
       temperature: 0.7,
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-    ]
+    }
   };
+
   const res = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+
   if (!res.ok) {
     const err = await res.text().catch(() => '');
-    throw new Error('Gemini API hatası: ' + res.status + ' ' + err.slice(0, 80));
+    let errMsg = '';
+    try { errMsg = JSON.parse(err)?.error?.message || err; } catch(e) { errMsg = err; }
+    throw new Error('Gemini ' + res.status + ': ' + errMsg.slice(0, 100));
   }
+
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Gemini boş yanıt döndürdü');
+  if (!text) {
+    const reason = data.candidates?.[0]?.finishReason || 'boş yanıt';
+    throw new Error('Gemini yanıt vermedi: ' + reason);
+  }
   return text;
 }
 
@@ -6372,7 +6379,20 @@ Formu doldurayım mı?`;
     // Hafızaya öğrenme
     aiKalipOgrenEn();
   } catch(e) {
-    aiMesajEkle('assistant', '⚠️ Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
+    const msg = String(e?.message || e);
+    // Key hatası
+    if (msg.includes('API key') || msg.includes('key girilmedi')) {
+      aiMesajEkle('assistant', '🔑 API key bulunamadı. Ayarlar → AI Asistan Ayarları → API Key Gir');
+    } else if (msg.includes('400') || msg.includes('INVALID_ARGUMENT')) {
+      aiMesajEkle('assistant', '⚠️ İstek hatası (400). Konsola bak: ' + msg.slice(0,100));
+    } else if (msg.includes('401') || msg.includes('403') || msg.includes('API_KEY_INVALID')) {
+      aiMesajEkle('assistant', '🔑 API key hatalı veya geçersiz. Ayarlar → AI Asistan Ayarları → API Key Kaldır → Yeni key gir');
+      localStorage.removeItem('gt_gemini_key');
+    } else if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+      aiMesajEkle('assistant', '⏳ Günlük limit doldu, yarın tekrar dene');
+    } else {
+      aiMesajEkle('assistant', '⚠️ Hata: ' + msg.slice(0, 120));
+    }
   } finally {
     if (btn) btn.disabled = false;
     if (ikon) ikon.textContent = '➤';
