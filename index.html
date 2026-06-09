@@ -1064,7 +1064,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fi" id="div-mi-altkat" style="display:none;"><label>Alt Kategori</label>
         <select id="mi-altkat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
       </div>
-      <div class="fi"><label>Tutar (₺)</label><input type="number" id="mi-tutar" inputmode="numeric" placeholder="0.00" oninput="calcYardimci()"></div>
+      <div class="fi"><label>Tutar (₺)</label><input type="number" id="mi-tutar" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()"></div>
       <div class="fi"><label>Statü</label>
         <select id="mi-statu" onchange="onStatuChange()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Tamamlandı">Tamamlandı</option><option value="Bekliyor">Bekliyor / Vadeli</option>
@@ -1082,7 +1082,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <input type="number" id="mi-taksit-sayi" value="2" min="2" style="padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
         </div>
       </div>
-      <div class="fi" id="div-mi-malzeme"><label>Harcanan Malzeme (₺)</label><input type="number" id="mi-malzeme" inputmode="numeric" placeholder="0.00" oninput="calcYardimci()"></div>
+      <div class="fi" id="div-mi-malzeme"><label>Harcanan Malzeme (₺)</label><input type="number" id="mi-malzeme" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()"></div>
       <div class="fi" id="div-mi-stok" style="display:none;">
         <label>Kullanılan Stok Malzemeleri</label>
         <div id="stok-satirlar" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
@@ -1090,15 +1090,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           + Stok Satırı Ekle
         </button>
       </div>
-      <div id="div-mi-yardimci" style="background:var(--blue-lt);padding:14px;border-radius:var(--r-md);border:1px solid rgba(126,179,240,0.2);display:none;">
+      <div id="div-mi-yardimci" style="background:var(--surface);border:1px solid rgba(126,179,240,0.3);padding:14px;border-radius:var(--r-md);display:none;">
         <label class="check-row">
           <input type="checkbox" id="mi-yardimci-chk" onchange="onYardimciChk()">
-          <span>Personel Kâr Payı</span>
+          <span style="font-weight:600;">👷 Personel Kâr Payı</span>
         </label>
         <div id="div-personel-listesi" style="display:none;margin-top:12px;">
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Personel Seç (birden fazla seçebilirsiniz)</div>
-          <div class="personel-select-list" id="personel-sec-list"></div>
-          <div style="font-weight:600;color:var(--blue);margin-top:10px;font-size:13px;" id="mi-yardimci-tutar">Toplam Pay: 0 ₺</div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Her personel için pay belirle</div>
+          <div id="personel-sec-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <div style="margin-top:10px;padding:10px;background:var(--bg2);border-radius:var(--r-sm);font-size:13px;color:var(--amber);font-weight:600;" id="mi-yardimci-tutar"></div>
         </div>
       </div>
       <div class="fi">
@@ -2600,8 +2600,11 @@ function onKatChange(){
   }else{
     if(checkDiv)checkDiv.style.display='none';if(selectDiv)selectDiv.style.display='block';
     const sel=document.getElementById('mi-altkat');if(sel){sel.innerHTML='';const sec=(KATEGORILER[tip]&&KATEGORILER[tip][kat])||[];if(!sec.length)sel.innerHTML='<option value="-">Detay Yok</option>';else sec.forEach(o=>sel.add(new Option(o,o)));}
-    if(isSahsi){if(yDiv)yDiv.style.display='none';if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
-    else{if(tip==='Gelir'){if(yDiv)yDiv.style.display='block';if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';}else{if(yDiv)yDiv.style.display='none';if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}}
+    // Personel payı SADECE İşletme Geliri'nde — diğer tüm kategorilerde gizle
+    if(yDiv)yDiv.style.display='none';
+    if(isSahsi){if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
+    else if(tip==='Gelir'){if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';}
+    else{if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
   }
   calcYardimci();onStatuChange();
 }
@@ -2618,38 +2621,121 @@ function onYardimciChk(){
 
 function renderPersonelSecList(){
   const el=document.getElementById('personel-sec-list');if(!el)return;
-  if(!DB.personeller.length){el.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text3);">Personel listesi boş. Önce personel ekleyin.</div>';return;}
-  el.innerHTML=DB.personeller.map(p=>`<div class="personel-select-item" id="psi-${p.id}" onclick="togglePersonelSec(${p.id})">
-    <input type="checkbox" class="personel-sec-chk" data-id="${p.id}" data-oran="${p.oran}" onchange="calcYardimci()" style="pointer-events:none;">
-    <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${p.isim}</div><div style="font-size:11px;color:var(--text2);">${p.pozisyon||'Personel'} · %${p.oran}</div></div>
-  </div>`).join('');
+  if(!DB.personeller.length){
+    el.innerHTML='<div style="padding:12px;font-size:12px;color:var(--text3);">Personel listesi boş. Önce personel ekleyin.</div>';
+    return;
+  }
+  el.innerHTML=DB.personeller.map(p=>`
+    <div class="personel-pay-satir" id="pps-${p.id}" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <input type="checkbox" id="ppchk-${p.id}" class="personel-sec-chk" data-id="${p.id}" onchange="onPersonelPayChk(${p.id})" style="width:16px;height:16px;cursor:pointer;">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;">${p.isim}</div>
+          <div style="font-size:11px;color:var(--text2);">${p.pozisyon||'Personel'}</div>
+        </div>
+      </div>
+      <div id="pps-detay-${p.id}" style="display:none;display:none;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="position:relative;flex:1;">
+            <input type="number" id="pps-oran-${p.id}" placeholder="%" min="0" max="100" step="0.1"
+              oninput="personelPayOranGuncelle(${p.id},'oran')"
+              style="width:100%;padding:9px 28px 9px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;">
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">%</span>
+          </div>
+          <div style="color:var(--text3);font-size:12px;flex-shrink:0;">↔</div>
+          <div style="position:relative;flex:1;">
+            <input type="number" id="pps-tutar-${p.id}" placeholder="₺" min="0" step="1"
+              oninput="personelPayOranGuncelle(${p.id},'tutar')"
+              style="width:100%;padding:9px 28px 9px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;">
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">₺</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
 }
 
-function togglePersonelSec(pid){
-  const item=document.getElementById('psi-'+pid);const chk=item?.querySelector('.personel-sec-chk');
-  if(chk){chk.checked=!chk.checked;item.classList.toggle('selected',chk.checked);}
+function onPersonelPayChk(pid){
+  const chk=document.getElementById('ppchk-'+pid);
+  const detay=document.getElementById('pps-detay-'+pid);
+  const satir=document.getElementById('pps-'+pid);
+  if(detay)detay.style.display=chk?.checked?'block':'none';
+  if(satir)satir.style.borderColor=chk?.checked?'var(--blue)':'var(--border)';
   calcYardimci();
 }
 
-function getSeciliPersoneller(){return Array.from(document.querySelectorAll('.personel-sec-chk:checked')).map(c=>({id:parseInt(c.dataset.id),oran:parseFloat(c.dataset.oran)||30}));}
+function personelPayOranGuncelle(pid,kaynak){
+  const t=parseFloat(document.getElementById('mi-tutar')?.value)||0;
+  const m=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+  const net=Math.max(0,t-m);
+  const oranEl=document.getElementById('pps-oran-'+pid);
+  const tutarEl=document.getElementById('pps-tutar-'+pid);
+  if(!oranEl||!tutarEl)return;
+  if(kaynak==='oran'&&net>0){
+    const oran=parseFloat(oranEl.value)||0;
+    const tutar=Math.round(net*(oran/100)*100)/100;
+    tutarEl.value=tutar||'';
+  }else if(kaynak==='tutar'&&net>0){
+    const tutar=parseFloat(tutarEl.value)||0;
+    const oran=Math.round(tutar/net*10000)/100;
+    oranEl.value=oran||'';
+  }
+  calcYardimci();
+}
+
+function togglePersonelSec(pid){
+  const chk=document.getElementById('ppchk-'+pid);
+  if(chk){chk.checked=!chk.checked;onPersonelPayChk(pid);}
+}
+
+function getSeciliPersoneller(){
+  return DB.personeller.filter(p=>{
+    const chk=document.getElementById('ppchk-'+p.id);
+    return chk?.checked;
+  }).map(p=>{
+    const oranEl=document.getElementById('pps-oran-'+p.id);
+    const tutarEl=document.getElementById('pps-tutar-'+p.id);
+    const t=parseFloat(document.getElementById('mi-tutar')?.value)||0;
+    const m=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+    const net=Math.max(0,t-m);
+    let oran=parseFloat(oranEl?.value)||0;
+    let tutar=parseFloat(tutarEl?.value)||0;
+    // Eğer tutar girilmişse onu kullan, yoksa orandan hesapla
+    if(tutar>0&&oran===0)oran=net>0?Math.round(tutar/net*10000)/100:0;
+    if(oran>0&&tutar===0)tutar=Math.round(net*(oran/100)*100)/100;
+    return {id:p.id,isim:p.isim,oran,tutar};
+  });
+}
+
+// Tutar değişince açık olan personel oran kutularını yenile
+function personelPayTutarYenile(){
+  DB.personeller.forEach(p=>{
+    const chk=document.getElementById('ppchk-'+p.id);
+    if(!chk?.checked)return;
+    const oranEl=document.getElementById('pps-oran-'+p.id);
+    const tutarEl=document.getElementById('pps-tutar-'+p.id);
+    if(!oranEl||!tutarEl)return;
+    const oran=parseFloat(oranEl.value)||0;
+    if(oran>0){
+      // Oran girilmişse tutarı güncelle
+      const t=parseFloat(document.getElementById('mi-tutar')?.value)||0;
+      const m=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+      const net=Math.max(0,t-m);
+      tutarEl.value=Math.round(net*(oran/100)*100)/100||'';
+    }
+  });
+  calcYardimci();
+}
 
 function calcYardimci(){
   const chk=document.getElementById('mi-yardimci-chk');
   const el=document.getElementById('mi-yardimci-tutar');
   if(!el)return;
   if(!chk||!chk.checked){el.textContent='';return;}
-  const t=parseFloat(document.getElementById('mi-tutar')?.value)||0;
-  const m=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
-  const net=Math.max(0,t-m);
   const secili=getSeciliPersoneller();
-  if(!secili.length){el.textContent='Personel seçin';el.style.color='var(--amber)';return;}
-  const satirlar=secili.map(p=>{
-    const pay=Math.round(net*(p.oran/100)*100)/100;
-    const pr=getPersonel(p.id);
-    return `${pr?.isim||'—'} %${p.oran} → ${fmt(pay)} ₺`;
-  });
-  const topPay=secili.reduce((a,p)=>a+Math.round(net*(p.oran/100)*100)/100,0);
-  el.textContent=satirlar.join(' · ')+` | Toplam: ${fmt(topPay)} ₺`;
+  if(!secili.length){el.textContent='Personel işaretleyip pay girin';el.style.color='var(--text3)';return;}
+  const topPay=secili.reduce((a,p)=>a+p.tutar,0);
+  const satirlar=secili.map(p=>`${p.isim} %${p.oran||'?'} → ${fmt(p.tutar)} ₺`).join(' · ');
+  el.textContent=satirlar+(secili.length>1?` | Toplam: ${fmt(topPay)} ₺`:'');
   el.style.color='var(--amber)';
 }
 
@@ -3044,17 +3130,19 @@ async function saveIslem(btn){
       if(statu==='Bekliyor'){const base=Math.round(tutar/tSayisi);for(let idx=0;idx<tSayisi;idx++){const sT=new Date(vTarih);sT.setMonth(sT.getMonth()+idx);kayitlar.push({group_id:groupId,tarih:localISOString(sT),tip,statu:'Bekliyor',kisi_id:kId,kat,alt_kat:finalAltKat,tutar:base,malzeme_tutar:idx===0?malz:0,"not":(tSayisi>1?'['+(idx+1)+'/'+tSayisi+' Taksit] ':'')+notDetay,odeme_yontemi:odemeY,personel_ids:personelIds});}}
       else{kayitlar.push({tarih:localISOString(tarih),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId});}
       const result=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(kayitlar)});
-      // Personel hak ediş — tüm gelir tiplerinde çalışır
+      // Personel hak ediş — tutarı getSeciliPersoneller'dan al
       if(yardimciChk&&tip==='Gelir'&&result&&result[0]&&seciliPersoneller.length){
-        const net=Math.max(0,tutar-malz);
         for(const p of seciliPersoneller){
-          const pay=Math.round(net*(p.oran/100)*100)/100;
+          // Tutar direkt olarak personel pay satırından gelir
+          const pay=p.tutar||Math.round(Math.max(0,tutar-malz)*(( p.oran||0)/100)*100)/100;
           if(pay>0){
             await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-              islem_id:result[0].id,personel_id:p.id,
+              islem_id:result[0].id,
+              personel_id:p.id,
               tarih:localISOString(tarih),
-              tip:'Hak Edis',tutar:pay,
-              not:(kat||'İşlem').substring(0,40)+' — %'+p.oran+' Pay'
+              tip:'Hak Edis',
+              tutar:pay,
+              not:(kat||'İşlem').substring(0,40)+' — '+(p.oran?'%'+p.oran+' Pay':'Pay')
             })});
           }
         }
@@ -3657,7 +3745,7 @@ function renderPersonel(c){
       const aiBtn=`<button class="icon-btn" onclick="event.stopPropagation();aiPersonelAnaliz(${p.id})" style="width:28px;height:28px;font-size:13px;background:rgba(139,92,246,0.15);border-radius:var(--r-sm);" title="AI Analiz">✦</button>`;
       return `<div class="stagger-item" style="animation-delay:${i*0.05}s;cursor:pointer;" onclick="showPersonelDetay(${p.id})">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <div style="flex:1;"><div style="font-weight:600;font-size:14px;margin-bottom:2px;">${p.isim}</div><div style="font-size:12px;color:var(--text2);">${p.pozisyon||'Personel'} · %${p.oran} Kâr Payı${p.maasTutar?` · ${fmt(p.maasTutar)} ₺ ${p.maasDongusu||'Aylık'}`:''}</div></div>
+          <div style="flex:1;"><div style="font-weight:600;font-size:14px;margin-bottom:2px;">${p.isim}</div><div style="font-size:12px;color:var(--text2);">${p.pozisyon||'Personel'}${p.maasTutar?` · Maaş: ${fmt(p.maasTutar)} ₺ ${p.maasDongusu||'Aylık'}`:''}</div></div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="font-weight:700;font-size:16px;color:${renk};" class="num">${fmt(Math.abs(b))}</div>
             <div onclick="event.stopPropagation()">${aiBtn}${editBtn}${delBtn}</div>
