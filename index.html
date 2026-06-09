@@ -151,7 +151,7 @@ input[type="month"].month-input:focus{border-color:var(--blue);}
 /* KARTLAR */
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
 .cards-1{grid-template-columns:1fr;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;position:relative;overflow:hidden;transition:transform 0.4s var(--ease),box-shadow 0.4s var(--ease),border-color 0.4s var(--ease);cursor:pointer;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;position:relative;overflow:visible;transition:transform 0.4s var(--ease),box-shadow 0.4s var(--ease),border-color 0.4s var(--ease);cursor:pointer;}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--border2);}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:transparent;transition:background 0.4s var(--ease);}
 .card:hover::before{background:var(--grad-main);}
@@ -576,6 +576,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div class="sec-title mt0" style="margin:0">Malzeme & Stok</div>
         <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="aiStokGenelAnaliz()" style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);">✦ Analiz</button>
           <button class="btn btn-secondary btn-sm" onclick="openBarkodKamera('stok-ara-barkod')" title="Barkodla ara">📷 Tara</button>
           <button class="btn btn-primary btn-sm" onclick="openStokModal()">+ Ekle</button>
         </div>
@@ -5529,10 +5530,58 @@ function hesaplaIcgoru(){
   // ── STOK UYARISI
   const kritikte=DB.stok.filter(s=>s.miktar>0&&s.miktar<=s.kritikSeviye);
   const bitti=DB.stok.filter(s=>s.miktar<=0);
-  if(bitti.length)icgorular.push({ikon:'📦',baslik:`${bitti.length} ürün stokta bitti`,aciklama:bitti.slice(0,3).map(s=>s.ad).join(', '),renk:'var(--red)'});
-  else if(kritikte.length)icgorular.push({ikon:'⚡',baslik:`${kritikte.length} ürün kritik seviyede`,aciklama:kritikte.slice(0,3).map(s=>s.ad).join(', '),renk:'var(--amber)'});
+  if(bitti.length)icgorular.push({ikon:'📦',baslik:`${bitti.length} ürün stokta bitti`,aciklama:bitti.slice(0,3).map(s=>s.ad).join(', ')+' — Sipariş vermeyi unutmayın, müşteri kaybedebilirsiniz.',renk:'var(--red)'});
+  else if(kritikte.length)icgorular.push({ikon:'⚡',baslik:`${kritikte.length} ürün kritik seviyede`,aciklama:kritikte.slice(0,3).map(s=>s.ad).join(', ')+' — Yakında bitecek, stok takviyesi yapın.',renk:'var(--amber)'});
 
-  if(!icgorular.length)icgorular.push({ikon:'✅',baslik:'Her şey yolunda görünüyor',aciklama:'Dikkat çeken bir durum tespit edilmedi',renk:'var(--green)'});
+  // ── YENİ 1: ÖDEME PERFORMANSI
+  const vadeSure=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir');
+  if(vadeSure.length){
+    const ortalama=vadeSure.reduce((a,i)=>a+Math.max(0,Math.floor((new Date()-new Date(i.tarih))/(24*60*60*1000))),0)/vadeSure.length;
+    if(ortalama>30)icgorular.push({ikon:'🐢',baslik:`Ortalama tahsilat süresi ${Math.round(ortalama)} gün`,aciklama:`${vadeSure.length} bekleyen tahsilat var. Bu süre kabul edilebilirin üzerinde — ödeme koşullarını gözden geçirin.`,renk:'var(--amber)'});
+  }
+
+  // ── YENİ 2: EN YÜKSEK TEKİL GİDER
+  const buAyGiderler=tamam.filter(i=>i.tip==='Gider'&&filterByMonth(i.tarih,buAy,buYil)).sort((a,b)=>b.tutar-a.tutar);
+  if(buAyGiderler.length){
+    const enYuksek=buAyGiderler[0];
+    const buAyGiderToplam=buAyGiderler.reduce((a,i)=>a+i.tutar,0);
+    const oran=(enYuksek.tutar/buAyGiderToplam*100).toFixed(0);
+    if(parseInt(oran)>30)icgorular.push({ikon:'🎯',baslik:`Bu ayın en büyük gideri: ${enYuksek.kat||'Gider'}`,aciklama:`${fmt(enYuksek.tutar)} ₺ — Toplam giderin %${oran}'i tek kalemden oluşuyor. Kontrol etmeye değer.`,renk:'var(--amber)'});
+  }
+
+  // ── YENİ 3: TEKLIF DÖNÜŞÜM ORANI
+  if(DB.teklifler.length>=3){
+    const onaylanan=DB.teklifler.filter(t=>t.durum==='Onaylandı').length;
+    const reddedilen=DB.teklifler.filter(t=>t.durum==='Reddedildi').length;
+    const toplam=onaylanan+reddedilen;
+    if(toplam>0){
+      const oran=Math.round(onaylanan/toplam*100);
+      if(oran<50)icgorular.push({ikon:'📋',baslik:`Teklif onay oranı düşük: %${oran}`,aciklama:`${toplam} tekliften ${onaylanan} onaylandı. Fiyatlandırma veya teklif sunumunuzu gözden geçirin.`,renk:'var(--red)'});
+      else if(oran>=80)icgorular.push({ikon:'🎉',baslik:`Teklif onay oranı güçlü: %${oran}`,aciklama:`${toplam} tekliften ${onaylanan}'i kabul gördü. Fiyatlandırmanız rekabetçi görünüyor.`,renk:'var(--green)'});
+    }
+  }
+
+  // ── YENİ 4: MEVSIMSEL TREND
+  const gecen3Ay=[];
+  for(let i=3;i>=1;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const g=tamam.filter(x=>x.tip==='Gelir'&&filterByMonth(x.tarih,d.getMonth(),d.getFullYear())).reduce((a,x)=>a+x.tutar,0);
+    gecen3Ay.push(g);
+  }
+  if(gecen3Ay.every(v=>v>0)){
+    const artis=gecen3Ay[2]>gecen3Ay[0];
+    const yuzdeDegisim=((gecen3Ay[2]-gecen3Ay[0])/gecen3Ay[0]*100).toFixed(0);
+    if(Math.abs(parseInt(yuzdeDegisim))>20){
+      icgorular.push({
+        ikon:artis?'📊':'📉',
+        baslik:`3 aylık trend: ${artis?'Yükseliş':'Düşüş'} sinyali`,
+        aciklama:`Son 3 ayda gelir %${Math.abs(yuzdeDegisim)} ${artis?'arttı':'azaldı'} (${gecen3Ay.map(v=>fmt(v)+' ₺').join(' → ')}). ${artis?'Momentumu koruyun.':'Önlem alın.'}`,
+        renk:artis?'var(--green)':'var(--red)'
+      });
+    }
+  }
+
+  if(!icgorular.length)icgorular.push({ikon:'✅',baslik:'Her şey yolunda görünüyor',aciklama:'Kritik bir durum tespit edilmedi. İşler normal seyrinde gidiyor.',renk:'var(--green)'});
   return icgorular;
 }
 
@@ -6718,16 +6767,63 @@ function aiOzetKutucukAnaliz(tip){
 }
 
 function aiTakvimGunAnaliz(tarih){
-  const gunIslemler=DB.islemler.filter(i=>dtS(i.tarih)===tarih);
-  const gunTakvim=DB.takvim.filter(t=>t.tarih===tarih||dtS(t.tarih)===tarih);
+  if(!tarih){showToast('Tarih bulunamadı','amber');return;}
+  // tarih hem YYYYMMDD hem de YYYY-MM-DD formatında gelebilir — normalleştir
+  const tarihNorm = tarih.includes('-') ? tarih : tarih.slice(0,4)+'-'+tarih.slice(4,6)+'-'+tarih.slice(6,8);
+  const tarihStr = tarihNorm.slice(0,10); // YYYY-MM-DD
+
+  // İşlemleri eşleştir — tarih kısmı karşılaştır
+  const gunIslemler=DB.islemler.filter(i=>{
+    const it=(i.tarih||'').slice(0,10);
+    return it===tarihStr;
+  });
+  const gunTakvim=DB.takvim.filter(t=>{
+    const tt=(t.tarih||'').slice(0,10);
+    return tt===tarihStr;
+  });
+
   const gelir=gunIslemler.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
   const gider=gunIslemler.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
   const bek=gunIslemler.filter(i=>i.statu==='Bekliyor');
-  let html=`<div style="font-size:13px;font-weight:600;margin-bottom:10px;">${tarih}</div>`;
-  if(gelir||gider)html+=`<div class="card" style="margin-bottom:10px;">${row('Gelir',fmt(gelir)+' ₺')}${row('Gider',fmt(gider)+' ₺')}${row('Net',fmt(gelir-gider)+' ₺')}</div>`;
-  if(bek.length)html+=`<div style="padding:10px;background:rgba(255,170,0,0.1);border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;">⚠️ ${bek.length} vadeli işlem: ${fmt(bek.reduce((a,i)=>a+i.tutar,0))} ₺</div>`;
-  if(gunTakvim.length)gunTakvim.forEach(t=>html+=`<div style="padding:8px 10px;background:var(--bg2);border-radius:var(--r-sm);font-size:12px;margin-bottom:4px;">📅 ${t.baslik||t.detay||t.tip}</div>`);
-  if(!gelir&&!gider&&!bek.length&&!gunTakvim.length)html+='<div style="font-size:13px;color:var(--text2);">Bu gün için kayıt yok.</div>';
+  const tamam=gunIslemler.filter(i=>i.statu==='Tamamlandı');
+
+  let html=`<div style="font-size:13px;font-weight:600;margin-bottom:10px;">📅 ${tarihStr}</div>`;
+
+  if(gelir||gider){
+    html+=`<div class="card" style="margin-bottom:10px;">`;
+    html+=row('Gelir',fmt(gelir)+' ₺');
+    html+=row('Gider',fmt(gider)+' ₺');
+    html+=row('Net',fmt(gelir-gider)+' ₺');
+    html+=`</div>`;
+    // Yorum
+    if(gelir>gider)html+=`<div style="padding:10px;background:rgba(46,160,67,0.1);border-radius:var(--r-sm);font-size:13px;margin-bottom:8px;">✅ Bu gün kârlı geçmiş. Net ${fmt(gelir-gider)} ₺ kazanılmış.</div>`;
+    else if(gider>gelir)html+=`<div style="padding:10px;background:rgba(255,80,80,0.1);border-radius:var(--r-sm);font-size:13px;margin-bottom:8px;">⚠️ Bu gün ${fmt(gider-gelir)} ₺ zararlı geçmiş.</div>`;
+  }
+
+  if(bek.length){
+    const bekTop=bek.reduce((a,i)=>a+i.tutar,0);
+    html+=`<div style="padding:10px;background:rgba(255,170,0,0.1);border-radius:var(--r-sm);font-size:13px;margin-bottom:8px;">⏳ ${bek.length} vadeli işlem bekliyor: ${fmt(bekTop)} ₺</div>`;
+  }
+
+  if(tamam.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">İşlemler (${tamam.length})</div>`;
+    tamam.forEach(i=>{
+      const k=getKisi(i.kisiId);
+      html+=`<div style="padding:8px 10px;background:var(--bg2);border-left:3px solid ${i.tip==='Gelir'?'var(--green)':'var(--red)'};border-radius:var(--r-sm);margin-bottom:4px;font-size:12px;cursor:pointer;" onclick="closeModal('modal-info');showIslemDetay(${i.id})">
+        <div style="display:flex;justify-content:space-between;"><span>${k?k.isim:'—'} · ${i.kat||i.tip}</span><span class="num" style="color:${i.tip==='Gelir'?'var(--green)':'var(--red)'};">${fmt(i.tutar)} ₺</span></div>
+      </div>`;
+    });
+  }
+
+  if(gunTakvim.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:8px 0 6px;">Ajanda (${gunTakvim.length})</div>`;
+    gunTakvim.forEach(t=>html+=`<div style="padding:8px 10px;background:var(--bg2);border-radius:var(--r-sm);font-size:12px;margin-bottom:4px;">📅 ${t.baslik||t.detay||t.tip}</div>`);
+  }
+
+  if(!gelir&&!gider&&!bek.length&&!gunTakvim.length){
+    html+='<div style="font-size:13px;color:var(--text2);text-align:center;padding:20px;">Bu gün için kayıt bulunamadı.</div>';
+  }
+
   showInfoModal('✦ Gün Analizi',html);
 }
 
@@ -6940,6 +7036,57 @@ function icsDateTimeStr(d){
 
 function icsDateTimeStrLocal(d){
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+}
+
+function aiStokGenelAnaliz(){
+  const biten=DB.stok.filter(s=>s.miktar<=0);
+  const kritik=DB.stok.filter(s=>s.miktar>0&&s.miktar<=s.kritikSeviye);
+  const normal=DB.stok.filter(s=>s.miktar>s.kritikSeviye);
+  const topDeger=DB.stok.reduce((a,s)=>a+(s.satisFiyati||0)*s.miktar,0);
+  const uyarilar=[];
+  const yorumlar=[];
+
+  if(biten.length){
+    uyarilar.push(`🔴 ${biten.length} ürün tamamen bitti: ${biten.map(s=>s.ad).join(', ')}`);
+    yorumlar.push(`Stokta biten ürünler var. Bu ürünler için müşteri talebi gelmeden önce sipariş verin.`);
+  }
+  if(kritik.length){
+    uyarilar.push(`⚡ ${kritik.length} ürün kritik seviyeye indi: ${kritik.map(s=>s.ad+' ('+s.miktar+')').join(', ')}`);
+    yorumlar.push(`Kritik stoklar için acil sipariş önerilir, yoksa iş aksaklığı yaşanabilir.`);
+  }
+  if(normal.length>0&&!biten.length&&!kritik.length){
+    yorumlar.push(`Tüm ürünler normal seviyede. ${normal.length} ürün güvende.`);
+  }
+
+  // Hızlı tüketim analizi
+  const now=new Date();
+  const buAy=now.getMonth(),buYil=now.getFullYear();
+  const gecenAy=buAy===0?11:buAy-1,gecenYil=buAy===0?buYil-1:buYil;
+  const hizliTuketen=[];
+  DB.stok.forEach(s=>{
+    const buAyH=DB.stokHareketleri.filter(h=>h.stokId===s.id&&filterByMonth(h.tarih,buAy,buYil)&&h.tip==='cikis').reduce((a,h)=>a+Math.abs(h.miktar),0);
+    const gecenH=DB.stokHareketleri.filter(h=>h.stokId===s.id&&filterByMonth(h.tarih,gecenAy,gecenYil)&&h.tip==='cikis').reduce((a,h)=>a+Math.abs(h.miktar),0);
+    if(gecenH>0&&buAyH>gecenH*1.5)hizliTuketen.push(s.ad);
+  });
+  if(hizliTuketen.length)yorumlar.push(`📈 Hızlı tüketim: ${hizliTuketen.slice(0,3).join(', ')} bu ay normalin üzerinde kullanılmış.`);
+
+  let html=`<div class="card" style="margin-bottom:12px;">`;
+  html+=row('Toplam ürün',DB.stok.length+' çeşit');
+  html+=row('Normal seviyede',normal.length+' ürün');
+  html+=row('Kritik',kritik.length+' ürün');
+  html+=row('Biten',biten.length+' ürün');
+  if(topDeger>0)html+=row('Toplam stok değeri',fmt(topDeger)+' ₺');
+  html+=`</div>`;
+
+  if(uyarilar.length){
+    uyarilar.forEach(u=>html+=`<div style="padding:10px;background:rgba(255,80,80,0.1);border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;">${u}</div>`);
+  }
+  if(yorumlar.length){
+    html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 6px;">Analiz & Tavsiye</div>`;
+    yorumlar.forEach(y=>html+=`<div style="padding:10px;background:var(--bg2);border-radius:var(--r-sm);font-size:13px;margin-bottom:6px;line-height:1.5;">${y}</div>`);
+  }
+
+  showInfoModal('✦ Stok Genel Analizi',html);
 }
 
 // ============================================================ BAŞLAT
