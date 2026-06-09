@@ -1897,8 +1897,8 @@ function goPage(id,navEl){
   document.getElementById('page-title').textContent=PAGE_TITLES[id]||id;
   document.querySelector('.content').scrollTo(0,0);
   renderAll();
-  // Sayfa bazlı AI bildirimi — 1.5 saniye gecikmeyle (sayfa render'ı bekle)
-  if(typeof aiSayfaBildirimi==='function') setTimeout(()=>aiSayfaBildirimi(id),1500);
+  // Sayfa bazlı yerel analiz (API çağrısı yok)
+  if(typeof aiSayfaAnalizLocal==='function') setTimeout(()=>aiSayfaAnalizLocal(id),800);
 }
 
 function onMonthChange(){const v=document.getElementById('global-month').value;renderAll();}
@@ -5846,7 +5846,7 @@ function exportKDVRaporu(){
 
 const AI_KEY = 'gt_ai_prefs';
 const AI_HAFIZA_KEY = 'gt_ai_memory';
-const AI_MODEL = 'gemini-2.0-flash';
+const AI_MODEL = 'gemini-1.5-flash';
 // Key localStorage'da saklanır — GitHub'a gömülmez
 
 let aiGecmis = [];
@@ -5855,18 +5855,88 @@ let aiPeriyodikTimer = null;
 let aiSessizMod = false;
 let aiIslemSayaci = 0;
 
+// Sayfa bazlı yerel analiz — API çağrısı yapmaz, kural tabanlı
+function aiSayfaAnalizLocal(sayfaId) {
+  if (aiSessizMod) return;
+  const now = new Date();
+  let mesaj = '';
+  switch(sayfaId) {
+    case 'ozet': {
+      const c = calcFinans();
+      if (c.kasa < 0) mesaj = '🔴 Kasa negatife düştü: ' + fmt(c.kasa) + ' ₺';
+      else {
+        const gec = DB.islemler.filter(i=>i.statu==='Bekliyor'&&new Date(i.tarih)<now).length;
+        if (gec > 0) mesaj = `⚠️ ${gec} vadesi geçmiş işlem var`;
+      }
+      break;
+    }
+    case 'stok': {
+      const biten = DB.stok.filter(s=>s.miktar<=0);
+      const kritik = DB.stok.filter(s=>s.miktar>0&&s.miktar<=s.kritikSeviye);
+      if (biten.length) mesaj = `📦 ${biten.length} ürün stokta bitti: ${biten.slice(0,2).map(s=>s.ad).join(', ')}`;
+      else if (kritik.length) mesaj = `⚡ ${kritik.length} ürün kritik seviyede`;
+      break;
+    }
+    case 'cari': {
+      const gec = DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<now);
+      if (gec.length) mesaj = `💰 ${gec.length} vadesi geçmiş alacak: ${fmt(gec.reduce((a,i)=>a+i.tutar,0))} ₺`;
+      break;
+    }
+    case 'vergi': {
+      const kdvKalan = Math.ceil((new Date(now.getFullYear(),now.getMonth(),26)-now)/(24*60*60*1000));
+      if (kdvKalan >= 0 && kdvKalan <= 5) mesaj = `🏛️ KDV beyanname ${kdvKalan===0?'bugün':kdvKalan+' gün sonra'}`;
+      break;
+    }
+    case 'projeler': {
+      const devam = DB.projeler.filter(p=>p.durum==='Devam Ediyor').length;
+      if (devam > 0) mesaj = `🏗️ ${devam} aktif proje devam ediyor`;
+      break;
+    }
+  }
+  if (mesaj) aiBildirimGoster('bilgi', '✦ ' + mesaj, 6000);
+}
+
 // ── BAŞLATMA ─────────────────────────────────────────────────────────────
 
 function aiBaslat() {
-  // Ayarları yükle
   try { aiHafiza = JSON.parse(localStorage.getItem(AI_HAFIZA_KEY) || '{}'); } catch(e) { aiHafiza = {}; }
   const prefs = JSON.parse(localStorage.getItem(AI_KEY) || '{"aktif":true,"sessiz":false}');
   aiSessizMod = prefs.sessiz || false;
   if (!prefs.aktif) return;
-  // Giriş özeti — 2 saniye sonra
-  setTimeout(() => aiGirisBildirimi(), 2000);
-  // Periyodik kontrol — her 30 dakika
-  aiPeriyodikTimer = setInterval(() => aiPeriyodikKontrol(), 30 * 60 * 1000);
+  // Periyodik kontrol — 30 dakikada bir (otomatik API çağrısı yapmıyor, sadece kural tabanlı)
+  aiPeriyodikTimer = setInterval(() => aiPeriyodikKontrolLocal(), 30 * 60 * 1000);
+  // Giriş mesajı — API çağrısı yapmadan sadece veri özeti
+  setTimeout(() => aiGirisMesajiLocal(), 2000);
+}
+
+// API çağrısı olmadan yerel analiz
+function aiGirisMesajiLocal() {
+  if (aiSessizMod) return;
+  const v = aiVeriOzeti();
+  const mesajlar = [];
+  if (v.gecmisSayi > 0) mesajlar.push(`⚠️ ${v.gecmisSayi} vadesi geçmiş işlem (${fmt(v.gecmisTutar)} ₺)`);
+  if (v.buHaftaSayi > 0) mesajlar.push(`📅 Bu hafta ${v.buHaftaSayi} vade`);
+  if (v.stokBittiSayi > 0) mesajlar.push(`📦 ${v.stokBittiSayi} ürün stokta bitti`);
+  if (v.kasa < 0) mesajlar.push(`🔴 Kasa negatif: ${fmt(v.kasa)} ₺`);
+  if (mesajlar.length) {
+    aiBildirimGoster('uyari', mesajlar.join(' · '), 8000);
+  } else {
+    const gun = new Date().getHours();
+    const selam = gun < 12 ? 'Günaydın' : gun < 18 ? 'İyi günler' : 'İyi akşamlar';
+    aiBildirimGoster('info', `${selam}! Kasa: ${fmt(v.kasa)} ₺ · Bu ay kâr: ${fmt(v.buAyKar)} ₺`, 5000);
+  }
+}
+
+// Periyodik kontrol — API çağrısı yok
+function aiPeriyodikKontrolLocal() {
+  if (aiSessizMod) return;
+  const now = new Date();
+  const v = aiVeriOzeti();
+  const uyarilar = [];
+  if (v.gecmisSayi > 0) uyarilar.push(`${v.gecmisSayi} vadesi geçmiş işlem`);
+  if (v.stokBittiSayi > 0) uyarilar.push(`${v.stokBitenler} stokta bitti`);
+  if (v.kasa < 0) uyarilar.push(`Kasa negatif: ${fmt(v.kasa)} ₺`);
+  if (uyarilar.length) aiBildirimGoster('uyari', '⏰ ' + uyarilar.join(' · '), 7000);
 }
 
 function aiDurdur() {
