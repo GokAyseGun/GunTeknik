@@ -1509,6 +1509,22 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
+<!-- Teklif Önizleme Modal -->
+<div class="modal-ov" id="modal-teklif-onizleme" style="z-index:10004;">
+  <div class="modal" style="max-width:680px;max-height:95vh;width:96vw;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>👁 Teklif Önizleme</h3>
+      <div style="display:flex;gap:8px;">
+        <button onclick="teklifOnizlemePrint()" class="btn btn-primary btn-sm">🖨 PDF İndir</button>
+        <button class="modal-close" onclick="closeModal('modal-teklif-onizleme')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0;overflow:hidden;">
+      <div id="teklif-onizleme-wrap" style="overflow-y:auto;max-height:calc(95vh - 80px);background:white;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Bütçe Limit Modal -->
 <div class="modal-ov" id="modal-butce">
   <div class="modal"><div class="modal-handle"></div>
@@ -1561,6 +1577,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="display:flex;gap:8px;">
         <input type="text" id="ai-input" placeholder="Sorunuzu yazın..." style="flex:1;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiGonder();}">
+        <button onclick="aiSesliGiris()" id="ai-ses-btn" title="Sesli giriş" style="padding:0 12px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text2);font-size:18px;cursor:pointer;" class="btn">🎤</button>
         <button onclick="aiGonder()" class="btn btn-primary" style="padding:0 16px;flex-shrink:0;" id="ai-gonder-btn">
           <span id="ai-gonder-ikon">➤</span>
         </button>
@@ -1880,6 +1897,8 @@ function goPage(id,navEl){
   document.getElementById('page-title').textContent=PAGE_TITLES[id]||id;
   document.querySelector('.content').scrollTo(0,0);
   renderAll();
+  // Sayfa bazlı AI bildirimi — 1.5 saniye gecikmeyle (sayfa render'ı bekle)
+  if(typeof aiSayfaBildirimi==='function') setTimeout(()=>aiSayfaBildirimi(id),1500);
 }
 
 function onMonthChange(){const v=document.getElementById('global-month').value;renderAll();}
@@ -2996,7 +3015,14 @@ function showKisiDetay(id){
   html+='<div style="font-weight:700;font-size:18px;">'+k.isim+'</div></div>';
   html+='<div style="text-align:right;"><div style="font-size:11px;color:var(--text3);">'+durum+'</div>';
   html+='<div style="font-weight:700;font-size:20px;color:'+renk+';" class="num">'+fmt(Math.abs(bakiye))+'</div></div></div>';
-    if(k.tel){const telSafe=k.tel.replace(/'/g,'');html+='<a href="#" onclick="goWhatsapp(\"'+telSafe+'\")" style="display:flex;align-items:center;gap:8px;color:var(--green);font-weight:600;font-size:13px;margin-bottom:4px;">💬 '+k.tel+'</a>';}
+  if(k.tel){
+    const telSafe=(k.tel||'').replace(/\D/g,'');
+    const waNum='90'+(telSafe.startsWith('0')?telSafe.slice(1):telSafe);
+    html+='<div style="display:flex;gap:8px;margin-bottom:8px;">';
+    html+='<a href="tel:'+k.tel+'" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(126,179,240,0.1);border:1px solid rgba(126,179,240,0.3);border-radius:var(--r-sm);color:var(--blue);font-weight:600;font-size:13px;text-decoration:none;">📞 '+k.tel+'</a>';
+    html+='<a href="https://wa.me/'+waNum+'" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:10px 14px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:var(--r-sm);color:#25d166;font-size:18px;text-decoration:none;">💬</a>';
+    html+='</div>';
+  }
   if(k.adres)html+='<div style="font-size:12px;color:var(--text2);">📍 '+k.adres+'</div>';
   if(k.not)html+='<div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:var(--r-sm);margin-top:8px;font-size:12px;color:var(--text2);">📝 '+k.not+'</div>';
   html+='</div>';
@@ -5095,7 +5121,7 @@ function showTeklifDetay(id){
   let footer='';
   if(USER_ROL!=='goruntule'){
     footer+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
-    footer+=`<button class="btn btn-primary btn-full" onclick="teklifPdfIndir(${id})">📄 PDF İndir</button>`;
+    footer+=`<button class="btn btn-primary btn-full" onclick="teklifOnizlemeGoster(${id})">👁 Önizle & PDF İndir</button>`;
     if(t.durum!=='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Gönderildi')">📤 Gönderildi İşaretle</button>`;
     if(t.durum==='Gönderildi'||t.durum==='Taslak')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifOnayLinki(${id})">🔗 Dijital Onay Linki Gönder</button>`;
     if(t.durum==='Gönderildi')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Onaylandı')">✅ Onaylandı İşaretle</button>`;
@@ -5820,7 +5846,11 @@ function exportKDVRaporu(){
 
 const AI_KEY = 'gt_ai_prefs';
 const AI_HAFIZA_KEY = 'gt_ai_memory';
-const AI_MODEL = 'claude-sonnet-4-20250514';
+const AI_MODEL = 'gemini-2.0-flash';
+// Key localStorage'da saklanır — GitHub'a gömülmez
+function getGeminiKey(){
+  return localStorage.getItem('gt_gemini_key')||'';
+}
 
 let aiGecmis = [];
 let aiHafiza = {};
@@ -6197,22 +6227,55 @@ async function aiAySonuOzeti() {
   } catch(e) {}
 }
 
-// ── API ÇAĞRISI ───────────────────────────────────────────────────────────
+// ── API ÇAĞRISI — Google Gemini ──────────────────────────────────────────
+// Key: aistudio.google.com → Get API Key → Create API Key
 
 async function aiApiCagri(prompt, gecmis, jsonMode, ekBilgi) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  let GEMINI_KEY = getGeminiKey();
+  if (!GEMINI_KEY) {
+    GEMINI_KEY = await aiKeyIste();
+    if (!GEMINI_KEY) throw new Error('API key girilmedi');
+  }
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+  // Sistem mesajını ve geçmişi Gemini formatına çevir
+  const sistemMetni = aiSistemPrompt(ekBilgi);
+  // Gemini'de sohbet geçmişi
+  const parts = [];
+  // Geçmiş mesajlar
+  (gecmis||[]).slice(-8).forEach(m => {
+    parts.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
+  });
+  // Son kullanıcı mesajı
+  const sonMesaj = `${sistemMetni}\n\n${prompt}`;
+  const payload = {
+    contents: [
+      ...parts,
+      { role: 'user', parts: [{ text: sonMesaj }] }
+    ],
+    generationConfig: {
+      maxOutputTokens: jsonMode ? 500 : 800,
+      temperature: 0.7,
+    },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    ]
+  };
+  const res = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      max_tokens: jsonMode ? 500 : 800,
-      system: aiSistemPrompt(ekBilgi),
-      messages: [...(gecmis||[]).slice(-8), { role: 'user', content: prompt }]
-    })
+    body: JSON.stringify(payload)
   });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error('Gemini API hatası: ' + res.status + ' ' + err.slice(0, 80));
+  }
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.content?.[0]?.text || '';
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Gemini boş yanıt döndürdü');
+  return text;
 }
 
 // ── BİLDİRİM UI ──────────────────────────────────────────────────────────
@@ -6379,7 +6442,10 @@ function openAiAyarlar() {
     </div>
     <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="aiHafiza={};aiHafizaKaydet();showToast('Hafıza temizlendi','amber');closeModal('modal-info')">🗑 Hafızayı Temizle</button>
     <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="aiAySonuOzeti();closeModal('modal-info')">📅 Ay Sonu Özeti Al</button>
-    <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="aiAnomaliKontrol();closeModal('modal-info')">🔍 Anomali Tara</button>`
+    <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="aiAnomaliKontrol();closeModal('modal-info')">🔍 Anomali Tara</button>
+    <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Gemini API Key: <span style="color:${getGeminiKey()?'var(--green)':'var(--red)'};">${getGeminiKey()?'✓ Kayıtlı':'✗ Girilmemiş'}</span></div>
+    ${!getGeminiKey()?`<button class="btn btn-primary btn-full" onclick="aiKeyIste().then(k=>{if(k){closeModal('modal-info');showToast('AI aktif!','green');}})">🔑 API Key Gir</button>`:`<button class="btn btn-secondary btn-full" onclick="aiKeyTemizle();closeModal('modal-info')">🗑 API Key Kaldır</button>`}`
   );
 }
 
@@ -6389,6 +6455,240 @@ function aiAyarKaydet() {
   aiSessizMod = sessiz;
   localStorage.setItem(AI_KEY, JSON.stringify({ aktif, sessiz }));
   showToast('AI ayarları kaydedildi', 'green');
+}
+
+// Key yoksa kullanıcıdan iste
+function aiKeyIste() {
+  return new Promise(resolve => {
+    let modal = document.getElementById('modal-gemini-key');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-gemini-key';
+      modal.className = 'modal-ov';
+      modal.style.zIndex = '20000';
+      modal.innerHTML = `
+        <div class="modal" style="max-width:380px;">
+          <div class="modal-head"><h3>🤖 AI Asistan Kurulumu</h3></div>
+          <div class="modal-body fg">
+            <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">
+              Ücretsiz Gemini API key gerekli.<br>
+              <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue);">aistudio.google.com</a> → Get API Key → Create API Key
+            </div>
+            <div class="fi"><label>API Key</label>
+              <input type="password" id="gemini-key-input" placeholder="AIza..." style="font-family:monospace;">
+            </div>
+            <div style="font-size:11px;color:var(--text3);">Key cihazınızda saklanır, sunucuya gönderilmez.</div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-secondary btn-full" onclick="document.getElementById('modal-gemini-key').classList.remove('open');window._aiKeyResolve&&window._aiKeyResolve(null)">Şimdi değil</button>
+            <button class="btn btn-primary btn-full" onclick="aiKeyKaydet()">Kaydet & Başlat</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+    window._aiKeyResolve = resolve;
+    modal.classList.add('open');
+    setTimeout(() => document.getElementById('gemini-key-input')?.focus(), 300);
+  });
+}
+
+function aiKeyKaydet() {
+  const key = document.getElementById('gemini-key-input')?.value?.trim();
+  if (!key || !key.startsWith('AIza')) {
+    showToast('Geçerli bir key girin (AIza... ile başlar)', 'red'); return;
+  }
+  localStorage.setItem('gt_gemini_key', key);
+  document.getElementById('modal-gemini-key')?.classList.remove('open');
+  if (window._aiKeyResolve) { window._aiKeyResolve(key); window._aiKeyResolve = null; }
+  showToast('AI Asistan aktif!', 'green');
+}
+
+// AI Ayarlar'da key sıfırlama
+function aiKeyTemizle() {
+  localStorage.removeItem('gt_gemini_key');
+  showToast('AI key kaldırıldı', 'amber');
+}
+
+// ── SESLİ GİRİŞ ──────────────────────────────────────────────────────────
+
+let aiSesliAktif = false;
+let aiSesRecognition = null;
+
+function aiSesliGiris() {
+  const btn = document.getElementById('ai-ses-btn');
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Tarayıcınız sesli girişi desteklemiyor', 'amber'); return;
+  }
+  if (aiSesliAktif) {
+    if (aiSesRecognition) aiSesRecognition.stop();
+    aiSesliAktif = false;
+    if (btn) btn.style.color = 'var(--text2)';
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  aiSesRecognition = new SR();
+  aiSesRecognition.lang = 'tr-TR';
+  aiSesRecognition.continuous = false;
+  aiSesRecognition.interimResults = false;
+  aiSesRecognition.onstart = () => { aiSesliAktif = true; if (btn) btn.style.color = 'var(--red)'; showToast('🎤 Dinleniyor...', 'blue'); };
+  aiSesRecognition.onresult = (e) => {
+    const metin = e.results[0][0].transcript;
+    const input = document.getElementById('ai-input');
+    if (input) { input.value = metin; input.focus(); }
+    aiSesliAktif = false; if (btn) btn.style.color = 'var(--text2)';
+    setTimeout(() => aiGonder(), 300);
+  };
+  aiSesRecognition.onerror = (e) => { aiSesliAktif = false; if (btn) btn.style.color = 'var(--text2)'; showToast('Ses hatası: ' + e.error, 'red'); };
+  aiSesRecognition.onend = () => { aiSesliAktif = false; if (btn) btn.style.color = 'var(--text2)'; };
+  aiSesRecognition.start();
+}
+
+// ── TEKLİF ÖNİZLEME ─────────────────────────────────────────────────────
+
+function teklifOnizlemeGoster(id) {
+  const t = DB.teklifler.find(x => x.id === id); if (!t) return;
+  const k = getKisi(t.kisiId);
+  const durumRenk = { Taslak: '#999', Gönderildi: '#1a73e8', Onaylandı: '#2e7d32', Reddedildi: '#c62828' };
+  const drn = durumRenk[t.durum] || '#999';
+  const kalemSatirlari = (t.kalemler || []).map((km, i) =>
+    `<tr style="background:${i%2===0?'#fff':'#f9f9f9'}">
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;">${km.aciklama}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-size:13px;">${km.miktar}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-size:13px;">${fmt(km.birimFiyat)} \u20ba</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-size:13px;font-weight:600;">${fmt(km.toplam)} \u20ba</td>
+    </tr>`).join('');
+  const html = `<div style="font-family:Arial,sans-serif;background:white;min-height:100%;" id="teklif-print-icerik">
+    <div style="background:linear-gradient(135deg,#1a73e8,#0d47a1);padding:32px 40px;color:white;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div style="font-size:26px;font-weight:800;">GÜN TEKNİK</div><div style="font-size:13px;opacity:0.8;margin-top:4px;">Teknik Hizmetler</div></div>
+        <div style="text-align:right;"><div style="font-size:12px;opacity:0.7;">Teklif No</div><div style="font-size:22px;font-weight:700;">#${fmtId(t.id)}</div><div style="font-size:12px;opacity:0.7;">${new Date(t.tarih).toLocaleDateString('tr-TR')}</div></div>
+      </div>
+    </div>
+    <div style="display:flex;border-bottom:1px solid #eee;">
+      <div style="flex:1;padding:24px 40px;border-right:1px solid #eee;">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Müşteri</div>
+        <div style="font-size:18px;font-weight:700;">${k?k.isim:'—'}</div>
+        ${k&&k.tel?'<div style="font-size:13px;color:#555;margin-top:4px;">📞 '+k.tel+'</div>':''}
+        ${k&&k.adres?'<div style="font-size:12px;color:#777;margin-top:2px;">📍 '+k.adres+'</div>':''}
+        ${k&&k.vergiNo?'<div style="font-size:12px;color:#777;">VKN: '+k.vergiNo+'</div>':''}
+      </div>
+      <div style="padding:24px 40px;">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Durum</div>
+        <div style="display:inline-block;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;background:${drn}22;color:${drn};border:1px solid ${drn}44;">${t.durum}</div>
+        ${t.gecerlilikTarihi?'<div style="font-size:12px;color:#777;margin-top:10px;">⏰ Geçerlilik: '+t.gecerlilikTarihi+'</div>':''}
+        ${t.onaylayanIsim?'<div style="font-size:12px;color:#2e7d32;margin-top:6px;">✅ '+t.onaylayanIsim+' onayladı</div>':''}
+      </div>
+    </div>
+    <div style="padding:24px 40px;">
+      <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:#f5f7fa;">
+          <th style="padding:11px 14px;text-align:left;font-size:12px;color:#555;font-weight:600;">Açıklama</th>
+          <th style="padding:11px 14px;text-align:center;font-size:12px;color:#555;font-weight:600;">Miktar</th>
+          <th style="padding:11px 14px;text-align:right;font-size:12px;color:#555;font-weight:600;">Birim Fiyat</th>
+          <th style="padding:11px 14px;text-align:right;font-size:12px;color:#555;font-weight:600;">Toplam</th>
+        </tr></thead>
+        <tbody>${kalemSatirlari}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:10px;padding:16px 24px;text-align:right;">
+          <div style="font-size:12px;color:#555;margin-bottom:4px;">TOPLAM TUTAR</div>
+          <div style="font-size:26px;font-weight:800;color:#1b5e20;">${fmt(t.toplam)} \u20ba</div>
+        </div>
+      </div>
+      ${t.aciklama?'<div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px;border-left:4px solid #1a73e8;font-size:13px;color:#444;">'+t.aciklama+'</div>':''}
+    </div>
+    <div style="padding:24px 40px;border-top:1px solid #eee;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;">
+        <div style="border-top:2px solid #ddd;padding-top:10px;"><div style="font-size:12px;color:#999;">Müşteri Onayı</div><div style="font-size:13px;color:#555;margin-top:4px;">${k?k.isim:''}</div><div style="height:40px;"></div></div>
+        <div style="border-top:2px solid #ddd;padding-top:10px;"><div style="font-size:12px;color:#999;">Yetkili İmzası</div><div style="font-size:13px;color:#555;margin-top:4px;">Gün Teknik</div><div style="height:40px;"></div></div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">Gün Teknik ERP · ${new Date().toLocaleDateString('tr-TR')}</div>
+    </div>
+  </div>`;
+  document.getElementById('teklif-onizleme-wrap').innerHTML = html;
+  closeModal('modal-teklif-detay');
+  openModal('modal-teklif-onizleme');
+}
+
+function teklifOnizlemePrint() {
+  const icerik = document.getElementById('teklif-print-icerik');
+  if (!icerik) return;
+  const blob = new Blob(['<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Teklif</title><style>@media print{@page{size:A4;margin:0;}body{margin:0;}}</style></head><body style="margin:0">'+icerik.outerHTML+'</body></html>'], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='teklif-'+Date.now()+'.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('İndirildi — tarayıcıda aç, Ctrl+P → PDF kaydet', 'green');
+}
+
+// ── SAYFA BAZLI AI BİLDİRİMİ ─────────────────────────────────────────────
+
+const aiSayfaBildirimCache = {};
+
+async function aiSayfaBildirimi(sayfaId) {
+  if (aiSessizMod) return;
+  const sonGoster = aiSayfaBildirimCache[sayfaId] || 0;
+  if (Date.now() - sonGoster < 10 * 60 * 1000) return;
+  aiSayfaBildirimCache[sayfaId] = Date.now();
+  let prompt = ''; let ekBilgi = '';
+  const now = new Date();
+  const buAy = now.getMonth(); const buYil = now.getFullYear();
+  switch(sayfaId) {
+    case 'ozet': {
+      const c = calcFinans();
+      if (c.kasa < 0) { prompt = 'Kasa negatif. 1 cümle acil öneri.'; break; }
+      const gec = DB.islemler.filter(i=>i.statu==='Bekliyor'&&new Date(i.tarih)<now).length;
+      if (gec > 0) { prompt = `${gec} vadesi geçmiş işlem var. 1 cümle uyarı.`; break; }
+      prompt = 'Genel durum özeti, 1 cümle, sadece önemli bir şey varsa söyle, yoksa boş döndür.'; break;
+    }
+    case 'islemler': {
+      const bek = DB.islemler.filter(i=>i.statu==='Bekliyor');
+      if (!bek.length) return;
+      prompt = `${bek.length} bekleyen işlem. En yakın vadeli için 1 cümle.`;
+      break;
+    }
+    case 'cari': {
+      const gec = DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<now);
+      if (!gec.length) return;
+      const top = gec.reduce((a,i)=>a+i.tutar,0);
+      prompt = `${gec.length} vadesi geçmiş alacak, toplam ${fmt(top)} TL. Tahsilat için 1 cümle öneri.`;
+      break;
+    }
+    case 'stok': {
+      const kritik = DB.stok.filter(s=>s.miktar<=s.kritikSeviye&&s.miktar>0);
+      const biten = DB.stok.filter(s=>s.miktar<=0);
+      if (!kritik.length && !biten.length) return;
+      ekBilgi = `Biten: ${biten.map(s=>s.ad).join(', ')||'yok'}. Kritik: ${kritik.map(s=>s.ad+' ('+s.miktar+')').join(', ')||'yok'}`;
+      prompt = 'Stok durumu hakkında 1 cümle öneri.';
+      break;
+    }
+    case 'projeler': {
+      const zarar = DB.projeler.filter(p=>{
+        const kar=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı').reduce((a,i)=>a+(i.tip==='Gelir'?i.tutar:-i.tutar),0);
+        return kar<0;
+      });
+      if (!zarar.length) return;
+      prompt = `${zarar.length} zararda proje. 1 cümle öneri.`;
+      break;
+    }
+    case 'vergi': {
+      const kdvKalan = Math.ceil((new Date(buYil,buAy,26)-now)/(24*60*60*1000));
+      if (kdvKalan > 10) return;
+      prompt = `KDV beyanname ${kdvKalan} gün sonra. 1 cümle hatırlatma.`;
+      break;
+    }
+    case 'raporlar': prompt = 'Rapor sayfasında en kritik 1 iş önerisi ver, çok kısa.'; break;
+    case 'teklifler': {
+      const gond = DB.teklifler.filter(t=>t.durum==='Gönderildi');
+      if (!gond.length) return;
+      prompt = `${gond.length} yanıt bekleyen teklif var. 1 cümle.`;
+      break;
+    }
+    default: return;
+  }
+  try {
+    const cevap = await aiApiCagri(prompt, [], false, ekBilgi);
+    if (cevap && cevap.trim().length > 5) aiBildirimGoster('bilgi', '✦ ' + cevap.trim(), 8000);
+  } catch(e) { /* sessiz */ }
 }
 
 // ============================================================ BAŞLAT
