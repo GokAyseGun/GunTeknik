@@ -5852,8 +5852,7 @@ function exportKDVRaporu(){
 const AI_KEY = 'gt_ai_prefs';
 const AI_HAFIZA_KEY = 'gt_ai_memory';
 const AI_MODEL = 'gemini-1.5-flash';
-// URL builder — v1 endpoint kullan
-function getGeminiUrl(key){ return `https://generativelanguage.googleapis.com/v1/models/${AI_MODEL}:generateContent?key=${key}`; }
+function getGeminiUrl(key){ return `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${key}`; }
 // Key localStorage'da saklanır — GitHub'a gömülmez
 
 let aiGecmis = [];
@@ -6299,42 +6298,39 @@ async function aiApiCagri(prompt, gecmis, jsonMode, ekBilgi) {
   const GEMINI_URL = getGeminiUrl(GEMINI_KEY);
   const sistemMetni = aiSistemPrompt(ekBilgi);
 
-  // Geçmiş mesajlar — Gemini formatı: user/model çiftleri olmalı
+  // Geçmiş mesajlar
   const contents = [];
-  const ge = (gecmis||[]).slice(-8);
+  const ge = (gecmis||[]).slice(-6);
   ge.forEach(m => {
     contents.push({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: String(m.content||'') }]
     });
   });
-  // Son kullanıcı mesajı
-  contents.push({ role: 'user', parts: [{ text: String(prompt) }] });
+  // Son kullanıcı mesajı — sistem bağlamını ilk mesaja ekle
+  const sonMesajMetni = contents.length === 0
+    ? `${sistemMetni}\n\nKullanıcı sorusu: ${prompt}`
+    : String(prompt);
+  contents.push({ role: 'user', parts: [{ text: sonMesajMetni }] });
 
-  // İlk mesaj user olmalı — model ile başlayamaz
+  // user/model sırası kontrolü — model ile başlayamaz
   const filteredContents = [];
   let lastRole = null;
   for (const c of contents) {
     if (c.role === lastRole) {
-      // Aynı rol üst üste gelirse birleştir
       filteredContents[filteredContents.length-1].parts[0].text += '\n' + c.parts[0].text;
     } else {
-      filteredContents.push(c);
+      filteredContents.push({role:c.role,parts:[{text:c.parts[0].text}]});
       lastRole = c.role;
     }
   }
-  // model ile başlıyorsa başa user ekle
   if (filteredContents[0]?.role === 'model') {
-    filteredContents.unshift({ role: 'user', parts: [{ text: '.' }] });
+    filteredContents.unshift({ role: 'user', parts: [{ text: sistemMetni }] });
   }
 
   const payload = {
-    systemInstruction: { parts: [{ text: sistemMetni }] },
     contents: filteredContents,
-    generationConfig: {
-      maxOutputTokens: jsonMode ? 400 : 700,
-      temperature: 0.7,
-    }
+    generationConfig: { maxOutputTokens: jsonMode ? 400 : 700, temperature: 0.7 }
   };
 
   const res = await fetch(GEMINI_URL, {
