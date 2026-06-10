@@ -3383,24 +3383,30 @@ function renderRehber(){
   const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
   const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
   const sortFavori=(a,b)=>{if(a.favori&&!b.favori)return -1;if(!a.favori&&b.favori)return 1;return(a.isim||'').localeCompare(b.isim||'');};
-  const buildList=(list,elId)=>{
+  // ── REhBER LİSTE RENDER ──
+  const ROW_STYLE='height:40px;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;gap:6px;margin-bottom:3px;';
+  const BTN='height:30px;width:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;background:none;border:none;cursor:pointer;font-size:16px;';
+  function buildList(list,elId){
     const el=document.getElementById(elId);if(!el)return;
     if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Kayıt bulunamadı</div></div>';return;}
-    el.innerHTML=list.sort(sortFavori).map((k,i)=>`<div class="stagger-item" style="animation-delay:${i*0.05}s;padding:10px 12px;" onclick="showKisiDetay(${k.id})">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div style="flex:1;min-width:0;overflow:hidden;">
-          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;">${k.favori?'⭐ ':''}${k.isim} <span class="id-badge">${fmtKId(k.id)}</span></div>
+    el.innerHTML=list.sort(sortFavori).map((k,i)=>{
+      const yildiz=k.favori
+        ? `<button style="${BTN}color:var(--amber);" onclick="event.stopPropagation();toggleFavori(${k.id},event)">★</button>`
+        : `<button style="${BTN}color:var(--text3);" onclick="event.stopPropagation();toggleFavori(${k.id},event)">☆</button>`;
+      const analiz=`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();showMusteriAnaliz(${k.id})" title="Analiz">📊</button>`;
+      const duzenle=USER_ROL!=='goruntule'?`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();editKisi(${k.id},event)">✏️</button>`:'';
+      const sil=USER_ROL==='admin'?`<button style="${BTN}font-size:14px;color:var(--red);" onclick="event.stopPropagation();deleteKisi(${k.id},event)">🗑</button>`:'';
+      return `<div style="${ROW_STYLE}" onclick="showKisiDetay(${k.id})">
+        <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.isim}</span>
+          <span class="id-badge" style="flex-shrink:0;">${fmtKId(k.id)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:1px;flex-shrink:0;" onclick="event.stopPropagation()">
-          <button class="icon-btn-sm" onclick="showMusteriAnaliz(${k.id})" title="Analiz">📊</button>
-          <button class="star-btn-sm ${k.favori?'active':''}" onclick="toggleFavori(${k.id},event)">★</button>
-          ${USER_ROL!=='goruntule'?`<button class="icon-btn-sm" onclick="editKisi(${k.id},event)">✏️</button>`:''}
-          ${USER_ROL==='admin'?`<button class="icon-btn-sm" onclick="deleteKisi(${k.id},event)" style="color:var(--red);">🗑</button>`:''}
+        <div style="display:flex;align-items:center;gap:1px;flex-shrink:0;">
+          ${yildiz}${analiz}${duzenle}${sil}
         </div>
-      </div>
-    </div>`).join('');
-    setStagger(el.querySelectorAll('.stagger-item'));observeStagger();
-  };
+      </div>`;
+    }).join('');
+  }
   buildList(musteri,'r-list-mus');buildList(firma,'r-list-top');
 }
 
