@@ -727,6 +727,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
             <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Stok Değer Raporu</div><div style="font-size:12px;color:var(--text2);">Stok envanteri, kritik seviyeler ve toplam değer</div></div>
           </div>
         </div>
+        <div class="card" onclick="generateKrediRaporu()">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(30,58,138,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏦</div>
+            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Banka Kredileri Raporu</div><div style="font-size:12px;color:var(--text2);">Aktif & kapalı krediler, taksit geçmişi, faiz analizi</div></div>
+          </div>
+        </div>
       </div>
       <div class="sec-title">Tekrar Eden Şablonlar</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
@@ -2651,6 +2657,8 @@ function renderAll(){
     if(pid==='teklifler')renderTeklifler();
     if(pid==='fiyatlar')renderFiyatlar();
     if(pid==='raporlar')renderRaporIcgoru();
+    // Kredi paneli her zaman güncelle
+    if(typeof renderKrediPanel==='function')renderKrediPanel();
     renderVergiDash();
     observeStagger();
   }catch(e){console.error('renderAll:',e);}
@@ -6815,7 +6823,8 @@ function aiVeriOzeti(){
     buHaftaSayi:buHafta.length,stokKritikSayi:stokK.length,stokBittiSayi:stokB.length,
     stokBitenler:stokB.slice(0,3).map(s=>s.ad).join(', '),
     musteriSayi:DB.kisiler.length,aktifProjeler:DB.projeler.filter(p=>p.durum==='Devam Ediyor').length,
-    teklifBekleyen:DB.teklifler.filter(t=>t.durum==='\u0130letildi'||t.durum==='G\u00F6nderildi').length};
+    teklifBekleyen:DB.teklifler.filter(t=>t.durum==='\u0130letildi'||t.durum==='G\u00F6nderildi').length,
+    ...aiVeriOzetiKredi()};
 }
 
 const aiSayfaCache={};
@@ -7075,6 +7084,10 @@ function aiSor(s){
 // ============================================================
 
 function aiKuralCevap(soru){
+  // Kredi sorusu kontrolü — ayrı fonksiyon, recursive değil
+  const krediYanit=aiKrediYanit(soru);
+  if(krediYanit)return krediYanit;
+
   const s = soru.toLowerCase().trim();
   const v = aiVeriOzeti();
   const c = calcFinans();
@@ -8577,6 +8590,171 @@ function generatePersonelRaporu(){
   <table><thead><tr><th>Personel</th><th>Pozisyon</th><th style="text-align:right">Maaş</th><th style="text-align:right">Toplam Hak</th><th style="text-align:right">Ödenen</th><th style="text-align:right">Bakiye</th></tr></thead><tbody>${satirlar}</tbody></table>
   </body></html>`;
   _htmlIndir(html,'personel-maliyet-raporu.html');showToast('Personel raporu indirildi','green');
+}
+
+function generateKrediRaporu(){
+  const tarihFmt=new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  const tumKrediler=[...DB.bankaKredileri].sort((a,b)=>a.durum.localeCompare(b.durum));
+  const aktif=tumKrediler.filter(k=>k.durum==='Aktif');
+  const kapali=tumKrediler.filter(k=>k.durum!=='Aktif');
+  const toplamAnapara=tumKrediler.reduce((a,k)=>a+k.anapara,0);
+  const toplamKalanBorc=aktif.reduce((a,k)=>a+k.kalanBorc,0);
+  const toplamOdenen=tumKrediler.reduce((a,k)=>a+k.toplamOdenen,0);
+  const aylikYuk=aktif.reduce((a,k)=>a+k.taksitTutari,0);
+  const ticariBorc=aktif.filter(k=>k.krediTuru==='Ticari').reduce((a,k)=>a+k.kalanBorc,0);
+  const sahsiBorc=aktif.filter(k=>k.krediTuru==='Şahsi').reduce((a,k)=>a+k.kalanBorc,0);
+
+  const krediSatir=(k)=>{
+    const ilerleme=k.vadeAy>0?Math.round((k.odenenTaksit/k.vadeAy)*100):0;
+    const odemeler=DB.krediOdemeleri.filter(o=>o.krediId===k.id).sort((a,b)=>new Date(b.odemeTarihi)-new Date(a.odemeTarihi));
+    const toplamFaiz=Math.max(0,k.toplamOdenen-((k.anapara/k.vadeAy)*k.odenenTaksit));
+    let sonrakiTarih='—';
+    if(k.ilkTaksitTarihi&&k.kalanTaksit>0){
+      const d=new Date(k.ilkTaksitTarihi);d.setMonth(d.getMonth()+k.odenenTaksit);
+      sonrakiTarih=d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+    }
+    const durumRenk={Aktif:'#15803d',Kapatıldı:'#6b7280',Gecikmiş:'#dc2626'}[k.durum]||'#1d4ed8';
+    const odemeGecmisHtml=odemeler.slice(0,5).map(o=>`
+      <tr>
+        <td style="padding:5px 10px;font-size:10px;color:#475569;">${o.taksitNo||'—'}. taksit</td>
+        <td style="padding:5px 10px;font-size:10px;color:#475569;">${o.odemeTarihi||'—'}</td>
+        <td style="padding:5px 10px;font-size:10px;color:#475569;">${o.odemeYontemi}</td>
+        <td style="padding:5px 10px;font-size:10px;text-align:right;font-weight:600;color:#15803d;">${fmt(o.toplamTutar)} ₺</td>
+      </tr>`).join('');
+    return `
+    <div style="margin-bottom:24px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;page-break-inside:avoid;">
+      <div style="background:${durumRenk};padding:12px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#fff;">${k.bankaAdi} — ${k.krediTipi}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:2px;">${k.krediTuru}${k.sube?' · '+k.sube:''} · Başlangıç: ${k.baslangicTarihi||'—'}</div>
+        </div>
+        <span style="background:rgba(255,255,255,0.2);color:#fff;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;">${k.durum}</span>
+      </div>
+      <div style="padding:14px 18px;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">
+          <div style="text-align:center;padding:8px;background:#f8fafc;border-radius:8px;">
+            <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Anapara</div>
+            <div style="font-size:13px;font-weight:700;color:#1e293b;">${fmt(k.anapara)} ₺</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:#f8fafc;border-radius:8px;">
+            <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Aylık Taksit</div>
+            <div style="font-size:13px;font-weight:700;color:#b45309;">${fmt(k.taksitTutari)} ₺</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:#f8fafc;border-radius:8px;">
+            <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Toplam Ödenen</div>
+            <div style="font-size:13px;font-weight:700;color:#15803d;">${fmt(k.toplamOdenen)} ₺</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:#f8fafc;border-radius:8px;">
+            <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Kalan Borç</div>
+            <div style="font-size:13px;font-weight:700;color:#dc2626;">${fmt(k.kalanBorc)} ₺</div>
+          </div>
+        </div>
+        <!-- İlerleme -->
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748b;margin-bottom:4px;">
+            <span>${k.odenenTaksit}/${k.vadeAy} taksit tamamlandı</span>
+            <span>%${ilerleme} · Faiz: %${k.faizOrani} yıllık</span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:4px;height:7px;">
+            <div style="background:${durumRenk};height:7px;border-radius:4px;width:${ilerleme}%;"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:11px;color:#64748b;margin-bottom:${odemeler.length?10:0}px;">
+          ${k.teminat?`<span>🔒 Teminat: ${k.teminat}</span>`:''}
+          ${k.kefil?`<span>🤝 Kefil: ${k.kefil}</span>`:''}
+          ${k.onOdeme?`<span>💸 Ön Ödeme: ${fmt(k.onOdeme)} ₺</span>`:''}
+          ${k.durum==='Aktif'?`<span>📅 Sonraki taksit: ${sonrakiTarih}</span>`:''}
+        </div>
+        ${odemeler.length?`
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Son Ödemeler</div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid #f1f5f9;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="padding:5px 10px;text-align:left;font-size:9px;color:#64748b;">Taksit</th>
+            <th style="padding:5px 10px;text-align:left;font-size:9px;color:#64748b;">Tarih</th>
+            <th style="padding:5px 10px;text-align:left;font-size:9px;color:#64748b;">Yöntem</th>
+            <th style="padding:5px 10px;text-align:right;font-size:9px;color:#64748b;">Tutar</th>
+          </tr></thead>
+          <tbody>${odemeGecmisHtml}</tbody>
+        </table>`:''}
+      </div>
+    </div>`;
+  };
+
+  const html=`<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><title>Banka Kredileri Raporu — Gün Teknik</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1e293b;}
+  .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);}
+  .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#1e40af 100%);padding:36px 44px 28px;color:#fff;position:relative;overflow:hidden;}
+  .hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:rgba(255,255,255,0.03);border-radius:50%;}
+  .hdr-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+  .logo{font-size:26px;font-weight:800;letter-spacing:-0.5px;}
+  .logo-sub{font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:2px;text-transform:uppercase;}
+  .accent{height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa,transparent);margin-top:20px;border-radius:2px;position:relative;z-index:1;}
+  .kpi-band{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid #e2e8f0;}
+  .kpi{padding:14px 12px;text-align:center;border-right:1px solid #e2e8f0;}
+  .kpi:last-child{border-right:none;}
+  .kl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+  .kv{font-size:16px;font-weight:800;}
+  .body{padding:24px 44px 32px;}
+  .sec-ttl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;padding-bottom:5px;border-bottom:2px solid #f1f5f9;}
+  .pbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;position:sticky;top:0;z-index:100;}
+  .ftr{padding:10px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;}
+  .ft{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:0.5px;}
+  @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:0;}body{background:#fff;}.page{box-shadow:none;margin:0;width:100%;}.pbar{display:none;}}
+</style></head>
+<body>
+<div class="pbar">
+  <button onclick="window.print()" style="padding:8px 18px;background:#0f172a;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">🖨️ Yazdır</button>
+  <button onclick="window.print()" style="padding:8px 18px;background:#1d4ed8;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">📄 PDF İndir</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><div class="logo">GÜN TEKNİK</div><div class="logo-sub">Banka Kredileri Raporu</div></div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;">Rapor Tarihi</div>
+        <div style="font-size:18px;font-weight:800;color:#fff;">${tarihFmt}</div>
+      </div>
+    </div>
+    <div class="accent"></div>
+  </div>
+  <div class="kpi-band">
+    <div class="kpi"><div class="kl">Toplam Kredi</div><div class="kv" style="color:#1d4ed8;">${tumKrediler.length}</div></div>
+    <div class="kpi"><div class="kl">Aktif Kredi</div><div class="kv" style="color:#15803d;">${aktif.length}</div></div>
+    <div class="kpi"><div class="kl">Toplam Anapara</div><div class="kv" style="color:#1e293b;">${fmt(toplamAnapara)} ₺</div></div>
+    <div class="kpi"><div class="kl">Toplam Kalan</div><div class="kv" style="color:#dc2626;">${fmt(toplamKalanBorc)} ₺</div></div>
+    <div class="kpi"><div class="kl">Aylık Yük</div><div class="kv" style="color:#b45309;">${fmt(aylikYuk)} ₺</div></div>
+  </div>
+  <div class="body">
+    ${tumKrediler.length===0?`<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px;">Henüz kredi kaydı bulunmuyor.</div>`:''}
+    ${aktif.length?`<div class="sec-ttl">✅ Aktif Krediler (${aktif.length})</div>${aktif.map(krediSatir).join('')}`:''}
+    ${kapali.length?`<div class="sec-ttl" style="margin-top:20px;">🔒 Kapalı / Tamamlanan Krediler (${kapali.length})</div>${kapali.map(krediSatir).join('')}`:''}
+    ${aktif.length>1?`
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:16px;margin-top:8px;">
+      <div style="font-size:10px;color:#0369a1;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px;">Özet Analiz</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+        <div><span style="color:#64748b;">Ticari krediler kalan borç:</span> <strong>${fmt(ticariBorc)} ₺</strong></div>
+        <div><span style="color:#64748b;">Şahsi krediler kalan borç:</span> <strong>${fmt(sahsiBorc)} ₺</strong></div>
+        <div><span style="color:#64748b;">Toplam ödenen:</span> <strong>${fmt(toplamOdenen)} ₺</strong></div>
+        <div><span style="color:#64748b;">Kalan toplam borç:</span> <strong style="color:#dc2626;">${fmt(toplamKalanBorc)} ₺</strong></div>
+      </div>
+    </div>`:''}
+  </div>
+  <div class="ftr">
+    <div class="ft">Gün Teknik Teknik Hizmetler</div>
+    <div class="ft">Banka Kredileri Raporu</div>
+    <div class="ft">${tarihFmt}</div>
+  </div>
+</div>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
 function generateStokDegerRaporu(){
@@ -11168,35 +11346,27 @@ function renderKrediPanel(){
     <button class="btn btn-secondary btn-full" onclick="openKrediModal()" style="margin-top:4px;font-size:12px;">+ Yeni Kredi Ekle</button>`;
 }
 
-// renderAll'da kredi panelini de güncelle
-const _rAll=renderAll;
-function renderAll(){_rAll();renderKrediPanel();}
-
-// aiVeriOzeti'ne kredi bilgisi ekle
-const _aVO=aiVeriOzeti;
-function aiVeriOzeti(){
-  const v=_aVO();
-  const aktif=DB.bankaKredileri.filter(k=>k.durum==='Aktif');
-  v.aktifKrediSayi=aktif.length;
-  v.toplamKrediBorc=aktif.reduce((a,k)=>a+k.kalanBorc,0);
-  v.aylikKrediTaksit=aktif.reduce((a,k)=>a+k.taksitTutari,0);
-  v.ticariKrediBorc=aktif.filter(k=>k.krediTuru==='Ticari').reduce((a,k)=>a+k.kalanBorc,0);
-  v.sahsiKrediBorc=aktif.filter(k=>k.krediTuru==='Şahsi').reduce((a,k)=>a+k.kalanBorc,0);
-  return v;
+// aiVeriOzeti kredi eklentisi — doğrudan fonksiyon içinde çalışır
+function aiVeriOzetiKredi(){
+  const aktif=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
+  return {
+    aktifKrediSayi:aktif.length,
+    toplamKrediBorc:aktif.reduce((a,k)=>a+k.kalanBorc,0),
+    aylikKrediTaksit:aktif.reduce((a,k)=>a+k.taksitTutari,0),
+    ticariKrediBorc:aktif.filter(k=>k.krediTuru==='Ticari').reduce((a,k)=>a+k.kalanBorc,0),
+    sahsiKrediBorc:aktif.filter(k=>k.krediTuru==='Şahsi').reduce((a,k)=>a+k.kalanBorc,0)
+  };
 }
 
-// aiKuralCevap'a kredi yanıtı ekle
-const _aKC=aiKuralCevap;
-function aiKuralCevap(soru){
+// aiKuralCevap kredi yanıtı — ayrı fonksiyon
+function aiKrediYanit(soru){
   const s=soru.toLowerCase();
-  if(/kredi|banka.*bor|taksit|loan/.test(s)){
-    const aktif=DB.bankaKredileri.filter(k=>k.durum==='Aktif');
-    if(!aktif.length)return '🏦 Şu anda aktif banka krediniz bulunmuyor.';
-    const detay=aktif.map(k=>`• ${k.bankaAdi} ${k.krediTipi}: ${fmt(k.kalanBorc)} ₺ kalan, ${k.kalanTaksit} taksit, aylık ${fmt(k.taksitTutari)} ₺`).join('\n');
-    const v=aiVeriOzeti();
-    return `🏦 Aktif Banka Kredileri (${aktif.length})\n${detay}\n\nToplam kalan: ${fmt(v.toplamKrediBorc)} ₺ — Aylık taksit: ${fmt(v.aylikKrediTaksit)} ₺\nTicari: ${fmt(v.ticariKrediBorc)} ₺ · Şahsi: ${fmt(v.sahsiKrediBorc)} ₺`;
-  }
-  return _aKC(soru);
+  if(!/kredi|banka.*bor|taksit|loan/.test(s))return null;
+  const aktif=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
+  if(!aktif.length)return '🏦 Şu anda aktif banka krediniz bulunmuyor.';
+  const detay=aktif.map(k=>`• ${k.bankaAdi} ${k.krediTipi}: ${fmt(k.kalanBorc)} ₺ kalan, ${k.kalanTaksit} taksit, aylık ${fmt(k.taksitTutari)} ₺`).join('\n');
+  const kv=aiVeriOzetiKredi();
+  return `🏦 Aktif Banka Kredileri (${aktif.length})\n${detay}\n\nToplam kalan: ${fmt(kv.toplamKrediBorc)} ₺ — Aylık taksit: ${fmt(kv.aylikKrediTaksit)} ₺\nTicari: ${fmt(kv.ticariKrediBorc)} ₺ · Şahsi: ${fmt(kv.sahsiKrediBorc)} ₺`;
 }
 
 </script>
