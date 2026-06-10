@@ -621,7 +621,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div style="display:flex;gap:8px;">
           <button class="btn btn-secondary btn-sm" onclick="aiStokGenelAnaliz()" style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);">✦ Analiz</button>
           <button class="btn btn-secondary btn-sm" onclick="openBarkodKamera('stok-ara-barkod')" title="Barkodla ara">📷 Tara</button>
-          <button class="btn btn-secondary btn-sm" onclick="openStokEnflasyonModal()" style="background:rgba(240,196,114,0.15);color:var(--amber);border-color:rgba(240,196,114,0.3);">📈 Enflasyon</button>
           <button class="btn btn-secondary btn-sm" onclick="openStokEnflasyonModal()" style="background:rgba(16,185,129,0.15);color:#10b981;border-color:rgba(16,185,129,0.3);">📈 Enflasyon</button>
           <button class="btn btn-primary btn-sm" onclick="openStokModal()">+ Ekle</button>
         </div>
@@ -5897,18 +5896,34 @@ function showTeklifDetay(id){
   if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
   document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
   document.getElementById('teklif-detay-content').innerHTML=html;
-  // Footer butonlar
+  // Footer butonlar — 3 + 3 + 1 (Sil) grid düzeni
   let footer='';
   if(USER_ROL!=='goruntule'){
-    footer+=`<button class="btn btn-secondary btn-full" style="margin-bottom:6px;" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
-    footer+=`<button class="btn btn-primary btn-full" style="margin-bottom:6px;" onclick="teklifOnizlemeGoster(${id})">🖨️ Yazdır</button>`;
-    footer+=`<button class="btn btn-secondary btn-full" style="margin-bottom:6px;" onclick="teklifOnizlemeGoster(${id})">📄 PDF İndir</button>`;
-    if(t.durum!=='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Gönderildi')">📤 Gönderildi İşaretle</button>`;
-    if(t.durum==='Gönderildi'||t.durum==='Taslak')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifOnayLinki(${id})">🔗 Dijital Onay Linki Gönder</button>`;
-    if(t.durum==='Gönderildi')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Onaylandı')">✅ Onaylandı İşaretle</button>`;
-    if(t.durum==='Onaylandı')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifIslemeCevir(${id})">💰 İşleme Dönüştür</button>`;
-    if(t.durum==='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:6px;background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);" onclick="teklifdenProjeOlustur(${id})">🏗️ Projeye Dönüştür</button>`;
-    if(USER_ROL==='admin')footer+=`<button class="btn btn-danger btn-full" style="margin-top:8px;" onclick="deleteTeklif(${id})">🗑 Sil</button>`;
+    // Satır 1: Düzenle · Yazdır · PDF İndir
+    footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="font-size:12px;padding:10px 6px;">✏️ Düzenle</button>
+      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="font-size:12px;padding:10px 6px;">🖨️ Yazdır</button>
+      <button class="btn btn-secondary" onclick="teklifOnizlemeGoster(${id})" style="font-size:12px;padding:10px 6px;">📄 PDF</button>
+    </div>`;
+    // Satır 2: durum butonları — en fazla 3 göster
+    const row2=[];
+    if(t.durum!=='Onaylandı')
+      row2.push(`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="font-size:12px;padding:10px 6px;">📤 Gönderildi</button>`);
+    if(t.durum==='Gönderildi'||t.durum==='Taslak')
+      row2.push(`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="font-size:12px;padding:10px 6px;">🔗 Dijital Onay</button>`);
+    if(t.durum==='Gönderildi')
+      row2.push(`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="font-size:12px;padding:10px 6px;">✅ Onayla</button>`);
+    if(t.durum==='Onaylandı')
+      row2.push(`<button class="btn btn-primary" onclick="teklifIslemeCevir(${id})" style="font-size:12px;padding:10px 6px;">💰 İşleme Dönüştür</button>`);
+    if(t.durum==='Onaylandı')
+      row2.push(`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="font-size:12px;padding:10px 6px;background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Projeye Dönüştür</button>`);
+    if(row2.length){
+      const cols=row2.length===1?'1fr':row2.length===2?'1fr 1fr':'repeat(3,1fr)';
+      footer+=`<div style="display:grid;grid-template-columns:${cols};gap:6px;margin-bottom:6px;">${row2.join('')}</div>`;
+    }
+    // Satır 3: Sil — ince uzun
+    if(USER_ROL==='admin')
+      footer+=`<button class="btn btn-secondary btn-full" onclick="deleteTeklif(${id})" style="color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);font-size:12px;padding:8px;">🗑 Sil</button>`;
   }
   document.getElementById('teklif-detay-footer').innerHTML=footer;
   openModal('modal-teklif-detay');
