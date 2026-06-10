@@ -913,6 +913,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" onclick="goPage('dashboard',this)"><span class="nav-icon">📊</span><span>Özet</span></div>
     <div class="nav-item" onclick="goPage('islemler',this)"><span class="nav-icon">📋</span><span>İşlemler</span></div>
+    <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
     <div class="nav-item" onclick="goPage('takvim',this)"><span class="nav-icon">📅</span><span>Takvim</span></div>
     <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
     <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
@@ -923,7 +924,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
     <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
     <div class="nav-item" onclick="goPage('teklifler',this)"><span class="nav-icon">📋</span><span>Teklif</span></div>
-    <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
   </nav>
 </div>
 
@@ -2260,8 +2260,8 @@ async function loadDB(){
       return {id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler,toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at};
     });
     DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
-    // Fiyat listesini yükle
-    await loadFiyatlar();
+    // Fiyat listesi ve enflasyon geçmişini yükle (paralel)
+    await Promise.all([loadFiyatlar(), loadFiyatGecmis()]);
     renderAll();
   }catch(e){
     console.error('loadDB:',e);
@@ -4661,7 +4661,7 @@ function hesaplaKDV(){
     if(bilgi)bilgi.textContent='Matrah: '+fmt(toplam-kdv)+' ₺ · KDV: '+fmt(kdv)+' ₺ ('+oran+'%)';
   } else {
     // Ana tutardan hesapla
-    const tutar=parseFloat(document.getElementById('mi-tutar')?.value)||0;
+    const tutar=getIslemGercekTutar();
     if(tutar>0&&oran>0){
       const kdv=Math.round(tutar*oran/100*100)/100;
       if(kdvEl)kdvEl.value=kdv;
@@ -9556,10 +9556,13 @@ if(typeof PAGE_TITLES !== 'undefined') PAGE_TITLES['fiyatlar'] = '💰 Fiyat Lis
 
 function calcIslemToplam(){
   const iscilikManuel = parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
-  const iscillikListeToplam = iscillikSecilen ? iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0) : 0;
+  const iscillikListeToplam = (typeof iscillikSecilen !== 'undefined' && iscillikSecilen)
+    ? iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0) : 0;
   const iscilik = iscilikManuel > 0 ? iscilikManuel : iscillikListeToplam;
   const malzeme = parseFloat(document.getElementById('mi-malzeme')?.value)||0;
-  const stokToplam = calcStokToplam ? calcStokToplam() : 0;
+  // Stok toplamı — stok satırlarından hesapla
+  let stokToplam = 0;
+  document.querySelectorAll('.stok-satir-fiyat').forEach(el=>{stokToplam+=parseFloat(el.value)||0;});
   const topMalzeme = malzeme + stokToplam;
   const otoToplam = iscilik + topMalzeme;
 
@@ -9570,7 +9573,7 @@ function calcIslemToplam(){
 
   const gecerli = manuelDeger > 0 ? manuelDeger : otoToplam;
 
-  if(ozetEl) ozetEl.textContent = fmt(gecerli) + ' ₺' + (manuelDeger > 0 ? ' (manuel)' : '');
+  if(ozetEl) ozetEl.textContent = fmt(gecerli) + ' ₺' + (manuelDeger > 0 ? ' (manuel)' : ' (otomatik)');
   if(detayEl){
     const parcalar = [];
     if(iscilik > 0) parcalar.push('İşçilik: ' + fmt(iscilik) + ' ₺');
@@ -9598,10 +9601,10 @@ function getIslemGercekTutar(){
 
 // ============================================================ ENFLASYON SİSTEMİ
 
-DB.fiyatGecmis = [];
 let enfAktifKat = '';
 
 async function loadFiyatGecmis(){
+  if(!DB.fiyatGecmis) DB.fiyatGecmis = [];
   try{
     const data = await sbFetch('fiyat_gecmis?order=tarih.asc&select=*');
     DB.fiyatGecmis = (data||[]).map(r=>({
@@ -9626,10 +9629,10 @@ async function fiyatGecmisKaydet(fiyatId, eskiFiyat, yeniFiyat, kategori){
 }
 
 function openEnflasyonModal(){
-  loadFiyatGecmis().then(()=>{
-    enfKatSec('', document.querySelector('.enf-kat-btn'));
-    openModal('modal-enflasyon');
-  });
+  // Önce modal aç, sonra render et (çift tık sorunu önlenir)
+  openModal('modal-enflasyon');
+  // Veri zaten yüklüyse direkt render et
+  enfKatSec('', document.querySelector('.enf-kat-btn'));
 }
 
 function enfKatSec(kat, btn){
@@ -9833,12 +9836,8 @@ async function saveFiyat(btn){
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
-// loadDB'ye fiyat geçmişi ekle — loadFiyatlar içinde çağır
-const _origLoadFiyatlar = loadFiyatlar;
-async function loadFiyatlar(){
-  await _origLoadFiyatlar();
-  await loadFiyatGecmis();
-}
+// loadFiyatlar — hem fiyatları hem geçmişi yükler
+// Not: Override yerine doğrudan loadDB'ye eklendi
 
 // ── GÜNCELLENMIŞ AI FIYAT SENARYOLARI (2026 Marmaris) ────
 // Baz: Elektrik ustası günlük 5.000₺, Klima temizlik 2.000₺,
