@@ -140,6 +140,9 @@ input.isim-input{text-transform:capitalize;}
 .topbar{height:var(--top-h);flex-shrink:0;background:rgba(7,16,31,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative;z-index:100;}
 .topbar-title{font-size:16px;font-weight:600;letter-spacing:-0.4px;color:var(--text);}
 .topbar-actions{display:flex;align-items:center;gap:6px;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 .icon-btn{width:38px;height:38px;border-radius:var(--r-sm);background:transparent;border:1px solid transparent;color:var(--text2);font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s var(--ease);}
 .icon-btn-sm{width:28px;height:28px;border-radius:var(--r-sm);background:transparent;border:none;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:all 0.2s var(--ease);flex-shrink:0;}
 .icon-btn-sm:hover{background:var(--bg2);}
@@ -3330,6 +3333,7 @@ async function saveIslem(btn){
     const statu=document.getElementById('mi-statu').value;const kId=parseInt(document.getElementById('mi-kisi').value)||null;
     const malz=parseTutar(document.getElementById('mi-malzeme').value);
     const notDetay=document.getElementById('mi-not').value;const odemeY=document.getElementById('mi-odeme').value||'Nakit';
+    const projeId=parseInt(document.getElementById('mi-proje-id')?.value)||null;
     const dtVal=document.getElementById('mi-tarih').value;
     let tarih=new Date(dtVal);if(isNaN(tarih))tarih=new Date();
     let vTarih=new Date(document.getElementById('mi-vade').value||tarih);if(isNaN(vTarih))vTarih=new Date(tarih);
