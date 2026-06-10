@@ -1284,8 +1284,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </button>
       </div>
 
-      <!-- TUTAR — otomatik toplam + manuel override -->
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:4px;">
+      <!-- TUTAR — otomatik toplam + manuel override (İşletme Geliri/Gideri için) -->
+      <div id="div-mi-tutar-ozet" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:4px;display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">Tutar Özeti</div>
           <div style="font-size:13px;font-weight:600;color:var(--text2);" id="mi-tutar-ozet">0 ₺</div>
@@ -1295,6 +1295,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <label style="font-size:12px;">Manuel Toplam (₺) <span style="color:var(--text3);">— boş bırakırsan otomatik toplam geçerli</span></label>
           <input type="number" id="mi-tutar" inputmode="numeric" placeholder="Otomatik hesaplandı..." oninput="calcIslemToplam()">
         </div>
+      </div>
+      <!-- Düz tutar (Şahsi Gelir/Gider ve diğer kategoriler için) -->
+      <div id="div-mi-tutar-duz" class="fi">
+        <label>Tutar (₺)</label>
+        <input type="number" id="mi-tutar-duz" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()">
       </div>
 
       <div class="fi"><label>Statü</label>
@@ -2831,7 +2836,14 @@ function onKatChange(){
   const checkDiv=document.getElementById('div-mi-check');const selectDiv=document.getElementById('div-mi-altkat');
   const yDiv=document.getElementById('div-mi-yardimci');const mDiv=document.getElementById('div-mi-malzeme');const stokDiv=document.getElementById('div-mi-stok');
   const isIsBir=tip==='Gelir'&&kat==='İşletme Geliri';
+  const isIsGider=tip==='Gider'&&kat==='İşletme Gideri';
   const isSahsi=kat==='Şahsi Gelir'||kat==='Şahsi Gider';
+  const tutarOzetDiv=document.getElementById('div-mi-tutar-ozet');
+  const tutarDuzDiv=document.getElementById('div-mi-tutar-duz');
+  // Tutar alanı: İşletme Geliri ve İşletme Gideri → özet+override, diğerleri → düz kutu
+  const kullanimOtomatik=isIsBir||isIsGider;
+  if(tutarOzetDiv)tutarOzetDiv.style.display=kullanimOtomatik?'block':'none';
+  if(tutarDuzDiv)tutarDuzDiv.style.display=kullanimOtomatik?'none':'block';
   if(isIsBir){
     if(checkDiv)checkDiv.style.display='block';if(selectDiv)selectDiv.style.display='none';
     const body=document.getElementById('ms-body');if(body){let html='';for(let mK in ISLETME_HİZ){html+=`<div class="ms-cat-title">${mK}</div><div class="check-grid">`;ISLETME_HİZ[mK].forEach(alt=>{html+=`<label class="check-item"><input type="checkbox" class="isletme-cb" data-main="${mK}" value="${alt}" onchange="this.parentElement.classList.toggle('selected',this.checked);updateHizmetOzet()"><span>${alt}</span></label>`;});html+=`</div>`;}body.innerHTML=html;}
@@ -2844,7 +2856,8 @@ function onKatChange(){
     // Personel payı SADECE İşletme Geliri'nde — diğer tüm kategorilerde gizle
     if(yDiv)yDiv.style.display='none';
     const iscilikDiv2=document.getElementById('div-mi-iscilik');if(iscilikDiv2)iscilikDiv2.style.display='none';
-    if(isSahsi){if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
+    if(isIsGider){if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';}
+    else if(isSahsi){if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
     else if(tip==='Gelir'){if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';}
     else{if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
   }
@@ -5768,9 +5781,7 @@ function openTeklifModal(id){
   document.getElementById('teklif-modal-baslik').textContent=id?'Teklifi Düzenle':'Yeni Teklif';
   const bugun=today();
   document.getElementById('teklif-tarih').value=bugun;
-  // Geçerlilik = 30 gün sonra
-  const gecerlilik=new Date();gecerlilik.setDate(gecerlilik.getDate()+30);
-  document.getElementById('teklif-gecerlilik').value=localDateStr(gecerlilik);
+  document.getElementById('teklif-gecerlilik').value=bugun;
   document.getElementById('teklif-aciklama').value='';
   document.getElementById('teklif-kalemler').innerHTML='';
   acClear('teklif-ac');
@@ -5842,8 +5853,9 @@ function showTeklifDetay(id){
   // Footer butonlar
   let footer='';
   if(USER_ROL!=='goruntule'){
-    footer+=`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
-    footer+=`<button class="btn btn-primary btn-full" onclick="teklifOnizlemeGoster(${id})">👁 Önizle & PDF İndir</button>`;
+    footer+=`<button class="btn btn-secondary btn-full" style="margin-bottom:6px;" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})">✏️ Düzenle</button>`;
+    footer+=`<button class="btn btn-primary btn-full" style="margin-bottom:6px;" onclick="teklifOnizlemeGoster(${id})">🖨️ Yazdır</button>`;
+    footer+=`<button class="btn btn-secondary btn-full" style="margin-bottom:6px;" onclick="teklifOnizlemeGoster(${id})">📄 PDF İndir</button>`;
     if(t.durum!=='Onaylandı')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Gönderildi')">📤 Gönderildi İşaretle</button>`;
     if(t.durum==='Gönderildi'||t.durum==='Taslak')footer+=`<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="teklifOnayLinki(${id})">🔗 Dijital Onay Linki Gönder</button>`;
     if(t.durum==='Gönderildi')footer+=`<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="teklifDurumGuncelle(${id},'Onaylandı')">✅ Onaylandı İşaretle</button>`;
@@ -7745,65 +7757,225 @@ function aiAyarKaydet(){
 function teklifOnizlemeGoster(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
   const k=getKisi(t.kisiId);
-  const durumRenk={Taslak:'#999',Gönderildi:'#1a73e8',Onaylandı:'#2e7d32',Reddedildi:'#c62828'};
-  const drn=durumRenk[t.durum]||'#999';
-  const satirlar=(t.kalemler||[]).map((km,i)=>`<tr style="background:${i%2===0?'#fff':'#f9f9f9'}">
-    <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;">${km.aciklama}</td>
-    <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-size:13px;">${km.miktar}</td>
-    <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-size:13px;">${fmt(km.birimFiyat)} ₺</td>
-    <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-size:13px;font-weight:600;">${fmt(km.toplam)} ₺</td>
-  </tr>`).join('');
-  const wrap=document.getElementById('teklif-onizleme-wrap');if(!wrap)return;
-  wrap.innerHTML=`<div style="font-family:Arial,sans-serif;background:white;">
-    <div style="background:linear-gradient(135deg,#1a73e8,#0d47a1);padding:28px 36px;color:white;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div><div style="font-size:24px;font-weight:800;">GÜN TEKNİK</div><div style="font-size:12px;opacity:0.8;margin-top:3px;">Teknik Hizmetler</div></div>
-        <div style="text-align:right;"><div style="font-size:11px;opacity:0.7;">Teklif No</div><div style="font-size:20px;font-weight:700;">#${fmtId(t.id)}</div><div style="font-size:11px;opacity:0.7;">${new Date(t.tarih).toLocaleDateString('tr-TR')}</div></div>
+  const tarihFmt=new Date(t.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  const gecFmt=t.gecerlilikTarihi?new Date(t.gecerlilikTarihi).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  const durumRenk={Taslak:'#6b7280',Gönderildi:'#1d4ed8',Onaylandı:'#15803d',Reddedildi:'#dc2626'};
+  const drn=durumRenk[t.durum]||'#6b7280';
+
+  // Kalemleri tip'e göre ayır
+  const malzemeKalemleri=(t.kalemler||[]).filter(k=>k.tip!=='iscilik');
+  const iscillikKalemleri=(t.kalemler||[]).filter(k=>k.tip==='iscilik');
+  const malzemeToplam=malzemeKalemleri.reduce((a,k)=>a+k.toplam,0);
+  const iscilikToplam=iscillikKalemleri.reduce((a,k)=>a+k.toplam,0);
+
+  const malzemeRows=malzemeKalemleri.map((km,i)=>`
+    <tr>
+      <td class="td-ac">${km.aciklama}</td>
+      <td class="td-c">${km.miktar} ${km.birim||'Adet'}</td>
+      <td class="td-r">${fmt(km.birimFiyat)} ₺</td>
+      <td class="td-r td-bold">${fmt(km.toplam)} ₺</td>
+    </tr>`).join('');
+
+  const iscillikRows=iscillikKalemleri.map((km,i)=>`
+    <tr>
+      <td class="td-ac" colspan="3">${km.aciklama}</td>
+      <td class="td-r td-bold">${fmt(km.toplam)} ₺</td>
+    </tr>`).join('');
+
+  const html=`<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teklif #${fmtId(t.id)} — Gün Teknik</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;}
+  .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
+  /* HEADER */
+  .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%);padding:36px 44px 32px;color:#fff;position:relative;overflow:hidden;}
+  .header::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%;}
+  .header::after{content:'';position:absolute;bottom:-60px;right:60px;width:160px;height:160px;background:rgba(255,255,255,0.03);border-radius:50%;}
+  .header-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+  .logo-block .logo-text{font-size:28px;font-weight:800;letter-spacing:-0.5px;color:#fff;}
+  .logo-block .logo-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;letter-spacing:2px;text-transform:uppercase;}
+  .doc-block{text-align:right;}
+  .doc-block .doc-label{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  .doc-block .doc-no{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+  .doc-block .doc-date{font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;}
+  .accent-bar{height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa,transparent);margin-top:24px;border-radius:2px;position:relative;z-index:1;}
+  /* INFO BAND */
+  .info-band{display:flex;border-bottom:1px solid #e2e8f0;}
+  .info-cell{flex:1;padding:20px 28px;}
+  .info-cell+.info-cell{border-left:1px solid #e2e8f0;}
+  .info-label{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
+  .info-val{font-size:15px;font-weight:700;color:#0f172a;}
+  .info-sub{font-size:11px;color:#64748b;margin-top:3px;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.5px;}
+  /* BODY */
+  .body{flex:1;padding:28px 44px;}
+  .section-title{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #f1f5f9;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#f8fafc;}
+  th{padding:9px 12px;font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-weight:600;border-bottom:2px solid #e2e8f0;}
+  .th-l{text-align:left;} .th-c{text-align:center;} .th-r{text-align:right;}
+  tr{border-bottom:1px solid #f1f5f9;}
+  tr:last-child{border-bottom:none;}
+  .td-ac{padding:10px 12px;font-size:12px;color:#334155;}
+  .td-c{padding:10px 12px;font-size:12px;color:#64748b;text-align:center;}
+  .td-r{padding:10px 12px;font-size:12px;color:#475569;text-align:right;}
+  .td-bold{font-weight:700;color:#0f172a;}
+  .iscilik-row td{background:#fafbff;}
+  /* TOPLAM */
+  .total-block{display:flex;justify-content:flex-end;margin-top:16px;}
+  .total-inner{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:16px 24px;min-width:220px;}
+  ${malzemeKalemleri.length&&iscillikKalemleri.length?`.sub-total{display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #bfdbfe;}`:''}
+  .grand-label{font-size:10px;color:#3b82f6;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+  .grand-amount{font-size:24px;font-weight:800;color:#1d4ed8;letter-spacing:-0.5px;}
+  /* AÇIKLAMA */
+  .note-block{margin-top:16px;padding:14px 18px;background:#f8fafc;border-radius:10px;border-left:3px solid #3b82f6;}
+  .note-text{font-size:11px;color:#475569;line-height:1.6;}
+  /* İMZA */
+  .sign-section{padding:24px 44px 32px;border-top:1px solid #e2e8f0;background:#fafbfd;}
+  .sign-title{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;}
+  .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+  .sign-box{padding-top:40px;border-top:1.5px solid #cbd5e1;position:relative;}
+  .sign-box::before{content:'';position:absolute;top:-1px;left:0;width:30px;height:3px;background:linear-gradient(90deg,#3b82f6,transparent);}
+  .sign-name{font-size:11px;font-weight:600;color:#334155;margin-bottom:2px;}
+  .sign-role{font-size:10px;color:#94a3b8;}
+  /* FOOTER */
+  .footer{padding:12px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;}
+  .footer-text{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
+  /* PRINT */
+  @media print{
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+    @page{size:A4;margin:0;}
+    body{background:#fff;}
+    .page{box-shadow:none;margin:0;width:100%;min-height:100vh;}
+    .no-print{display:none!important;}
+  }
+  /* BUTTONS (sadece ekranda) */
+  .print-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 20px;display:flex;gap:10px;justify-content:flex-end;position:sticky;top:0;z-index:100;}
+  @media print{.print-bar{display:none;}}
+</style>
+</head>
+<body>
+<div class="print-bar no-print">
+  <button onclick="window.print()" style="padding:9px 20px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">🖨️ Yazdır</button>
+  <button onclick="teklifPdfIndir()" style="padding:9px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">📄 PDF İndir</button>
+</div>
+<div class="page">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-row">
+      <div class="logo-block">
+        <div class="logo-text">GÜN TEKNİK</div>
+        <div class="logo-sub">Teknik Hizmetler & Çözümler</div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-label">Fiyat Teklifi</div>
+        <div class="doc-no">#${fmtId(t.id)}</div>
+        <div class="doc-date">${tarihFmt}</div>
       </div>
     </div>
-    <div style="display:flex;border-bottom:1px solid #eee;">
-      <div style="flex:1;padding:20px 36px;border-right:1px solid #eee;">
-        <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Müşteri</div>
-        <div style="font-size:16px;font-weight:700;">${k?k.isim:'—'}</div>
-        ${k&&k.tel?`<div style="font-size:12px;color:#555;margin-top:3px;">📞 ${k.tel}</div>`:''}
-        ${k&&k.vergiNo?`<div style="font-size:12px;color:#555;">VKN: ${k.vergiNo}</div>`:''}
-      </div>
-      <div style="padding:20px 36px;">
-        <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Durum</div>
-        <div style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:${drn}22;color:${drn};border:1px solid ${drn}44;">${t.durum}</div>
-        ${t.gecerlilikTarihi?`<div style="font-size:11px;color:#777;margin-top:8px;">⏰ ${t.gecerlilikTarihi}</div>`:''}
+    <div class="accent-bar"></div>
+  </div>
+  <!-- INFO BAND -->
+  <div class="info-band">
+    <div class="info-cell">
+      <div class="info-label">Müşteri</div>
+      <div class="info-val">${k?k.isim:'—'}</div>
+      ${k&&k.tel?`<div class="info-sub">📞 ${k.tel}</div>`:''}
+      ${k&&k.adres?`<div class="info-sub">📍 ${k.adres}</div>`:''}
+    </div>
+    <div class="info-cell">
+      <div class="info-label">Durum</div>
+      <div style="margin-top:2px;"><span class="badge" style="background:${drn}18;color:${drn};border:1px solid ${drn}44;">${t.durum}</span></div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">Geçerlilik</div>
+      <div class="info-val" style="font-size:13px;">${gecFmt}</div>
+      ${t.onaylayanIsim?`<div class="info-sub" style="color:#15803d;">✅ ${t.onaylayanIsim}</div>`:''}
+    </div>
+  </div>
+  <!-- BODY -->
+  <div class="body">
+    ${malzemeKalemleri.length?`
+    <div class="section-title" style="margin-bottom:8px;">Malzeme & Ürünler</div>
+    <table>
+      <thead><tr>
+        <th class="th-l">Açıklama</th>
+        <th class="th-c">Miktar</th>
+        <th class="th-r">Birim Fiyat</th>
+        <th class="th-r">Toplam</th>
+      </tr></thead>
+      <tbody>${malzemeRows}</tbody>
+    </table>`:''}
+    ${iscillikKalemleri.length?`
+    <div class="section-title" style="margin-top:${malzemeKalemleri.length?20:0}px;margin-bottom:8px;">İşçilik</div>
+    <table>
+      <thead><tr>
+        <th class="th-l" colspan="3">Hizmet Açıklaması</th>
+        <th class="th-r">Tutar</th>
+      </tr></thead>
+      <tbody>${iscillikRows}</tbody>
+    </table>`:''}
+    <!-- TOPLAM -->
+    <div class="total-block">
+      <div class="total-inner">
+        ${malzemeKalemleri.length&&iscillikKalemleri.length?`
+        <div class="sub-total"><span>Malzeme</span><span>${fmt(malzemeToplam)} ₺</span></div>
+        <div class="sub-total"><span>İşçilik</span><span>${fmt(iscilikToplam)} ₺</span></div>`:''}
+        <div class="grand-label">Genel Toplam</div>
+        <div class="grand-amount">${fmt(t.toplam)} ₺</div>
       </div>
     </div>
-    <div style="padding:20px 36px;">
-      <table style="width:100%;border-collapse:collapse;border:1px solid #eee;">
-        <thead><tr style="background:#f5f7fa;">
-          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#555;">Açıklama</th>
-          <th style="padding:10px 14px;text-align:center;font-size:11px;color:#555;">Miktar</th>
-          <th style="padding:10px 14px;text-align:right;font-size:11px;color:#555;">Birim Fiyat</th>
-          <th style="padding:10px 14px;text-align:right;font-size:11px;color:#555;">Toplam</th>
-        </tr></thead>
-        <tbody>${satirlar}</tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
-        <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:8px;padding:14px 20px;text-align:right;">
-          <div style="font-size:11px;color:#555;margin-bottom:3px;">TOPLAM</div>
-          <div style="font-size:22px;font-weight:800;color:#1b5e20;">${fmt(t.toplam)} ₺</div>
+    ${t.aciklama?`<div class="note-block"><div class="note-text">${t.aciklama.replace(/\n/g,'<br>')}</div></div>`:''}
+  </div>
+  <!-- İMZA -->
+  <div class="sign-section">
+    <div class="sign-title">Onay & İmza</div>
+    <div class="sign-grid">
+      <div>
+        <div class="sign-box">
+          <div class="sign-name">${k?k.isim:'Müşteri Adı Soyadı'}</div>
+          <div class="sign-role">Müşteri — Tarih: ____/____/________</div>
         </div>
       </div>
-      ${t.aciklama?`<div style="margin-top:14px;padding:12px;background:#f9f9f9;border-radius:6px;border-left:3px solid #1a73e8;font-size:12px;color:#444;">${t.aciklama}</div>`:''}
-    </div>
-    <div style="padding:20px 36px;border-top:1px solid #eee;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:12px;">
-        <div style="border-top:1px solid #ccc;padding-top:8px;font-size:11px;color:#888;">Müşteri Onayı · ${k?k.isim:''}<div style="height:36px;"></div></div>
-        <div style="border-top:1px solid #ccc;padding-top:8px;font-size:11px;color:#888;">Yetkili İmzası · Gün Teknik<div style="height:36px;"></div></div>
+      <div>
+        <div class="sign-box">
+          <div class="sign-name">Gün Teknik Yetkili</div>
+          <div class="sign-role">Kaşe / İmza — ${tarihFmt}</div>
+        </div>
       </div>
-      <div style="text-align:center;font-size:10px;color:#ccc;">Gün Teknik ERP · ${new Date().toLocaleDateString('tr-TR')}</div>
     </div>
-  </div>`;
-  // Teklif detay modalını kapat, önizlemeyi aç
-  closeModal('modal-teklif-detay');
-  openModal('modal-teklif-onizleme');
+  </div>
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-text">Gün Teknik Teknik Hizmetler</div>
+    <div class="footer-text">Teklif No: #${fmtId(t.id)} · ${tarihFmt}</div>
+    <div class="footer-text">Bu teklif ${gecFmt} tarihine kadar geçerlidir.</div>
+  </div>
+</div>
+<script nomodule>
+function teklifPdfIndir(){
+  document.querySelector('.print-bar').style.display='none';
+  window.print();
+  setTimeout(()=>{document.querySelector('.print-bar').style.display='';},1000);
 }
+<\/script>
+</body>
+</html>`;
+
+  // Yeni sekmede aç
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+
+function teklifYazdirAc(id){teklifOnizlemeGoster(id);}
+function teklifPdfIndir(id){if(id)teklifOnizlemeGoster(id);}
 
 function teklifOnizlemePrint(){
   const ic=document.querySelector('#teklif-onizleme-wrap > div');if(!ic)return;
@@ -7811,7 +7983,7 @@ function teklifOnizlemePrint(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='teklif-'+Date.now()+'.html';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  showToast('İndirildi — tarayıcıda aç, Ctrl+P → PDF','green');
+  showToast('İndirildi','green');
 }
 
 
@@ -9001,14 +9173,23 @@ function teklifKalemEkle(kalem,isIscilik){
   const idx=teklifKalemSay++;
   const id='tk-'+idx;
   const div=document.createElement('div');
-  div.id=id;div.style.cssText='display:flex;gap:5px;align-items:flex-end;';
-  const birimSec=BIRIM_SEC.map(b=>`<option${kalem?.birim===b?' selected':''}>${b}</option>`).join('');
-  div.innerHTML=`
-    <div style="flex:2.5;"><input type="text" id="${id}-aciklama" placeholder="${isIscilik?'İşçilik açıklaması':'Malzeme / ürün adı'}" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words" oninput="hesaplaTeklifToplam()"></div>
-    <div style="flex:1;"><input type="number" id="${id}-miktar" placeholder="Miktar" value="${kalem?.miktar||1}" min="0.01" step="any" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"></div>
-    <div style="flex:1;"><select id="${id}-birim" style="width:100%;padding:10px 6px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:12px;outline:none;appearance:none;">${birimSec}</select></div>
-    <div style="flex:1.2;position:relative;"><input type="number" id="${id}-birim-fiyat" placeholder="Fiyat" value="${kalem?.birimFiyat||''}" style="width:100%;padding:10px 24px 10px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">₺</span></div>
-    <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
+  div.id=id;div.style.cssText='display:flex;gap:5px;align-items:center;margin-bottom:4px;';
+  if(isIscilik){
+    // İşçilik: sadece açıklama + tutar
+    div.innerHTML=`
+      <div style="flex:3;"><input type="text" id="${id}-aciklama" placeholder="İşçilik açıklaması" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words" oninput="hesaplaTeklifToplam()"></div>
+      <div style="flex:1.2;position:relative;"><input type="number" id="${id}-birim-fiyat" placeholder="Tutar" value="${kalem?.birimFiyat||kalem?.toplam||''}" style="width:100%;padding:10px 24px 10px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">₺</span></div>
+      <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
+  }else{
+    // Malzeme: açıklama + miktar + birim + birim fiyat
+    const birimSec=BIRIM_SEC.map(b=>`<option${kalem?.birim===b?' selected':''}>${b}</option>`).join('');
+    div.innerHTML=`
+      <div style="flex:2.5;"><input type="text" id="${id}-aciklama" placeholder="Malzeme / ürün adı" value="${kalem?.aciklama||''}" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" autocapitalize="words" oninput="hesaplaTeklifToplam()"></div>
+      <div style="flex:0.7;"><input type="number" id="${id}-miktar" placeholder="Miktar" value="${kalem?.miktar||1}" min="0.01" step="any" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;text-align:center;" oninput="hesaplaTeklifToplam()"></div>
+      <div style="flex:0.8;"><select id="${id}-birim" style="width:100%;padding:10px 4px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:12px;outline:none;appearance:none;text-align:center;">${birimSec}</select></div>
+      <div style="flex:1.2;position:relative;"><input type="number" id="${id}-birim-fiyat" placeholder="Fiyat" value="${kalem?.birimFiyat||''}" style="width:100%;padding:10px 24px 10px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none;" oninput="hesaplaTeklifToplam()"><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">₺</span></div>
+      <button type="button" onclick="document.getElementById('${id}').remove();hesaplaTeklifToplam()" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--red);cursor:pointer;flex-shrink:0;">✕</button>`;
+  }
   wrap.appendChild(div);
 }
 
@@ -9016,17 +9197,43 @@ function teklifIscilikEkle(kalem){teklifKalemEkle(kalem,true);}
 
 function hesaplaTeklifToplam(){
   let toplam=0;
-  ['teklif-kalemler','teklif-iscilik-kalemler'].forEach(wid=>{
-    const wrap=document.getElementById(wid);if(!wrap)return;
-    Array.from(wrap.children).forEach(div=>{
-      const m=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||0;
-      const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
-      toplam+=m*f;
-    });
+  // Malzeme kalemleri
+  const mWrap=document.getElementById('teklif-kalemler');
+  if(mWrap)Array.from(mWrap.children).forEach(div=>{
+    const m=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
+    const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    toplam+=m*f;
+  });
+  // İşçilik kalemleri — miktar yok, direkt tutar
+  const iWrap=document.getElementById('teklif-iscilik-kalemler');
+  if(iWrap)Array.from(iWrap.children).forEach(div=>{
+    const f=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    toplam+=f;
   });
   const el=document.getElementById('teklif-toplam-goster');
   if(el)el.textContent=formatTutar(toplam)+' ₺';
   return toplam;
+}
+
+function teklifKalemleriOku(){
+  const kalemler=[];
+  // Malzeme kalemleri
+  const mWrap=document.getElementById('teklif-kalemler');
+  if(mWrap)Array.from(mWrap.children).forEach(div=>{
+    const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
+    const miktar=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
+    const birim=div.querySelector('[id$="-birim"]')?.value||'Adet';
+    const birimFiyat=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    if(aciklama)kalemler.push({aciklama,miktar,birim,birimFiyat,toplam:miktar*birimFiyat,tip:'malzeme'});
+  });
+  // İşçilik kalemleri
+  const iWrap=document.getElementById('teklif-iscilik-kalemler');
+  if(iWrap)Array.from(iWrap.children).forEach(div=>{
+    const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
+    const tutar=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
+    if(aciklama)kalemler.push({aciklama,miktar:1,birim:'Hizmet',birimFiyat:tutar,toplam:tutar,tip:'iscilik'});
+  });
+  return kalemler;
 }
 
 function teklifKalemleriOku(){
@@ -9592,15 +9799,20 @@ function calcIslemToplam(){
 
 // saveIslem'de kullanılacak gerçek tutarı al
 function getIslemGercekTutar(){
-  const manuelEl = document.getElementById('mi-tutar');
-  const manuelDeger = parseFloat(manuelEl?.value)||0;
-  if(manuelDeger > 0) return manuelDeger;
-
-  const iscilikManuel = parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
-  const iscillikListeToplam = iscillikSecilen ? iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0) : 0;
-  const iscilik = iscilikManuel > 0 ? iscilikManuel : iscillikListeToplam;
-  const malzeme = parseFloat(document.getElementById('mi-malzeme')?.value)||0;
-  return iscilik + malzeme;
+  // Özet kutu aktif mi?
+  const ozetDiv=document.getElementById('div-mi-tutar-ozet');
+  if(ozetDiv&&ozetDiv.style.display!=='none'){
+    const manuelEl=document.getElementById('mi-tutar');
+    const manuelDeger=parseFloat(manuelEl?.value)||0;
+    if(manuelDeger>0)return manuelDeger;
+    const iscilikManuel=parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
+    const iscillikListeToplam=(typeof iscillikSecilen!=='undefined'&&iscillikSecilen)?iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0):0;
+    const iscilik=iscilikManuel>0?iscilikManuel:iscillikListeToplam;
+    const malzeme=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+    return iscilik+malzeme;
+  }
+  // Düz tutar kutusu
+  return parseFloat(document.getElementById('mi-tutar-duz')?.value)||parseFloat(document.getElementById('mi-tutar')?.value)||0;
 }
 
 // ============================================================ ENFLASYON SİSTEMİ
