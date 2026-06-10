@@ -893,7 +893,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="page" id="page-fiyatlar">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div class="sec-title mt0" style="margin:0">💰 Fiyat Listesi</div>
-        <button class="btn btn-primary btn-sm" onclick="openFiyatModal()">+ Fiyat Ekle</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="openEnflasyonModal()" style="background:rgba(126,179,240,0.15);color:var(--blue);border-color:rgba(126,179,240,0.3);">📈 Enflasyon</button>
+          <button class="btn btn-primary btn-sm" onclick="openFiyatModal()">+ Fiyat Ekle</button>
+        </div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
         <button class="btn btn-secondary btn-sm fiyat-kat-btn active" onclick="fiyatKatFiltre('',this)">Tümü</button>
@@ -932,6 +935,36 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
   <button class="fab-btn" onclick="openModal('modal-ai')" style="width:46px;height:46px;font-size:20px;background:linear-gradient(135deg,var(--blue),#8b5cf6);border:none;border-radius:50%;color:white;box-shadow:var(--shadow-md);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="AI Asistan">✦</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
+</div>
+
+<!-- ENFLASYON MODALı -->
+<div class="modal-ov" id="modal-enflasyon" style="z-index:10007;">
+  <div class="modal" style="max-width:540px;max-height:92vh;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div><h3>📈 Fiyat Enflasyon Takibi</h3><div style="font-size:11px;color:var(--text3);margin-top:2px;">Kategori bazında fiyat değişim geçmişi</div></div>
+      <button class="modal-close" onclick="closeModal('modal-enflasyon')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;display:flex;flex-direction:column;height:calc(92vh - 120px);">
+      <!-- Kategori seçici -->
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm enf-kat-btn active" onclick="enfKatSec('',this)">Tümü</button>
+        <button class="btn btn-secondary btn-sm enf-kat-btn" onclick="enfKatSec('Elektrik',this)">⚡ Elektrik</button>
+        <button class="btn btn-secondary btn-sm enf-kat-btn" onclick="enfKatSec('Klima',this)">❄️ Klima</button>
+        <button class="btn btn-secondary btn-sm enf-kat-btn" onclick="enfKatSec('Sıhhi Tesisat',this)">🔧 Tesisat</button>
+        <button class="btn btn-secondary btn-sm enf-kat-btn" onclick="enfKatSec('Metal',this)">🔩 Metal</button>
+        <button class="btn btn-secondary btn-sm enf-kat-btn" onclick="enfKatSec('Ahşap',this)">🪵 Ahşap</button>
+      </div>
+      <!-- Özet kartlar -->
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;" id="enf-ozet"></div>
+      <!-- Çizgi grafik -->
+      <div style="padding:12px 16px;flex-shrink:0;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Fiyat Değişim Trendi</div>
+        <canvas id="enf-canvas" style="width:100%;height:160px;"></canvas>
+      </div>
+      <!-- Liste -->
+      <div style="flex:1;overflow-y:auto;padding:8px 16px;" id="enf-liste"></div>
+    </div>
+  </div>
 </div>
 
 <!-- FİYAT EKLE / DÜZENLE MODALı -->
@@ -1222,7 +1255,45 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fi" id="div-mi-altkat" style="display:none;"><label>Alt Kategori</label>
         <select id="mi-altkat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
       </div>
-      <div class="fi"><label>Tutar (₺)</label><input type="number" id="mi-tutar" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()"></div>
+
+      <!-- İŞÇİLİK — hizmet seçiminin hemen altında, sadece İşletme Geliri'nde görünür -->
+      <div id="div-mi-iscilik" style="display:none;background:rgba(46,160,67,0.08);border:1px solid rgba(46,160,67,0.25);padding:12px;border-radius:var(--r-md);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:600;color:var(--green);">🔧 İşçilik</div>
+          <button type="button" onclick="openIscillikModal()" class="btn btn-secondary btn-sm" style="font-size:12px;">+ İşçilik Ekle</button>
+        </div>
+        <div id="mi-iscilik-secilen" style="font-size:12px;color:var(--text2);display:none;margin-bottom:8px;"></div>
+        <div class="fi" style="margin-bottom:0;">
+          <label style="font-size:12px;">İşçilik Tutarı (₺) <span style="color:var(--text3);">— boş bırakırsan liste toplamı</span></label>
+          <input type="number" id="mi-iscilik-manuel" inputmode="numeric" placeholder="0" oninput="calcIslemToplam()">
+        </div>
+      </div>
+
+      <!-- MALZEME -->
+      <div class="fi" id="div-mi-malzeme"><label>Malzeme Tutarı (₺)</label>
+        <input type="number" id="mi-malzeme" inputmode="numeric" placeholder="0.00" oninput="calcIslemToplam();calcYardimci();personelPayTutarYenile()">
+      </div>
+      <div class="fi" id="div-mi-stok" style="display:none;">
+        <label>Kullanılan Stok Malzemeleri</label>
+        <div id="stok-satirlar" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+        <button type="button" onclick="stokSatirEkle()" style="width:100%;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:transparent;color:var(--blue);font-size:13px;cursor:pointer;transition:all 0.3s;">
+          + Stok Satırı Ekle
+        </button>
+      </div>
+
+      <!-- TUTAR — otomatik toplam + manuel override -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">Tutar Özeti</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text2);" id="mi-tutar-ozet">0 ₺</div>
+        </div>
+        <div id="mi-tutar-detay" style="font-size:11px;color:var(--text3);margin-bottom:10px;"></div>
+        <div class="fi" style="margin-bottom:0;">
+          <label style="font-size:12px;">Manuel Toplam (₺) <span style="color:var(--text3);">— boş bırakırsan otomatik toplam geçerli</span></label>
+          <input type="number" id="mi-tutar" inputmode="numeric" placeholder="Otomatik hesaplandı..." oninput="calcIslemToplam()">
+        </div>
+      </div>
+
       <div class="fi"><label>Statü</label>
         <select id="mi-statu" onchange="onStatuChange()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Tamamlandı">Tamamlandı</option><option value="Bekliyor">Bekliyor / Vadeli</option>
@@ -1238,25 +1309,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div id="div-taksit" style="display:none;flex-direction:column;gap:6px;margin-top:8px;">
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">Taksit Sayısı</label>
           <input type="number" id="mi-taksit-sayi" value="2" min="2" style="padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
-        </div>
-      </div>
-      <div class="fi" id="div-mi-malzeme"><label>Harcanan Malzeme (₺)</label><input type="number" id="mi-malzeme" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()"></div>
-      <div class="fi" id="div-mi-stok" style="display:none;">
-        <label>Kullanılan Stok Malzemeleri</label>
-        <div id="stok-satirlar" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
-        <button type="button" onclick="stokSatirEkle()" style="width:100%;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:transparent;color:var(--blue);font-size:13px;cursor:pointer;transition:all 0.3s;">
-          + Stok Satırı Ekle
-        </button>
-      </div>
-      <div id="div-mi-iscilik" style="display:none;background:rgba(46,160,67,0.08);border:1px solid rgba(46,160,67,0.25);padding:12px;border-radius:var(--r-md);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:600;color:var(--green);">🔧 İşçilik</div>
-          <button type="button" onclick="openIscillikModal()" class="btn btn-secondary btn-sm" style="font-size:12px;">+ İşçilik Ekle</button>
-        </div>
-        <div id="mi-iscilik-secilen" style="font-size:12px;color:var(--text2);display:none;margin-bottom:8px;"></div>
-        <div class="fi" style="margin-bottom:0;">
-          <label style="font-size:12px;">Manuel İşçilik Tutarı (₺) <span style="color:var(--text3);">— boşsa liste toplamı kullanılır</span></label>
-          <input type="number" id="mi-iscilik-manuel" inputmode="numeric" placeholder="0">
         </div>
       </div>
 
@@ -2707,7 +2759,9 @@ function openIslemModal(){
   document.getElementById('mi-statu').value='Tamamlandı';
   document.getElementById('mi-kisi-kat').value='';
   acReset('mi-ac');
-  document.getElementById('mi-tutar').value='';
+  const miTutar=document.getElementById('mi-tutar');if(miTutar)miTutar.value='';
+  const miIscilikManuel=document.getElementById('mi-iscilik-manuel');if(miIscilikManuel)miIscilikManuel.value='';
+  calcIslemToplam();
   document.getElementById('mi-malzeme').value='';
   document.getElementById('mi-not').value='';
   document.getElementById('mi-vade').value='';
@@ -9230,7 +9284,7 @@ function fiyatAiHesapla(){
   const sabit = parseFloat(document.getElementById('fiyat-sabit').value)||0;
   const sure = parseFloat(document.getElementById('fiyat-sure').value)||1;
   const key = kat+':'+dal;
-  const senaryo = AI_FIYAT_SENARYOLAR[key];
+  const senaryo = (AI_FIYAT_SENARYOLAR_YENİ||AI_FIYAT_SENARYOLAR)[key];
   let aiTahmini = 0, aciklama = '';
   if(senaryo){
     let base = senaryo.base;
@@ -9497,6 +9551,355 @@ async function loadFiyatlar(){
 
 // PAGE_TITLES güncelle
 if(typeof PAGE_TITLES !== 'undefined') PAGE_TITLES['fiyatlar'] = '💰 Fiyat Listesi';
+
+// ============================================================ İŞLEM TOPLAM HESAPLAMA
+
+function calcIslemToplam(){
+  const iscilikManuel = parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
+  const iscillikListeToplam = iscillikSecilen ? iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0) : 0;
+  const iscilik = iscilikManuel > 0 ? iscilikManuel : iscillikListeToplam;
+  const malzeme = parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+  const stokToplam = calcStokToplam ? calcStokToplam() : 0;
+  const topMalzeme = malzeme + stokToplam;
+  const otoToplam = iscilik + topMalzeme;
+
+  const ozetEl = document.getElementById('mi-tutar-ozet');
+  const detayEl = document.getElementById('mi-tutar-detay');
+  const manuelEl = document.getElementById('mi-tutar');
+  const manuelDeger = parseFloat(manuelEl?.value)||0;
+
+  const gecerli = manuelDeger > 0 ? manuelDeger : otoToplam;
+
+  if(ozetEl) ozetEl.textContent = fmt(gecerli) + ' ₺' + (manuelDeger > 0 ? ' (manuel)' : '');
+  if(detayEl){
+    const parcalar = [];
+    if(iscilik > 0) parcalar.push('İşçilik: ' + fmt(iscilik) + ' ₺');
+    if(topMalzeme > 0) parcalar.push('Malzeme: ' + fmt(topMalzeme) + ' ₺');
+    detayEl.textContent = parcalar.join(' + ') || 'Henüz tutar girilmedi';
+  }
+
+  // Personel pay hesabı için de güncelle
+  if(typeof calcYardimci === 'function') calcYardimci();
+  if(typeof personelPayTutarYenile === 'function') personelPayTutarYenile();
+}
+
+// saveIslem'de kullanılacak gerçek tutarı al
+function getIslemGercekTutar(){
+  const manuelEl = document.getElementById('mi-tutar');
+  const manuelDeger = parseFloat(manuelEl?.value)||0;
+  if(manuelDeger > 0) return manuelDeger;
+
+  const iscilikManuel = parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
+  const iscillikListeToplam = iscillikSecilen ? iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0) : 0;
+  const iscilik = iscilikManuel > 0 ? iscilikManuel : iscillikListeToplam;
+  const malzeme = parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+  return iscilik + malzeme;
+}
+
+// ============================================================ ENFLASYON SİSTEMİ
+
+DB.fiyatGecmis = [];
+let enfAktifKat = '';
+
+async function loadFiyatGecmis(){
+  try{
+    const data = await sbFetch('fiyat_gecmis?order=tarih.asc&select=*');
+    DB.fiyatGecmis = (data||[]).map(r=>({
+      id:r.id, fiyatId:r.fiyat_id, kategori:r.kategori,
+      eskiFiyat:parseFloat(r.eski_fiyat)||0,
+      yeniFiyat:parseFloat(r.yeni_fiyat)||0,
+      degisimYuzdesi:parseFloat(r.degisim_yuzdesi)||0,
+      tarih:r.tarih
+    }));
+  }catch(e){DB.fiyatGecmis=[];}
+}
+
+async function fiyatGecmisKaydet(fiyatId, eskiFiyat, yeniFiyat, kategori){
+  if(!eskiFiyat || !yeniFiyat || eskiFiyat===yeniFiyat) return;
+  const degisim = ((yeniFiyat-eskiFiyat)/eskiFiyat*100);
+  await sbFetch('fiyat_gecmis',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+    fiyat_id:fiyatId,kategori,
+    eski_fiyat:eskiFiyat,yeni_fiyat:yeniFiyat,
+    degisim_yuzdesi:Math.round(degisim*100)/100,
+    tarih:new Date().toISOString()
+  })});
+}
+
+function openEnflasyonModal(){
+  loadFiyatGecmis().then(()=>{
+    enfKatSec('', document.querySelector('.enf-kat-btn'));
+    openModal('modal-enflasyon');
+  });
+}
+
+function enfKatSec(kat, btn){
+  enfAktifKat = kat;
+  document.querySelectorAll('.enf-kat-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderEnflasyon();
+}
+
+function renderEnflasyon(){
+  const veriler = enfAktifKat
+    ? DB.fiyatGecmis.filter(r=>r.kategori===enfAktifKat)
+    : DB.fiyatGecmis;
+
+  // Özet
+  const ozetEl = document.getElementById('enf-ozet');
+  if(ozetEl){
+    if(!veriler.length){
+      ozetEl.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">Henüz fiyat değişikliği kaydedilmemiş</div>';
+    }else{
+      // Kategoriye göre ortalama değişim
+      const katGrup = {};
+      veriler.forEach(r=>{
+        if(!katGrup[r.kategori]) katGrup[r.kategori]={toplam:0,sayi:0};
+        katGrup[r.kategori].toplam += r.degisimYuzdesi;
+        katGrup[r.kategori].sayi++;
+      });
+      const kartlar = Object.entries(katGrup).map(([kat,v])=>{
+        const ort = v.toplam/v.sayi;
+        const renk = ort>0?'var(--red)':ort<0?'var(--green)':'var(--text2)';
+        return `<div style="flex:1;text-align:center;background:var(--bg2);border-radius:var(--r-sm);padding:8px 6px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${kat}</div>
+          <div style="font-size:15px;font-weight:700;color:${renk};">${ort>0?'+':''}${ort.toFixed(1)}%</div>
+          <div style="font-size:10px;color:var(--text3);">${v.sayi} değişim</div>
+        </div>`;
+      }).join('');
+      ozetEl.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;">${kartlar}</div>`;
+    }
+  }
+
+  // Grafik
+  const canvas = document.getElementById('enf-canvas');
+  if(canvas && veriler.length){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.parentElement.offsetWidth - 32;
+    canvas.width = W * (window.devicePixelRatio||1);
+    canvas.height = 160 * (window.devicePixelRatio||1);
+    canvas.style.width = W + 'px';
+    canvas.style.height = '160px';
+    ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+    ctx.clearRect(0,0,W,160);
+
+    // Zaman bazlı sıralı veri
+    const sirali = [...veriler].sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+    // Kümülatif değişim
+    let kumulatif = 0;
+    const noktalar = sirali.map(r=>{kumulatif+=r.degisimYuzdesi;return {tarih:r.tarih,kum:kumulatif,degisim:r.degisimYuzdesi};});
+
+    if(noktalar.length>=2){
+      const minV = Math.min(...noktalar.map(p=>p.kum), 0);
+      const maxV = Math.max(...noktalar.map(p=>p.kum), 0);
+      const rangeV = maxV - minV || 1;
+      const pad = {l:40,r:12,t:16,b:24};
+      const iW = W-pad.l-pad.r, iH = 160-pad.t-pad.b;
+
+      // Sıfır çizgisi
+      const zeroY = pad.t + iH * (1 - (0-minV)/rangeV);
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();ctx.moveTo(pad.l,zeroY);ctx.lineTo(pad.l+iW,zeroY);ctx.stroke();
+
+      // Çizgi
+      ctx.strokeStyle = '#7eb3f0';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      noktalar.forEach((p,i)=>{
+        const x = pad.l + (i/(noktalar.length-1))*iW;
+        const y = pad.t + iH*(1-(p.kum-minV)/rangeV);
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // Noktalar
+      noktalar.forEach((p,i)=>{
+        const x = pad.l + (i/(noktalar.length-1))*iW;
+        const y = pad.t + iH*(1-(p.kum-minV)/rangeV);
+        ctx.fillStyle = p.degisim>0?'var(--red, #e88080)':'#6fcf97';
+        ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();
+      });
+
+      // Y ekseni etiketleri
+      ctx.fillStyle = 'rgba(139,164,200,0.8)';
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText((maxV>0?'+':'')+maxV.toFixed(0)+'%', pad.l-4, pad.t+8);
+      ctx.fillText((minV>0?'+':'')+minV.toFixed(0)+'%', pad.l-4, pad.t+iH);
+    }else if(noktalar.length===1){
+      ctx.fillStyle = 'rgba(139,164,200,0.5)';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('En az 2 değişim gerekli', W/2, 80);
+    }
+  }else if(canvas){
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+
+  // Değişim listesi
+  const listeEl = document.getElementById('enf-liste');
+  if(listeEl){
+    if(!veriler.length){
+      listeEl.innerHTML='';return;
+    }
+    const sirali = [...veriler].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+    listeEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Değişim Geçmişi</div>'+
+      sirali.map(r=>{
+        const f = DB.fiyatlar.find(x=>x.id===r.fiyatId);
+        const renk = r.degisimYuzdesi>0?'var(--red)':'var(--green)';
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:12px;font-weight:600;">${f?f.tarif:r.kategori}</div>
+            <div style="font-size:11px;color:var(--text3);">${r.kategori} · ${new Date(r.tarih).toLocaleDateString('tr-TR')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:12px;color:${renk};font-weight:700;">${r.degisimYuzdesi>0?'+':''}${r.degisimYuzdesi.toFixed(1)}%</div>
+            <div style="font-size:11px;color:var(--text3);">${fmt(r.eskiFiyat)} → ${fmt(r.yeniFiyat)} ₺</div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+}
+
+// ── Enflasyon bazlı AI tahmin güncelleme ─────────────────
+function enfasyonAiKatsayisi(kategori){
+  const altAy = new Date(Date.now()-180*24*60*60*1000);
+  const son6Ay = DB.fiyatGecmis.filter(r=>r.kategori===kategori && new Date(r.tarih)>altAy);
+  if(!son6Ay.length) return {katsayi:1, aciklama:null};
+  const topDegisim = son6Ay.reduce((a,r)=>a+r.degisimYuzdesi,0);
+  const ortalama = topDegisim/son6Ay.length;
+  const katsayi = 1 + ortalama/100;
+  const aciklama = son6Ay.length > 0
+    ? `Son 6 ayda ${kategori} kategorisinde ortalama ${ortalama>0?'+':''}${ortalama.toFixed(1)}% değişim → AI tahmini güncellendi`
+    : null;
+  return {katsayi, aciklama};
+}
+
+// ── saveFiyat'ı enflasyon kaydıyla güncelle ──────────────
+async function saveFiyat(btn){
+  if(btn) btn.disabled=true;
+  try{
+    const id = document.getElementById('fiyat-id').value;
+    const kategori = document.getElementById('fiyat-kategori').value;
+    const dal = document.getElementById('fiyat-dal').value;
+    const tarif = document.getElementById('fiyat-tarif').value.trim();
+    if(!kategori||!dal||!tarif){showToast('Kategori, dal ve tarif zorunlu','red');return;}
+
+    const yeniSabit = parseFloat(document.getElementById('fiyat-sabit').value)||0;
+    const yeniAi = parseFloat(document.getElementById('fiyat-ai').value)||0;
+
+    // Enflasyon katsayısını uygula
+    const {katsayi, aciklama} = enfasyonAiKatsayisi(kategori);
+    const aiGuncellenmis = katsayi!==1 ? Math.round(yeniAi*katsayi) : yeniAi;
+
+    // Eski fiyatı bul
+    let eskiSabit = 0;
+    if(id){
+      const eskiF = DB.fiyatlar.find(f=>f.id===parseInt(id));
+      if(eskiF) eskiSabit = eskiF.sabitFiyat||0;
+    }
+
+    const payload = {
+      kategori, dal, tarif,
+      sabit_fiyat: yeniSabit,
+      zorluk: document.getElementById('fiyat-zorluk').value,
+      gercek_fiyat_min: parseFloat(document.getElementById('fiyat-gercek-min').value)||0,
+      gercek_fiyat_max: parseFloat(document.getElementById('fiyat-gercek-max').value)||0,
+      iscilik_sure: parseFloat(document.getElementById('fiyat-sure').value)||0,
+      ai_fiyat: aiGuncellenmis,
+      notlar: document.getElementById('fiyat-notlar').value,
+      aktif: true
+    };
+
+    if(id){
+      await sbFetch('fiyatlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+      // Enflasyon kaydı — sabit fiyat değiştiyse
+      if(eskiSabit && yeniSabit && eskiSabit !== yeniSabit){
+        await fiyatGecmisKaydet(parseInt(id), eskiSabit, yeniSabit, kategori);
+      }
+    }else{
+      await sbFetch('fiyatlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    }
+
+    if(aciklama) aiBildirimGoster('bilgi', '📈 '+aciklama, 8000);
+
+    await loadDB();
+    closeModal('modal-fiyat');
+    renderFiyatlar();
+    showToast(id?'Güncellendi':'Fiyat eklendi','green');
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+// loadDB'ye fiyat geçmişi ekle — loadFiyatlar içinde çağır
+const _origLoadFiyatlar = loadFiyatlar;
+async function loadFiyatlar(){
+  await _origLoadFiyatlar();
+  await loadFiyatGecmis();
+}
+
+// ── GÜNCELLENMIŞ AI FIYAT SENARYOLARI (2026 Marmaris) ────
+// Baz: Elektrik ustası günlük 5.000₺, Klima temizlik 2.000₺,
+// Kaynakçı/Demirci günlük 5.000₺, Turistik bölge +%30
+const AI_FIYAT_SENARYOLAR_YENİ = {
+  // ELEKTRİK — saatlik ~650₺ (5000/8saat)
+  'Elektrik:Priz / Anahtar Montajı':    {base:1200, label:'2026 Marmaris: ~1.000-1.400₺/adet. Servis ücreti dahil. 1-2 saat'},
+  'Elektrik:Priz / Anahtar Tamiri':     {base:1000, label:'2026: 800-1.200₺. Basit tamir servis dahil'},
+  'Elektrik:Kablo ve Hat Çekme':        {base:80,   perMetre:true, label:'2026: 65-100₺/metre işçilik (gizli kanal +%40)'},
+  'Elektrik:Tavan Led Döşeme':          {base:200,  perUnit:true,  label:'2026: 160-260₺/spot. Sıva üstü 160₺, gömme 220₺+'},
+  'Elektrik:Avize Montaj / Tamir':      {base:1200, label:'2026: 1.000-1.500₺. Ağır/büyük 1.800₺+'},
+  'Elektrik:Dekoratif Aydınlatma':      {base:1800, label:'2026: 1.500-2.500₺ işçilik. Karmaşık sistem 3.000₺+'},
+  'Elektrik:Klima Elektrik Bağlantısı': {base:1400, label:'2026: 1.200-1.800₺. Özel hat gerekiyorsa 2.500₺+'},
+  'Elektrik:Tesisat Yenileme':          {base:400,  perM2:true, label:'2026: 350-500₺/m² işçilik. 100m² daire 40.000₺+'},
+  'Elektrik:İnternet Arıza':            {base:1100, label:'2026: 900-1.400₺. Servis+tespit+işçilik'},
+  'Elektrik:İnternet Kablo Çekme':      {base:70,   perMetre:true, label:'2026: 60-90₺/metre. Kanal açma +%50'},
+  'Elektrik:Sigorta Arızası / Değişimi':{base:1000, label:'2026: 800-1.300₺. Pano değişimi 5.000-10.000₺'},
+  'Elektrik:Pano Montajı':              {base:7000, label:'2026: 6.000-9.000₺ işçilik (malzeme hariç)'},
+  'Elektrik:Tamirat':                   {base:1300, label:'2026: 1.000-1.600₺ arıza tespiti+işçilik'},
+  'Elektrik:Tadilat':                   {base:400,  perM2:true, label:'2026: 350-500₺/m². Komple tadilat 30.000₺+'},
+  'Elektrik:Montaj':                    {base:1300, label:'2026: 1.100-1.600₺ standart montaj işçilik'},
+  'Elektrik:TV Montaj':                 {base:1000, label:'2026: 850-1.200₺. Askı+kablo gizleme dahil'},
+  // KLİMA — iç/dış temizlik baz 2.000₺
+  'Klima:Montaj':                       {base:5500, label:'2026 Marmaris: 4.500-7.000₺ split (malzeme ayrıca). Yüksek kat +%40'},
+  'Klima:Gaz Dolumu':                   {base:2500, label:'2026: 2.000-3.200₺. R32 gaz+işçilik. Kaçak var +800₺'},
+  'Klima:İç Ünite Temizliği':           {base:2000, label:'2026 baz fiyat: 1.800-2.300₺/kafa. Kimyasal temizlik dahil'},
+  'Klima:Dış Ünite Temizliği':          {base:2000, label:'2026: 1.700-2.400₺. Yüksek erişim +%50'},
+  'Klima:Kart Arıza':                   {base:2800, label:'2026 işçilik: 2.200-3.500₺ + parça bedeli ayrıca'},
+  'Klima:Motor Arıza':                  {base:3200, label:'2026 işçilik: 2.500-4.000₺ + motor bedeli'},
+  'Klima:Elektrik Arıza':               {base:2200, label:'2026: 1.800-2.800₺. Servis+tespit+işçilik'},
+  'Klima:Su Tahliye Sorunu':            {base:1600, label:'2026: 1.300-2.000₺. Tahliye hattı yenileme'},
+  'Klima:Yer Değiştirme Sök/Tak':       {base:4500, label:'2026: 3.800-5.500₺. Söküm+nakil+montaj'},
+  'Klima:Tesisat Döşeme':               {base:250,  perMetre:true, label:'2026: 200-320₺/metre bakır boru+işçilik'},
+  // SIHHI TESİSAT — saatlik ~600₺
+  'Sıhhi Tesisat:Tıkanıklık Açma':      {base:1600, label:'2026 Marmaris: 1.300-2.000₺. Gece/acil +%60'},
+  'Sıhhi Tesisat:Su Kaçağı Tespiti':    {base:2000, label:'2026: 1.600-2.600₺ tespit işçilik. Tamir yaptırılırsa düşer'},
+  'Sıhhi Tesisat:Su Kaçağı Tamiratı':   {base:3500, label:'2026: 2.800-5.000₺+ işçilik. Kırım gerekiyorsa 7.000₺+'},
+  'Sıhhi Tesisat:Şofben Montaj':        {base:2000, label:'2026: 1.700-2.500₺ işçilik. Kombi montajı 3.500-5.000₺'},
+  'Sıhhi Tesisat:Montaj':               {base:1800, label:'2026: 1.500-2.200₺ (musluk/klozet/batarya montajı)'},
+  'Sıhhi Tesisat:Tamir':                {base:1500, label:'2026: 1.200-1.900₺. Servis Marmaris\'te 1.000₺+'},
+  'Sıhhi Tesisat:Arıza':                {base:1400, label:'2026: 1.100-1.800₺. Acil servis +%60'},
+  'Sıhhi Tesisat:Döşeme':               {base:180,  perMetre:true, label:'2026: 150-220₺/metre PPR boru işçilik (malzeme hariç)'},
+  // METAL — günlük 5.000₺, saatlik ~650₺
+  'Metal:Kaynak İşçilik':               {base:650,  perSaat:true, label:'2026 Marmaris: 600-750₺/saat. Günlük 5.000₺'},
+  'Metal:Korkuluk':                     {base:1300, perMetre:true, label:'2026: 1.100-1.600₺/metre malzeme+işçilik. Ferforje 2.200₺+/m'},
+  'Metal:Küpeşte':                      {base:1100, perMetre:true, label:'2026: 900-1.400₺/metre. Paslanmaz 1.600₺+/m'},
+  'Metal:Panel Çit':                    {base:800,  perMetre:true, label:'2026: 650-1.000₺/metre (malzeme+işçilik+beton)'},
+  'Metal:Demir Kapı/Pencere':           {base:8000, label:'2026: 6.500-10.000₺/kanat (malzeme+işçilik). Özel 15.000₺+'},
+  'Metal:Bahçe Kapısı':                 {base:11000,label:'2026: 9.000-15.000₺. Otomatik sistem +8.000₺'},
+  'Metal:Teras Kapama':                 {base:1300, perM2:true, label:'2026: 1.100-1.600₺/m² çelik konstrüksiyon (malzeme dahil)'},
+  'Metal:Çatı Kapama':                  {base:1200, perM2:true, label:'2026: 1.000-1.500₺/m² trapez/sandviç panel'},
+  'Metal:Garaj Yapımı':                 {base:25000,label:'2026: 20.000-35.000₺ standart. Otomatik kapı +12.000₺'},
+  'Metal:Ferforje':                     {base:1900, perMetre:true, label:'2026: 1.600-2.400₺/metre. El dövmesi 3.000₺+/m'},
+  // AHŞAP — günlük 3.500-4.000₺, saatlik ~450₺
+  'Ahşap:İşçilik':                      {base:450,  perSaat:true, label:'2026 Marmaris: 400-550₺/saat. Günlük 3.500-4.000₺'},
+  'Ahşap:Tamir':                        {base:1800, label:'2026: 1.500-2.200₺. Kapı/çerçeve tamiri'},
+  'Ahşap:Lambri':                       {base:380,  perM2:true, label:'2026: 320-480₺/m² sadece işçilik. Malzeme dahil 700-1.100₺/m²'},
+  'Ahşap:Zımpara':                      {base:260,  perM2:true, label:'2026: 220-320₺/m². Parke yüzey zımparası'},
+  'Ahşap:Cila':                         {base:320,  perM2:true, label:'2026: 270-400₺/m². Su bazlı 270₺, solvent bazlı 370₺+'},
+  'Ahşap:Dekoratif Ürün':               {base:3500, label:'2026: 2.500-6.000₺+ işçilik. Özel sipariş projeye göre'},
+};
 
 // ============================================================ BAŞLAT
 window.addEventListener('DOMContentLoaded',()=>{
