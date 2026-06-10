@@ -889,6 +889,23 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="list-teklifler" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
+    <!-- FİYATLAR -->
+    <div class="page" id="page-fiyatlar">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">💰 Fiyat Listesi</div>
+        <button class="btn btn-primary btn-sm" onclick="openFiyatModal()">+ Fiyat Ekle</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn active" onclick="fiyatKatFiltre('',this)">Tümü</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Elektrik',this)">⚡ Elektrik</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Klima',this)">❄️ Klima</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Sıhhi Tesisat',this)">🔧 Tesisat</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Metal',this)">🔩 Metal</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Ahşap',this)">🪵 Ahşap</button>
+      </div>
+      <div id="list-fiyatlar" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" onclick="goPage('dashboard',this)"><span class="nav-icon">📊</span><span>Özet</span></div>
@@ -903,6 +920,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
     <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
     <div class="nav-item" onclick="goPage('teklifler',this)"><span class="nav-icon">📋</span><span>Teklif</span></div>
+    <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
   </nav>
 </div>
 
@@ -914,6 +932,135 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
   <button class="fab-btn" onclick="openModal('modal-ai')" style="width:46px;height:46px;font-size:20px;background:linear-gradient(135deg,var(--blue),#8b5cf6);border:none;border-radius:50%;color:white;box-shadow:var(--shadow-md);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="AI Asistan">✦</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
+</div>
+
+<!-- FİYAT EKLE / DÜZENLE MODALı -->
+<div class="modal-ov" id="modal-fiyat" style="z-index:10005;">
+  <div class="modal" style="max-width:520px;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3 id="fiyat-modal-baslik">Fiyat Ekle</h3>
+      <button class="modal-close" onclick="closeModal('modal-fiyat')">✕</button>
+    </div>
+    <div class="modal-body fg">
+      <input type="hidden" id="fiyat-id">
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1">
+          <label>Kategori</label>
+          <select id="fiyat-kategori" onchange="fiyatDalGuncelle()" style="padding:13px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;width:100%;">
+            <option value="">Seçin</option>
+            <option>Elektrik</option><option>Klima</option>
+            <option>Sıhhi Tesisat</option><option>Metal</option><option>Ahşap</option>
+          </select>
+        </div>
+        <div class="fi" style="flex:1">
+          <label>Dal</label>
+          <select id="fiyat-dal" style="padding:13px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;width:100%;">
+            <option value="">Önce kategori seçin</option>
+          </select>
+        </div>
+      </div>
+      <div class="fi"><label>Hizmet Tarifi</label>
+        <textarea id="fiyat-tarif" rows="2" placeholder="Hizmetin detaylı açıklaması..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1">
+          <label>Sabit Fiyat (₺)</label>
+          <input type="number" id="fiyat-sabit" inputmode="numeric" placeholder="0" oninput="fiyatHesapla()">
+        </div>
+        <div class="fi" style="flex:1">
+          <label>Tahmini Süre (Saat)</label>
+          <input type="number" id="fiyat-sure" inputmode="numeric" placeholder="1" step="0.5" oninput="fiyatHesapla()">
+        </div>
+      </div>
+      <div class="fi">
+        <label>Zorluk Derecesi</label>
+        <select id="fiyat-zorluk" onchange="fiyatHesapla()" style="padding:13px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;width:100%;">
+          <option value="Kolay">Kolay (Sabit fiyat, +%0)</option>
+          <option value="Orta" selected>Orta (+%30 — +%50)</option>
+          <option value="Zor">Zor (+%80 — +%100)</option>
+          <option value="Çok Zor">Çok Zor (+%150 — +%200)</option>
+        </select>
+      </div>
+      <!-- Gerçek Fiyatlandırma -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;" id="fiyat-gercek-wrap">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Zorluk Bazlı Gerçek Fiyat</div>
+        <div style="font-size:12px;color:var(--amber);margin-bottom:10px;" id="fiyat-aralik-bilgi">Zorluk seçin</div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1">
+            <label>Min Fiyat (₺)</label>
+            <input type="number" id="fiyat-gercek-min" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="fi" style="flex:1">
+            <label>Max Fiyat (₺)</label>
+            <input type="number" id="fiyat-gercek-max" inputmode="numeric" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <!-- AI Tahmin -->
+      <div style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:var(--r-md);padding:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:11px;color:#b39ddb;text-transform:uppercase;letter-spacing:0.8px;">✦ AI Fiyat Tahmini</div>
+          <button type="button" onclick="fiyatAiHesapla()" style="font-size:11px;padding:4px 10px;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);border-radius:var(--r-sm);color:#b39ddb;cursor:pointer;">Yenile</button>
+        </div>
+        <div style="font-size:22px;font-weight:700;color:#b39ddb;" id="fiyat-ai-goster">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;" id="fiyat-ai-aciklama"></div>
+        <input type="hidden" id="fiyat-ai">
+      </div>
+      <div class="fi"><label>Not (isteğe bağlı)</label>
+        <input type="text" id="fiyat-notlar" placeholder="Ek bilgi, malzeme gereksinimleri...">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-fiyat')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveFiyat(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- İŞÇİLİK SEÇİM MODALı -->
+<div class="modal-ov" id="modal-iscilik" style="z-index:10006;">
+  <div class="modal" style="max-width:560px;max-height:90vh;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>🔧 İşçilik Ekle</h3>
+      <button class="modal-close" onclick="closeModal('modal-iscilik')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;display:flex;flex-direction:column;height:calc(90vh - 120px);">
+      <!-- Filtre -->
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn active" onclick="isciliKatFiltre('',this)">Tümü</button>
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn" onclick="isciliKatFiltre('Elektrik',this)">⚡</button>
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn" onclick="isciliKatFiltre('Klima',this)">❄️</button>
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn" onclick="isciliKatFiltre('Sıhhi Tesisat',this)">🔧</button>
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn" onclick="isciliKatFiltre('Metal',this)">🔩</button>
+          <button class="btn btn-secondary btn-sm iscilik-kat-btn" onclick="isciliKatFiltre('Ahşap',this)">🪵</button>
+        </div>
+        <input type="text" id="iscilik-ara" placeholder="Hizmet ara..." oninput="renderIscillikListesi()" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
+      </div>
+      <!-- Liste -->
+      <div id="iscilik-fiyat-listesi" style="flex:1;overflow-y:auto;padding:8px 16px;display:flex;flex-direction:column;gap:6px;"></div>
+      <!-- Seçilenler & Toplam -->
+      <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">
+        <div id="iscilik-secilen-wrap" style="display:none;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Seçilen İşçilikler</div>
+          <div id="iscilik-secilen-listesi" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;color:var(--text2);">Toplam İşçilik</div>
+            <div style="font-size:18px;font-weight:700;color:var(--green);" class="num" id="iscilik-toplam">0 ₺</div>
+          </div>
+          <div class="fi" style="margin-bottom:8px;">
+            <label style="font-size:12px;">Manuel Tutar (boş bırakırsan liste toplamı geçerli)</label>
+            <input type="number" id="iscilik-manuel" inputmode="numeric" placeholder="0" oninput="iscillikManuelGuncelle()">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:600;">Geçerli Tutar</div>
+            <div style="font-size:18px;font-weight:700;color:var(--blue);" class="num" id="iscilik-gecerli">0 ₺</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="iscillikUygula()">✅ Uygula</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MODALLER -->
@@ -1101,6 +1248,18 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           + Stok Satırı Ekle
         </button>
       </div>
+      <div id="div-mi-iscilik" style="display:none;background:rgba(46,160,67,0.08);border:1px solid rgba(46,160,67,0.25);padding:12px;border-radius:var(--r-md);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:600;color:var(--green);">🔧 İşçilik</div>
+          <button type="button" onclick="openIscillikModal()" class="btn btn-secondary btn-sm" style="font-size:12px;">+ İşçilik Ekle</button>
+        </div>
+        <div id="mi-iscilik-secilen" style="font-size:12px;color:var(--text2);display:none;margin-bottom:8px;"></div>
+        <div class="fi" style="margin-bottom:0;">
+          <label style="font-size:12px;">Manuel İşçilik Tutarı (₺) <span style="color:var(--text3);">— boşsa liste toplamı kullanılır</span></label>
+          <input type="number" id="mi-iscilik-manuel" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+
       <div id="div-mi-yardimci" style="background:var(--surface);border:1px solid rgba(126,179,240,0.3);padding:14px;border-radius:var(--r-md);display:none;">
         <label class="check-row">
           <input type="checkbox" id="mi-yardimci-chk" onchange="onYardimciChk()">
@@ -2049,6 +2208,8 @@ async function loadDB(){
       return {id:t.id,tarih:t.tarih,gecerlilikTarihi:t.gecerlilik_tarihi||null,kisiId:t.kisi_id||null,projeId:t.proje_id||null,kalemler,toplam:parseFloat(t.toplam)||0,durum:t.durum||'Taslak',aciklama:t.aciklama||'',onayToken:t.onay_token||null,onayTarihi:t.onay_tarihi||null,onaylayanIsim:t.onaylayan_isim||null,createdAt:t.created_at};
     });
     DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
+    // Fiyat listesini yükle
+    await loadFiyatlar();
     renderAll();
   }catch(e){
     console.error('loadDB:',e);
@@ -2140,7 +2301,7 @@ const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.is
 function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi'};
 
 function goPage(id,navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2261,10 +2422,10 @@ function renderAll(){
     if(pid==='personel')renderPersonel(c);
     if(pid==='stok')renderStok();
     if(pid==='irsaliye')renderIrsaliye();
-    if(pid==='raporlar'){renderSablonlar();renderRaporIcgoru();}
     if(pid==='vergi')renderVergi();
     if(pid==='projeler')renderProjeler();
     if(pid==='teklifler')renderTeklifler();
+    if(pid==='fiyatlar')renderFiyatlar();
     // Dashboard vergi kartlarını her zaman güncelle
     renderVergiDash();
     observeStagger();
@@ -2618,11 +2779,14 @@ function onKatChange(){
     if(checkDiv)checkDiv.style.display='block';if(selectDiv)selectDiv.style.display='none';
     const body=document.getElementById('ms-body');if(body){let html='';for(let mK in ISLETME_HİZ){html+=`<div class="ms-cat-title">${mK}</div><div class="check-grid">`;ISLETME_HİZ[mK].forEach(alt=>{html+=`<label class="check-item"><input type="checkbox" class="isletme-cb" data-main="${mK}" value="${alt}" onchange="this.parentElement.classList.toggle('selected',this.checked);updateHizmetOzet()"><span>${alt}</span></label>`;});html+=`</div>`;}body.innerHTML=html;}
     if(yDiv)yDiv.style.display='block';if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';
+    // İşçilik butonu göster
+    const iscilikDiv=document.getElementById('div-mi-iscilik');if(iscilikDiv)iscilikDiv.style.display='block';
   }else{
     if(checkDiv)checkDiv.style.display='none';if(selectDiv)selectDiv.style.display='block';
     const sel=document.getElementById('mi-altkat');if(sel){sel.innerHTML='';const sec=(KATEGORILER[tip]&&KATEGORILER[tip][kat])||[];if(!sec.length)sel.innerHTML='<option value="-">Detay Yok</option>';else sec.forEach(o=>sel.add(new Option(o,o)));}
     // Personel payı SADECE İşletme Geliri'nde — diğer tüm kategorilerde gizle
     if(yDiv)yDiv.style.display='none';
+    const iscilikDiv2=document.getElementById('div-mi-iscilik');if(iscilikDiv2)iscilikDiv2.style.display='none';
     if(isSahsi){if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
     else if(tip==='Gelir'){if(mDiv)mDiv.style.display='flex';if(stokDiv)stokDiv.style.display='block';}
     else{if(mDiv)mDiv.style.display='none';if(stokDiv)stokDiv.style.display='none';}
@@ -8914,6 +9078,425 @@ function teklifPollBaslat(){
 // ============================================================ AI SOHBET (gelişmiş)
 
 
+
+// ============================================================ FİYATLAR SİSTEMİ
+
+// Kategori-Dal eşleşmesi
+const FIYAT_KATEGORILER = {
+  'Elektrik': ['Tamirat','Tadilat','Montaj','TV Montaj','Kablo ve Hat Çekme','Tavan Led Döşeme','Avize Montaj / Tamir','Dekoratif Aydınlatma','Klima Elektrik Bağlantısı','Tesisat Yenileme','İnternet Arıza','İnternet Kablo Çekme','Priz / Anahtar Tamiri','Priz / Anahtar Montajı','Sigorta Arızası / Değişimi','Pano Montajı'],
+  'Klima': ['Kart Arıza','Motor Arıza','Gaz Dolumu','Elektrik Arıza','Montaj','İç Ünite Temizliği','Dış Ünite Temizliği','Su Tahliye Sorunu','Yer Değiştirme Sök/Tak','Tesisat Döşeme'],
+  'Sıhhi Tesisat': ['Döşeme','Arıza','Montaj','Tamir','Şofben Montaj','Tıkanıklık Açma','Su Kaçağı Tespiti','Su Kaçağı Tamiratı'],
+  'Metal': ['Kaynak İşçilik','Ferforje','Korkuluk','Küpeşte','Panel Çit','Demir Kapı/Pencere','Bahçe Kapısı','Teras Kapama','Çatı Kapama','Garaj Yapımı'],
+  'Ahşap': ['İşçilik','Tamir','Dekoratif Ürün','Lambri','Zımpara','Cila']
+};
+
+// Zorluk yüzde aralıkları
+const ZORLUK_ARALIK = {
+  'Kolay':   {min:0,   max:0,   label:'Sabit fiyat (+%0)'},
+  'Orta':    {min:30,  max:50,  label:'+%30 ile +%50 arası'},
+  'Zor':     {min:80,  max:100, label:'+%80 ile +%100 arası'},
+  'Çok Zor': {min:150, max:200, label:'+%150 ile +%200 arası'}
+};
+
+// AI Fiyat Senaryoları — kategori/dal bazında piyasa ortalamaları (TL, 2024)
+// AI Fiyat Senaryoları — Marmaris/Muğla 2026 piyasa ortalamaları
+// Kaynak: Armut.com, forelektrik.com, meslekmaas.com — Ocak-Haziran 2026
+// Not: Marmaris tatil bölgesi olup Türkiye ortalamasının ~%25 üzerindedir
+const AI_FIYAT_SENARYOLAR = {
+  // ── ELEKTRİK ──────────────────────────────────────────
+  // Günlük yevmiye 2026: 3.000-4.000₺, servis/muayene ücreti: 1.000-1.500₺
+  'Elektrik:Priz / Anahtar Montajı': {base:500,  label:'2026 Marmaris: 400-650₺/adet (servis dahil). Türkiye ort. 300-500₺, bölge farkı +%25'},
+  'Elektrik:Priz / Anahtar Tamiri':  {base:600,  label:'2026: Arıza servis ücreti 1.000-1.500₺ + işçilik. Basit tamir 500-700₺'},
+  'Elektrik:Kablo ve Hat Çekme':     {base:55,   perMetre:true, label:'2026: 45-70₺/metre işçilik. Gizli kanalda +%30'},
+  'Elektrik:Tavan Led Döşeme':       {base:150,  perUnit:true,  label:'2026: 120-200₺/spot işçilik. Sıva üstü 80₺, gömme 150₺+'},
+  'Elektrik:Avize Montaj / Tamir':   {base:800,  label:'2026: 600-1.000₺. Ağır/büyük avize 1.200₺+'},
+  'Elektrik:Dekoratif Aydınlatma':   {base:1200, label:'2026: 900-1.500₺ işçilik. Karmaşık sistem 2.000₺+'},
+  'Elektrik:Klima Elektrik Bağlantısı':{base:900, label:'2026: 700-1.200₺. Özel hat çekilecekse 1.500₺+'},
+  'Elektrik:Tesisat Yenileme':       {base:300,  perM2:true, label:'2026: 250-350₺/m² işçilik (malzeme hariç). 100m² daire ~30.000₺'},
+  'Elektrik:İnternet Arıza':         {base:700,  label:'2026: 600-1.000₺. Servis ücreti Marmaris\'te yüksek'},
+  'Elektrik:İnternet Kablo Çekme':   {base:50,   perMetre:true, label:'2026: 40-65₺/metre. Kanal açma gerekiyorsa +%40'},
+  'Elektrik:Sigorta Arızası / Değişimi':{base:800, label:'2026: 700-1.200₺. Pano değişimi 3.000-8.000₺'},
+  'Elektrik:Pano Montajı':           {base:5000, label:'2026: 4.000-7.000₺ işçilik. Malzeme ayrıca'},
+  'Elektrik:Tamirat':                {base:900,  label:'2026 servis ücreti: 1.000-1.500₺. Basit tamir dahil'},
+  'Elektrik:Tadilat':                {base:250,  perM2:true, label:'2026: 200-350₺/m². Komple tadilat 15.000₺+'},
+  'Elektrik:Montaj':                 {base:900,  label:'2026: 700-1.200₺ standart montaj işçilik'},
+  'Elektrik:TV Montaj':              {base:700,  label:'2026: 600-900₺. Duvara askı dahil. Kablo gizleme +300₺'},
+  // ── KLİMA ─────────────────────────────────────────────
+  // Kaynak: Armut klima montaj 2026: 3.500-5.250₺ standart. Marmaris +%25
+  'Klima:Montaj':                    {base:4500, label:'2026 Marmaris: 3.800-5.500₺ standart split (12-18K BTU). Yüksek kat/zor konum +%30'},
+  'Klima:Gaz Dolumu':                {base:1800, label:'2026: 1.500-2.500₺. R32 gaz + işçilik. Kaçak varsa +500₺'},
+  'Klima:İç Ünite Temizliği':        {base:1200, label:'2026: 1.000-1.500₺/kafa. Kimyasal temizlik dahil'},
+  'Klima:Dış Ünite Temizliği':       {base:900,  label:'2026: 800-1.200₺. Yüksek erişim gerekiyorsa +%40'},
+  'Klima:Kart Arıza':                {base:2000, label:'2026 işçilik: 1.500-2.500₺ + parça bedeli ayrıca'},
+  'Klima:Motor Arıza':               {base:2200, label:'2026 işçilik: 1.800-3.000₺ + motor bedeli'},
+  'Klima:Elektrik Arıza':            {base:1500, label:'2026: 1.200-2.000₺. Servis+tespit+işçilik'},
+  'Klima:Su Tahliye Sorunu':         {base:1100, label:'2026: 900-1.400₺. Tahliye hattı temizliği/yenileme'},
+  'Klima:Yer Değiştirme Sök/Tak':    {base:3500, label:'2026: 3.000-4.500₺. Söküm+nakil+montaj. Boru yetmezse +'},
+  'Klima:Tesisat Döşeme':            {base:180,  perMetre:true, label:'2026: 150-220₺/metre bakır boru+işçilik'},
+  // ── SIHHI TESİSAT ─────────────────────────────────────
+  // Kaynak: erkasutesisatcisi.com, enestesisat.com 2026
+  'Sıhhi Tesisat:Tıkanıklık Açma':   {base:1200, label:'2026 Marmaris: 1.000-1.600₺. Spiral/basınçlı açma. Gece/acil +%50'},
+  'Sıhhi Tesisat:Su Kaçağı Tespiti': {base:1500, label:'2026: 1.200-2.000₺ tespit işçilik. Tamir yaptırılırsa ±düşülebilir'},
+  'Sıhhi Tesisat:Su Kaçağı Tamiratı':{base:2500, label:'2026: 2.000-4.000₺+ işçilik. Kırım-döküm gerektiriyorsa 5.000₺+'},
+  'Sıhhi Tesisat:Şofben Montaj':     {base:1500, label:'2026: 1.200-2.000₺ işçilik. Kombi montajı 2.500-4.000₺'},
+  'Sıhhi Tesisat:Montaj':            {base:1300, label:'2026: 1.000-1.600₺ standart montaj (musluk, klozet vb.)'},
+  'Sıhhi Tesisat:Tamir':             {base:1100, label:'2026: 900-1.500₺. Servis ücreti Marmaris\'te 800₺+'},
+  'Sıhhi Tesisat:Arıza':             {base:1000, label:'2026: 800-1.400₺. Acil servis +%50 ek'},
+  'Sıhhi Tesisat:Döşeme':            {base:130,  perMetre:true, label:'2026: 110-160₺/metre PPR/PE-X boru işçilik (malzeme hariç)'},
+  // ── METAL / DEMİR ─────────────────────────────────────
+  // Kaynak: Armut 2026 demir kaynak/korkuluk, emirdemirdograma.com
+  'Metal:Kaynak İşçilik':            {base:250,  perSaat:true,  label:'2026 Marmaris: 200-300₺/saat. Günlük yevmiye 3.000-4.000₺'},
+  'Metal:Korkuluk':                  {base:900,  perMetre:true, label:'2026: 700-1.200₺/metre (malzeme+işçilik). Ferforje 1.500₺+/m'},
+  'Metal:Küpeşte':                   {base:750,  perMetre:true, label:'2026: 600-950₺/metre. Paslanmaz çelik 1.200₺+/m'},
+  'Metal:Panel Çit':                 {base:550,  perMetre:true, label:'2026: 450-700₺/metre (malzeme+işçilik+beton)'},
+  'Metal:Demir Kapı/Pencere':        {base:6000, label:'2026: 5.000-8.000₺/kanat (malzeme+işçilik). Büyük/özel 10.000₺+'},
+  'Metal:Bahçe Kapısı':              {base:8000, label:'2026: 6.500-12.000₺. Otomatik sistem +5.000₺'},
+  'Metal:Teras Kapama':              {base:900,  perM2:true, label:'2026: 750-1.200₺/m² çelik konstrüksiyon+profil (malzeme dahil)'},
+  'Metal:Çatı Kapama':               {base:800,  perM2:true, label:'2026: 650-1.000₺/m² trapez/sandviç panel+işçilik'},
+  'Metal:Garaj Yapımı':              {base:18000,label:'2026: 15.000-25.000₺ standart tek araba. Otomatik kapı +8.000₺'},
+  'Metal:Ferforje':                  {base:1300, perMetre:true, label:'2026: 1.100-1.600₺/metre. El dövmesi özel tasarım 2.000₺+/m'},
+  // ── AHŞAP ─────────────────────────────────────────────
+  // Kaynak: Armut marangoz/lambri/parke 2026, sistrecilausta.com
+  'Ahşap:İşçilik':                   {base:250,  perSaat:true,  label:'2026 Marmaris marangoz: 200-300₺/saat. Günlük 2.500-3.500₺'},
+  'Ahşap:Tamir':                     {base:1200, label:'2026: 900-1.600₺. Kapı/çerçeve tamiri 800-1.200₺'},
+  'Ahşap:Lambri':                    {base:280,  perM2:true, label:'2026: 230-350₺/m² sadece işçilik. Malzeme dahil 500-800₺/m²'},
+  'Ahşap:Zımpara':                   {base:180,  perM2:true, label:'2026: 150-220₺/m² (zemin zımparası). Parke yüzey 200-280₺/m²'},
+  'Ahşap:Cila':                      {base:220,  perM2:true, label:'2026: 180-280₺/m². Su bazlı 180₺, solvent bazlı 250₺+'},
+  'Ahşap:Dekoratif Ürün':            {base:2500, label:'2026: 1.500-4.000₺+ işçilik. Özel sipariş projeye göre'},
+};
+
+// DB'de fiyatlar
+if(!DB.fiyatlar) DB.fiyatlar = [];
+if(!DB.iscillikSecilen) DB.iscillikSecilen = [];
+
+// ── MODAL FONKSİYONLARI ──────────────────────────────────
+
+function openFiyatModal(id){
+  document.getElementById('fiyat-modal-baslik').textContent = id ? 'Fiyatı Düzenle' : 'Fiyat Ekle';
+  document.getElementById('fiyat-id').value = id || '';
+  if(id){
+    const f = DB.fiyatlar.find(x=>x.id===id);
+    if(f){
+      document.getElementById('fiyat-kategori').value = f.kategori;
+      fiyatDalGuncelle();
+      setTimeout(()=>document.getElementById('fiyat-dal').value = f.dal, 50);
+      document.getElementById('fiyat-tarif').value = f.tarif||'';
+      document.getElementById('fiyat-sabit').value = f.sabitFiyat||'';
+      document.getElementById('fiyat-zorluk').value = f.zorluk||'Orta';
+      document.getElementById('fiyat-gercek-min').value = f.gercekFiyatMin||'';
+      document.getElementById('fiyat-gercek-max').value = f.gercekFiyatMax||'';
+      document.getElementById('fiyat-sure').value = f.iscillikSure||'';
+      document.getElementById('fiyat-notlar').value = f.notlar||'';
+      document.getElementById('fiyat-ai').value = f.aiFiyat||'';
+      document.getElementById('fiyat-ai-goster').textContent = f.aiFiyat ? fmt(f.aiFiyat)+' ₺' : '—';
+    }
+  } else {
+    ['fiyat-tarif','fiyat-notlar'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['fiyat-sabit','fiyat-gercek-min','fiyat-gercek-max','fiyat-sure'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('fiyat-kategori').value='';
+    document.getElementById('fiyat-dal').innerHTML='<option value="">Önce kategori seçin</option>';
+    document.getElementById('fiyat-zorluk').value='Orta';
+    document.getElementById('fiyat-ai-goster').textContent='—';
+    document.getElementById('fiyat-ai-aciklama').textContent='';
+    document.getElementById('fiyat-ai').value='';
+  }
+  fiyatHesapla();
+  openModal('modal-fiyat');
+}
+
+function fiyatDalGuncelle(){
+  const kat = document.getElementById('fiyat-kategori').value;
+  const dalSel = document.getElementById('fiyat-dal');
+  const dallar = FIYAT_KATEGORILER[kat] || [];
+  dalSel.innerHTML = dallar.length
+    ? dallar.map(d=>`<option value="${d}">${d}</option>`).join('')
+    : '<option value="">Dal yok</option>';
+  fiyatHesapla();
+}
+
+function fiyatHesapla(){
+  const zorluk = document.getElementById('fiyat-zorluk').value;
+  const ar = ZORLUK_ARALIK[zorluk] || ZORLUK_ARALIK['Orta'];
+  const bilgiEl = document.getElementById('fiyat-aralik-bilgi');
+  if(bilgiEl) bilgiEl.textContent = ar.label;
+  // AI hesap
+  fiyatAiHesapla();
+}
+
+function fiyatAiHesapla(){
+  const kat = document.getElementById('fiyat-kategori').value;
+  const dal = document.getElementById('fiyat-dal').value;
+  const zorluk = document.getElementById('fiyat-zorluk').value;
+  const sabit = parseFloat(document.getElementById('fiyat-sabit').value)||0;
+  const sure = parseFloat(document.getElementById('fiyat-sure').value)||1;
+  const key = kat+':'+dal;
+  const senaryo = AI_FIYAT_SENARYOLAR[key];
+  let aiTahmini = 0, aciklama = '';
+  if(senaryo){
+    let base = senaryo.base;
+    if(senaryo.perSaat) base = base * sure;
+    else if(senaryo.perMetre || senaryo.perM2 || senaryo.perUnit) base = base; // kullanıcı miktar bilmeli
+    const ar = ZORLUK_ARALIK[zorluk] || ZORLUK_ARALIK['Orta'];
+    const carpan = 1 + (ar.min+ar.max)/2/100;
+    aiTahmini = Math.round(base * carpan);
+    aciklama = senaryo.label + (zorluk!=='Kolay'?' · Zorluk katsayısı uygulandı':'');
+  } else if(sabit > 0){
+    const ar = ZORLUK_ARALIK[zorluk] || ZORLUK_ARALIK['Orta'];
+    const carpan = 1 + (ar.min+ar.max)/2/100;
+    aiTahmini = Math.round(sabit * carpan);
+    aciklama = 'Sabit fiyat ve zorluk katsayısına göre hesaplandı';
+  }
+  const gosterEl = document.getElementById('fiyat-ai-goster');
+  const aciklamaEl = document.getElementById('fiyat-ai-aciklama');
+  const inputEl = document.getElementById('fiyat-ai');
+  if(gosterEl) gosterEl.textContent = aiTahmini ? fmt(aiTahmini)+' ₺' : '—';
+  if(aciklamaEl) aciklamaEl.textContent = aciklama;
+  if(inputEl) inputEl.value = aiTahmini || '';
+}
+
+async function saveFiyat(btn){
+  if(btn) btn.disabled=true;
+  try{
+    const id = document.getElementById('fiyat-id').value;
+    const kategori = document.getElementById('fiyat-kategori').value;
+    const dal = document.getElementById('fiyat-dal').value;
+    const tarif = document.getElementById('fiyat-tarif').value.trim();
+    if(!kategori||!dal||!tarif){showToast('Kategori, dal ve tarif zorunlu','red');return;}
+    const payload = {
+      kategori, dal, tarif,
+      sabit_fiyat: parseFloat(document.getElementById('fiyat-sabit').value)||0,
+      zorluk: document.getElementById('fiyat-zorluk').value,
+      gercek_fiyat_min: parseFloat(document.getElementById('fiyat-gercek-min').value)||0,
+      gercek_fiyat_max: parseFloat(document.getElementById('fiyat-gercek-max').value)||0,
+      iscilik_sure: parseFloat(document.getElementById('fiyat-sure').value)||0,
+      ai_fiyat: parseFloat(document.getElementById('fiyat-ai').value)||0,
+      notlar: document.getElementById('fiyat-notlar').value,
+      aktif: true
+    };
+    if(id) await sbFetch('fiyatlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    else await sbFetch('fiyatlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    await loadDB();
+    closeModal('modal-fiyat');
+    renderFiyatlar();
+    showToast(id?'Güncellendi':'Fiyat eklendi','green');
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function deleteFiyat(id,e){
+  e.stopPropagation();
+  if(!confirm('Bu fiyatı silmek istiyor musunuz?'))return;
+  await sbFetch('fiyatlar?id=eq.'+id,{method:'DELETE'});
+  await loadDB();renderFiyatlar();showToast('Silindi','amber');
+}
+
+// ── RENDER ───────────────────────────────────────────────
+
+let fiyatAktifKat = '';
+
+function fiyatKatFiltre(kat, btn){
+  fiyatAktifKat = kat;
+  document.querySelectorAll('.fiyat-kat-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderFiyatlar();
+}
+
+function renderFiyatlar(){
+  const el = document.getElementById('list-fiyatlar');if(!el)return;
+  let liste = (DB.fiyatlar||[]).filter(f=>f.aktif!==false);
+  if(fiyatAktifKat) liste = liste.filter(f=>f.kategori===fiyatAktifKat);
+  liste.sort((a,b)=>a.tarif.localeCompare(b.tarif,'tr'));
+  if(!liste.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">Fiyat listesi boş</div><div class="empty-sub">Fiyat Ekle ile başlayın</div></div>';
+    return;
+  }
+  const katRenk={Elektrik:'var(--amber)',Klima:'var(--blue)',  'Sıhhi Tesisat':'var(--teal)',Metal:'#9ca3af',Ahşap:'#a16207'};
+  const katEmoji={Elektrik:'⚡',Klima:'❄️','Sıhhi Tesisat':'🔧',Metal:'🔩',Ahşap:'🪵'};
+  el.innerHTML = liste.map((f,i)=>{
+    const renk = katRenk[f.kategori]||'var(--text2)';
+    const emoji = katEmoji[f.kategori]||'';
+    const zorlukRenk={Kolay:'var(--green)',Orta:'var(--amber)',Zor:'var(--red)','Çok Zor':'#9333ea'};
+    return `<div class="card" style="padding:14px;cursor:pointer;" onclick="openFiyatModal(${f.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:11px;color:${renk};font-weight:700;background:${renk}22;padding:2px 7px;border-radius:20px;">${emoji} ${f.kategori}</span>
+            <span style="font-size:11px;color:var(--text3);">${f.dal}</span>
+          </div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;">${f.tarif}</div>
+          ${f.notlar?`<div style="font-size:11px;color:var(--text3);">${f.notlar}</div>`:''}
+        </div>
+        <div onclick="event.stopPropagation()">
+          ${USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteFiyat(${f.id},event)" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:''}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;border-top:1px solid var(--border);padding-top:10px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Sabit</div>
+          <div class="num" style="font-weight:700;font-size:15px;">${f.sabitFiyat?fmt(f.sabitFiyat)+' ₺':'—'}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;justify-content:center;gap:4px;">
+            <span style="color:${zorlukRenk[f.zorluk]||'var(--amber)'};">●</span>${f.zorluk||'Orta'}
+          </div>
+          <div class="num" style="font-weight:700;font-size:14px;color:var(--amber);">
+            ${f.gercekFiyatMin&&f.gercekFiyatMax?fmt(f.gercekFiyatMin)+' - '+fmt(f.gercekFiyatMax)+' ₺':'—'}
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px;color:#b39ddb;margin-bottom:3px;">✦ AI Tahmin</div>
+          <div class="num" style="font-weight:700;font-size:15px;color:#b39ddb;">${f.aiFiyat?fmt(f.aiFiyat)+' ₺':'—'}</div>
+        </div>
+      </div>
+      ${f.iscillikSure?`<div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:right;">⏱ Tahmini süre: ${f.iscillikSure} saat</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── İŞÇİLİK MODALı ──────────────────────────────────────
+
+let iscillikAktifKat = '';
+let iscillikSecilen = []; // {fiyatId, tarif, tutar, adet}
+
+function openIscillikModal(){
+  iscillikSecilen = [];
+  iscillikAktifKat = '';
+  document.querySelectorAll('.iscilik-kat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.iscilik-kat-btn')?.classList.add('active');
+  const araEl = document.getElementById('iscilik-ara');if(araEl)araEl.value='';
+  const manuelEl = document.getElementById('iscilik-manuel');if(manuelEl)manuelEl.value='';
+  renderIscillikListesi();
+  renderIscillikSecilen();
+  openModal('modal-iscilik');
+}
+
+function isciliKatFiltre(kat, btn){
+  iscillikAktifKat = kat;
+  document.querySelectorAll('.iscilik-kat-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderIscillikListesi();
+}
+
+function renderIscillikListesi(){
+  const el = document.getElementById('iscilik-fiyat-listesi');if(!el)return;
+  const ara = (document.getElementById('iscilik-ara')?.value||'').toLowerCase();
+  let liste = (DB.fiyatlar||[]).filter(f=>f.aktif!==false);
+  if(iscillikAktifKat) liste = liste.filter(f=>f.kategori===iscillikAktifKat);
+  if(ara) liste = liste.filter(f=>(f.tarif||'').toLowerCase().includes(ara)||(f.dal||'').toLowerCase().includes(ara));
+  liste.sort((a,b)=>a.tarif.localeCompare(b.tarif,'tr'));
+  if(!liste.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Fiyat bulunamadı</div>';return;}
+  el.innerHTML = liste.map(f=>{
+    const secili = iscillikSecilen.find(s=>s.fiyatId===f.id);
+    const fiyatlar = [
+      f.sabitFiyat?fmt(f.sabitFiyat)+' ₺ (sabit)':null,
+      f.gercekFiyatMin?fmt(f.gercekFiyatMin)+'-'+fmt(f.gercekFiyatMax)+' ₺':null,
+      f.aiFiyat?'✦ '+fmt(f.aiFiyat)+' ₺':null
+    ].filter(Boolean);
+    return `<div style="padding:10px 12px;background:${secili?'rgba(126,179,240,0.12)':'var(--bg2)'};border:1px solid ${secili?'var(--blue)':'var(--border)'};border-radius:var(--r-sm);cursor:pointer;" onclick="iscillikToggle(${f.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px;">${f.tarif}</div>
+          <div style="font-size:11px;color:var(--text3);">${f.kategori} · ${f.dal}${f.iscillikSure?' · ⏱'+f.iscillikSure+'s':''}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px;">${fiyatlar.join(' | ')}</div>
+        </div>
+        <div style="font-size:18px;">${secili?'✅':'○'}</div>
+      </div>
+      ${secili?`<div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+        <div style="font-size:12px;color:var(--text2);">Adet:</div>
+        <input type="number" value="${secili.adet}" min="1" onclick="event.stopPropagation()" onchange="iscillikAdetGuncelle(${f.id},this.value)" style="width:50px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;text-align:center;">
+        <div style="font-size:12px;color:var(--text2);">Tutar:</div>
+        <input type="number" value="${secili.tutar}" onclick="event.stopPropagation()" onchange="iscillikTutarGuncelle(${f.id},this.value)" style="width:80px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font-size:13px;" placeholder="₺">
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function iscillikToggle(fiyatId){
+  const f = DB.fiyatlar.find(x=>x.id===fiyatId);if(!f)return;
+  const idx = iscillikSecilen.findIndex(s=>s.fiyatId===fiyatId);
+  if(idx>=0){
+    iscillikSecilen.splice(idx,1);
+  } else {
+    const tutar = f.aiFiyat||f.sabitFiyat||0;
+    iscillikSecilen.push({fiyatId, tarif:f.tarif, tutar, adet:1});
+  }
+  renderIscillikListesi();
+  renderIscillikSecilen();
+}
+
+function iscillikAdetGuncelle(fiyatId, adet){
+  const s = iscillikSecilen.find(x=>x.fiyatId===fiyatId);
+  if(s){s.adet=parseInt(adet)||1;renderIscillikSecilen();}
+}
+
+function iscillikTutarGuncelle(fiyatId, tutar){
+  const s = iscillikSecilen.find(x=>x.fiyatId===fiyatId);
+  if(s){s.tutar=parseFloat(tutar)||0;renderIscillikSecilen();}
+}
+
+function renderIscillikSecilen(){
+  const wrap = document.getElementById('iscilik-secilen-wrap');
+  const liste = document.getElementById('iscilik-secilen-listesi');
+  const toplamEl = document.getElementById('iscilik-toplam');
+  const gecerliEl = document.getElementById('iscilik-gecerli');
+  if(!wrap)return;
+  wrap.style.display = iscillikSecilen.length?'block':'none';
+  const toplam = iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0);
+  if(toplamEl)toplamEl.textContent = fmt(toplam)+' ₺';
+  iscillikManuelGuncelle();
+  if(!liste)return;
+  liste.innerHTML = iscillikSecilen.map(s=>`
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">
+      <span>${s.tarif}${s.adet>1?' x'+s.adet:''}</span>
+      <span class="num" style="color:var(--green);font-weight:600;">${fmt(s.tutar*s.adet)} ₺</span>
+    </div>`).join('');
+}
+
+function iscillikManuelGuncelle(){
+  const manuel = parseFloat(document.getElementById('iscilik-manuel')?.value)||0;
+  const toplam = iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0);
+  const gecerli = manuel>0?manuel:toplam;
+  const el = document.getElementById('iscilik-gecerli');
+  if(el)el.textContent = fmt(gecerli)+' ₺';
+}
+
+function iscillikUygula(){
+  const toplam = iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0);
+  const manuel = parseFloat(document.getElementById('iscilik-manuel')?.value)||0;
+  const gecerli = manuel>0?manuel:toplam;
+  // İşlem formuna yaz
+  const manuelEl = document.getElementById('mi-iscilik-manuel');
+  if(manuelEl)manuelEl.value = gecerli||'';
+  // Seçilenleri özet olarak göster
+  const secilenEl = document.getElementById('mi-iscilik-secilen');
+  if(secilenEl){
+    secilenEl.style.display='block';
+    secilenEl.innerHTML = iscillikSecilen.map(s=>`• ${s.tarif}: ${fmt(s.tutar*s.adet)} ₺`).join('<br>');
+  }
+  // Toplam tutarı işlem tutarına da öner
+  const tutarEl = document.getElementById('mi-tutar');
+  if(tutarEl&&!tutarEl.value){tutarEl.value=gecerli;calcYardimci();}
+  closeModal('modal-iscilik');
+  showToast(`${iscillikSecilen.length} işçilik · ${fmt(gecerli)} ₺ uygulandı`,'green');
+}
+
+// ── loadDB entegrasyonu ──────────────────────────────────
+
+async function loadFiyatlar(){
+  try{
+    const data = await sbFetch('fiyatlar?order=tarif.asc&aktif=eq.true');
+    DB.fiyatlar = (data||[]).map(f=>({
+      id:f.id, kategori:f.kategori, dal:f.dal, tarif:f.tarif,
+      sabitFiyat:f.sabit_fiyat, zorluk:f.zorluk,
+      gercekFiyatMin:f.gercek_fiyat_min, gercekFiyatMax:f.gercek_fiyat_max,
+      iscillikSure:f.iscilik_sure, aiFiyat:f.ai_fiyat,
+      notlar:f.notlar, aktif:f.aktif
+    }));
+  }catch(e){DB.fiyatlar=[];}
+}
+
+// PAGE_TITLES güncelle
+if(typeof PAGE_TITLES !== 'undefined') PAGE_TITLES['fiyatlar'] = '💰 Fiyat Listesi';
 
 // ============================================================ BAŞLAT
 window.addEventListener('DOMContentLoaded',()=>{
