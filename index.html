@@ -2174,6 +2174,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="fi"><label>Gerekli Malzemeler</label><textarea id="proje-malzemeler" rows="2" placeholder="Kablo, sigorta, priz vb..."></textarea></div>
       <div class="fi"><label>Açıklama</label><textarea id="proje-aciklama" rows="2" placeholder="Proje detayları..."></textarea></div>
+      <!-- Dosya/Fotoğraf Yükleme -->
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Belgeler</div>
+        <div id="proje-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+            📷 Kamera / Galeri
+            <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDosyaEkle(this,'proje')">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+            📁 Dosya Seç
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDosyaEkle(this,'proje')">
+          </label>
+        </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje')">İptal</button>
@@ -2228,6 +2242,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="fi"><label>Açıklama / Not</label><textarea id="teklif-aciklama" rows="3" placeholder="Teklif notları, ödeme koşulları..."></textarea></div>
       <button type="button" onclick="teklifAiAciklamaEkle()" class="btn btn-secondary btn-full" style="background:rgba(139,92,246,0.1);color:#b39ddb;border-color:rgba(139,92,246,0.3);">✦ AI Açıklama Ekle</button>
+      <!-- Dosya/Fotoğraf Yükleme -->
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Belgeler</div>
+        <div id="teklif-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+            📷 Kamera / Galeri
+            <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDosyaEkle(this,'teklif')">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+            📁 Dosya Seç
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDosyaEkle(this,'teklif')">
+          </label>
+        </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-teklif')">İptal</button>
@@ -6419,6 +6447,8 @@ function openProjeModal(id){
     if(p.musteriId){const k=getKisi(p.musteriId);if(k)acSelect('proje-ac',k.id,k.isim,k.tip);}
   }
   openModal('modal-proje');
+  // Mevcut ekleri yükle
+  eklerModalAc('proje', id||null);
 }
 
 async function saveProje(btn){
@@ -6428,8 +6458,14 @@ async function saveProje(btn){
     const isim=document.getElementById('proje-isim').value.trim();
     if(!isim){showToast('Proje adı gerekli','red');return;}
     const payload={isim,durum:document.getElementById('proje-durum').value,zorluk:document.getElementById('proje-zorluk')?.value||'Orta',baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,adres:document.getElementById('proje-adres')?.value||'',malzemeler:document.getElementById('proje-malzemeler')?.value||'',en_iyi_fiyat:parseFloat(document.getElementById('proje-en-iyi-fiyat')?.value)||null,teklif_fiyat:parseFloat(document.getElementById('proje-teklif-fiyat')?.value)||null,musteri_teklif:parseFloat(document.getElementById('proje-musteri-teklif')?.value)||null,malzeme_tahmini:parseFloat(document.getElementById('proje-malzeme-tahmini')?.value)||null,iscilik_tahmini:parseFloat(document.getElementById('proje-iscilik-tahmini')?.value)||null,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
+    let projeKayitId = id ? parseInt(id) : null;
     if(id)await sbFetch('projeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
-    else await sbFetch('projeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    else{
+      const r=await sbFetch('projeler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});
+      projeKayitId=r&&r[0]?r[0].id:null;
+    }
+    // Ekleri yükle
+    if(projeKayitId) await eklerKaydet('proje', projeKayitId).catch(()=>{});
     await loadDB();closeModal('modal-proje');showToast(id?'Güncellendi':'Proje eklendi','green');
     if(document.getElementById('proje-durum')?.value==='Tamamlandı')setTimeout(()=>window.animProjeTamamlandi&&animProjeTamamlandi(),200);
   }catch(e){showToast('Hata!','red');}
@@ -6498,6 +6534,8 @@ function openTeklifModal(id){
   }
   hesaplaTeklifToplam();
   openModal('modal-teklif');
+  // Mevcut ekleri yükle
+  eklerModalAc('teklif', id||null);
 }
 
 // teklifKalemEkle — yeni sürüm altta tanımlı
@@ -6516,8 +6554,10 @@ async function saveTeklif(btn){
     if(!kalemler.length){showToast('En az bir kalem girin','red');return;}
     const toplam=kalemler.reduce((a,k)=>a+k.toplam,0);
     const payload={kisi_id:kisiId,tarih:new Date(document.getElementById('teklif-tarih').value).toISOString(),gecerlilik_tarihi:document.getElementById('teklif-gecerlilik').value||null,kalemler:JSON.stringify(kalemler),toplam,aciklama:document.getElementById('teklif-aciklama').value};
+    let teklifKayitId = id ? parseInt(id) : null;
     if(id){await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});}
-    else{const r=await sbFetch('teklifler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});if(r&&r[0])await guncelOnayToken(r[0].id);}
+    else{const r=await sbFetch('teklifler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});if(r&&r[0]){teklifKayitId=r[0].id;await guncelOnayToken(r[0].id);}}
+    if(teklifKayitId) await eklerKaydet('teklif', teklifKayitId).catch(()=>{});
     await loadDB();closeModal('modal-teklif');showToast(id?'Güncellendi':'Teklif oluşturuldu','green');
   }catch(e){showToast('Hata!','red');console.error(e);}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -8441,7 +8481,7 @@ function aiAyarKaydet(){
 
 // ============================================================ TEKLİF ÖNİZLEME
 
-function teklifOnizlemeGoster(id){
+async function teklifOnizlemeGoster(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
   const k=getKisi(t.kisiId);
   const tarihFmt=new Date(t.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
@@ -8454,6 +8494,11 @@ function teklifOnizlemeGoster(id){
   const iscillikKalemleri=(t.kalemler||[]).filter(k=>k.tip==='iscilik');
   const malzemeToplam=malzemeKalemleri.reduce((a,k)=>a+k.toplam,0);
   const iscilikToplam=iscillikKalemleri.reduce((a,k)=>a+k.toplam,0);
+
+  // Ekleri çek
+  let teklifEkleri=[];
+  try{teklifEkleri=await sbFetch('ekler?teklif_id=eq.'+id+'&order=created_at.asc')||[];}catch(e){}
+  const resimEkler=teklifEkleri.filter(e=>e.dosya_tipi!=='pdf').slice(0,6);
 
   const malzemeRows=malzemeKalemleri.map((km,i)=>`
     <tr>
@@ -8620,6 +8665,16 @@ function teklifOnizlemeGoster(id){
     ${t.aciklama?`<div class="note-block"><div class="note-text">${t.aciklama.replace(/\n/g,'<br>')}</div></div>`:''}
   </div>
   <!-- İMZA -->
+  ${resimEkler.length?`
+  <div style="padding:20px 44px;border-top:1px solid #e2e8f0;">
+    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">İş Görselleri</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      ${resimEkler.map(e=>`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
+      </div>`).join('')}
+    </div>
+    ${teklifEkleri.length>6?`<div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center;">+ ${teklifEkleri.length-6} görsel daha mevcut</div>`:''}
+  </div>`:''}
   <div class="sign-section">
     <div class="sign-title">Onay & İmza</div>
     <div class="sign-grid">
@@ -11118,14 +11173,15 @@ async function isRaporuYazdirAc(projeId){
   const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
   const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
   const kar=ciro-gider;
-  let malzemeler=[],personeller=[],notlar=[];
+  let malzemeler=[],personeller=[],notlar=[],projeEkleri=[];
   try{
-    const [md,pd,nd]=await Promise.all([
+    const [md,pd,nd,ed]=await Promise.all([
       sbFetch('proje_malzemeler?proje_id=eq.'+projeId+'&order=id.asc'),
       sbFetch('proje_personeller?proje_id=eq.'+projeId),
-      sbFetch('proje_notlar?proje_id=eq.'+projeId+'&order=created_at.asc')
+      sbFetch('proje_notlar?proje_id=eq.'+projeId+'&order=created_at.asc'),
+      sbFetch('ekler?proje_id=eq.'+projeId+'&order=created_at.asc').catch(()=>[])
     ]);
-    malzemeler=md||[];personeller=pd||[];notlar=nd||[];
+    malzemeler=md||[];personeller=pd||[];notlar=nd||[];projeEkleri=(ed||[]).filter(e=>e.dosya_tipi!=='pdf').slice(0,6);
   }catch(e){}
   const malzemeToplam=malzemeler.reduce((a,m)=>a+(parseFloat(m.toplam)||0),0);
   const tarihFmt=new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
@@ -11260,6 +11316,12 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     ${notlar.map(n=>`<div class="note"><div class="note-txt">${n.not_metni}</div><div class="note-dt">${new Date(n.created_at).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('')}
     </div>`:''}
     ${p.aciklama?`<div class="sec"><div class="sec-ttl">ℹ️ Proje Açıklaması</div><div class="note"><div class="note-txt">${p.aciklama}</div></div></div>`:''}
+    ${projeEkleri.length?`<div class="sec"><div class="sec-ttl">📷 İş Görselleri</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      ${projeEkleri.map(e=>`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
+      </div>`).join('')}
+    </div></div>`:''}
   </div>
   <div class="sign-sec">
     <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">Onay & İmza</div>
@@ -11913,6 +11975,168 @@ function aiKrediYanit(soru){
   const kv=aiVeriOzetiKredi();
   return `🏦 Aktif Banka Kredileri (${aktif.length})\n${detay}\n\nToplam kalan: ${fmt(kv.toplamKrediBorc)} ₺ — Aylık taksit: ${fmt(kv.aylikKrediTaksit)} ₺\nTicari: ${fmt(kv.ticariKrediBorc)} ₺ · Şahsi: ${fmt(kv.sahsiKrediBorc)} ₺`;
 }
+
+// ============================================================
+// TEKLIF & PROJE EKLER SİSTEMİ
+// ============================================================
+
+// tip: 'teklif' veya 'proje' — kayitId: kayıt ID'si (düzenleme modunda)
+let _eklerTeklifYeni = [];   // Yeni eklenen, henüz yüklenmemiş
+let _eklerProjeYeni  = [];   // Yeni eklenen, henüz yüklenmemiş
+let _eklerTeklifMevcut = []; // DB'den gelen mevcut ekler
+let _eklerProjeMevcut  = []; // DB'den gelen mevcut ekler
+
+async function eklerYukle(tip, kayitId) {
+  if (!kayitId) return [];
+  try {
+    const alan = tip === 'teklif' ? 'teklif_id' : 'proje_id';
+    const data = await sbFetch(`ekler?${alan}=eq.${kayitId}&order=created_at.asc`);
+    return data || [];
+  } catch(e) { return []; }
+}
+
+function eklerGridGuncelle(tip) {
+  const gridId = tip === 'teklif' ? 'teklif-ekler-grid' : 'proje-ekler-grid';
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+
+  const mevcut = tip === 'teklif' ? _eklerTeklifMevcut : _eklerProjeMevcut;
+  const yeni   = tip === 'teklif' ? _eklerTeklifYeni   : _eklerProjeYeni;
+  const toplam = mevcut.length + yeni.length;
+
+  let html = '';
+
+  // Mevcut (DB'den) dosyalar
+  mevcut.forEach((ek, i) => {
+    const url = ek.url || ek.dosya_url;
+    const isPdf = (url||'').toLowerCase().includes('.pdf') || ek.dosya_tipi === 'pdf';
+    html += `<div style="position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;background:var(--bg2);border:1px solid var(--border);">
+      ${isPdf
+        ? `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;cursor:pointer;" onclick="window.open('${url}','_blank')">
+            <span style="font-size:24px;">📄</span>
+            <span style="font-size:9px;color:var(--text3);text-align:center;padding:0 4px;word-break:break-all;">${(ek.dosya_adi||'PDF').substring(0,20)}</span>
+           </div>`
+        : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="window.open('${url}','_blank')" loading="lazy">`
+      }
+      <button onclick="eklerMevcutSil('${ek.id}','${tip}')"
+        style="position:absolute;top:3px;right:3px;background:rgba(200,50,50,0.85);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>`;
+  });
+
+  // Yeni (önizleme) dosyalar
+  yeni.forEach((item, i) => {
+    const isPdf = item.file.type === 'application/pdf';
+    html += `<div style="position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;background:var(--bg2);border:1px dashed var(--border2);">
+      ${isPdf
+        ? `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;">
+            <span style="font-size:24px;">📄</span>
+            <span style="font-size:9px;color:var(--text3);text-align:center;padding:0 4px;">${item.file.name.substring(0,20)}</span>
+           </div>`
+        : `<img src="${item.preview}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`
+      }
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);font-size:9px;color:#aaa;text-align:center;padding:2px;">Yükleniyor...</div>
+      <button onclick="eklerYeniSil(${i},'${tip}')"
+        style="position:absolute;top:3px;right:3px;background:rgba(200,50,50,0.85);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>`;
+  });
+
+  grid.innerHTML = html || '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Henüz dosya eklenmedi</div>';
+}
+
+function eklerDosyaEkle(input, tip) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const yeni = tip === 'teklif' ? _eklerTeklifYeni : _eklerProjeYeni;
+  const mevcut = tip === 'teklif' ? _eklerTeklifMevcut : _eklerProjeMevcut;
+
+  const kalan = 6 - mevcut.length - yeni.length;
+  if (kalan <= 0) { showToast('Maksimum 6 dosya yüklenebilir', 'amber'); return; }
+
+  const eklenecek = files.slice(0, kalan);
+  if (files.length > kalan) showToast(`${files.length - kalan} dosya limit aşımı nedeniyle eklenmedi`, 'amber');
+
+  let bekleyen = eklenecek.length;
+  eklenecek.forEach(file => {
+    if (file.type === 'application/pdf') {
+      yeni.push({ file, preview: null });
+      bekleyen--;
+      if (bekleyen === 0) eklerGridGuncelle(tip);
+    } else {
+      const reader = new FileReader();
+      reader.onload = e => {
+        yeni.push({ file, preview: e.target.result });
+        bekleyen--;
+        if (bekleyen === 0) eklerGridGuncelle(tip);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Input'u temizle (aynı dosya tekrar seçilebilsin)
+  input.value = '';
+}
+
+function eklerYeniSil(idx, tip) {
+  if (tip === 'teklif') _eklerTeklifYeni.splice(idx, 1);
+  else _eklerProjeYeni.splice(idx, 1);
+  eklerGridGuncelle(tip);
+}
+
+async function eklerMevcutSil(ekId, tip) {
+  try {
+    await sbFetch('ekler?id=eq.' + ekId, { method: 'DELETE' });
+    if (tip === 'teklif') _eklerTeklifMevcut = _eklerTeklifMevcut.filter(e => String(e.id) !== String(ekId));
+    else _eklerProjeMevcut = _eklerProjeMevcut.filter(e => String(e.id) !== String(ekId));
+    eklerGridGuncelle(tip);
+    showToast('Dosya silindi', 'amber');
+  } catch(e) { showToast('Silinemedi: ' + e.message, 'red'); }
+}
+
+async function eklerKaydet(tip, kayitId) {
+  const yeni = tip === 'teklif' ? _eklerTeklifYeni : _eklerProjeYeni;
+  if (!yeni.length) return;
+
+  const bucket = 'ekler';
+  const alan   = tip === 'teklif' ? 'teklif_id' : 'proje_id';
+  const klasor = tip === 'teklif' ? 'teklif-ekler' : 'proje-ekler';
+
+  const hatalar = [];
+  for (const item of yeni) {
+    try {
+      // Fotoğrafı sıkıştır
+      let dosya = item.file;
+      if (dosya.type.startsWith('image/')) {
+        dosya = await gorselSikistir(dosya, 1200, 0.78).catch(() => dosya);
+      }
+      const url = await sbStorage(bucket + '/' + klasor, dosya);
+      await sbFetch('ekler', {
+        method: 'POST', prefer: 'return=minimal',
+        body: JSON.stringify({
+          [alan]: kayitId,
+          url,
+          dosya_adi: item.file.name,
+          dosya_tipi: item.file.type.includes('pdf') ? 'pdf' : 'image',
+          dosya_boyut: item.file.size
+        })
+      });
+    } catch(e) { hatalar.push(item.file.name + ': ' + e.message); }
+  }
+
+  if (tip === 'teklif') _eklerTeklifYeni = [];
+  else _eklerProjeYeni = [];
+
+  if (hatalar.length) showToast('Bazı dosyalar yüklenemedi: ' + hatalar[0], 'red');
+}
+
+async function eklerModalAc(tip, kayitId) {
+  // Modal açılırken mevcut ekleri yükle ve yeni listesini sıfırla
+  const mevcut = await eklerYukle(tip, kayitId);
+  if (tip === 'teklif') { _eklerTeklifMevcut = mevcut; _eklerTeklifYeni = []; }
+  else { _eklerProjeMevcut = mevcut; _eklerProjeYeni = []; }
+  eklerGridGuncelle(tip);
+}
+
 
 </script>
 </body>
