@@ -2530,7 +2530,7 @@ async function loadDB(){
       sbFetch('yardimci_islemleri?order=tarih.desc&select=*'),
       sbFetch('takvim?order=tarih.asc&select=*'),
       sbFetch('stok?order=ad.asc&select=*'),
-      sbFetch('stok_hareketleri?order=tarih.desc&select=*').catch(()=>[]),
+      sbFetch('stok_hareketleri?order=tarih.desc&select=*&limit=500').catch(()=>[]),
       sbFetch('sablonlar?order=id.asc&select=*'),
       sbFetch('ekler?select=*').catch(()=>[]),
       sbFetch('personeller?order=isim.asc&select=*').catch(()=>[]),
@@ -3218,7 +3218,7 @@ async function deleteIslem(id,event){
 
 // ============================================================ İŞLEM FORMU
 const ISLETME_HİZ={"Elektrik":["Tamirat","Tadilat","Montaj","TV Montaj","Kablo ve Hat Çekme","Tavan Led Döşeme","Avize Montaj / Tamir","Dekoratif Aydınlatma","Klima Elektrik Bağlantısı","Tesisat Yenileme","İnternet Arıza","İnternet Kablo Çekme","Priz / Anahtar Tamiri","Priz / Anahtar Montajı","Sigorta Arızası / Değişimi","Pano Montajı"],"Klima":["Kart Arıza","Motor Arıza","Gaz Dolumu","Elektrik Arıza","Montaj","İç Ünite Temizliği","Dış Ünite Temizliği","Su Tahliye Sorunu","Yer Değiştirme Sök/Tak","Tesisat Döşeme"],"Sıhhi Tesisat":["Döşeme","Arıza","Montaj","Tamir","Şofben Montaj","Tıkanıklık Açma","Su Kaçağı Tespiti","Su Kaçağı Tamiratı"],"Metal":["Kaynak İşçilik","Ferforje","Korkuluk","Küpeşte","Panel Çit","Demir Kapı/Pencere","Bahçe Kapısı","Teras Kapama","Çatı Kapama","Garaj Yapımı"],"Ahşap":["İşçilik","Tamir","Dekoratif Ürün","Lambri","Zımpara","Cila"]};
-const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama"]}};
+const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım","Kredi Taksiti","Banka Kredisi / Finansman"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
 
 function selectPayMethod(btn,hiddenId,modalId){
   const container=document.getElementById(modalId)||document;
@@ -3309,7 +3309,20 @@ async function projejiTamamla(btn){
   if(btn)btn.disabled=true;
   try{
     const projeId=parseInt(document.getElementById('ptm-proje-id').value);
-    const p=DB.projeler.find(x=>x.id===projeId);if(!p){showToast('Proje bulunamadı','red');return;}
+    const p=DB.projeler.find(x=>x.id===projeId);if(!p){showToast('Proje bulunamadı','red');if(btn)btn.disabled=false;return;}
+    // Güvenlik: stok yeterliliğini burada da kontrol et
+    let malzemelerGv=[];
+    try{malzemelerGv=await sbFetch('proje_malzemeler?proje_id=eq.'+projeId)||[];}catch(e){}
+    const stokHatalarGv=[];
+    malzemelerGv.filter(m=>m.stok_id).forEach(m=>{
+      const stok=DB.stok.find(s=>s.id===m.stok_id);
+      if(stok&&(stok.miktar||0)<(m.miktar||0))
+        stokHatalarGv.push(`${m.malzeme_adi}: ${m.miktar} gerekli, ${stok.miktar} mevcut`);
+    });
+    if(stokHatalarGv.length){
+      showToast('Stok yetersiz — lütfen stoku düzenleyin','red');
+      if(btn)btn.disabled=false;return;
+    }
     const k=getKisi(p.musteriId);
     const tutar=parseFloat(document.getElementById('ptm-tutar').value)||0;
     if(tutar<=0){showToast('Gerçekleşen tutar girin','red');if(btn)btn.disabled=false;return;}
@@ -3657,7 +3670,6 @@ function calcYardimci(){
   el.style.color='var(--amber)';
 }
 
-function toggleHizmetSec(){const b=document.getElementById('ms-body');if(b)b.style.display=b.style.display==='none'?'block':'none';}
 function updateHizmetOzet(){const c=document.querySelectorAll('.isletme-cb:checked').length;const s=document.getElementById('ms-summary');if(s)s.textContent=c>0?c+' Seçim Yapıldı':'Seçim Yapın';}
 
 function renderKisiSelect(selId,katId,araId,tipId){
@@ -4138,6 +4150,10 @@ function openBorcModal(){
   const dt2Y=dt2.getFullYear(),dt2M=String(dt2.getMonth()+1).padStart(2,'0'),dt2D=String(dt2.getDate()).padStart(2,'0'),dt2H=String(dt2.getHours()).padStart(2,'0'),dt2Mn=String(dt2.getMinutes()).padStart(2,'0');
   document.getElementById('mb-tarih').value=dt2Y+'-'+dt2M+'-'+dt2D+'T'+dt2H+':'+dt2Mn;
   acReset('mb-ac');
+  acClearBanka();
+  document.getElementById('mb-tip').value='Alındı';
+  document.querySelectorAll('input[name="mb-kaynak"]')[0].checked=true;
+  onBorcKaynakChange();
   openModal('modal-borc');
 }
 function openKisiFromBorc(){const s=document.getElementById('mk-source');if(s)s.value='borc';openKisiModal();}
@@ -4279,7 +4295,7 @@ function renderRehber(){
   const ara=(document.getElementById('r-ara-mus')?.value||'').toLowerCase();
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
   const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
-  const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
+  const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
   const sortFavori=(a,b)=>{if(a.favori&&!b.favori)return -1;if(!a.favori&&b.favori)return 1;return(a.isim||'').localeCompare(b.isim||'');};
   // ── REhBER LİSTE RENDER ──
   const ROW_STYLE='height:40px;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;gap:6px;margin-bottom:3px;';
@@ -4407,7 +4423,7 @@ function renderCari(c){
 
   // Tarih filtreli cari hesaplama
   const cariMap={};
-  DB.kisiler.forEach(k=>cariMap[k.id]={id:k.id,ad:k.isim,tip:k.tip,bakiye:0});
+  DB.kisiler.filter(k=>k.tip!=='Banka').forEach(k=>cariMap[k.id]={id:k.id,ad:k.isim,tip:k.tip,bakiye:0});
   DB.islemler.forEach(i=>{
     if(!i.kisiId||!cariMap[i.kisiId])return;
     if(i.tip==='Kasa Hareketi')return;
@@ -4770,7 +4786,14 @@ async function saveStok(btn){
       const r=await sbFetch('stok',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});
       resultId=r&&r[0]?r[0].id:null;
     }
-    await loadDB();closeModal('modal-stok');showToast(id?'Güncellendi':'Eklendi','green');
+    await loadDB();
+    // Fiyat değiştiyse stok enflasyon geçmişine kaydet
+    if(id&&eskiFiyat&&yeniFiyat&&eskiFiyat!==yeniFiyat){
+      const stokObj=DB.stok.find(x=>x.id===parseInt(id));
+      if(typeof stokFiyatGecmisKaydet==='function')
+        stokFiyatGecmisKaydet(parseInt(id),eskiFiyat,yeniFiyat,stokObj?.kategori||'Genel');
+    }
+    closeModal('modal-stok');showToast(id?'Güncellendi':'Eklendi','green');
     if(barkod&&resultId){const s=DB.stok.find(x=>x.id===resultId)||{ad,barkod};showBarkodEtiket(s);}
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -7495,19 +7518,7 @@ async function aiFiyatlandirmaOnerisi(kisiId){
   return {ortFiyat:Math.round(ort),sonFiyat:b[0].tutar,oneriFiyat:Math.round(ort*(1+Math.max(0,artis)/100)),giderArtis:artis.toFixed(1),islemSayisi:b.length};
 }
 
-async function aiFiyatOnerisiGoster(){
-  const kisiId=parseInt(document.getElementById('teklif-kisi').value)||null;
-  const kalemler=teklifKalemleriOku();
-  if(!kalemler.length){showToast('Önce kalem ekleyin','amber');return;}
-  showToast('Fiyat analizi...','blue');
-  const o=await aiFiyatlandirmaOnerisi(kisiId);
-  if(!o){showToast('Yeterli veri yok','amber');return;}
-  showInfoModal('\u2726 Fiyat Önerisi',
-    '<div class="card" style="text-align:center;margin-bottom:12px;"><div style="font-size:11px;color:var(--text3);">Önerilen</div>'+
-    '<div class="num" style="font-size:28px;font-weight:700;color:var(--green);">'+fmt(o.oneriFiyat)+' \u20BA</div></div>'+
-    row('Geçmiş ort.',fmt(o.ortFiyat)+' \u20BA')+row('Son fiyat',fmt(o.sonFiyat)+' \u20BA')+
-    row('Gider artışı','%'+o.giderArtis)+row('Baz',o.islemSayisi+' işlem'));
-}
+
 
 function aiAySonuOzeti(){
   const now=new Date();
@@ -7704,7 +7715,7 @@ function aiKuralCevap(soru){
         return `👤 Müşteri & Şahıslar (${m.length} kişi):\n`+m.map(k=>`• ${k.isim}`).join('\n');
       }
       if(/firma|kurum/.test(s)){
-        const f=DB.kisiler.filter(k=>k.tip==='Firma'||k.tip==='Kurum');
+        const f=DB.kisiler.filter(k=>k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka');
         return `🏢 Firmalar & Kurumlar (${f.length} kayıt):\n`+f.map(k=>`• ${k.isim}`).join('\n');
       }
       return `📋 Tüm rehber (${DB.kisiler.length} kayıt):\n`+DB.kisiler.map(k=>`• ${k.isim} (${k.tip})`).join('\n');
@@ -7713,7 +7724,7 @@ function aiKuralCevap(soru){
     // Kaç müşteri var?
     if(/kaç/.test(s)){
       const mus=DB.kisiler.filter(k=>k.tip==='Müşteri'||k.tip==='Şahıs').length;
-      const fir=DB.kisiler.filter(k=>k.tip==='Firma'||k.tip==='Kurum').length;
+      const fir=DB.kisiler.filter(k=>k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka').length;
       return `Rehber özeti:\n• Müşteri/Şahıs: ${mus} kişi\n• Firma/Kurum: ${fir} kayıt\n• Toplam: ${DB.kisiler.length}`;
     }
   }
@@ -8316,7 +8327,31 @@ function aiKuralCevap(soru){
     }
   }
 
-  return `Anlayamadım, biraz farklı sorar mısın?\n\nÖrnekler:\n• "Barış var mı rehberde?"\n• "Bu ay ne kadar kazandım?"\n• "Kimler bana borçlu?"\n• "Kasa ne kadar?"\n\n"yardım" yazarsanız tüm özellikleri listelerim.`;
+    // ── BÖLÜM 18: YAKLAŞAN VADELER ────────────────────────
+  if(/vade|vadeli|bekleyen.işlem|yaklaşan|ödeme.gelecek|tahsilat.gelecek/i.test(s)){
+    const bek2=DB.islemler.filter(i=>i.statu==='Bekliyor').sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+    if(!bek2.length)return '📅 Bekleyen vadeli işlem bulunmuyor.';
+    const now3=new Date();
+    const bu7=bek2.filter(i=>new Date(i.tarih)<=new Date(now3.getTime()+7*24*60*60*1000));
+    const gelir2=bek2.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+    const gider2=bek2.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+    let yanit2=`📅 Vadeli İşlemler (${bek2.length} toplam)\n`;
+    yanit2+=`• Bekleyen alacak: ${fmt(gelir2)} ₺\n`;
+    yanit2+=`• Bekleyen ödeme: ${fmt(gider2)} ₺\n`;
+    if(bu7.length)yanit2+=`• Bu hafta ${bu7.length} vade: ${bu7.slice(0,3).map(i=>{const k=getKisi(i.kisiId);return `${k?k.isim:'—'} ${fmt(i.tutar)} ₺`;}).join(', ')}`;
+    return yanit2;
+  }
+
+  // ── BÖLÜM 19: FİYAT LİSTESİ ───────────────────────────
+  if(/fiyat|ücret|işçilik|kaç para|ne kadar.tutar|tarife/i.test(s)){
+    if(!DB.fiyatlar||!DB.fiyatlar.length)return '💰 Henüz fiyat listesi oluşturulmamış.';
+    const araFiyat=s.replace(/fiyat|ücret|ne kadar|kaç para/gi,'').trim();
+    const eslesen=DB.fiyatlar.filter(f=>(f.tarif||'').toLowerCase().includes(araFiyat)||(f.dal||'').toLowerCase().includes(araFiyat)||(f.kategori||'').toLowerCase().includes(araFiyat));
+    if(!eslesen.length)return `💰 "${araFiyat}" için fiyat listesinde kayıt bulunamadı.`;
+    return `💰 Fiyat Listesi:\n`+eslesen.slice(0,5).map(f=>`• ${f.tarif}: ${fmt(f.sabitFiyat)} ₺ (${f.dal})`).join('\n')+(eslesen.length>5?`\n... ve ${eslesen.length-5} kayıt daha`:'');
+  }
+
+  return `Anlayamadım, biraz farklı sorar mısın?\\n\\nÖrnekler:\\n• "Barış var mı rehberde?"\\n• "Bu ay ne kadar kazandım?"\\n• "Kimler bana borçlu?"\\n• "Kasa ne kadar?"\\n• "Yaklaşan vadelerim neler?"\\n• "Priz fiyatı ne kadar?"\\n\\n"yardım" yazarsanız tüm özellikleri listelerim.`;
 }
 
 
@@ -8602,11 +8637,7 @@ function teklifOnizlemeGoster(id){
   </div>
 </div>
 <script nomodule>
-function teklifPdfIndir(){
-  document.querySelector('.print-bar').style.display='none';
-  window.print();
-  setTimeout(()=>{document.querySelector('.print-bar').style.display='';},1000);
-}
+
 <\/script>
 </body>
 </html>`;
@@ -8619,7 +8650,7 @@ function teklifPdfIndir(){
 }
 
 function teklifYazdirAc(id){teklifOnizlemeGoster(id);}
-function teklifPdfIndir(id){if(id)teklifOnizlemeGoster(id);}
+
 
 function teklifOnizlemePrint(){
   const ic=document.querySelector('#teklif-onizleme-wrap > div');if(!ic)return;
@@ -9281,130 +9312,11 @@ function _htmlIndir(html,dosyaAdi){
 
 // ============================================================ BÜTÇE LİMİT ALARM
 
-function butceAsimiKontrol(){
-  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
-  DB.butceLimitler.filter(b=>b.aktif).forEach(b=>{
-    const harcama=DB.islemler.filter(i=>{
-      if(i.tip!=='Gider'||i.statu!=='Tamamlandı')return false;
-      const kategoriEslesme=(i.kat||'').includes(b.kategori)||(i.altKat||'').includes(b.kategori);
-      if(!kategoriEslesme)return false;
-      if(b.donem==='Aylık'){const d=new Date(i.tarih);return d.getMonth()===ay&&d.getFullYear()===yil;}
-      return new Date(i.tarih).getFullYear()===yil;
-    }).reduce((a,i)=>a+i.tutar,0);
-    const oran=(harcama/b.limitTutar)*100;
-    const sonKey='butce_uyari_'+b.id+'_'+ay+'_'+yil;
-    const sonUyari=localStorage.getItem(sonKey)||0;
-    if(oran>=100&&sonUyari<100){
-      if(window.animLimitAsim)animLimitAsim();aiBildirimGoster('uyari',`🚨 "${b.kategori}" bütçe limiti aşıldı! ${fmt(harcama)} ₺ / ${fmt(b.limitTutar)} ₺`,10000);
-      localStorage.setItem(sonKey,100);
-    } else if(oran>=90&&sonUyari<90){
-      aiBildirimGoster('uyari',`⚠️ "${b.kategori}" bütçesinin %${Math.round(oran)}'ı kullanıldı`,8000);
-      localStorage.setItem(sonKey,90);
-    } else if(oran>=75&&sonUyari<75){
-      aiBildirimGoster('bilgi',`💡 "${b.kategori}" bütçesinin %${Math.round(oran)}'ı kullanıldı`,6000);
-      localStorage.setItem(sonKey,75);
-    }
-  });
-}
+
 
 // ============================================================ TAKVİM AKTARMA DÜZELTMESİ
 
-function takvimiAktar(mod){
-  const etkinlikler=[];
-  const alarmGunleri=new Set();
-  const now=new Date();
 
-  function ekle(tarihStr,baslik,aciklama,alarmKur,uid){
-    // Tarih + saat birlikte parse et
-    const tarihObj=new Date(tarihStr);
-    const gecerli=!isNaN(tarihObj.getTime());
-    const ds=gecerli?icsDateTimeStr(tarihObj):icsDateStr(new Date(tarihStr));
-    const hasTime=gecerli&&tarihStr.includes('T')&&tarihStr.length>10;
-    etkinlikler.push({ds,hasTime,tarihObj:gecerli?tarihObj:null,baslik,aciklama,uid:uid||('auto-'+ds+'-'+baslik.slice(0,8))});
-    if(alarmKur){
-      // Alarm için sadece günü al
-      const gunDs=gecerli?icsDateStr(tarihObj):ds.slice(0,8);
-      alarmGunleri.add(gunDs);
-    }
-  }
-
-  if(mod==='vade'||mod==='genel'||mod==='hepsi'){
-    DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
-      const k=getKisi(i.kisiId);
-      const tip=i.tip==='Gelir'?'Alacak':'Ödeme';
-      ekle(i.tarih,tip+': '+(k?k.isim:'—')+' · '+fmt(i.tutar)+' ₺',
-        (k?k.isim:'—')+' | '+fmt(i.tutar)+' ₺'+(i.not?' | '+i.not:''),
-        true,'islem-'+i.id+'@gunteknik');
-    });
-  }
-  if(mod==='genel'||mod==='hepsi'){
-    const alarmTipler=['Alacak','Verecek','İş','Bilgi'];
-    DB.takvim.forEach(t=>{
-      ekle(t.tarih,t.baslik||t.detay||t.tip,t.detay||t.baslik||'',
-        alarmTipler.includes(t.tip),'takvim-'+t.id+'@gunteknik');
-    });
-  }
-  if(mod==='hepsi'){
-    DB.islemler.filter(i=>i.statu==='Tamamlandı').forEach(i=>{
-      const k=getKisi(i.kisiId);
-      ekle(i.tarih,(i.tip==='Gelir'?'Gelir':'Gider')+': '+(k?k.isim:'—')+' · '+fmt(i.tutar)+' ₺',
-        (k?k.isim:'—')+' | '+fmt(i.tutar)+' ₺',
-        false,'islem-'+i.id+'@gunteknik');
-    });
-  }
-  if(!etkinlikler.length){showToast('Aktarılacak kayıt yok','amber');return;}
-
-  const satirlar=[];
-  satirlar.push('BEGIN:VCALENDAR');
-  satirlar.push('VERSION:2.0');
-  satirlar.push('PRODID:-//Gun Teknik ERP//TR');
-  satirlar.push('CALSCALE:GREGORIAN');
-  satirlar.push('METHOD:PUBLISH');
-  satirlar.push('X-WR-CALNAME:Gun Teknik');
-
-  // Her gün için 09:00'da TEK alarm
-  alarmGunleri.forEach(gunDs=>{
-    const yil=gunDs.slice(0,4),ay=gunDs.slice(4,6),gun=gunDs.slice(6,8);
-    const alarmDt=yil+ay+gun+'T090000';
-    satirlar.push('BEGIN:VEVENT');
-    satirlar.push('UID:alarm-'+gunDs+'@gunteknik');
-    satirlar.push('DTSTART;TZID=Europe/Istanbul:'+alarmDt);
-    satirlar.push('DTEND;TZID=Europe/Istanbul:'+yil+ay+gun+'T093000');
-    satirlar.push('SUMMARY:Takvime Bak');
-    satirlar.push('BEGIN:VALARM');
-    satirlar.push('TRIGGER:PT0S');
-    satirlar.push('ACTION:DISPLAY');
-    satirlar.push('DESCRIPTION:Takvime Bak');
-    satirlar.push('END:VALARM');
-    satirlar.push('END:VEVENT');
-  });
-
-  // Etkinlikler — kendi saatiyle, alarm YOK
-  etkinlikler.forEach(e=>{
-    satirlar.push('BEGIN:VEVENT');
-    satirlar.push('UID:'+e.uid);
-    if(e.hasTime&&e.tarihObj){
-      const dt=icsDateTimeStrLocal(e.tarihObj);
-      satirlar.push('DTSTART;TZID=Europe/Istanbul:'+dt);
-      satirlar.push('DTEND;TZID=Europe/Istanbul:'+icsDateTimeStrLocal(new Date(e.tarihObj.getTime()+30*60*1000)));
-    }else{
-      satirlar.push('DTSTART;VALUE=DATE:'+e.ds.slice(0,8));
-      satirlar.push('DTEND;VALUE=DATE:'+e.ds.slice(0,8));
-    }
-    satirlar.push('SUMMARY:'+icsEscape(e.baslik));
-    if(e.aciklama)satirlar.push('DESCRIPTION:'+icsEscape(e.aciklama));
-    satirlar.push('END:VEVENT');
-  });
-  satirlar.push('END:VCALENDAR');
-
-  const blob=new Blob([satirlar.join('\r\n')],{type:'text/calendar;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='gunteknik-'+(mod==='vade'?'vadeli':mod==='genel'?'genel':'tum')+'.ics';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  showToast(etkinlikler.length+' kayıt aktarıldı · '+alarmGunleri.size+' gün alarm','green');
-}
 
 function icsDateTimeStr(d){
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
@@ -9609,29 +9521,7 @@ function gelismisFiltreUygulaislem(islemler){
 
 // ============================================================ VERİ YEDEKLEME
 
-function exportData(){
-  const veri={
-    meta:{tarih:new Date().toISOString(),versiyon:'1.0',aciklama:'Gün Teknik ERP Yedeği'},
-    islemler:DB.islemler,
-    kisiler:DB.kisiler,
-    stok:DB.stok,
-    takvim:DB.takvim,
-    projeler:DB.projeler,
-    teklifler:DB.teklifler,
-    personeller:DB.personeller,
-    sablonlar:DB.sablonlar,
-    butceLimitler:DB.butceLimitler
-  };
-  const blob=new Blob([JSON.stringify(veri,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='gunteknik-yedek-'+new Date().toISOString().slice(0,10)+'.json';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  showToast('Veri yedeği indirildi','green');
-  // Son yedek tarihini kaydet
-  localStorage.setItem('gt_son_yedek',new Date().toISOString());
-}
+
 
 function yedekHatirlatici(){
   const son=localStorage.getItem('gt_son_yedek');
@@ -10032,20 +9922,7 @@ function teklifKalemleriOku(){
   return kalemler;
 }
 
-function teklifKalemleriOku(){
-  const kalemler=[];
-  ['teklif-kalemler','teklif-iscilik-kalemler'].forEach((wid,wi)=>{
-    const wrap=document.getElementById(wid);if(!wrap)return;
-    Array.from(wrap.children).forEach(div=>{
-      const aciklama=div.querySelector('[id$="-aciklama"]')?.value?.trim();
-      const miktar=parseFloat(div.querySelector('[id$="-miktar"]')?.value)||1;
-      const birim=div.querySelector('[id$="-birim"]')?.value||'Adet';
-      const birimFiyat=parseFloat(div.querySelector('[id$="-birim-fiyat"]')?.value)||0;
-      if(aciklama)kalemler.push({aciklama,miktar,birim,birimFiyat,toplam:miktar*birimFiyat,tip:wi===1?'iscilik':'malzeme'});
-    });
-  });
-  return kalemler;
-}
+
 
 function teklifAiAciklamaEkle(){
   const kisiId=parseInt(document.getElementById('teklif-kisi')?.value)||null;
@@ -10078,23 +9955,7 @@ function vfGenelToplamHesapla(){
 
 // ============================================================ WhatsApp MESAJLARI (güncel)
 
-function whatsappHatirlatici(kisiId){
-  const k=getKisi(kisiId);if(!k||!k.tel)return;
-  const c=calcFinans();const cD=c.cD[kisiId];if(!cD)return;
-  const bakiye=cD.bakiyeAll;
-  if(bakiye===0){showToast('Bu müşteriyle açık hesap yok','amber');return;}
-  const isim=k.firmaUnvan||k.isim;
-  let mesaj='';
-  if(bakiye>0){
-    // Bize borçlular — hatırlatıcı
-    mesaj=`Sayın ${isim},\n\nKarşılıklı güvene dayalı iş birliğimiz kapsamında tarafınıza sağladığımız finansman desteğine ilişkin olarak size ulaşıyoruz. Kayıtlarımıza göre yaklaşan ödeme gününüzü hatırlatmak ister, daha önce karşılıklı olarak mutabık kaldığımız tarihte ilgili ödemenin eksiksiz bir şekilde hesaplarımıza aktarılmasını beklediğimizi belirtmek isteriz.\n\nSürece dair aklınıza takılan herhangi bir soru veya netleştirmek istediğiniz bir husus olursa, lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
-  }else{
-    // Biz borçluyuz — bilgilendirme
-    mesaj=`Sayın ${isim},\n\nFirmamıza sağlamış olduğunuz finansal destek ve güven için teşekkür ederiz. Yaklaşan ödeme dönemimiz ile ilgili olarak, borç ödememizin daha önce karşılıklı olarak mutabık kaldığımız tarihte, eksiksiz bir şekilde tarafınıza gerçekleştirileceğini teyit etmek isteriz.\n\nSürece dair aklınıza takılan herhangi bir soru veya netleştirmek istediğiniz bi husus olursa, lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
-  }
-  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
-  window.open(url,'_blank');
-}
+
 
 function whatsappGecmisIhtar(kisiId){
   const k=getKisi(kisiId);if(!k||!k.tel){showToast('Telefon numarası yok','amber');return;}
@@ -10324,24 +10185,41 @@ async function saveFiyat(btn){
     const dal = document.getElementById('fiyat-dal').value;
     const tarif = document.getElementById('fiyat-tarif').value.trim();
     if(!kategori||!dal||!tarif){showToast('Kategori, dal ve tarif zorunlu','red');return;}
+    const yeniSabitFiyat=parseFloat(document.getElementById('fiyat-sabit').value)||0;
+    // Eski fiyatı bul (enflasyon takibi için)
+    let eskiSabitFiyat=0;
+    if(id){const eskiF=DB.fiyatlar.find(f=>f.id===parseInt(id));if(eskiF)eskiSabitFiyat=eskiF.sabitFiyat||0;}
+    // Enflasyon katsayısı uygula
+    let aiGuncellenmis=parseFloat(document.getElementById('fiyat-ai').value)||0;
+    if(typeof enfasyonAiKatsayisi==='function'){
+      const {katsayi,aciklama}=enfasyonAiKatsayisi(kategori);
+      if(katsayi!==1&&aiGuncellenmis>0)aiGuncellenmis=Math.round(aiGuncellenmis*katsayi);
+      if(aciklama&&typeof aiBildirimGoster==='function')
+        setTimeout(()=>aiBildirimGoster('bilgi','📈 '+aciklama,8000),1500);
+    }
     const payload = {
       kategori, dal, tarif,
-      sabit_fiyat: parseFloat(document.getElementById('fiyat-sabit').value)||0,
+      sabit_fiyat: yeniSabitFiyat,
       zorluk: document.getElementById('fiyat-zorluk').value,
       gercek_fiyat_min: parseFloat(document.getElementById('fiyat-gercek-min').value)||0,
       gercek_fiyat_max: parseFloat(document.getElementById('fiyat-gercek-max').value)||0,
       iscilik_sure: parseFloat(document.getElementById('fiyat-sure').value)||0,
-      ai_fiyat: parseFloat(document.getElementById('fiyat-ai').value)||0,
+      ai_fiyat: aiGuncellenmis,
       notlar: document.getElementById('fiyat-notlar').value,
       aktif: true
     };
     if(id) await sbFetch('fiyatlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
     else await sbFetch('fiyatlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    // Fiyat değiştiyse enflasyon geçmişine kaydet
+    if(id&&eskiSabitFiyat&&yeniSabitFiyat&&eskiSabitFiyat!==yeniSabitFiyat){
+      if(typeof fiyatGecmisKaydet==='function')
+        await fiyatGecmisKaydet(parseInt(id),eskiSabitFiyat,yeniSabitFiyat,kategori).catch(()=>{});
+    }
     await loadDB();
     closeModal('modal-fiyat');
     renderFiyatlar();
     showToast(id?'Güncellendi':'Fiyat eklendi','green');
-  }catch(e){showToast('Hata!','red');}
+  }catch(e){showToast('Hata!','red');console.error(e);}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
@@ -10624,7 +10502,7 @@ let enfAktifKat = '';
 async function loadFiyatGecmis(){
   if(!DB.fiyatGecmis) DB.fiyatGecmis = [];
   try{
-    const data = await sbFetch('fiyat_gecmis?order=tarih.asc&select=*');
+    const data = await sbFetch('fiyat_gecmis?order=tarih.asc&select=*&limit=200');
     DB.fiyatGecmis = (data||[]).map(r=>({
       id:r.id, fiyatId:r.fiyat_id, kategori:r.kategori,
       eskiFiyat:parseFloat(r.eski_fiyat)||0,
@@ -10799,60 +10677,7 @@ function enfasyonAiKatsayisi(kategori){
 }
 
 // ── saveFiyat'ı enflasyon kaydıyla güncelle ──────────────
-async function saveFiyat(btn){
-  if(btn) btn.disabled=true;
-  try{
-    const id = document.getElementById('fiyat-id').value;
-    const kategori = document.getElementById('fiyat-kategori').value;
-    const dal = document.getElementById('fiyat-dal').value;
-    const tarif = document.getElementById('fiyat-tarif').value.trim();
-    if(!kategori||!dal||!tarif){showToast('Kategori, dal ve tarif zorunlu','red');return;}
 
-    const yeniSabit = parseFloat(document.getElementById('fiyat-sabit').value)||0;
-    const yeniAi = parseFloat(document.getElementById('fiyat-ai').value)||0;
-
-    // Enflasyon katsayısını uygula
-    const {katsayi, aciklama} = enfasyonAiKatsayisi(kategori);
-    const aiGuncellenmis = katsayi!==1 ? Math.round(yeniAi*katsayi) : yeniAi;
-
-    // Eski fiyatı bul
-    let eskiSabit = 0;
-    if(id){
-      const eskiF = DB.fiyatlar.find(f=>f.id===parseInt(id));
-      if(eskiF) eskiSabit = eskiF.sabitFiyat||0;
-    }
-
-    const payload = {
-      kategori, dal, tarif,
-      sabit_fiyat: yeniSabit,
-      zorluk: document.getElementById('fiyat-zorluk').value,
-      gercek_fiyat_min: parseFloat(document.getElementById('fiyat-gercek-min').value)||0,
-      gercek_fiyat_max: parseFloat(document.getElementById('fiyat-gercek-max').value)||0,
-      iscilik_sure: parseFloat(document.getElementById('fiyat-sure').value)||0,
-      ai_fiyat: aiGuncellenmis,
-      notlar: document.getElementById('fiyat-notlar').value,
-      aktif: true
-    };
-
-    if(id){
-      await sbFetch('fiyatlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
-      // Enflasyon kaydı — sabit fiyat değiştiyse
-      if(eskiSabit && yeniSabit && eskiSabit !== yeniSabit){
-        await fiyatGecmisKaydet(parseInt(id), eskiSabit, yeniSabit, kategori);
-      }
-    }else{
-      await sbFetch('fiyatlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
-    }
-
-    if(aciklama) aiBildirimGoster('bilgi', '📈 '+aciklama, 8000);
-
-    await loadDB();
-    closeModal('modal-fiyat');
-    renderFiyatlar();
-    showToast(id?'Güncellendi':'Fiyat eklendi','green');
-  }catch(e){showToast('Hata!','red');}
-  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
-}
 
 // loadFiyatlar — hem fiyatları hem geçmişi yükler
 // Not: Override yerine doğrudan loadDB'ye eklendi
@@ -10925,7 +10750,7 @@ DB.stokFiyatGecmis = [];
 async function loadStokFiyatGecmis(){
   if(!DB.stokFiyatGecmis) DB.stokFiyatGecmis=[];
   try{
-    const data=await sbFetch('stok_fiyat_gecmis?order=tarih.asc');
+    const data=await sbFetch('stok_fiyat_gecmis?order=tarih.asc&limit=200');
     DB.stokFiyatGecmis=(data||[]).map(r=>({id:r.id,stokId:r.stok_id,kategori:r.kategori,eskiFiyat:parseFloat(r.eski_fiyat)||0,yeniFiyat:parseFloat(r.yeni_fiyat)||0,degisimYuzdesi:parseFloat(r.degisim_yuzdesi)||0,tarih:r.tarih}));
   }catch(e){DB.stokFiyatGecmis=[];}
 }
@@ -11021,6 +10846,14 @@ async function teklifdenProjeOlustur(teklifId){
     if(result&&result[0]){
       const projeId=result[0].id;
       const malzemeKalemleri=(t.kalemler||[]).filter(km=>km.tip!=='iscilik');
+      // İşçilik kalemlerini proje notu olarak kaydet
+      const iscillikKalemleri=(t.kalemler||[]).filter(km=>km.tip==='iscilik');
+      if(iscillikKalemleri.length){
+        const iscillikNot='İşçilik (Tekliften):\n'+iscillikKalemleri.map(km=>`• ${km.aciklama}: ${fmt(km.toplam)} ₺`).join('\n');
+        await sbFetch('proje_notlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+          proje_id:result[0].id,not_metni:iscillikNot
+        })}).catch(()=>{});
+      }
       for(const km of malzemeKalemleri){
         await sbFetch('proje_malzemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
           proje_id:projeId,
@@ -11643,7 +11476,7 @@ function krediKalanHesapla(){
   const taksit=parseFloat(document.getElementById('kredi-taksit')?.value)||0;
   const faiz=parseFloat(document.getElementById('kredi-faiz')?.value)||0;
   const odenen=parseInt(document.getElementById('kredi-odenen-taksit')?.value)||0;
-  krediOzetGoster(anapara,taksit,vade,faiz,odened);
+  krediOzetGoster(anapara,taksit,vade,faiz,odenen);
 }
 
 function krediOzetGoster(anapara,taksit,vade,faiz,odenen){
