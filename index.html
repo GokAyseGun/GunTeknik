@@ -2893,9 +2893,84 @@ function showDashDetay(tip){
   }else if(tip==='kasa'){
     title='Kasa Hareketleri (Tamamlanan)';
     items=DB.islemler.filter(i=>i.statu==='Tamamlandı');
-  }else if(tip==='beklenen'){
-    title='Bekleyen / Vadeli İşlemler';
-    items=DB.islemler.filter(i=>i.statu==='Bekliyor');
+  }else if(['bekBuAy','bek3Ay','bek6Ay','bek1Yil','bek10Yil'].includes(tip)){
+    const now2=new Date();
+    const donemMap={
+      'bekBuAy':{ad:'Bu Ay Sonu',bitis:new Date(now2.getFullYear(),now2.getMonth()+1,1)},
+      'bek3Ay':{ad:'3 Ay Sonunda',bitis:new Date(now2.getFullYear(),now2.getMonth()+3,1)},
+      'bek6Ay':{ad:'6 Ay Sonunda',bitis:new Date(now2.getFullYear(),now2.getMonth()+6,1)},
+      'bek1Yil':{ad:'1 Yıl Sonunda',bitis:new Date(now2.getFullYear(),now2.getMonth()+12,1)},
+      'bek10Yil':{ad:'10 Yıl Sonunda',bitis:new Date(now2.getFullYear(),now2.getMonth()+120,1)}
+    };
+    const dm=donemMap[tip];
+    const bitisTarih=dm.bitis;
+    const donemGelirler=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)>=now2&&new Date(i.tarih)<bitisTarih);
+    const donemGiderler=DB.islemler.filter(i=>i.statu==='Bekliyor'&&i.tip==='Gider'&&new Date(i.tarih)>=now2&&new Date(i.tarih)<bitisTarih);
+    const donemGelirToplam=donemGelirler.reduce((a,i)=>a+i.tutar,0);
+    const donemGiderToplam=donemGiderler.reduce((a,i)=>a+i.tutar,0);
+    let krediYuk=0;const krediSatirlar=[];
+    (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+      if(!k.ilkTaksitTarihi)return;
+      let td=new Date(k.ilkTaksitTarihi);td.setMonth(td.getMonth()+k.odenenTaksit);
+      let sayi=0;const gc=new Date(td);
+      while(gc<bitisTarih&&sayi<k.kalanTaksit){if(gc>=now2)sayi++;gc.setMonth(gc.getMonth()+1);}
+      if(sayi>0){krediYuk+=sayi*k.taksitTutari;krediSatirlar.push(`${k.bankaAdi}: ${sayi} taksit × ${fmt(k.taksitTutari)} ₺ = ${fmt(sayi*k.taksitTutari)} ₺`);}
+    });
+    const netAkis=donemGelirToplam-donemGiderToplam-krediYuk;
+    const sonucKasa=c.kasa+netAkis;
+    const renk=sonucKasa>=0?'var(--green)':'var(--red)';
+    let html=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">Bugün Eldeki</div>
+      <div class="num" style="font-size:20px;font-weight:700;">${fmt(c.kasa)} ₺</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;padding:10px 12px;background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.25);border-radius:var(--r-sm);">
+        <span style="font-size:13px;color:var(--text2);">📈 Beklenen Alacak</span>
+        <span class="num" style="font-weight:700;color:var(--green);">+${fmt(donemGelirToplam)} ₺</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 12px;background:rgba(232,128,128,0.1);border:1px solid rgba(232,128,128,0.25);border-radius:var(--r-sm);">
+        <span style="font-size:13px;color:var(--text2);">📉 Beklenen Ödeme</span>
+        <span class="num" style="font-weight:700;color:var(--red);">-${fmt(donemGiderToplam)} ₺</span>
+      </div>
+      ${krediYuk>0?`<div style="display:flex;justify-content:space-between;padding:10px 12px;background:rgba(30,58,138,0.1);border:1px solid rgba(30,58,138,0.3);border-radius:var(--r-sm);">
+        <span style="font-size:13px;color:var(--text2);">🏦 Kredi Taksitleri</span>
+        <span class="num" style="font-weight:700;color:var(--blue);">-${fmt(krediYuk)} ₺</span>
+      </div>`:''}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:${sonucKasa>=0?'rgba(46,160,67,0.12)':'rgba(232,128,128,0.12)'};border:1px solid ${sonucKasa>=0?'rgba(46,160,67,0.3)':'rgba(232,128,128,0.3)'};border-radius:var(--r-md);margin-bottom:12px;">
+      <span style="font-size:13px;font-weight:600;">${dm.ad} Tahmini Kasa</span>
+      <span class="num" style="font-size:18px;font-weight:800;color:${renk};">${fmt(sonucKasa)} ₺</span>
+    </div>`;
+    if(krediSatirlar.length){
+      html+=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Kredi Detayı</div>`;
+      html+=krediSatirlar.map(s=>`<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:var(--surface);border-radius:var(--r-sm);margin-bottom:4px;">${s}</div>`).join('');
+    }
+    if(donemGelirler.length){
+      html+=`<div style="font-size:11px;color:var(--text3);margin-top:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Bekleyen Alacaklar (${donemGelirler.length})</div>`;
+      html+=donemGelirler.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih)).slice(0,8).map(i=>{
+        const k=getKisi(i.kisiId);
+        return `<div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;cursor:pointer;" onclick="closeModal('modal-dash-detay');showIslemDetay(${i.id})">
+          <div><div style="font-size:12px;font-weight:600;">${k?k.isim:'—'}</div><div style="font-size:10px;color:var(--text3);">${new Date(i.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+          <div class="num" style="font-weight:700;color:var(--green);">${fmt(i.tutar)} ₺</div>
+        </div>`;
+      }).join('');
+    }
+    if(donemGiderler.length){
+      html+=`<div style="font-size:11px;color:var(--text3);margin-top:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Bekleyen Ödemeler (${donemGiderler.length})</div>`;
+      html+=donemGiderler.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih)).slice(0,8).map(i=>{
+        const k=getKisi(i.kisiId);
+        return `<div style="display:flex;justify-content:space-between;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;cursor:pointer;" onclick="closeModal('modal-dash-detay');showIslemDetay(${i.id})">
+          <div><div style="font-size:12px;font-weight:600;">${k?k.isim:'—'}</div><div style="font-size:10px;color:var(--text3);">${new Date(i.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+          <div class="num" style="font-weight:700;color:var(--red);">${fmt(i.tutar)} ₺</div>
+        </div>`;
+      }).join('');
+    }
+    if(!donemGelirler.length&&!donemGiderler.length&&!krediYuk){
+      html+=`<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Bu dönemde kayıtlı vade yok</div></div>`;
+    }
+    document.getElementById('dash-detay-title').textContent=dm.ad+' — Nakit Projeksiyonu';
+    document.getElementById('dash-detay-content').innerHTML=html;
+    openModal('modal-dash-detay');return;
   }else if(tip==='alacak'){
     title='Açık Alacaklarımız';
     const alacakList=Object.values(c.cD).filter(x=>x.bakiyeAll>0&&!x.isYardimci);
@@ -8615,70 +8690,6 @@ function aiOzetKutucukAnaliz(tip){
       if(bekGelir>0)satirlar.push(`📥 Tahsil edilecek alacaklar ${fmt(bekGelir)} ₺ — bunlar geldikçe kasa ${fmt(c.kasa+bekGelir)} ₺'ye çıkabilir.`);
       if(bekGider>c.kasa*0.6)satirlar.push(`⚠️ Bekleyen giderler kasanın %${Math.round(bekGider/c.kasa*100)}'ini oluşturuyor. Nakit akışı riski yüksek.`);
       else if(c.kasa>0)satirlar.push(`✅ Kasa, bekleyen ödemeleri karşılayacak düzeyde.`);
-      break;
-    }
-    case 'bekBuAy':
-    case 'bek3Ay':
-    case 'bek6Ay':
-    case 'bek1Yil':
-    case 'bek10Yil':{
-      const donemMap={
-        'bekBuAy':{ad:'Bu Ay Sonu',bitis:new Date(now.getFullYear(),now.getMonth()+1,1)},
-        'bek3Ay':{ad:'3 Ay Sonunda',bitis:new Date(now.getFullYear(),now.getMonth()+3,1)},
-        'bek6Ay':{ad:'6 Ay Sonunda',bitis:new Date(now.getFullYear(),now.getMonth()+6,1)},
-        'bek1Yil':{ad:'1 Yıl Sonunda',bitis:new Date(now.getFullYear(),now.getMonth()+12,1)},
-        'bek10Yil':{ad:'10 Yıl Sonunda',bitis:new Date(now.getFullYear(),now.getMonth()+120,1)}
-      };
-      const dm=donemMap[tip];
-      baslik=`📅 ${dm.ad} — Nakit Projeksiyonu`;
-      const bitisTarih=dm.bitis;
-      // Vadeli işlemler
-      const donemGelirler=bek.filter(i=>i.tip==='Gelir'&&new Date(i.tarih)>=now&&new Date(i.tarih)<bitisTarih);
-      const donemGiderler=bek.filter(i=>i.tip==='Gider'&&new Date(i.tarih)>=now&&new Date(i.tarih)<bitisTarih);
-      const donemGelirToplam=donemGelirler.reduce((a,i)=>a+i.tutar,0);
-      const donemGiderToplam=donemGiderler.reduce((a,i)=>a+i.tutar,0);
-      // Kredi taksitleri
-      let krediYuk=0;const krediSatirlar=[];
-      (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
-        if(!k.ilkTaksitTarihi)return;
-        let td=new Date(k.ilkTaksitTarihi);
-        td.setMonth(td.getMonth()+k.odenenTaksit);
-        let sayi=0;const gc=new Date(td);
-        while(gc<bitisTarih&&sayi<k.kalanTaksit){if(gc>=now)sayi++;gc.setMonth(gc.getMonth()+1);}
-        if(sayi>0){krediYuk+=sayi*k.taksitTutari;krediSatirlar.push(`${k.bankaAdi}: ${sayi} taksit × ${fmt(k.taksitTutari)} ₺ = ${fmt(sayi*k.taksitTutari)} ₺`);}
-      });
-      const netAkis=donemGelirToplam-donemGiderToplam-krediYuk;
-      const sonucKasa=c.kasa+netAkis;
-      satirlar.push(`💰 Bugün eldeki: ${fmt(c.kasa)} ₺`);
-      satirlar.push(`📈 Beklenen alacaklar: +${fmt(donemGelirToplam)} ₺ (${donemGelirler.length} işlem)`);
-      satirlar.push(`📉 Beklenen ödemeler: -${fmt(donemGiderToplam)} ₺ (${donemGiderler.length} işlem)`);
-      if(krediYuk>0){
-        satirlar.push(`🏦 Kredi taksit yükü: -${fmt(krediYuk)} ₺`);
-        krediSatirlar.forEach(s=>satirlar.push('  · '+s));
-      }
-      satirlar.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      satirlar.push(`${sonucKasa>=0?'✅':'⚠️'} ${dm.ad} tahmini kasa: ${fmt(sonucKasa)} ₺`);
-      if(sonucKasa<0)satirlar.push(`🚨 Bu dönemde nakit açığı oluşabilir! ${fmt(Math.abs(sonucKasa))} ₺ eksik.`);
-      // Alacak detayları
-      if(donemGelirler.length){
-        satirlar.push(``);
-        satirlar.push(`📋 Bekleyen Alacaklar:`);
-        donemGelirler.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih)).slice(0,5).forEach(i=>{
-          const k=getKisi(i.kisiId);
-          satirlar.push(`  • ${k?k.isim:'—'} · ${fmt(i.tutar)} ₺ · ${new Date(i.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})}`);
-        });
-        if(donemGelirler.length>5)satirlar.push(`  ... ve ${donemGelirler.length-5} işlem daha`);
-      }
-      // Gider detayları
-      if(donemGiderler.length){
-        satirlar.push(``);
-        satirlar.push(`📋 Bekleyen Ödemeler:`);
-        donemGiderler.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih)).slice(0,5).forEach(i=>{
-          const k=getKisi(i.kisiId);
-          satirlar.push(`  • ${k?k.isim:'—'} · ${fmt(i.tutar)} ₺ · ${new Date(i.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})}`);
-        });
-        if(donemGiderler.length>5)satirlar.push(`  ... ve ${donemGiderler.length-5} işlem daha`);
-      }
       break;
     }
 
