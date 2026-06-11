@@ -949,18 +949,18 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
   <nav class="bottom-nav" id="bottom-nav">
     <div class="nav-item active" onclick="goPage('dashboard',this)"><span class="nav-icon">📊</span><span>Özet</span></div>
-    <div class="nav-item" onclick="goPage('islemler',this)"><span class="nav-icon">📋</span><span>İşlemler</span></div>
-    <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
     <div class="nav-item" onclick="goPage('takvim',this)"><span class="nav-icon">📅</span><span>Takvim</span></div>
-    <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
-    <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
-    <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
-    <div class="nav-item" onclick="goPage('stok',this)"><span class="nav-icon">📦</span><span>Stok</span></div>
-    <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
-    <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
-    <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
-    <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
+    <div class="nav-item" onclick="goPage('islemler',this)"><span class="nav-icon">📋</span><span>İşlemler</span></div>
     <div class="nav-item" onclick="goPage('teklifler',this)"><span class="nav-icon">📋</span><span>Teklif</span></div>
+    <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
+    <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
+    <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
+    <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
+    <div class="nav-item" onclick="goPage('stok',this)"><span class="nav-icon">📦</span><span>Stok</span></div>
+    <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
+    <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
+    <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
+    <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
   </nav>
 </div>
 
@@ -1097,7 +1097,58 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
-<!-- KREDİ DETAY MODALı -->
+<!-- PROJEYİ TAMAMLA MODALı -->
+<div class="modal-ov" id="modal-proje-tamamla">
+  <div class="modal" style="max-width:480px;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div><h3>🏁 Projeyi Tamamla</h3><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="ptm-proje-adi"></div></div>
+      <button class="modal-close" onclick="closeModal('modal-proje-tamamla')">✕</button>
+    </div>
+    <div class="modal-body fg">
+      <input type="hidden" id="ptm-proje-id">
+      <div style="background:rgba(46,160,67,0.1);border:1px solid rgba(46,160,67,0.25);border-radius:var(--r-md);padding:12px;font-size:12px;color:var(--text2);margin-bottom:4px;">
+        ✅ Projeyi tamamladığınızda işlem kaydı, stok düşümü ve personel hak edişi otomatik oluşturulacak.
+      </div>
+      <!-- Tahsilat bilgileri -->
+      <div class="fi"><label>Gerçekleşen Tutar (₺) <span style="color:var(--red);">*</span></label>
+        <input type="number" id="ptm-tutar" inputmode="numeric" placeholder="Tahsil edilen tutar">
+      </div>
+      <div class="fi"><label>Ödeme Yöntemi</label>
+        <select id="ptm-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+          <option value="Nakit">💵 Nakit</option>
+          <option value="Kart">💳 Kart</option>
+          <option value="İBAN">🏦 Havale/EFT</option>
+        </select>
+      </div>
+      <div class="fi"><label>Hizmet / Ürün Seçimi</label>
+        <div class="ms-container">
+          <div class="ms-header" onclick="toggleHizmetSec('ptm')"><span id="ptm-ms-summary">Seçim Yapın</span><span>▾</span></div>
+          <div class="ms-body" id="ptm-ms-body"></div>
+        </div>
+      </div>
+      <div class="fi"><label>Fatura</label>
+        <label class="check-row">
+          <input type="checkbox" id="ptm-fatura"> <span>Fatura kesildi / fatura var</span>
+        </label>
+      </div>
+      <div class="fi"><label>Tarih</label>
+        <input type="date" id="ptm-tarih">
+      </div>
+      <div class="fi"><label>Not</label>
+        <textarea id="ptm-not" rows="2" placeholder="Proje tamamlanma notu..."></textarea>
+      </div>
+      <!-- Özet -->
+      <div id="ptm-ozet" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font-size:12px;display:none;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Otomatik Yapılacaklar</div>
+        <div id="ptm-ozet-ic"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje-tamamla')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="projejiTamamla(this)" style="background:linear-gradient(135deg,#15803d,#166534);">🏁 Tamamla & Kaydet</button>
+    </div>
+  </div>
+</div>
 <div class="modal-ov" id="modal-kredi-detay">
   <div class="modal" style="max-width:480px;"><div class="modal-handle"></div>
     <div class="modal-head"><h3 id="kredi-detay-baslik">Kredi Detayı</h3><button class="modal-close" onclick="closeModal('modal-kredi-detay')">✕</button></div>
@@ -3175,7 +3226,158 @@ function selectPayMethod(btn,hiddenId,modalId){
   btn.classList.add('active');document.getElementById(hiddenId).value=btn.dataset.val;
 }
 
-// ── Cari — Banka Kredileri Alt Paneli ───────────────────
+
+// ============================================================
+// PROJEYİ TAMAMLA
+// ============================================================
+
+async function openProjeTamamlaModal(projeId){
+  const p=DB.projeler.find(x=>x.id===projeId);if(!p)return;
+
+  // Stok yeterliliğini kontrol et
+  let malzemeler=[];
+  try{malzemeler=await sbFetch('proje_malzemeler?proje_id=eq.'+projeId)||[];}catch(e){}
+  const stokMalzemeler=malzemeler.filter(m=>m.stok_id);
+  const stokHatalar=[];
+  stokMalzemeler.forEach(m=>{
+    const stok=DB.stok.find(s=>s.id===m.stok_id);
+    if(stok&&(stok.miktar||0)<(m.miktar||0)){
+      stokHatalar.push(`❌ ${m.malzeme_adi}: Gereken ${m.miktar} ${m.birim||'Adet'}, stokta ${stok.miktar} var`);
+    }
+  });
+  if(stokHatalar.length){
+    showToast('Stok yetersiz — düzenleyip tekrar deneyin','red');
+    alert('Stok yetersizliği tespit edildi:\n\n'+stokHatalar.join('\n')+'\n\nLütfen stok miktarını güncelleyip tekrar deneyin.');
+    return;
+  }
+
+  // Personeller
+  let personeller=[];
+  try{personeller=await sbFetch('proje_personeller?proje_id=eq.'+projeId)||[];}catch(e){}
+
+  document.getElementById('ptm-proje-id').value=projeId;
+  document.getElementById('ptm-proje-adi').textContent=p.isim;
+  document.getElementById('ptm-tutar').value=p.teklifFiyat||'';
+  document.getElementById('ptm-tarih').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ptm-not').value='';
+  document.getElementById('ptm-fatura').checked=false;
+
+  // Hizmet seçimi doldur
+  const body=document.getElementById('ptm-ms-body');
+  if(body){
+    let html='';
+    for(let mK in ISLETME_HİZ){
+      html+=`<div class="ms-cat-title">${mK}</div><div class="check-grid">`;
+      ISLETME_HİZ[mK].forEach(alt=>{
+        html+=`<label class="check-item"><input type="checkbox" class="ptm-isletme-cb" data-main="${mK}" value="${alt}" onchange="this.parentElement.classList.toggle('selected',this.checked);ptmHizmetOzet()"><span>${alt}</span></label>`;
+      });
+      html+=`</div>`;
+    }
+    body.innerHTML=html;
+  }
+  document.getElementById('ptm-ms-summary').textContent='Seçim Yapın';
+
+  // Özet göster
+  const ozetEl=document.getElementById('ptm-ozet');
+  const ozetIc=document.getElementById('ptm-ozet-ic');
+  if(ozetEl&&ozetIc){
+    let ozet=`<div style="margin-bottom:4px;">✅ İşletme Geliri olarak işlem oluşturulacak</div>`;
+    if(stokMalzemeler.length)
+      ozet+=`<div style="margin-bottom:4px;">📦 ${stokMalzemeler.length} stok kalemi düşülecek</div>`;
+    if(personeller.length)
+      ozet+=`<div style="margin-bottom:4px;">👷 ${personeller.length} personel için hak ediş açılacak</div>`;
+    ozetIc.innerHTML=ozet;
+    ozetEl.style.display='block';
+  }
+
+  closeModal('modal-proje-detay');
+  openModal('modal-proje-tamamla');
+}
+
+function toggleHizmetSec(prefix){
+  const b=document.getElementById((prefix||'')+(prefix?'-ms-body':'ms-body'));
+  if(b)b.style.display=b.style.display==='none'?'block':'none';
+}
+
+function ptmHizmetOzet(){
+  const c=document.querySelectorAll('.ptm-isletme-cb:checked').length;
+  const s=document.getElementById('ptm-ms-summary');
+  if(s)s.textContent=c>0?c+' Seçim Yapıldı':'Seçim Yapın';
+}
+
+async function projejiTamamla(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const projeId=parseInt(document.getElementById('ptm-proje-id').value);
+    const p=DB.projeler.find(x=>x.id===projeId);if(!p){showToast('Proje bulunamadı','red');return;}
+    const k=getKisi(p.musteriId);
+    const tutar=parseFloat(document.getElementById('ptm-tutar').value)||0;
+    if(tutar<=0){showToast('Gerçekleşen tutar girin','red');if(btn)btn.disabled=false;return;}
+    const odeme=document.getElementById('ptm-odeme').value||'Nakit';
+    const tarih=document.getElementById('ptm-tarih').value||new Date().toISOString().split('T')[0];
+    const not=document.getElementById('ptm-not').value||'';
+    const faturaVar=document.getElementById('ptm-fatura').checked;
+
+    // Seçilen hizmetler
+    const seciliHizmetler=Array.from(document.querySelectorAll('.ptm-isletme-cb:checked')).map(cb=>cb.value);
+    const altKat=seciliHizmetler.length>0?seciliHizmetler.join(', '):'Proje Tamamlama';
+
+    // 1. Ana işlem kaydı — İşletme Geliri
+    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      tarih:tarih+'T12:00:00',tip:'Gelir',statu:'Tamamlandı',
+      kat:'İşletme Geliri',alt_kat:altKat,
+      tutar,odeme_yontemi:odeme,
+      kisi_id:p.musteriId||null,
+      proje_id:projeId,
+      not:`${p.isim} projesi tamamlandı.${not?' '+not:''}`,
+      fatura_var:faturaVar
+    })});
+
+    // 2. Stok düşümü
+    let malzemeler=[];
+    try{malzemeler=await sbFetch('proje_malzemeler?proje_id=eq.'+projeId)||[];}catch(e){}
+    const stokMalzemeler=malzemeler.filter(m=>m.stok_id);
+    for(const m of stokMalzemeler){
+      const stok=DB.stok.find(s=>s.id===m.stok_id);
+      if(stok){
+        const yeniMiktar=Math.max(0,(stok.miktar||0)-(m.miktar||0));
+        await sbFetch('stok?id=eq.'+m.stok_id,{method:'PATCH',body:JSON.stringify({miktar:yeniMiktar})});
+        // Stok hareketi
+        await sbFetch('stok_hareketleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+          stok_id:m.stok_id,tarih:tarih+'T12:00:00',
+          tip:'Kullanım',miktar:m.miktar,
+          aciklama:`Proje: ${p.isim}`
+        })}).catch(()=>{});
+      }
+    }
+
+    // 3. Personel hak edişleri
+    let personeller=[];
+    try{personeller=await sbFetch('proje_personeller?proje_id=eq.'+projeId)||[];}catch(e){}
+    for(const pp of personeller){
+      if(!pp.personel_id||!pp.manuel_tutar)continue;
+      const per=DB.personeller.find(x=>x.id===pp.personel_id);
+      if(!per)continue;
+      await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        tarih:tarih+'T12:00:00',
+        tip:'Hak Edis',
+        personel_id:pp.personel_id,
+        tutar:pp.manuel_tutar,
+        aciklama:`${p.isim} projesi hak edişi`
+      })}).catch(()=>{});
+    }
+
+    // 4. Projeyi tamamlandı yap
+    await sbFetch('projeler?id=eq.'+projeId,{method:'PATCH',body:JSON.stringify({durum:'Tamamlandı',bitis:tarih})});
+
+    await loadDB();
+    closeModal('modal-proje-tamamla');
+    showToast('✅ Proje tamamlandı! İşlem, stok ve hak edişler oluşturuldu.','green');
+  }catch(e){showToast('Hata: '+e.message,'red');console.error(e);}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+
 function renderCariKrediler(){
   const list=document.getElementById('list-cari-kredi');
   const baslik=document.getElementById('cari-kredi-baslik');
@@ -6318,32 +6520,27 @@ function showTeklifDetay(id){
   if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
   document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
   document.getElementById('teklif-detay-content').innerHTML=html;
-  // Footer butonlar — 3 + 3 grid düzeni, eşit büyüklük
+  // Footer butonlar — 3-3 eşit grid
   let footer='';
   if(USER_ROL!=='goruntule'){
-    // Satır 1: her zaman — Düzenle, Yazdır, PDF
+    const btnS='font-size:12px;padding:10px 6px;';
     footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
-      <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="font-size:12px;padding:11px 4px;text-align:center;">✏️<br><span style="font-size:10px;">Düzenle</span></button>
-      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="font-size:12px;padding:11px 4px;text-align:center;">🖨️<br><span style="font-size:10px;">Yazdır</span></button>
-      <button class="btn btn-secondary" onclick="teklifOnizlemeGoster(${id})" style="font-size:12px;padding:11px 4px;text-align:center;">📄<br><span style="font-size:10px;">PDF İndir</span></button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="${btnS}">✏️ Düzenle</button>
+      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">🖨️ Yazdır</button>
+      <button class="btn btn-secondary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">📄 PDF</button>
     </div>`;
-    // Satır 2: durum butonları — her zaman 3 kolon, boş olanlar gizli
-    const b2=[];
-    b2.push(t.durum!=='Onaylandı'
-      ? `<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="font-size:12px;padding:11px 4px;text-align:center;">📤<br><span style="font-size:10px;">Gönderildi</span></button>`
-      : `<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="font-size:12px;padding:11px 4px;text-align:center;">💰<br><span style="font-size:10px;">İşleme Dönüştür</span></button>`);
-    b2.push((t.durum==='Gönderildi'||t.durum==='Taslak')
-      ? `<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="font-size:12px;padding:11px 4px;text-align:center;">🔗<br><span style="font-size:10px;">Dijital Onay</span></button>`
-      : `<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="font-size:12px;padding:11px 4px;text-align:center;background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️<br><span style="font-size:10px;">Projeye Dönüştür</span></button>`);
-    b2.push(t.durum==='Gönderildi'
-      ? `<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="font-size:12px;padding:11px 4px;text-align:center;">✅<br><span style="font-size:10px;">Onayla</span></button>`
-      : `<div></div>`);
-    footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">${b2.join('')}</div>`;
-    // Sil — ince uzun
-    if(USER_ROL==='admin')
-      footer+=`<button class="btn btn-secondary btn-full" onclick="deleteTeklif(${id})" style="color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);font-size:12px;padding:8px;">🗑 Sil</button>`;
+    const gb1=t.durum!=='Onaylandı'
+      ?`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="${btnS}">📤 Gönderildi</button>`
+      :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${btnS}">💰 İşleme</button>`;
+    const gb2=(t.durum==='Gönderildi'||t.durum==='Taslak')
+      ?`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="${btnS}">🔗 Dijital Onay</button>`
+      :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${btnS};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Proje</button>`;
+    const gb3=t.durum==='Gönderildi'
+      ?`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="${btnS}">✅ Onayla</button>`
+      :(USER_ROL==='admin'?`<button class="btn btn-secondary" onclick="deleteTeklif(${id})" style="${btnS};color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);">🗑 Sil</button>`:'<div></div>');
+    footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${gb1}${gb2}${gb3}</div>`;
   }
-  document.getElementById('teklif-detay-footer').innerHTML=footer;
+    document.getElementById('teklif-detay-footer').innerHTML=footer;
   openModal('modal-teklif-detay');
 }
 
@@ -10850,13 +11047,37 @@ async function teklifdenProjeOlustur(teklifId){
 function projeMalzemeEkleModal(projeId){
   document.getElementById('pm-popup')?.remove();
   document.getElementById('pm-overlay')?.remove();
+  const stokSecenekleri=DB.stok.map(s=>`<option value="${s.id}" data-ad="${s.ad}" data-birim="${s.birim||'Adet'}" data-fiyat="${s.birimFiyat||0}" data-miktar="${s.miktar||0}">${s.ad} (${s.miktar||0} ${s.birim||'Adet'} · ${fmt(s.birimFiyat||0)} ₺)</option>`).join('');
   const el=document.createElement('div');
   el.id='pm-popup';
-  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:320px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
   el.innerHTML=`<div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
     <div style="font-size:14px;font-weight:700;">📦 Malzeme Ekle</div>
-    <input type="text" id="pm-ad" placeholder="Malzeme adı" autocapitalize="words"
-      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <!-- Stok veya Manuel seçimi -->
+    <div style="display:flex;gap:6px;">
+      <label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;background:var(--bg2);">
+        <input type="radio" name="pm-tip" value="manuel" checked onchange="pmTipDegis()"> Manuel Giriş
+      </label>
+      <label style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;background:var(--bg2);">
+        <input type="radio" name="pm-tip" value="stok" onchange="pmTipDegis()"> 📦 Stoktan Seç
+      </label>
+    </div>
+    <!-- Manuel alanlar -->
+    <div id="pm-manuel-alanlar">
+      <input type="text" id="pm-ad" placeholder="Malzeme adı" autocapitalize="words"
+        style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    </div>
+    <!-- Stok alanları -->
+    <div id="pm-stok-alanlar" style="display:none;">
+      <input type="hidden" id="pm-stok-id">
+      <select id="pm-stok-sec" onchange="pmStokSec(this)"
+        style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;">
+        <option value="">-- Stoktan seç --</option>
+        ${stokSecenekleri}
+      </select>
+      <div id="pm-stok-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+    </div>
+    <!-- Ortak alanlar -->
     <div style="display:flex;gap:8px;">
       <input type="number" id="pm-miktar" placeholder="Miktar" value="1"
         style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;"
@@ -10889,16 +11110,52 @@ function projeMalzemeEkleModal(projeId){
   setTimeout(()=>document.getElementById('pm-ad')?.focus(),80);
 }
 
+function pmTipDegis(){
+  const tip=document.querySelector('input[name="pm-tip"]:checked')?.value;
+  document.getElementById('pm-manuel-alanlar').style.display=tip==='manuel'?'block':'none';
+  document.getElementById('pm-stok-alanlar').style.display=tip==='stok'?'block':'none';
+  document.getElementById('pm-stok-id').value='';
+}
+
+function pmStokSec(sel){
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt.value)return;
+  document.getElementById('pm-stok-id').value=opt.value;
+  const birim=opt.dataset.birim||'Adet';
+  const fiyat=parseFloat(opt.dataset.fiyat)||0;
+  const mevcutMiktar=parseFloat(opt.dataset.miktar)||0;
+  // Birim'i ayarla
+  const birimSel=document.getElementById('pm-birim');
+  Array.from(birimSel.options).forEach(o=>{if(o.value===birim)o.selected=true;});
+  // Fiyatı doldur
+  document.getElementById('pm-fiyat').value=fiyat;
+  // Stok bilgisi
+  document.getElementById('pm-stok-bilgi').textContent=`Mevcut stok: ${mevcutMiktar} ${birim}`;
+  // Toplam güncelle
+  const m=parseFloat(document.getElementById('pm-miktar').value)||0;
+  document.getElementById('pm-toplam-g').textContent=(m*fiyat).toLocaleString('tr-TR')+' ₺';
+}
+
 async function projeMalzemeKaydet(projeId){
-  const ad=document.getElementById('pm-ad')?.value?.trim();
-  if(!ad){showToast('Malzeme adı girin','red');return;}
+  const tip=document.querySelector('input[name="pm-tip"]:checked')?.value||'manuel';
+  const stokId=parseInt(document.getElementById('pm-stok-id')?.value)||null;
+  let ad='';
+  if(tip==='stok'){
+    const sel=document.getElementById('pm-stok-sec');
+    ad=sel?.options[sel.selectedIndex]?.dataset?.ad||'';
+    if(!stokId||!ad){showToast('Stoktan bir ürün seçin','red');return;}
+  }else{
+    ad=document.getElementById('pm-ad')?.value?.trim();
+    if(!ad){showToast('Malzeme adı girin','red');return;}
+  }
   const miktar=parseFloat(document.getElementById('pm-miktar')?.value)||1;
   const birim=document.getElementById('pm-birim')?.value||'Adet';
   const fiyat=parseFloat(document.getElementById('pm-fiyat')?.value)||0;
   const temin=document.getElementById('pm-temin')?.value||'Bekliyor';
   await sbFetch('proje_malzemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
     proje_id:projeId,malzeme_adi:ad,miktar,birim,
-    birim_fiyat:fiyat,toplam:miktar*fiyat,temin_durumu:temin
+    birim_fiyat:fiyat,toplam:miktar*fiyat,
+    temin_durumu:temin,stok_id:stokId
   })});
   document.getElementById('pm-popup')?.remove();
   document.getElementById('pm-overlay')?.remove();
@@ -11307,7 +11564,7 @@ async function showProjeDetay(id){
   html+=`<div style="display:flex;flex-direction:column;gap:6px;">
     <div style="display:flex;gap:6px;">
       ${USER_ROL!=='goruntule'?`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje-detay');openProjeModal(${id})">✏️ Düzenle</button>`:''}
-      <button class="btn btn-primary btn-full" onclick="closeModal('modal-proje-detay');projeIslemEkle(${id})">+ İşlem Ekle</button>
+      <button class="btn btn-primary btn-full" onclick="openProjeTamamlaModal(${id})" style="background:linear-gradient(135deg,#15803d,#166534);">🏁 Projeyi Tamamla</button>
     </div>
     <div style="display:flex;gap:6px;">
       <button class="btn btn-secondary btn-full" onclick="isRaporuYazdirAc(${id})" style="background:rgba(30,58,138,0.2);color:#60a5fa;border-color:rgba(30,58,138,0.4);">🖨️ İş Raporu Yazdır</button>
