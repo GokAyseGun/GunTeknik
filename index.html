@@ -461,7 +461,24 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="kasa-dagitim"></div>
           <button onclick="event.stopPropagation();aiOzetKutucukAnaliz('kasa')" class="ai-abs-btn">✦</button>
         </div>
-        <div class="card accent-green" onclick="showDashDetay('beklenen')"><div class="lbl">📅 Beklenen (Vadeler Dahil)</div><div class="val c-green num" id="d-beklenen">0 ₺</div><button onclick="event.stopPropagation();aiOzetKutucukAnaliz('beklenen')" class="ai-abs-btn">✦</button></div>
+      </div>
+      <div class="cards" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
+        <div class="card" onclick="showDashDetay('bekBuAy')" style="cursor:pointer;">
+          <div class="lbl" style="font-size:11px;">📅 Bu Ay Beklenen</div>
+          <div class="val num" id="d-bek-buay" style="font-size:18px;">0 ₺</div>
+        </div>
+        <div class="card" onclick="showDashDetay('bek6Ay')" style="cursor:pointer;">
+          <div class="lbl" style="font-size:11px;">📆 6 Ay Beklenen</div>
+          <div class="val num" id="d-bek-6ay" style="font-size:18px;">0 ₺</div>
+        </div>
+        <div class="card" onclick="showDashDetay('bek1Yil')" style="cursor:pointer;">
+          <div class="lbl" style="font-size:11px;">📊 1 Yıl Beklenen</div>
+          <div class="val num" id="d-bek-1yil" style="font-size:18px;">0 ₺</div>
+        </div>
+        <div class="card" onclick="showDashDetay('bek10Yil')" style="cursor:pointer;">
+          <div class="lbl" style="font-size:11px;">🗓️ 10 Yıl Beklenen</div>
+          <div class="val num" id="d-bek-10yil" style="font-size:18px;">0 ₺</div>
+        </div>
       </div>
 
       <div class="sec-title">Alacak & Borç</div>
@@ -596,7 +613,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </select>
         <input type="text" id="f-cari-ara" placeholder="Kişi veya cari no ara..." oninput="renderCari()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
       </div>
-      <div class="stagger-wrap" id="list-cari"></div>
+      <!-- Kişi bakiyeleri — üst panel -->
+      <div style="margin-bottom:6px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">👥 Kişi & Kurum Bakiyeleri</div>
+      <div class="stagger-wrap" id="list-cari" style="max-height:40vh;overflow-y:auto;"></div>
+      <!-- Banka kredileri — alt panel -->
+      <div style="margin-top:14px;margin-bottom:6px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;" id="cari-kredi-baslik" style="display:none;">🏦 Banka Kredileri</div>
+      <div id="list-cari-kredi" style="max-height:40vh;overflow-y:auto;"></div>
     </div>
 
     <!-- PERSONEL -->
@@ -1362,7 +1384,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fi">
         <label>Kategori Filtresi</label>
         <select id="mi-kisi-kat" onchange="acFilter('mi-ac')" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="">Tüm Kategoriler</option><option value="Müşteri">Müşteriler</option><option value="Firma">Firmalar</option><option value="Kurum">Kurumlar</option><option value="Şahıs">Şahıslar</option>
+          <option value="">Tüm Kategoriler</option><option value="Müşteri">Müşteriler</option><option value="Firma">Firmalar</option><option value="Kurum">Kurumlar</option><option value="Banka">Bankalar</option><option value="Şahıs">Şahıslar</option>
         </select>
       </div>
       <div class="fi">
@@ -1556,41 +1578,104 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-head"><h3 style="color:var(--purple)">Borç & Finansman</h3><button class="modal-close" onclick="closeModal('modal-borc')">✕</button></div>
     <div class="modal-body fg">
       <div class="fi"><label>İşlem Yönü</label>
-        <select id="mb-tip" onchange="acFilter('mb-ac')" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+        <select id="mb-tip" onchange="onBorcTipChange()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Alındı">Borç Alındı (Kasaya Girer)</option><option value="Verildi">Borç Verildi (Kasadan Çıkar)</option>
         </select>
       </div>
-      <div class="fi"><label>Hangi Kasayı Etkiler?</label>
-        <select id="mb-kasa-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="isletme">İşletme Kasası</option>
-          <option value="sahsi">Şahsi Kasa</option>
-        </select>
-      </div>
-      <div class="fi">
-        <label>İlgili Kişi</label>
-        <input type="hidden" id="mb-kisi">
-        <div style="display:flex;gap:8px;align-items:flex-start;">
-          <div class="kisi-ac-wrap" style="flex:1;" id="mb-ac-wrap">
-            <input type="text" class="kisi-ac-input" id="mb-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
-              oninput="acSearch('mb-ac')" onfocus="acSearch('mb-ac')" autocomplete="off">
-            <div id="mb-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('mb-ac')">
-              <span class="ac-name" id="mb-ac-sel-text"></span>
-              <span class="ac-clear">✕</span>
-            </div>
-            <div class="kisi-ac-dropdown" id="mb-ac-drop"></div>
-          </div>
-          <button type="button" class="btn btn-primary btn-sm" onclick="openKisiFromBorc()" style="padding:0 14px;height:48px;flex-shrink:0;">+</button>
+      <!-- Kaynak tipi — sadece Alındı'da görünür -->
+      <div class="fi" id="mb-kaynak-tipi-wrap">
+        <label>Kaynak Tipi</label>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="mb-kaynak" value="kisi" checked onchange="onBorcKaynakChange()"> Kişi / Kurum
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="mb-kaynak" value="banka" onchange="onBorcKaynakChange()"> 🏦 Banka Kredisi
+          </label>
         </div>
       </div>
-      <div class="fi"><label>Tarih</label><input type="datetime-local" id="mb-tarih"></div>
-      <div class="fi"><label>Ana Para (₺)</label><input type="number" id="mb-anapara" inputmode="numeric" placeholder="0.00"></div>
-      <div class="fi"><label>Toplam Geri Ödenecek (₺)</label><input type="number" id="mb-toplamgeri" inputmode="numeric" placeholder="0.00"></div>
-      <div class="fi"><label>Taksit Sayısı (Ay)</label><input type="number" id="mb-taksit" value="1" min="1"></div>
-      <div class="fi"><label>Açıklama</label><textarea id="mb-not" rows="2" placeholder="Not ekleyin..."></textarea></div>
+      <!-- Normal kişi akışı -->
+      <div id="mb-normal-form">
+        <div class="fi"><label>Hangi Kasayı Etkiler?</label>
+          <select id="mb-kasa-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+            <option value="isletme">İşletme Kasası</option><option value="sahsi">Şahsi Kasa</option>
+          </select>
+        </div>
+        <div class="fi">
+          <label>İlgili Kişi</label>
+          <input type="hidden" id="mb-kisi">
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <div class="kisi-ac-wrap" style="flex:1;" id="mb-ac-wrap">
+              <input type="text" class="kisi-ac-input" id="mb-ac-input" placeholder="İsim yazarak ara..." autocapitalize="words"
+                oninput="acSearch('mb-ac')" onfocus="acSearch('mb-ac')" autocomplete="off">
+              <div id="mb-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClear('mb-ac')">
+                <span class="ac-name" id="mb-ac-sel-text"></span>
+                <span class="ac-clear">✕</span>
+              </div>
+              <div class="kisi-ac-dropdown" id="mb-ac-drop"></div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openKisiFromBorc()" style="padding:0 14px;height:48px;flex-shrink:0;">+</button>
+          </div>
+        </div>
+        <div class="fi"><label>Tarih</label><input type="datetime-local" id="mb-tarih"></div>
+        <div class="fi"><label>Ana Para (₺)</label><input type="number" id="mb-anapara" inputmode="numeric" placeholder="0.00"></div>
+        <div class="fi"><label>Toplam Geri Ödenecek (₺)</label><input type="number" id="mb-toplamgeri" inputmode="numeric" placeholder="0.00"></div>
+        <div class="fi"><label>Taksit Sayısı (Ay)</label><input type="number" id="mb-taksit" value="1" min="1"></div>
+        <div class="fi"><label>Açıklama</label><textarea id="mb-not" rows="2" placeholder="Not ekleyin..."></textarea></div>
+      </div>
+      <!-- Banka kredisi akışı — form dönüşümü -->
+      <div id="mb-banka-form" style="display:none;">
+        <div style="background:rgba(30,58,138,0.15);border:1px solid rgba(30,58,138,0.3);border-radius:var(--r-md);padding:12px;margin-bottom:8px;font-size:12px;color:var(--text2);">
+          🏦 Banka kredisi için kredi detaylarını girin. Kaydettiğinizde hem kredi kaydı oluşturulur hem kasa güncellenir.
+        </div>
+        <div class="fi"><label>Banka Seçimi (Rehber)</label>
+          <input type="hidden" id="mb-banka-kisi-id">
+          <div class="kisi-ac-wrap" id="mb-banka-ac-wrap">
+            <input type="text" class="kisi-ac-input" id="mb-banka-ac-input" placeholder="Banka adı yazarak ara..." autocapitalize="words"
+              oninput="acSearchBanka('mb-banka-ac')" onfocus="acSearchBanka('mb-banka-ac')" autocomplete="off">
+            <div id="mb-banka-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClearBanka()">
+              <span class="ac-name" id="mb-banka-ac-sel-text"></span><span class="ac-clear">✕</span>
+            </div>
+            <div class="kisi-ac-dropdown" id="mb-banka-ac-drop"></div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openKisiBanka()" style="margin-top:6px;font-size:11px;">+ Yeni Banka Ekle</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Kredi Türü</label>
+            <select id="mb-kredi-tur" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+              <option>Ticari</option><option>Şahsi</option>
+            </select>
+          </div>
+          <div class="fi" style="flex:1"><label>Kredi Tipi</label>
+            <select id="mb-kredi-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+              <option>İhtiyaç</option><option>Taşıt</option><option>Konut</option><option>Ticari</option><option>KGF</option><option>Diğer</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Anapara (₺)</label><input type="number" id="mb-kredi-anapara" inputmode="numeric" placeholder="0" oninput="mbKrediHesapla()"></div>
+          <div class="fi" style="flex:1"><label>Faiz Oranı (%)</label><input type="number" id="mb-kredi-faiz" inputmode="numeric" placeholder="0.00" step="0.01" oninput="mbKrediHesapla()"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Vade (Ay)</label><input type="number" id="mb-kredi-vade" inputmode="numeric" placeholder="12" oninput="mbKrediHesapla()"></div>
+          <div class="fi" style="flex:1"><label>Aylık Taksit (₺)</label><input type="number" id="mb-kredi-taksit" inputmode="numeric" placeholder="Otomatik"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Başlangıç Tarihi</label><input type="date" id="mb-kredi-baslangic"></div>
+          <div class="fi" style="flex:1"><label>İlk Taksit</label><input type="date" id="mb-kredi-ilk-taksit"></div>
+        </div>
+        <div class="fi"><label>Teminat</label><input type="text" id="mb-kredi-teminat" placeholder="Araç, gayrimenkul..."></div>
+        <div class="fi"><label>Kefil</label><input type="text" id="mb-kredi-kefil" placeholder="Kefil adı"></div>
+        <div class="fi"><label>Not</label><textarea id="mb-kredi-not" rows="2" placeholder="Ek bilgi..."></textarea></div>
+        <!-- Özet -->
+        <div id="mb-kredi-ozet" style="background:rgba(126,179,240,0.1);border:1px solid rgba(126,179,240,0.3);border-radius:var(--r-md);padding:10px;display:none;font-size:12px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="mb-kredi-ozet-ic"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-borc')">İptal</button>
-      <button class="btn btn-primary btn-full" onclick="saveBorc(this)">Oluştur</button>
+      <button class="btn btn-primary btn-full" id="mb-kaydet-btn" onclick="saveBorcOrKredi(this)">Oluştur</button>
     </div>
   </div>
 </div>
@@ -1603,7 +1688,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="hidden" id="mk-id"><input type="hidden" id="mk-source" value="rehber">
       <div class="fi"><label>Kategori</label>
         <select id="mk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Şahıs">Şahıs</option>
+          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Banka">Banka</option><option value="Şahıs">Şahıs</option>
         </select>
       </div>
       <div class="fi"><label>Görünürlük</label>
@@ -2621,7 +2706,76 @@ function calcFinans(){
 
   let alacakTop=0,borcTop=0;
   Object.values(cD).forEach(c=>{if(c.bakiyeAll>0)alacakTop+=c.bakiyeAll;else if(c.bakiyeAll<0)borcTop+=Math.abs(c.bakiyeAll);});
-  return{kasa:kasaTop,kasaNakit,kasaKart,kasaIBAN,beklenen:kasaTop+aySonuFark,isGelir,isGider,isKar:isGelir-isGider,shGelir,shGider,shNet:shGelir-shGider,alacakTop,borcTop,topPersonelBakiye,personelBakiye,cD,fDate};
+
+  // Bu ayki kredi taksitlerini borcTop'a ekle
+  const simdi=new Date();
+  const buAyStr=simdi.getFullYear()+'-'+String(simdi.getMonth()+1).padStart(2,'0');
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+    borcTop+=k.taksitTutari; // Aylık taksit yükü
+  });
+
+  // 4 dönem beklenen hesaplama — vadeli işlemler + kredi taksitleri
+  function bekleneniHesapla(donemAy){
+    const bitisTarih=new Date(simdi);
+    bitisTarih.setMonth(bitisTarih.getMonth()+donemAy);
+    const baslangicAy=new Date(simdi.getFullYear(),simdi.getMonth(),1);
+
+    // Vadeli işlemler (Bekliyor)
+    let vadeli=0;
+    DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
+      const t=parseFloat(i.tutar)||0;
+      const d=new Date(i.tarih);
+      if(d>=baslangicAy&&d<bitisTarih){
+        if(i.tip==='Gelir')vadeli+=t;
+        else if(i.tip==='Gider')vadeli-=t;
+      }
+    });
+
+    // Kredi taksitleri — o döneme kaç taksit denk geliyor
+    (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+      if(!k.ilkTaksitTarihi||!k.kalanTaksit)return;
+      let taksitTarih=new Date(k.ilkTaksitTarihi);
+      taksitTarih.setMonth(taksitTarih.getMonth()+k.odenenTaksit);
+      let sayi=0;
+      const gecici=new Date(taksitTarih);
+      while(gecici<bitisTarih&&sayi<k.kalanTaksit){
+        if(gecici>=baslangicAy) sayi++;
+        gecici.setMonth(gecici.getMonth()+1);
+      }
+      vadeli-=sayi*k.taksitTutari;
+    });
+    return vadeli;
+  }
+
+  // Bu ay: takvim ayının başından sonuna
+  const buAyBitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
+  let bekBuAy=0;
+  DB.islemler.filter(i=>i.statu==='Bekliyor').forEach(i=>{
+    const t=parseFloat(i.tutar)||0;
+    const d=new Date(i.tarih);
+    const ayBas=new Date(simdi.getFullYear(),simdi.getMonth(),1);
+    if(d>=ayBas&&d<buAyBitis){
+      if(i.tip==='Gelir')bekBuAy+=t;
+      else if(i.tip==='Gider')bekBuAy-=t;
+    }
+  });
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+    if(!k.ilkTaksitTarihi||!k.kalanTaksit)return;
+    let td=new Date(k.ilkTaksitTarihi);
+    td.setMonth(td.getMonth()+k.odenenTaksit);
+    if(td.getFullYear()===simdi.getFullYear()&&td.getMonth()===simdi.getMonth()){
+      bekBuAy-=k.taksitTutari;
+    }
+  });
+
+  const bek6Ay=bekleneniHesapla(6);
+  const bek1Yil=bekleneniHesapla(12);
+  const bek10Yil=bekleneniHesapla(120);
+
+  return{kasa:kasaTop,kasaNakit,kasaKart,kasaIBAN,
+    bekBuAy,bek6Ay,bek1Yil,bek10Yil,
+    isGelir,isGider,isKar:isGelir-isGider,shGelir,shGider,shNet:shGelir-shGider,
+    alacakTop,borcTop,topPersonelBakiye,personelBakiye,cD,fDate};
 }
 
 // ============================================================ RENDER ALL
@@ -2636,7 +2790,10 @@ function renderAll(){
     if(e('d-sh-gider'))animateCount(e('d-sh-gider'),c.shGider);
     if(e('d-sh-net'))animateCount(e('d-sh-net'),c.shNet);
     if(e('d-kasa'))animateCount(e('d-kasa'),c.kasa);
-    if(e('d-beklenen'))animateCount(e('d-beklenen'),c.beklenen);
+    if(e('d-bek-buay'))animateCount(e('d-bek-buay'),c.bekBuAy);
+    if(e('d-bek-6ay'))animateCount(e('d-bek-6ay'),c.bek6Ay);
+    if(e('d-bek-1yil'))animateCount(e('d-bek-1yil'),c.bek1Yil);
+    if(e('d-bek-10yil'))animateCount(e('d-bek-10yil'),c.bek10Yil);
     if(e('d-alacak'))animateCount(e('d-alacak'),c.alacakTop);
     if(e('d-verecek'))animateCount(e('d-verecek'),c.borcTop);
     if(e('d-personel'))animateCount(e('d-personel'),c.topPersonelBakiye);
@@ -2678,14 +2835,49 @@ function renderDashVade(){
   const el=document.getElementById('dash-vade-list');if(!el)return;
   const now=new Date(),soon=new Date(now.getTime()+7*24*60*60*1000);
   const list=DB.islemler.filter(i=>i.statu==='Bekliyor'&&new Date(i.tarih)<=soon).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih)).slice(0,5);
-  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">7 gün içinde vade yok</div></div>';return;}
-  el.innerHTML=list.map((i,idx)=>{
-    const k=getKisi(i.kisiId);const d=new Date(i.tarih);const gecti=d<now;const renk=gecti?'var(--red)':'var(--amber)';
-    return `<div class="stagger-item" style="animation-delay:${idx*0.06}s;border-left:3px solid ${renk};" onclick="showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${k?.isim||'—'}</div><div style="font-size:11px;color:var(--text2);">${dtS(i.tarih)} · ${i.kat||i.tip}</div></div><div style="font-weight:700;font-size:15px;color:${renk};" class="num">${fmt(i.tutar)}</div></div></div>`;
-  }).join('');
-  setStagger(el.querySelectorAll('.stagger-item'));
-}
 
+  // Kredi taksitlerini de ekle
+  const krediVadeler=[];
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+    if(!k.ilkTaksitTarihi||!k.kalanTaksit)return;
+    let td=new Date(k.ilkTaksitTarihi);
+    td.setMonth(td.getMonth()+k.odenenTaksit);
+    if(td<=soon){
+      krediVadeler.push({tip:'kredi',bankaAdi:k.bankaAdi,taksitNo:k.odenenTaksit+1,tutar:k.taksitTutari,tarih:td,gecmis:td<now});
+    }
+  });
+
+  const tumListe=[...list.map(i=>({tip:'islem',i})),...krediVadeler].sort((a,b)=>{
+    const da=a.tip==='islem'?new Date(a.i.tarih):a.tarih;
+    const db2=b.tip==='islem'?new Date(b.i.tarih):b.tarih;
+    return da-db2;
+  }).slice(0,7);
+
+  if(!tumListe.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Yaklaşan vade yok</div></div>';
+    return;
+  }
+
+  el.innerHTML=tumListe.map((item,idx)=>{
+    if(item.tip==='kredi'){
+      const renk=item.gecmis?'var(--red)':'var(--amber)';
+      const tarihStr=item.tarih.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'});
+      return `<div class="stagger-item" style="animation-delay:${idx*0.05}s;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div><div style="font-size:12px;font-weight:600;">🏦 ${item.bankaAdi} — ${item.taksitNo}. taksit</div><div style="font-size:11px;color:var(--text3);">${tarihStr}${item.gecmis?' · ⚠️ Gecikmiş':''}</div></div>
+        <div style="font-weight:700;color:${renk};" class="num">${fmt(item.tutar)} ₺</div>
+      </div>`;
+    }
+    const i=item.i;
+    const k=getKisi(i.kisiId);const isGelir=i.tip==='Gelir';
+    const renk=i.gecmis?'var(--red)':(isGelir?'var(--green)':'var(--amber)');
+    const tarihStr=new Date(i.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'});
+    return `<div class="stagger-item" style="animation-delay:${idx*0.05}s;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);" onclick="showIslemDetay(${i.id})">
+      <div><div style="font-size:12px;font-weight:600;">${k?k.isim:'—'}</div><div style="font-size:11px;color:var(--text3);">${tarihStr} · ${i.kat||i.tip}</div></div>
+      <div style="font-weight:700;color:${renk};" class="num">${isGelir?'+':'-'}${fmt(i.tutar)} ₺</div>
+    </div>`;
+
+  }).join('');
+}
 function renderDashBugun(){
   const el=document.getElementById('dash-bugun-list');if(!el)return;
   const t=today();const list=DB.islemler.filter(i=>localDateStr(i.tarih)===t).slice(0,6);
@@ -2929,6 +3121,51 @@ function selectPayMethod(btn,hiddenId,modalId){
   container.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');document.getElementById(hiddenId).value=btn.dataset.val;
 }
+
+// ── Cari — Banka Kredileri Alt Paneli ───────────────────
+function renderCariKrediler(){
+  const list=document.getElementById('list-cari-kredi');
+  const baslik=document.getElementById('cari-kredi-baslik');
+  if(!list)return;
+  const tumKrediler=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
+  if(!tumKrediler.length){
+    if(baslik)baslik.style.display='none';
+    list.innerHTML='';return;
+  }
+  if(baslik)baslik.style.display='';
+  const toplamKalan=tumKrediler.reduce((a,k)=>a+k.kalanBorc,0);
+  list.innerHTML=`<div class="card" style="margin-bottom:6px;background:rgba(30,58,138,0.1);border-color:rgba(30,58,138,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:12px;color:var(--text2);">Toplam Kalan Kredi Borcu</div>
+      <div class="num" style="font-weight:700;font-size:16px;color:var(--red);">${fmt(toplamKalan)} ₺</div>
+    </div>
+  </div>`+
+  tumKrediler.map((k,i)=>{
+    const ilerleme=k.vadeAy>0?Math.round((k.odenenTaksit/k.vadeAy)*100):0;
+    let sonrakiTarih='—';
+    if(k.ilkTaksitTarihi&&k.kalanTaksit>0){
+      const d=new Date(k.ilkTaksitTarihi);d.setMonth(d.getMonth()+k.odenenTaksit);
+      sonrakiTarih=d.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'});
+    }
+    return `<div class="card" style="margin-bottom:6px;cursor:pointer;" onclick="showKrediDetay(${k.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div><div style="font-size:13px;font-weight:600;">${k.bankaAdi}</div>
+        <div style="font-size:11px;color:var(--text3);">${k.krediTuru} · ${k.krediTipi} · %${k.faizOrani} faiz</div></div>
+        <div style="text-align:right;">
+          <div class="num" style="font-size:14px;font-weight:700;color:var(--red);">${fmt(k.kalanBorc)} ₺</div>
+          <div style="font-size:10px;color:var(--text3);">Taksit: ${fmt(k.taksitTutari)} ₺/ay</div>
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:3px;height:5px;margin-bottom:5px;">
+        <div style="background:var(--green);height:5px;border-radius:3px;width:${ilerleme}%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);">
+        <span>${k.odenenTaksit}/${k.vadeAy} taksit · %${ilerleme}</span><span>Sonraki: ${sonrakiTarih}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 
 function openIslemModal(){
   if(USER_ROL==='goruntule')return;
@@ -3958,6 +4195,9 @@ function renderCari(c){
       </div>
     </div>`;
   }).join('');
+
+  // Banka kredileri alt paneli
+  renderCariKrediler();
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
 }
 
@@ -6328,6 +6568,31 @@ function hesaplaIcgoru(){
   }
 
   if(!icgorular.length)icgorular.push({ikon:'✅',baslik:'Her şey yolunda görünüyor',aciklama:'Kritik bir durum tespit edilmedi. İşler normal seyrinde gidiyor.',renk:'var(--green)'});
+  // ── Kredi uyarıları ──────────────────────────────────
+  const aktifKrediler=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
+  if(aktifKrediler.length>0){
+    const simdiDate=new Date();
+    const haftaSonra=new Date(simdiDate.getTime()+7*24*60*60*1000);
+    // Yaklaşan taksit uyarısı
+    aktifKrediler.forEach(k=>{
+      if(!k.ilkTaksitTarihi||!k.kalanTaksit)return;
+      let td=new Date(k.ilkTaksitTarihi);
+      td.setMonth(td.getMonth()+k.odenenTaksit);
+      if(td<=haftaSonra&&td>=simdiDate){
+        const gun=Math.ceil((td-simdiDate)/(24*60*60*1000));
+        icgorular.push({ikon:'🏦',baslik:`${k.bankaAdi} taksiti yaklaşıyor`,aciklama:`${gun} gün içinde ${fmt(k.taksitTutari)} ₺ ödeme vadesi.`,renk:'amber'});
+      }else if(td<simdiDate){
+        icgorular.push({ikon:'🚨',baslik:`${k.bankaAdi} taksiti gecikmiş`,aciklama:`${fmt(k.taksitTutari)} ₺ taksit vadesi geçti.`,renk:'red'});
+      }
+    });
+    // Aylık kredi yükü uyarısı
+    const aylikKrediYuk=aktifKrediler.reduce((a,k)=>a+k.taksitTutari,0);
+    const toplamKasa=calcFinans().kasa;
+    if(toplamKasa>0&&aylikKrediYuk/toplamKasa>0.3){
+      icgorular.push({ikon:'⚠️',baslik:'Yüksek kredi taksit yükü',aciklama:`Aylık kredi taksitleri (${fmt(aylikKrediYuk)} ₺) kasa bakiyesinin %${Math.round(aylikKrediYuk/toplamKasa*100)}'ini oluşturuyor.`,renk:'red'});
+    }
+  }
+
   return icgorular;
 }
 
@@ -8374,18 +8639,43 @@ function aiOzetKutucukAnaliz(tip){
       else if(c.kasa>0)satirlar.push(`✅ Kasa, bekleyen ödemeleri karşılayacak düzeyde.`);
       break;
     }
-    case 'beklenen':{
-      baslik='📅 Beklenen Nakit Akışı';
-      const bekGelir=bek.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
-      const bekGider=bek.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
-      const net=bekGelir-bekGider;
-      satirlar.push(`Vadeli alacak: ${fmt(bekGelir)} ₺ · Vadeli ödeme: ${fmt(bekGider)} ₺ → Net beklenti: ${fmt(net)} ₺.`);
-      if(net<0)satirlar.push(`⚠️ Beklenen ödemeler tahsilattan ${fmt(Math.abs(net))} ₺ fazla. Bu farkı kapatmak için şimdiden tahsilat baskısı yapılmalı.`);
-      else satirlar.push(`✅ Beklenen tahsilatlar ödemeleri karşılıyor.`);
-      const gecmis=bek.filter(i=>new Date(i.tarih)<now);
-      if(gecmis.length)satirlar.push(`⚠️ ${gecmis.length} işlemin vadesi zaten geçmiş — gecikme uzadıkça tahsilat zorlaşır.`);
-      const buHafta=bek.filter(i=>{const d=new Date(i.tarih);return d>=now&&d<=new Date(now.getTime()+7*24*60*60*1000);});
-      if(buHafta.length)satirlar.push(`📅 Bu hafta içinde ${buHafta.length} vadeli işlem daha var.`);
+    case 'bekBuAy':
+    case 'bek6Ay':
+    case 'bek1Yil':
+    case 'bek10Yil':{
+      const donemMap={'bekBuAy':'Bu Ay','bek6Ay':'6 Ay','bek1Yil':'1 Yıl','bek10Yil':'10 Yıl'};
+      const donemAdi=donemMap[tip];
+      baslik=`📅 ${donemAdi} Beklenen Nakit Akışı`;
+      const simdi2=new Date();
+      let ayBas2,bitisTarih2=new Date(simdi2);
+      if(tip==='bekBuAy'){
+        ayBas2=new Date(simdi2.getFullYear(),simdi2.getMonth(),1);
+        bitisTarih2=new Date(simdi2.getFullYear(),simdi2.getMonth()+1,1);
+      }else{
+        ayBas2=new Date(simdi2.getFullYear(),simdi2.getMonth(),1);
+        const donemAyMap={'bek6Ay':6,'bek1Yil':12,'bek10Yil':120};
+        bitisTarih2.setMonth(bitisTarih2.getMonth()+(donemAyMap[tip]||6));
+      }
+      const donemIslemler=bek.filter(i=>{const d=new Date(i.tarih);return d>=ayBas2&&d<bitisTarih2;});
+      const donemGelir=donemIslemler.filter(i=>i.tip==='Gelir').reduce((a,i)=>a+i.tutar,0);
+      const donemGider=donemIslemler.filter(i=>i.tip==='Gider').reduce((a,i)=>a+i.tutar,0);
+      let krediYuk=0;const krediDetay=[];
+      (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+        if(!k.ilkTaksitTarihi)return;
+        let td=new Date(k.ilkTaksitTarihi);
+        td.setMonth(td.getMonth()+k.odenenTaksit);
+        let sayi=0;const gc=new Date(td);
+        while(gc<bitisTarih2&&sayi<k.kalanTaksit){if(gc>=ayBas2)sayi++;gc.setMonth(gc.getMonth()+1);}
+        if(sayi>0){krediYuk+=sayi*k.taksitTutari;krediDetay.push(`${k.bankaAdi}: ${sayi} taksit × ${fmt(k.taksitTutari)} ₺ = ${fmt(sayi*k.taksitTutari)} ₺`);}
+      });
+      const net=donemGelir-donemGider-krediYuk;
+      satirlar.push(`Beklenen gelir: ${fmt(donemGelir)} ₺`);
+      satirlar.push(`Beklenen gider: ${fmt(donemGider)} ₺`);
+      if(krediYuk>0){satirlar.push(`Kredi taksit yükü: ${fmt(krediYuk)} ₺`);krediDetay.forEach(d=>satirlar.push('  · '+d));}
+      satirlar.push(`Net beklenti: ${net>=0?'+':''}${fmt(net)} ₺`);
+      if(net<0)satirlar.push(`⚠️ Bu dönemde ${fmt(Math.abs(net))} ₺ nakit açığı bekleniyor.`);
+      else satirlar.push(`✅ Bu dönem nakit dengesi pozitif görünüyor.`);
+      if(!donemIslemler.length&&!krediYuk)satirlar.push('Bu dönem için kayıtlı bekleyen işlem veya kredi taksiti yok.');
       break;
     }
     case 'alacak':{
@@ -11305,14 +11595,152 @@ async function deleteKredi(krediId){
   await loadDB();closeModal('modal-kredi-detay');renderKrediPanel();showToast('Silindi','amber');
 }
 
+// ── Borç Modal Dönüşüm Fonksiyonları ────────────────────
+
+function onBorcTipChange(){
+  const tip=document.getElementById('mb-tip')?.value;
+  const kaynakWrap=document.getElementById('mb-kaynak-tipi-wrap');
+  if(kaynakWrap) kaynakWrap.style.display=tip==='Alındı'?'':'none';
+  if(tip==='Verildi'){
+    document.getElementById('mb-normal-form').style.display='';
+    document.getElementById('mb-banka-form').style.display='none';
+    document.querySelectorAll('input[name="mb-kaynak"]')[0].checked=true;
+  }
+  acFilter('mb-ac');
+}
+
+function onBorcKaynakChange(){
+  const banka=document.querySelector('input[name="mb-kaynak"]:checked')?.value==='banka';
+  document.getElementById('mb-normal-form').style.display=banka?'none':'';
+  document.getElementById('mb-banka-form').style.display=banka?'':'none';
+  document.getElementById('mb-kaydet-btn').textContent=banka?'Kredi Kaydet':'Oluştur';
+}
+
+function mbKrediHesapla(){
+  const anapara=parseFloat(document.getElementById('mb-kredi-anapara')?.value)||0;
+  const faiz=parseFloat(document.getElementById('mb-kredi-faiz')?.value)||0;
+  const vade=parseInt(document.getElementById('mb-kredi-vade')?.value)||0;
+  if(!anapara||!vade)return;
+  let taksit;
+  if(faiz>0){const r=faiz/100/12;taksit=anapara*(r*Math.pow(1+r,vade))/(Math.pow(1+r,vade)-1);}
+  else{taksit=anapara/vade;}
+  const el=document.getElementById('mb-kredi-taksit');
+  if(el&&!el.value)el.value=Math.round(taksit);
+  const bas=document.getElementById('mb-kredi-baslangic')?.value;
+  if(bas){
+    const d=new Date(bas);d.setMonth(d.getMonth()+1);
+    const el2=document.getElementById('mb-kredi-ilk-taksit');
+    if(el2&&!el2.value)el2.value=d.toISOString().split('T')[0];
+  }
+  const toplamGeri=Math.round(taksit)*vade;
+  const ozet=document.getElementById('mb-kredi-ozet');
+  const ic=document.getElementById('mb-kredi-ozet-ic');
+  if(ozet&&ic){
+    ic.innerHTML=`<div>Aylık taksit: <b class="num">${fmt(Math.round(taksit))} ₺</b></div><div>Toplam: <b class="num">${fmt(toplamGeri)} ₺</b></div>`;
+    ozet.style.display='block';
+  }
+}
+
+function acSearchBanka(){
+  const input=document.getElementById('mb-banka-ac-input');
+  const drop=document.getElementById('mb-banka-ac-drop');
+  if(!input||!drop)return;
+  const ara=input.value.toLowerCase().trim();
+  const list=DB.kisiler.filter(k=>k.tip==='Banka'&&(!ara||(k.isim||'').toLowerCase().includes(ara)));
+  drop.innerHTML='';
+  if(!list.length){
+    drop.innerHTML='<div class="kisi-ac-empty">Banka bulunamadı</div>';
+  }else{
+    list.forEach(k=>{
+      const div=document.createElement('div');
+      div.className='kisi-ac-item';
+      div.innerHTML=`<div>${k.isim}</div><div class="ac-sub">Banka</div>`;
+      div.addEventListener('mousedown',e=>{
+        e.preventDefault();
+        document.getElementById('mb-banka-kisi-id').value=k.id;
+        document.getElementById('mb-banka-ac-input').value=k.isim;
+        document.getElementById('mb-banka-ac-sel').style.display='flex';
+        document.getElementById('mb-banka-ac-sel-text').textContent=k.isim;
+        document.getElementById('mb-banka-ac-input').style.display='none';
+        drop.classList.remove('open');
+      });
+      drop.appendChild(div);
+    });
+  }
+  drop.classList.add('open');
+}
+
+function acClearBanka(){
+  document.getElementById('mb-banka-kisi-id').value='';
+  document.getElementById('mb-banka-ac-input').value='';
+  document.getElementById('mb-banka-ac-input').style.display='';
+  document.getElementById('mb-banka-ac-sel').style.display='none';
+}
+
+function openKisiBanka(){
+  const s=document.getElementById('mk-source');if(s)s.value='borc';
+  const tipEl=document.getElementById('mk-tip');if(tipEl)tipEl.value='Banka';
+  openKisiModal();
+}
+
+async function saveBorcOrKredi(btn){
+  const banka=document.querySelector('input[name="mb-kaynak"]:checked')?.value==='banka';
+  const tip=document.getElementById('mb-tip')?.value;
+  if(banka&&tip==='Alındı'){
+    if(btn)btn.disabled=true;
+    try{
+      const bankaKisiId=parseInt(document.getElementById('mb-banka-kisi-id').value)||0;
+      const bankaAdi=document.getElementById('mb-banka-ac-sel-text')?.textContent||document.getElementById('mb-banka-ac-input')?.value||'';
+      if(!bankaAdi){showToast('Banka seçin','red');if(btn)btn.disabled=false;return;}
+      const anapara=parseFloat(document.getElementById('mb-kredi-anapara').value)||0;
+      if(!anapara){showToast('Anapara girin','red');if(btn)btn.disabled=false;return;}
+      const faiz=parseFloat(document.getElementById('mb-kredi-faiz').value)||0;
+      const vade=parseInt(document.getElementById('mb-kredi-vade').value)||12;
+      const taksit=parseFloat(document.getElementById('mb-kredi-taksit').value)||Math.round(anapara/vade);
+      const baslangic=document.getElementById('mb-kredi-baslangic').value||new Date().toISOString().split('T')[0];
+      const ilkTaksit=document.getElementById('mb-kredi-ilk-taksit').value||'';
+      const krediTuru=document.getElementById('mb-kredi-tur').value;
+      const krediTipi=document.getElementById('mb-kredi-tipi').value;
+      await sbFetch('banka_kredileri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        banka_adi:bankaAdi,sube:'',kredi_turu:krediTuru,kredi_tipi:krediTipi,
+        anapara,faiz_orani:faiz,vade_ay:vade,taksit_tutari:taksit,
+        baslangic_tarihi:baslangic,ilk_taksit_tarihi:ilkTaksit||null,
+        odenen_taksit:0,kalan_taksit:vade,toplam_odenen:0,kalan_borc:taksit*vade,
+        taksit_gunu:1,on_odeme:0,
+        teminat:document.getElementById('mb-kredi-teminat').value||'',
+        kefil:document.getElementById('mb-kredi-kefil').value||'',
+        notlar:document.getElementById('mb-kredi-not').value||'',durum:'Aktif'
+      })});
+      const kat=krediTuru==='Ticari'?'İşletme Geliri':'Şahsi Gelir';
+      await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        tarih:baslangic+'T12:00:00',tip:'Gelir',statu:'Tamamlandı',
+        kat,alt_kat:'Banka Kredisi / Finansman',tutar:anapara,odeme_yontemi:'İBAN',
+        kisi_id:bankaKisiId||null,
+        not:`${bankaAdi} ${krediTipi} kredisi — ${vade} ay`
+      })});
+      await loadDB();closeModal('modal-borc');renderKrediPanel();
+      showToast('✅ Kredi ve kasa kaydı oluşturuldu','green');
+    }catch(e){showToast('Hata: '+e.message,'red');}
+    finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+  }else{
+    saveBorc(btn);
+  }
+}
+
+
 function renderKrediPanel(){
   const panel=document.getElementById('dash-kredi-panel');
   const baslik=document.getElementById('dash-kredi-baslik');
   if(!panel)return;
-  const aktif=DB.bankaKredileri.filter(k=>k.durum==='Aktif');
-  if(!aktif.length){panel.style.display='none';if(baslik)baslik.style.display='none';return;}
+  const aktif=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
+  // Her zaman göster
   if(baslik)baslik.style.display='';
   panel.style.display='block';
+  if(!aktif.length){
+    panel.innerHTML=`<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px;">Aktif kredi yok</div>
+    <button class="btn btn-secondary btn-full" onclick="openBorcModal()" style="font-size:12px;">+ Banka Kredisi Ekle</button>`;
+    return;
+  }
   const toplamKalan=aktif.reduce((a,k)=>a+k.kalanBorc,0);
   const toplamTaksit=aktif.reduce((a,k)=>a+k.taksitTutari,0);
   panel.innerHTML=`
