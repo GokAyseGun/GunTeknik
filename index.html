@@ -419,6 +419,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <!-- ANA UYGULAMA -->
+<!-- ŞABLONLAR SAYFASI -->
+<div class="page" id="page-sablonlar">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div class="sec-title mt0" style="margin:0">📑 Şablonlar</div>
+    <button class="btn btn-primary btn-sm" onclick="openSablonModal()">+ Şablon</button>
+  </div>
+  <div id="sablon-listesi"></div>
+</div>
+
+
 <div id="app">
   <div class="topbar">
     <div class="topbar-title" id="page-title">Genel Özet</div>
@@ -646,6 +656,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div class="sec-title mt0" style="margin:0">Malzeme & Stok</div>
         <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="stokKarRaporuGoster()" style="background:rgba(46,160,67,0.12);color:var(--green);border-color:rgba(46,160,67,0.3);">📊 Kar Raporu</button>
           <button class="btn btn-secondary btn-sm" onclick="aiStokGenelAnaliz()" style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);">✦ Analiz</button>
           <button class="btn btn-secondary btn-sm" onclick="openBarkodKamera('stok-ara-barkod')" title="Barkodla ara">📷 Tara</button>
           <button class="btn btn-secondary btn-sm" onclick="openStokEnflasyonModal()" style="background:rgba(16,185,129,0.15);color:#10b981;border-color:rgba(16,185,129,0.3);">📈 Enflasyon</button>
@@ -702,62 +713,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="rapor-icgoru" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
       <!-- Rapor kartları -->
       <div class="sec-title">Rapor Oluştur</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="card" onclick="generatePDF()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--red-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📄</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">PDF Rapor (A4)</div><div style="font-size:12px;color:var(--text2);">Gelir-gider özeti, cari hesaplar ve personel durumu</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateExcel()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--green-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📊</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Excel Rapor (CSV)</div><div style="font-size:12px;color:var(--text2);">Tüm işlemler ödeme yöntemiyle birlikte</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateCariRapor()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👥</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Cari Hesap Raporu (A4)</div><div style="font-size:12px;color:var(--text2);">Müşteri bakiyeleri, alacak ve borç özetleri</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateProjeRapor()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(255,180,0,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏗️</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Proje Kâr/Zarar Raporu</div><div style="font-size:12px;color:var(--text2);">Tüm projeler bazında ciro, gider ve net kâr</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateNakitAkisRaporu()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(46,160,67,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💵</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Nakit Akış Raporu</div><div style="font-size:12px;color:var(--text2);">Son 6 ay nakit giriş-çıkış analizi, haftalık kırılım</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateMusteriRaporu()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏆</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Müşteri Kârlılık Raporu</div><div style="font-size:12px;color:var(--text2);">Her müşteri için ciro, kâr ve ödeme performansı</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generatePersonelRaporu()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👷</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Personel Maliyet Raporu</div><div style="font-size:12px;color:var(--text2);">Maaş, hak ediş ve avans ödemeleri özeti</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateStokDegerRaporu()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(234,88,12,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📦</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Stok Değer Raporu</div><div style="font-size:12px;color:var(--text2);">Stok envanteri, kritik seviyeler ve toplam değer</div></div>
-          </div>
-        </div>
-        <div class="card" onclick="generateKrediRaporu()">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:rgba(30,58,138,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏦</div>
-            <div><div style="font-weight:600;font-size:14px;margin-bottom:3px;">Banka Kredileri Raporu</div><div style="font-size:12px;color:var(--text2);">Aktif & kapalı krediler, taksit geçmişi, faiz analizi</div></div>
-          </div>
-        </div>
-      </div>
       <div class="sec-title">Tekrar Eden Şablonlar</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
         <button class="btn btn-secondary btn-sm" onclick="openSablonModal()">+ Şablon Ekle</button>
@@ -961,6 +916,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
+    <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
   </nav>
 </div>
 
@@ -1093,6 +1049,58 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-taksit-ode')">İptal</button>
       <button class="btn btn-primary btn-full" onclick="taksitOde(this)">✅ Ödemeyi Onayla</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ŞABLON EKLE/DÜZENLE MODALı -->
+<div class="modal-ov" id="modal-sablon">
+  <div class="modal" style="max-width:440px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="sablon-modal-baslik">Şablon</h3><button class="modal-close" onclick="closeModal('modal-sablon')">✕</button></div>
+    <div class="modal-body fg">
+      <input type="hidden" id="sablon-id">
+      <div class="fi"><label>Başlık <span style="color:var(--red);">*</span></label>
+        <input type="text" id="sablon-baslik" placeholder="Kira ödemesi, Elektrik faturası...">
+      </div>
+      <div class="fi"><label>Tutar (₺)</label>
+        <input type="number" id="sablon-tutar" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="fi"><label>Periyot</label>
+        <select id="sablon-periyot" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
+          <option>Aylık</option><option>Haftalık</option><option>Yıllık</option><option>Tek Seferlik</option>
+        </select>
+      </div>
+      <div class="fi"><label>Kategori</label>
+        <input type="text" id="sablon-kategori" placeholder="İşletme Gideri, Kira...">
+      </div>
+      <div class="fi"><label>Kişi / Kurum</label>
+        <input type="hidden" id="sablon-kisi-id">
+        <div class="ac-wrap" id="sablon-ac-wrap">
+          <input type="text" id="sablon-ac-input" placeholder="Kişi ara..." autocomplete="off"
+            oninput="acSearch('sablon-ac')" onfocus="acSearch('sablon-ac')">
+          <div class="ac-list" id="sablon-ac-list"></div>
+        </div>
+        <div id="sablon-kisi-goster" style="font-size:12px;color:var(--text3);margin-top:4px;"></div>
+      </div>
+      <div class="fi"><label>Açıklama</label>
+        <textarea id="sablon-aciklama" rows="2" placeholder="Şablon notu..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-sablon')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveSablon(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ŞABLON DETAY MODALı -->
+<div class="modal-ov" id="modal-sablon-detay">
+  <div class="modal" style="max-width:440px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="sablon-detay-title">Şablon</h3><button class="modal-close" onclick="closeModal('modal-sablon-detay')">✕</button></div>
+    <div class="modal-body" id="sablon-detay-content"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-sablon-detay')">Kapat</button>
     </div>
   </div>
 </div>
@@ -1918,8 +1926,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div class="fi" style="flex:1"><label>Mevcut Miktar</label><input type="number" id="stok-miktar" inputmode="numeric" placeholder="0"></div>
         <div class="fi" style="flex:1"><label>Kritik Seviye</label><input type="number" id="stok-kritik" inputmode="numeric" placeholder="5"></div>
       </div>
-      <!-- 8. Birim Fiyat -->
-      <div class="fi"><label>Birim Fiyat (₺)</label><input type="number" id="stok-fiyat" inputmode="numeric" placeholder="0"></div>
+      <!-- 8. Fiyatlar -->
+      <div style="display:flex;gap:8px;">
+        <div class="fi" style="flex:1;"><label>Satış Fiyatı (₺)</label><input type="number" id="stok-fiyat" inputmode="numeric" placeholder="0"></div>
+        <div class="fi" style="flex:1;"><label>Alış Fiyatı (₺) 🔒</label><input type="number" id="stok-alis-fiyat" inputmode="numeric" placeholder="0"></div>
+      </div>
       <!-- 9. Barkod -->
       <div class="fi">
         <label>Barkod</label>
@@ -2071,12 +2082,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <!-- Etiket önizleme -->
       <div style="background:white;border-radius:var(--r-sm);padding:8px;box-shadow:var(--shadow-md);margin-bottom:16px;text-align:center;" id="etiket-preview-wrap">
         <div id="etiket-preview" style="width:62mm;margin:0 auto;font-family:monospace;background:white;padding:4px 2px;">
-          <div style="font-size:8px;color:#666;text-align:center;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="etiket-urun-adi">Ürün Adı</div>
-          <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
-            <div id="etiket-code128" style="text-align:center;"></div>
-            <div id="etiket-qr" style="text-align:center;"></div>
-          </div>
-          <div style="font-size:9px;color:#333;text-align:center;margin-top:3px;font-family:monospace;" id="etiket-no-text">000000000</div>
+          <div style="font-size:9px;color:#333;text-align:center;margin-bottom:4px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" id="etiket-urun-adi">Ürün Adı</div>
+          <div id="etiket-code128" style="text-align:center;margin-bottom:2px;"></div>
+          <div style="font-size:9px;color:#333;text-align:center;margin-bottom:4px;font-family:monospace;letter-spacing:1px;" id="etiket-no-text">000000000</div>
+          <div id="etiket-qr" style="text-align:center;margin:0 auto;"></div>
         </div>
       </div>
       <div style="display:flex;gap:10px;">
@@ -2436,10 +2445,9 @@ async function tryRefreshToken(){
     return false;
   }catch(e){return false;}
 }
-async function sbStorage(bucket,file){
+async function sbStorage(bucket, file, path){
   const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-  const fname=Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
-  // Önce multipart dene, sonra binary
+  const fname=(path?path+'/':'')+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
   const res=await fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+fname,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN,'Content-Type':file.type||'application/octet-stream'},
@@ -2593,7 +2601,8 @@ async function loadDB(){
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
     DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
     DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:t.tarih,tip:t.tip,baslik:t.baslik||t.not||'',detay:t.not||''}));
-    DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
+    DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
+      alisFiyat:parseFloat(s.alis_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,isim:s.isim,tip:s.tip,kat:s.kat,altKat:s.alt_kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',not:s.not||''}));
     DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
@@ -2875,6 +2884,7 @@ function renderAll(){
     if(pid==='teklifler')renderTeklifler();
     if(pid==='fiyatlar')renderFiyatlar();
     if(pid==='raporlar')renderRaporIcgoru();
+    if(pid==='sablonlar')renderSablonlar();
     // Kredi paneli her zaman güncelle
     if(typeof renderKrediPanel==='function')renderKrediPanel();
     renderVergiDash();
@@ -4353,9 +4363,9 @@ function renderRehber(){
       return `<div style="${ROW_STYLE}" onclick="showKisiDetay(${k.id})">
         <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;">
           <span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.isim}</span>
-          <span class="id-badge" style="flex-shrink:0;">${fmtKId(k.id)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:1px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+          <span class="id-badge" style="flex-shrink:0;">${fmtKId(k.id)}</span>
           ${yildiz}${analiz}${duzenle}${sil}
         </div>
       </div>`;
@@ -4775,12 +4785,13 @@ function openStokModal(id){
       document.getElementById('stok-miktar').value=s.miktar||0;
       document.getElementById('stok-kritik').value=s.kritikSeviye||5;
       document.getElementById('stok-fiyat').value=s.birimFiyat||0;
+      document.getElementById('stok-alis-fiyat').value=s.alisFiyat||0;
       document.getElementById('stok-not').value=s.not||'';
       document.getElementById('stok-barkod').value=s.barkod||'';
     }
   }else{
     ['stok-ad','stok-marka','stok-model','stok-barkod','stok-not'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
-    ['stok-miktar','stok-kritik','stok-fiyat'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+    ['stok-miktar','stok-kritik','stok-fiyat','stok-alis-fiyat'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('stok-birim').value='Adet';
     document.getElementById('stok-kat').value='Elektrik';
   }
@@ -4806,6 +4817,7 @@ async function saveStok(btn){
       miktar:parseTutar(document.getElementById('stok-miktar').value),
       kritik_seviye:parseFloat(document.getElementById('stok-kritik').value)||5,
       birim_fiyat:yeniFiyat,
+      alis_fiyat:parseTutar(document.getElementById('stok-alis-fiyat')?.value)||0,
       'not':document.getElementById('stok-not').value,
       barkod
     };
@@ -6595,27 +6607,30 @@ function showTeklifDetay(id){
   if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
   document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
   document.getElementById('teklif-detay-content').innerHTML=html;
-  // Footer butonlar — 3-3 eşit grid
+  // Footer butonlar — 2-2-2 grid
   let footer='';
   if(USER_ROL!=='goruntule'){
-    const btnS='font-size:12px;padding:10px 6px;';
-    footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
+    const btnS='font-size:13px;padding:12px 6px;';
+    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">
       <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="${btnS}">✏️ Düzenle</button>
-      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">🖨️ Yazdır</button>
-      <button class="btn btn-secondary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">📄 PDF</button>
+      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">🖨️ Yazdır / PDF</button>
     </div>`;
     const gb1=t.durum!=='Onaylandı'
       ?`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="${btnS}">📤 Gönderildi</button>`
-      :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${btnS}">💰 İşleme</button>`;
+      :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${btnS}">💰 İşleme Dönüştür</button>`;
     const gb2=(t.durum==='Gönderildi'||t.durum==='Taslak')
       ?`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="${btnS}">🔗 Dijital Onay</button>`
-      :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${btnS};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Proje</button>`;
+      :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${btnS};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Projeye Dönüştür</button>`;
+    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">${gb1}${gb2}</div>`;
     const gb3=t.durum==='Gönderildi'
       ?`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="${btnS}">✅ Onayla</button>`
-      :(USER_ROL==='admin'?`<button class="btn btn-secondary" onclick="deleteTeklif(${id})" style="${btnS};color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);">🗑 Sil</button>`:'<div></div>');
-    footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${gb1}${gb2}${gb3}</div>`;
+      :`<div></div>`;
+    const gb4=USER_ROL==='admin'
+      ?`<button class="btn btn-secondary" onclick="deleteTeklif(${id})" style="${btnS};color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);">🗑 Sil</button>`
+      :`<div></div>`;
+    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">${gb3}${gb4}</div>`;
   }
-    document.getElementById('teklif-detay-footer').innerHTML=footer;
+  document.getElementById('teklif-detay-footer').innerHTML=footer;
   document.getElementById('teklif-detay-content').scrollTop=0;
   openModal('modal-teklif-detay');
 }
@@ -8451,6 +8466,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       aiMesajEkle('assistant',msg);
     }
   }).observe(m,{attributes:true,attributeFilter:['class']});
+  // Geri tuşunu engelle — uygulama modu
+  history.pushState(null,'',location.href);
+  window.addEventListener('popstate',()=>history.pushState(null,'',location.href));
 });
 
 let aiSesliAktif=false,aiSesRec=null;
@@ -11296,11 +11314,9 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <div class="ic"><div class="il">Müşteri</div><div class="iv">${k?k.isim:'—'}</div>${k?.tel?`<div class="is">📞 ${k.tel}</div>`:''}</div>
     <div class="ic"><div class="il">Durum</div><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${drn}18;color:${drn};border:1px solid ${drn}44;margin-top:2px;">${p.durum}</span></div>
   </div>
-  <div class="kpi-band">
+  <div class="kpi-band" style="grid-template-columns:repeat(2,1fr);">
     <div class="kpi"><div class="kl">Teklif</div><div class="kv" style="color:#1d4ed8;">${fmt(p.teklifFiyat||0)} ₺</div></div>
-    <div class="kpi"><div class="kl">Gerçekleşen</div><div class="kv" style="color:#15803d;">${fmt(ciro)} ₺</div></div>
-    <div class="kpi"><div class="kl">Gider</div><div class="kv" style="color:#dc2626;">${fmt(gider)} ₺</div></div>
-    <div class="kpi"><div class="kl">Kâr/Zarar</div><div class="kv" style="color:${kar>=0?'#15803d':'#dc2626'};">${kar<0?'-':''}${fmt(Math.abs(kar))} ₺</div></div>
+    <div class="kpi" style="border-right:none;"><div class="kl">Gerçekleşen</div><div class="kv" style="color:#15803d;">${fmt(ciro)} ₺</div></div>
   </div>
   <div class="body">
     ${malzemeler.length?`<div class="sec"><div class="sec-ttl">📦 Malzeme Planı</div>
@@ -11309,20 +11325,12 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <div class="sum-box"><div class="sum-in" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;">
       <div class="sum-ttl" style="color:#1d4ed8;border-top:none;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">Malzeme Toplamı</span><span>${fmt(malzemeToplam)} ₺</span></div>
     </div></div></div>`:''}
-    ${personeller.length?`<div class="sec"><div class="sec-ttl">👷 Ekip & İşçilik</div>
+    ${false?`<div class="sec"><div class="sec-ttl">👷 Ekip & İşçilik</div>
     <table><thead><tr><th class="thl">Personel</th><th class="thc">Katılım</th><th class="thc">Süre/Oran</th><th class="thr">Tutar</th></tr></thead>
     <tbody>${personelRows}</tbody></table></div>`:''}
     ${islemler.length?`<div class="sec"><div class="sec-ttl">💳 İşlem Geçmişi</div>
     <table><thead><tr><th class="thl">Tarih</th><th class="thl">Kategori</th><th class="thl">Statü</th><th class="thr">Tutar</th></tr></thead>
-    <tbody>${islemRows}</tbody></table>
-    <div class="sum-box"><div class="sum-in" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
-      <div class="sum-row"><span>Toplam Gelir</span><span style="color:#15803d;">${fmt(ciro)} ₺</span></div>
-      <div class="sum-row"><span>Toplam Gider</span><span style="color:#dc2626;">${fmt(gider)} ₺</span></div>
-      <div class="sum-ttl" style="color:${kar>=0?'#15803d':'#dc2626'};border-top:1px solid #86efac;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">Net Kâr</span><span>${kar<0?'-':''}${fmt(Math.abs(kar))} ₺</span></div>
-    </div></div></div>`:''}
-    ${notlar.length?`<div class="sec"><div class="sec-ttl">📝 Proje Notları</div>
-    ${notlar.map(n=>`<div class="note"><div class="note-txt">${n.not_metni}</div><div class="note-dt">${new Date(n.created_at).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('')}
-    </div>`:''}
+    <tbody>${islemRows}</tbody></table></div>`:''}
     ${p.aciklama?`<div class="sec"><div class="sec-ttl">ℹ️ Proje Açıklaması</div><div class="note"><div class="note-txt">${p.aciklama}</div></div></div>`:''}
     ${projeEkleri.length?`<div class="sec"><div class="sec-ttl">📷 İş Görselleri</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
@@ -11336,7 +11344,6 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <div class="sign-grid">
       <div class="sign-box"><div class="sign-name">${k?k.isim:'Müşteri'}</div><div class="sign-role">Müşteri — Tarih: ____/____/________</div></div>
       <div class="sign-box"><div class="sign-name">Gün Teknik Yetkili</div><div class="sign-role">Kaşe / İmza — ${tarihFmt}</div></div>
-      <div class="sign-box"><div class="sign-name">Kontrol Eden</div><div class="sign-role">İsim / İmza: ___________________</div></div>
     </div>
   </div>
   <div class="ftr">
@@ -11486,6 +11493,14 @@ async function showProjeDetay(id){
   html+=`</div>`;
   // BUTONLAR
   html+=`<div style="display:flex;flex-direction:column;gap:6px;">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+      <button class="btn btn-secondary btn-full" onclick="projeMalzemeEkleModal(${id})" style="font-size:13px;">📦 Malzeme</button>
+      <button class="btn btn-secondary btn-full" onclick="projeIscilikEkleModal(${id})" style="font-size:13px;">🔧 İşçilik</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+      <button class="btn btn-secondary btn-full" onclick="projePersonelEkleModal(${id})" style="font-size:13px;">👷 Ekip</button>
+      <button class="btn btn-secondary btn-full" onclick="projeAraOdemeModal(${id})" style="font-size:13px;background:rgba(46,160,67,0.12);color:var(--green);border-color:rgba(46,160,67,0.3);">💳 Ara Ödeme</button>
+    </div>
     <div style="display:flex;gap:6px;">
       ${USER_ROL!=='goruntule'?`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-proje-detay');openProjeModal(${id})">✏️ Düzenle</button>`:''}
       <button class="btn btn-primary btn-full" onclick="openProjeTamamlaModal(${id})" style="background:linear-gradient(135deg,#15803d,#166534);">🏁 Projeyi Tamamla</button>
@@ -12129,7 +12144,7 @@ async function eklerKaydet(tip, kayitId) {
       if (dosya.type.startsWith('image/')) {
         dosya = await gorselSikistir(dosya, 1200, 0.78).catch(() => dosya);
       }
-      const url = await sbStorage(bucket + '/' + klasor, dosya);
+      const url = await sbStorage(bucket, dosya, klasor);
       await sbFetch('ekler', {
         method: 'POST', prefer: 'return=minimal',
         body: JSON.stringify({
@@ -12157,6 +12172,249 @@ async function eklerModalAc(tip, kayitId) {
   eklerGridGuncelle(tip);
 }
 
+
+// ============================================================
+// ŞABLONLAR SAYFASI
+// ============================================================
+
+function renderSablonlar(){
+  const el=document.getElementById('sablon-listesi');if(!el)return;
+  if(!DB.sablonlar||!DB.sablonlar.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-title">Şablon yok</div><div class="empty-sub">+ Şablon butonuyla ekleyin</div></div>';
+    return;
+  }
+  el.innerHTML=DB.sablonlar.map(s=>{
+    const k=getKisi(s.kisiId);
+    return `<div class="card" style="margin-bottom:10px;padding:14px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;cursor:pointer;" onclick="showSablonDetay(${s.id})">
+          <div style="font-weight:700;font-size:14px;">${s.baslik||'Şablon'}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">${k?k.isim:'—'} · ${s.periyot||'Aylık'} · ${fmt(s.tutar||0)} ₺</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="btn btn-secondary btn-sm" onclick="sablonAnaliz(${s.id})" style="font-size:11px;padding:5px 8px;">📊 Analiz</button>
+          <button class="btn btn-secondary btn-sm" onclick="openSablonModal(${s.id})" style="font-size:11px;padding:5px 8px;">✏️</button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteSablon(${s.id})" style="font-size:11px;padding:5px 8px;color:var(--red);">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openSablonModal(id){
+  if(USER_ROL==='goruntule')return;
+  const s=id?DB.sablonlar.find(x=>x.id===id):null;
+  document.getElementById('sablon-id').value=id||'';
+  document.getElementById('sablon-baslik').value=s?.baslik||'';
+  document.getElementById('sablon-tutar').value=s?.tutar||'';
+  document.getElementById('sablon-periyot').value=s?.periyot||'Aylık';
+  document.getElementById('sablon-kategori').value=s?.kategori||'';
+  document.getElementById('sablon-aciklama').value=s?.aciklama||'';
+  document.getElementById('sablon-kisi-id').value=s?.kisiId||'';
+  const ac=s?getKisi(s.kisiId):null;
+  const goster=document.getElementById('sablon-kisi-goster');
+  if(goster)goster.textContent=ac?ac.isim:'';
+  openModal('modal-sablon');
+}
+
+async function saveSablon(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const id=document.getElementById('sablon-id').value;
+    const kisiId=document.getElementById('sablon-kisi-id').value;
+    const payload={
+      baslik:document.getElementById('sablon-baslik').value.trim(),
+      tutar:parseTutar(document.getElementById('sablon-tutar').value)||0,
+      periyot:document.getElementById('sablon-periyot').value,
+      kategori:document.getElementById('sablon-kategori').value,
+      aciklama:document.getElementById('sablon-aciklama').value,
+      kisi_id:kisiId||null
+    };
+    if(!payload.baslik){showToast('Başlık zorunlu','red');return;}
+    if(id)await sbFetch('sablonlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    else await sbFetch('sablonlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    await loadDB();closeModal('modal-sablon');renderSablonlar();
+    showToast(id?'Güncellendi':'Şablon eklendi','green');
+  }catch(e){showToast('Hata: '+e.message,'red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+function showSablonDetay(id){
+  const s=DB.sablonlar.find(x=>x.id===id);if(!s)return;
+  const k=getKisi(s.kisiId);
+  let html='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:8px;">';
+  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Başlık</span><span style="font-weight:600;">${s.baslik}</span></div>`;
+  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Tutar</span><span style="font-weight:700;color:var(--green);">${fmt(s.tutar)} ₺</span></div>`;
+  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Periyot</span><span>${s.periyot}</span></div>`;
+  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Kategori</span><span>${s.kategori||'—'}</span></div>`;
+  if(k)html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Kişi/Kurum</span><span>${k.isim}</span></div>`;
+  if(s.aciklama)html+=`<div style="margin-top:4px;font-size:12px;color:var(--text2);">📝 ${s.aciklama}</div>`;
+  html+='</div>';
+  document.getElementById('sablon-detay-title').textContent=s.baslik;
+  document.getElementById('sablon-detay-content').innerHTML=html;
+  openModal('modal-sablon-detay');
+}
+
+function sablonAnaliz(id){showSablonDetay(id);}
+
+async function deleteSablon(id){
+  if(!confirm('Bu şablonu silmek istediğinizden emin misiniz?'))return;
+  await sbFetch('sablonlar?id=eq.'+id,{method:'DELETE'});
+  await loadDB();renderSablonlar();showToast('Şablon silindi','amber');
+}
+
+// ============================================================
+// PROJE İŞÇİLİK PANELİ (Madde 4)
+// ============================================================
+
+function projeIscilikEkleModal(projeId){
+  document.getElementById('pis-popup')?.remove();
+  document.getElementById('pis-overlay')?.remove();
+  const el=document.createElement('div');
+  el.id='pis-popup';
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+  el.innerHTML=`<div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:14px;font-weight:700;">🔧 İşçilik Ekle</div>
+    <input type="text" id="pis-aciklama" placeholder="İşçilik açıklaması" autocapitalize="words"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <input type="number" id="pis-tutar" placeholder="Tutar (₺)" inputmode="numeric"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <select id="pis-personel" style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;">
+      <option value="">Personel (isteğe bağlı)</option>
+      ${DB.personeller.map(p=>`<option value="${p.id}">${p.isim}</option>`).join('')}
+    </select>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="document.getElementById('pis-popup').remove();document.getElementById('pis-overlay').remove();" class="btn btn-secondary btn-sm">İptal</button>
+      <button onclick="projeIscilikKaydet(${projeId})" class="btn btn-primary btn-sm">Kaydet</button>
+    </div>
+  </div>`;
+  const overlay=document.createElement('div');
+  overlay.id='pis-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;';
+  overlay.onclick=()=>{overlay.remove();el.remove();};
+  document.body.appendChild(overlay);
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('pis-aciklama')?.focus(),80);
+}
+
+async function projeIscilikKaydet(projeId){
+  const aciklama=document.getElementById('pis-aciklama')?.value?.trim();
+  const tutar=parseTutar(document.getElementById('pis-tutar')?.value)||0;
+  const personelId=document.getElementById('pis-personel')?.value||null;
+  if(!aciklama){showToast('Açıklama girin','red');return;}
+  if(!tutar){showToast('Tutar girin','red');return;}
+  await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+    proje_id:projeId,aciklama,tutar,personel_id:personelId||null
+  })});
+  document.getElementById('pis-popup')?.remove();
+  document.getElementById('pis-overlay')?.remove();
+  showToast('İşçilik eklendi','green');
+  showProjeDetay(projeId);
+}
+
+// ============================================================
+// PROJE ARA ÖDEME (Madde 5)
+// ============================================================
+
+function projeAraOdemeModal(projeId){
+  document.getElementById('pao-popup')?.remove();
+  document.getElementById('pao-overlay')?.remove();
+  const p=DB.projeler.find(x=>x.id===projeId);
+  const k=p?getKisi(p.musteriId):null;
+  const el=document.createElement('div');
+  el.id='pao-popup';
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+  el.innerHTML=`<div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:14px;font-weight:700;">💳 Ara Ödeme Ekle</div>
+    ${k?`<div style="font-size:12px;color:var(--text3);">Müşteri: ${k.isim}</div>`:''}
+    <input type="number" id="pao-tutar" placeholder="Tutar (₺)" inputmode="numeric"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <select id="pao-yontem" style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;">
+      <option value="Nakit">💵 Nakit</option><option value="Kart">💳 Kart</option><option value="İBAN">🏦 Havale/EFT</option>
+    </select>
+    <input type="date" id="pao-tarih" value="${new Date().toISOString().split('T')[0]}"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <input type="text" id="pao-not" placeholder="Not (isteğe bağlı)"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="document.getElementById('pao-popup').remove();document.getElementById('pao-overlay').remove();" class="btn btn-secondary btn-sm">İptal</button>
+      <button onclick="projeAraOdemeKaydet(${projeId})" class="btn btn-primary btn-sm">Kaydet</button>
+    </div>
+  </div>`;
+  const overlay=document.createElement('div');
+  overlay.id='pao-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;';
+  overlay.onclick=()=>{overlay.remove();el.remove();};
+  document.body.appendChild(overlay);
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('pao-tutar')?.focus(),80);
+}
+
+async function projeAraOdemeKaydet(projeId){
+  const tutar=parseTutar(document.getElementById('pao-tutar')?.value)||0;
+  if(!tutar){showToast('Tutar girin','red');return;}
+  const yontem=document.getElementById('pao-yontem')?.value||'Nakit';
+  const tarih=document.getElementById('pao-tarih')?.value||new Date().toISOString().split('T')[0];
+  const not=document.getElementById('pao-not')?.value||'';
+  const p=DB.projeler.find(x=>x.id===projeId);
+  await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+    tarih:tarih+'T12:00:00',tip:'Gelir',statu:'Tamamlandı',
+    kat:'İşletme Geliri',alt_kat:'Ara Ödeme',tutar,
+    odeme_yontemi:yontem,kisi_id:p?.musteriId||null,
+    proje_id:projeId,
+    not:`${p?.isim||''} ara ödeme${not?' — '+not:''}`
+  })});
+  document.getElementById('pao-popup')?.remove();
+  document.getElementById('pao-overlay')?.remove();
+  await loadDB();showToast('Ara ödeme kaydedildi','green');showProjeDetay(projeId);
+}
+
+// ============================================================
+// STOK KAR RAPORU (Madde 10)
+// ============================================================
+
+function stokKarRaporuGoster(){
+  let toplamKar=0;const satirlar=[];
+  DB.stok.forEach(s=>{
+    if(!s.alisFiyat||!s.birimFiyat||s.alisFiyat===s.birimFiyat)return;
+    const karBirim=s.birimFiyat-s.alisFiyat;
+    const kullanim=(DB.stokHareketleri||[]).filter(h=>h.stokId===s.id&&h.tip==='Kullanım');
+    const toplamMiktar=kullanim.reduce((a,h)=>a+(h.miktar||0),0);
+    if(!toplamMiktar)return;
+    const kar=karBirim*toplamMiktar;
+    toplamKar+=kar;
+    satirlar.push({ad:s.ad,alisFiyat:s.alisFiyat,satisFiyat:s.birimFiyat,karBirim,toplamMiktar,kar});
+  });
+  let html=`<div style="background:rgba(46,160,67,0.12);border:1px solid rgba(46,160,67,0.3);border-radius:var(--r-md);padding:14px;margin-bottom:14px;text-align:center;">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Toplam Stok Karı</div>
+    <div style="font-size:24px;font-weight:800;color:var(--green);">${fmt(toplamKar)} ₺</div>
+  </div>`;
+  if(satirlar.length){
+    satirlar.sort((a,b)=>b.kar-a.kar).forEach(r=>{
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px;">
+        <div><div style="font-weight:600;">${r.ad}</div>
+        <div style="color:var(--text3);">Alış: ${fmt(r.alisFiyat)} · Satış: ${fmt(r.satisFiyat)} · ${r.toplamMiktar} adet</div></div>
+        <div style="font-weight:700;color:var(--green);flex-shrink:0;">${fmt(r.kar)} ₺</div>
+      </div>`;
+    });
+  }else{
+    html+='<div style="text-align:center;color:var(--text3);padding:20px;">Henüz kullanım kaydı yok</div>';
+  }
+  document.getElementById('kar-popup')?.remove();document.getElementById('kar-overlay')?.remove();
+  const el=document.createElement('div');
+  el.id='kar-popup';
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:380px;max-width:92vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+  el.innerHTML=`<div style="padding:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-size:14px;font-weight:700;">📊 Stok Kar Raporu</div>
+    <button onclick="document.getElementById('kar-popup').remove();document.getElementById('kar-overlay').remove();" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;">✕</button>
+  </div>${html}</div>`;
+  const overlay=document.createElement('div');
+  overlay.id='kar-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;';
+  overlay.onclick=()=>{overlay.remove();el.remove();};
+  document.body.appendChild(overlay);
+  document.body.appendChild(el);
+}
 
 </script>
 </body>
