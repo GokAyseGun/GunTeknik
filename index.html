@@ -6447,8 +6447,8 @@ function openProjeModal(id){
     if(p.musteriId){const k=getKisi(p.musteriId);if(k)acSelect('proje-ac',k.id,k.isim,k.tip);}
   }
   openModal('modal-proje');
-  // Mevcut ekleri yükle
-  eklerModalAc('proje', id||null);
+  // Ekleri modal açıldıktan sonra arka planda yükle
+  setTimeout(()=>eklerModalAc('proje', id||null), 50);
 }
 
 async function saveProje(btn){
@@ -6534,8 +6534,8 @@ function openTeklifModal(id){
   }
   hesaplaTeklifToplam();
   openModal('modal-teklif');
-  // Mevcut ekleri yükle
-  eklerModalAc('teklif', id||null);
+  // Ekleri modal açıldıktan sonra arka planda yükle
+  setTimeout(()=>eklerModalAc('teklif', id||null), 50);
 }
 
 // teklifKalemEkle — yeni sürüm altta tanımlı
@@ -6571,6 +6571,10 @@ async function guncelOnayToken(teklifId){
 
 function showTeklifDetay(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+
+  // Modalı hemen aç
+  document.getElementById('modal-teklif-detay') && openModal('modal-teklif-detay');
+
   const k=getKisi(t.kisiId);
   const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
   const renk=durumRenk[t.durum]||'var(--text3)';
@@ -8495,9 +8499,12 @@ async function teklifOnizlemeGoster(id){
   const malzemeToplam=malzemeKalemleri.reduce((a,k)=>a+k.toplam,0);
   const iscilikToplam=iscillikKalemleri.reduce((a,k)=>a+k.toplam,0);
 
-  // Ekleri çek
+  // Ekleri paralelde çek — UI bloklamasın, tamamlanınca devam et
   let teklifEkleri=[];
-  try{teklifEkleri=await sbFetch('ekler?teklif_id=eq.'+id+'&order=created_at.asc')||[];}catch(e){}
+  try{const d=await Promise.race([
+    sbFetch('ekler?teklif_id=eq.'+id+'&order=created_at.asc'),
+    new Promise(r=>setTimeout(()=>r([]),2000)) // 2sn timeout
+  ]);teklifEkleri=d||[];}catch(e){}
   const resimEkler=teklifEkleri.filter(e=>e.dosya_tipi!=='pdf').slice(0,6);
 
   const malzemeRows=malzemeKalemleri.map((km,i)=>`
@@ -11349,6 +11356,16 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
 // ── PROJE DETAY (ASYNC - TAM VERSİYON) ─────────────────
 async function showProjeDetay(id){
   const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+
+  // Önce modalı hemen aç, yükleniyor göster
+  document.getElementById('proje-detay-baslik').textContent=p.isim;
+  document.getElementById('proje-detay-content').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--text3);">
+      <div style="width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+      <span style="font-size:13px;">Yükleniyor...</span>
+    </div>`;
+  openModal('modal-proje-detay');
+
   const k=getKisi(p.musteriId);
   const islemler=DB.islemler.filter(x=>x.projeId===id).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
