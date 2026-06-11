@@ -419,16 +419,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <!-- ANA UYGULAMA -->
-<!-- ŞABLONLAR SAYFASI -->
-<div class="page" id="page-sablonlar">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-    <div class="sec-title mt0" style="margin:0">📑 Şablonlar</div>
-    <button class="btn btn-primary btn-sm" onclick="openSablonModal()">+ Şablon</button>
-  </div>
-  <div id="sablon-listesi"></div>
-</div>
-
-
 <div id="app">
   <div class="topbar">
     <div class="topbar-title" id="page-title">Genel Özet</div>
@@ -699,6 +689,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     </div>
 
     <!-- RAPORLAR -->
+    <!-- ŞABLONLAR SAYFASI -->
+    <div class="page" id="page-sablonlar">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">📑 Şablonlar</div>
+        <button class="btn btn-primary btn-sm" onclick="openSablonModal()">+ Şablon</button>
+      </div>
+      <div id="sablon-listesi"></div>
+    </div>
+
     <div class="page" id="page-raporlar">
       <!-- Tahmin Grafikleri -->
       <div class="card" style="margin-bottom:16px;" id="rapor-tahmin-kart">
@@ -4406,8 +4405,8 @@ function showKisiDetay(id){
   // Tahsilat butonu
   if(USER_ROL!=='goruntule')html+='<button class="btn btn-primary btn-full" style="margin-bottom:14px;" onclick="closeModal(\'modal-kisi-detay\');openOdemeModal('+id+')">💳 Tahsilat / Ödeme Ekle</button>';
   // WhatsApp butonları — bakiyeye göre
+  const vadeGecmisAlacak=DB.islemler.filter(i=>String(i.kisiId)===String(id)&&i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<new Date());
   if(k.tel){
-    const vadeGecmisAlacak=DB.islemler.filter(i=>String(i.kisiId)===String(id)&&i.statu==='Bekliyor'&&i.tip==='Gelir'&&new Date(i.tarih)<new Date());
     if(bakiye>0){
       // Bize borçlu — hatırlatıcı
       html+='<button class="btn btn-secondary btn-full" style="margin-bottom:6px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Hatırlatıcı Gönder</button>';
@@ -4419,7 +4418,7 @@ function showKisiDetay(id){
       html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(37,211,102,0.15);color:#25d166;border-color:rgba(37,211,102,0.3);" onclick="whatsappHatirlatici('+id+')">💬 WhatsApp Bilgilendirme Gönder</button>';
     }
   }
-  if(vadeGecmis.length)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);" onclick="aiTahsilatStratejisi('+id+')">✦ AI Tahsilat Stratejisi</button>';
+  if(vadeGecmisAlacak.length)html+='<button class="btn btn-secondary btn-full" style="margin-bottom:10px;background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3);" onclick="aiTahsilatStratejisi('+id+')">✦ AI Tahsilat Stratejisi</button>';
 
   // Ödemeler
   if(odemeler.length){
@@ -6607,14 +6606,16 @@ function showTeklifDetay(id){
   if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
   document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
   document.getElementById('teklif-detay-content').innerHTML=html;
-  // Footer butonlar — 2-2-2 grid
+  // Footer butonlar — 3 satır × 2 buton
   let footer='';
   if(USER_ROL!=='goruntule'){
     const btnS='font-size:13px;padding:12px 6px;';
+    // Satır 1: Düzenle · Yazdır/PDF
     footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">
       <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="${btnS}">✏️ Düzenle</button>
       <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">🖨️ Yazdır / PDF</button>
     </div>`;
+    // Satır 2: Durum · Onay/Proje
     const gb1=t.durum!=='Onaylandı'
       ?`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="${btnS}">📤 Gönderildi</button>`
       :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${btnS}">💰 İşleme Dönüştür</button>`;
@@ -6622,6 +6623,7 @@ function showTeklifDetay(id){
       ?`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="${btnS}">🔗 Dijital Onay</button>`
       :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${btnS};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Projeye Dönüştür</button>`;
     footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">${gb1}${gb2}</div>`;
+    // Satır 3: Onayla · Sil
     const gb3=t.durum==='Gönderildi'
       ?`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="${btnS}">✅ Onayla</button>`
       :`<div></div>`;
