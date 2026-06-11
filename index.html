@@ -6572,9 +6572,11 @@ async function guncelOnayToken(teklifId){
 function showTeklifDetay(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
 
-  // Modalı hemen aç
-  document.getElementById('modal-teklif-detay') && openModal('modal-teklif-detay');
+  // Modalı önce aç
+  openModal('modal-teklif-detay');
 
+  // İçeriği bir sonraki frame'de doldur — modal görünür olsun
+  requestAnimationFrame(()=>{
   const k=getKisi(t.kisiId);
   const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
   const renk=durumRenk[t.durum]||'var(--text3)';
@@ -6616,7 +6618,7 @@ function showTeklifDetay(id){
     footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${gb1}${gb2}${gb3}</div>`;
   }
     document.getElementById('teklif-detay-footer').innerHTML=footer;
-  openModal('modal-teklif-detay');
+  }); // requestAnimationFrame
 }
 
 async function teklifDurumGuncelle(id,durum){
@@ -11357,14 +11359,17 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
 async function showProjeDetay(id){
   const p=DB.projeler.find(x=>x.id===id);if(!p)return;
 
-  // Önce modalı hemen aç, yükleniyor göster
+  // Modalı önce hemen aç, spinner göster
   document.getElementById('proje-detay-baslik').textContent=p.isim;
-  document.getElementById('proje-detay-content').innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--text3);">
+  document.getElementById('proje-detay-content').innerHTML=
+    `<div style="display:flex;align-items:center;justify-content:center;padding:40px;gap:12px;color:var(--text3);">
       <div style="width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
       <span style="font-size:13px;">Yükleniyor...</span>
-    </div>`;
+     </div>`;
   openModal('modal-proje-detay');
+
+  // Veriler yüklensin
+  await new Promise(r=>requestAnimationFrame(r));
 
   const k=getKisi(p.musteriId);
   const islemler=DB.islemler.filter(x=>x.projeId===id).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
@@ -11494,7 +11499,6 @@ async function showProjeDetay(id){
   </div>`;
   document.getElementById('proje-detay-baslik').textContent=p.isim;
   document.getElementById('proje-detay-content').innerHTML=html;
-  openModal('modal-proje-detay');
 }
 
 
