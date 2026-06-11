@@ -2700,6 +2700,8 @@ function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-it
 const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi'};
 
 function goPage(id,navEl){
+  // Sayfa geçişinde tüm açık modalleri kapat
+  document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const page=document.getElementById('page-'+id);if(page)page.classList.add('active');
@@ -6571,12 +6573,6 @@ async function guncelOnayToken(teklifId){
 
 function showTeklifDetay(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
-
-  // Modalı önce aç
-  openModal('modal-teklif-detay');
-
-  // İçeriği bir sonraki frame'de doldur — modal görünür olsun
-  requestAnimationFrame(()=>{
   const k=getKisi(t.kisiId);
   const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
   const renk=durumRenk[t.durum]||'var(--text3)';
@@ -6618,7 +6614,8 @@ function showTeklifDetay(id){
     footer+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${gb1}${gb2}${gb3}</div>`;
   }
     document.getElementById('teklif-detay-footer').innerHTML=footer;
-  }); // requestAnimationFrame
+  document.getElementById('teklif-detay-content').scrollTop=0;
+  openModal('modal-teklif-detay');
 }
 
 async function teklifDurumGuncelle(id,durum){
