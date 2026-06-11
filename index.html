@@ -1685,7 +1685,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <input type="hidden" id="mb-banka-kisi-id">
           <div class="kisi-ac-wrap" id="mb-banka-ac-wrap">
             <input type="text" class="kisi-ac-input" id="mb-banka-ac-input" placeholder="Banka adı yazarak ara..." autocapitalize="words"
-              oninput="acSearchBanka('mb-banka-ac')" onfocus="acSearchBanka('mb-banka-ac')" autocomplete="off">
+              oninput="acSearchBanka()" onfocus="acSearchBanka()" autocomplete="off">
             <div id="mb-banka-ac-sel" style="display:none;" class="kisi-ac-selected" onclick="acClearBanka()">
               <span class="ac-name" id="mb-banka-ac-sel-text"></span><span class="ac-clear">✕</span>
             </div>
@@ -4151,6 +4151,14 @@ function openBorcModal(){
   document.getElementById('mb-tarih').value=dt2Y+'-'+dt2M+'-'+dt2D+'T'+dt2H+':'+dt2Mn;
   acReset('mb-ac');
   acClearBanka();
+  // Kredi alanlarını sıfırla
+  ['mb-kredi-anapara','mb-kredi-faiz','mb-kredi-vade','mb-kredi-taksit',
+   'mb-kredi-baslangic','mb-kredi-ilk-taksit','mb-kredi-teminat',
+   'mb-kredi-kefil','mb-kredi-not'].forEach(fid=>{
+    const el=document.getElementById(fid);if(el)el.value='';
+  });
+  const ozetEl=document.getElementById('mb-kredi-ozet');
+  if(ozetEl)ozetEl.style.display='none';
   document.getElementById('mb-tip').value='Alındı';
   document.querySelectorAll('input[name="mb-kaynak"]')[0].checked=true;
   onBorcKaynakChange();
