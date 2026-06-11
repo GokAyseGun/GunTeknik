@@ -1453,13 +1453,13 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div id="mi-tutar-detay" style="font-size:11px;color:var(--text3);margin-bottom:10px;"></div>
         <div class="fi" style="margin-bottom:0;">
           <label style="font-size:12px;">Manuel Toplam (₺) <span style="color:var(--text3);">— boş bırakırsan otomatik toplam geçerli</span></label>
-          <input type="number" id="mi-tutar" inputmode="numeric" placeholder="Otomatik hesaplandı..." oninput="calcIslemToplam()">
+          <input type="text" id="mi-tutar" inputmode="decimal" placeholder="Otomatik hesaplandı..." oninput="calcIslemToplam()">
         </div>
       </div>
       <!-- Düz tutar (Şahsi Gelir/Gider ve diğer kategoriler için) -->
       <div id="div-mi-tutar-duz" class="fi">
         <label>Tutar (₺)</label>
-        <input type="number" id="mi-tutar-duz" inputmode="numeric" placeholder="0.00" oninput="calcYardimci();personelPayTutarYenile()">
+        <input type="text" id="mi-tutar-duz" inputmode="decimal" placeholder="0,00" oninput="calcYardimci();personelPayTutarYenile()">
       </div>
 
       <div class="fi"><label>Statü</label>
@@ -3433,8 +3433,7 @@ function personelPayTutarYenile(){
     if(!oranEl||!tutarEl)return;
     const oran=parseFloat(oranEl.value)||0;
     if(oran>0){
-      // Oran girilmişse tutarı güncelle
-      const t=parseFloat(document.getElementById('mi-tutar')?.value)||0;
+      const t=getIslemGercekTutar();
       const m=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
       const net=Math.max(0,t-m);
       tutarEl.value=Math.round(net*(oran/100)*100)/100||'';
@@ -3802,8 +3801,8 @@ async function saveIslem(btn){
   if(USER_ROL==='goruntule')return;if(btn)btn.disabled=true;
   try{
     const eId=document.getElementById('mi-id').value;
-    const tutar=parseTutar(document.getElementById('mi-tutar').value);
-    if(tutar<=0){showToast('Geçerli tutar girin','red');return;}
+    const tutar=getIslemGercekTutar();
+    if(tutar<=0){showToast('Geçerli tutar girin','red');if(btn)btn.disabled=false;return;}
     const tip=document.getElementById('mi-tip').value;const kat=document.getElementById('mi-kat').value;
     const statu=document.getElementById('mi-statu').value;const kId=parseInt(document.getElementById('mi-kisi').value)||null;
     const malz=parseTutar(document.getElementById('mi-malzeme').value);
@@ -10400,20 +10399,25 @@ function calcIslemToplam(){
 
 // saveIslem'de kullanılacak gerçek tutarı al
 function getIslemGercekTutar(){
-  // Özet kutu aktif mi?
   const ozetDiv=document.getElementById('div-mi-tutar-ozet');
-  if(ozetDiv&&ozetDiv.style.display!=='none'){
-    const manuelEl=document.getElementById('mi-tutar');
-    const manuelDeger=parseFloat(manuelEl?.value)||0;
+  const duzDiv=document.getElementById('div-mi-tutar-duz');
+  const ozetAktif=ozetDiv&&ozetDiv.style.display==='block';
+  const duzAktif=duzDiv&&duzDiv.style.display!=='none';
+
+  if(duzAktif&&!ozetAktif){
+    return parseTutar(document.getElementById('mi-tutar-duz')?.value)||0;
+  }
+  if(ozetAktif){
+    const manuelDeger=parseTutar(document.getElementById('mi-tutar')?.value)||0;
     if(manuelDeger>0)return manuelDeger;
-    const iscilikManuel=parseFloat(document.getElementById('mi-iscilik-manuel')?.value)||0;
+    const iscilikManuel=parseTutar(document.getElementById('mi-iscilik-manuel')?.value)||0;
     const iscillikListeToplam=(typeof iscillikSecilen!=='undefined'&&iscillikSecilen)?iscillikSecilen.reduce((a,s)=>a+s.tutar*s.adet,0):0;
     const iscilik=iscilikManuel>0?iscilikManuel:iscillikListeToplam;
-    const malzeme=parseFloat(document.getElementById('mi-malzeme')?.value)||0;
+    const malzeme=parseTutar(document.getElementById('mi-malzeme')?.value)||0;
     return iscilik+malzeme;
   }
-  // Düz tutar kutusu
-  return parseFloat(document.getElementById('mi-tutar-duz')?.value)||parseFloat(document.getElementById('mi-tutar')?.value)||0;
+  return parseTutar(document.getElementById('mi-tutar-duz')?.value)||
+         parseTutar(document.getElementById('mi-tutar')?.value)||0;
 }
 
 // ============================================================ ENFLASYON SİSTEMİ
