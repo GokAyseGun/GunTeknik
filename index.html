@@ -1055,35 +1055,114 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 <!-- ŞABLON EKLE/DÜZENLE MODALı -->
 <div class="modal-ov" id="modal-sablon">
-  <div class="modal" style="max-width:440px;"><div class="modal-handle"></div>
-    <div class="modal-head"><h3 id="sablon-modal-baslik">Şablon</h3><button class="modal-close" onclick="closeModal('modal-sablon')">✕</button></div>
+  <div class="modal" style="max-width:480px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="sablon-modal-baslik">Tekrarlayan İşlem</h3><button class="modal-close" onclick="closeModal('modal-sablon')">✕</button></div>
     <div class="modal-body fg">
       <input type="hidden" id="sablon-id">
+
+      <!-- Başlık -->
       <div class="fi"><label>Başlık <span style="color:var(--red);">*</span></label>
         <input type="text" id="sablon-baslik" placeholder="Kira ödemesi, Elektrik faturası...">
       </div>
-      <div class="fi"><label>Tutar (₺)</label>
-        <input type="number" id="sablon-tutar" inputmode="numeric" placeholder="0">
+
+      <!-- İşlem Tipi -->
+      <div class="fi"><label>İşlem Türü <span style="color:var(--red);">*</span></label>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="sablon-tip" value="Gelir" onchange="sablonTipDegis()"> 💰 Gelir
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="sablon-tip" value="Gider" checked onchange="sablonTipDegis()"> 💸 Gider
+          </label>
+        </div>
       </div>
-      <div class="fi"><label>Periyot</label>
-        <select id="sablon-periyot" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
-          <option>Aylık</option><option>Haftalık</option><option>Yıllık</option><option>Tek Seferlik</option>
+
+      <!-- Hesap Türü -->
+      <div class="fi"><label>Hesap Türü</label>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="sablon-hesap" value="İşletme" checked> 🏢 İşletme
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);cursor:pointer;background:var(--bg2);">
+            <input type="radio" name="sablon-hesap" value="Şahsi"> 👤 Şahsi
+          </label>
+        </div>
+      </div>
+
+      <!-- Kategori -->
+      <div class="fi"><label>Kategori</label>
+        <select id="sablon-kategori" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
+          <option value="İşletme Gideri">İşletme Gideri</option>
+          <option value="Şahsi Gider">Şahsi Gider</option>
+          <option value="İşletme Geliri">İşletme Geliri</option>
+          <option value="Şahsi Gelir">Şahsi Gelir</option>
+          <option value="Kira Gideri">Kira Gideri</option>
+          <option value="Fatura">Fatura</option>
+          <option value="Maaş">Maaş</option>
+          <option value="Kira Geliri">Kira Geliri</option>
         </select>
       </div>
-      <div class="fi"><label>Kategori</label>
-        <input type="text" id="sablon-kategori" placeholder="İşletme Gideri, Kira...">
+
+      <!-- Tutar -->
+      <div class="fi"><label>Tutar (₺) <span style="color:var(--red);">*</span></label>
+        <input type="number" id="sablon-tutar" inputmode="numeric" placeholder="0">
       </div>
-      <div class="fi"><label>Kişi / Kurum</label>
+
+      <!-- Ödeme Yöntemi -->
+      <div class="fi"><label>Ödeme Yöntemi</label>
+        <select id="sablon-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
+          <option value="Nakit">💵 Nakit</option>
+          <option value="Kart">💳 Kart</option>
+          <option value="İBAN">🏦 Havale/EFT</option>
+        </select>
+      </div>
+
+      <!-- Kişi / Kurum -->
+      <div class="fi"><label>Kişi / Kurum (isteğe bağlı)</label>
         <input type="hidden" id="sablon-kisi-id">
-        <div class="ac-wrap" id="sablon-ac-wrap">
-          <input type="text" id="sablon-ac-input" placeholder="Kişi ara..." autocomplete="off"
-            oninput="acSearch('sablon-ac')" onfocus="acSearch('sablon-ac')">
-          <div class="ac-list" id="sablon-ac-list"></div>
+        <div style="position:relative;">
+          <input type="text" id="sablon-kisi-ara" placeholder="İsim ara..." autocomplete="off"
+            oninput="sablonKisiAra(this.value)" onfocus="sablonKisiAra(this.value)"
+            style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;width:100%;">
+          <div id="sablon-kisi-liste" style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:100;max-height:160px;overflow-y:auto;display:none;"></div>
         </div>
-        <div id="sablon-kisi-goster" style="font-size:12px;color:var(--text3);margin-top:4px;"></div>
+        <div id="sablon-kisi-secili" style="font-size:12px;color:var(--green);margin-top:4px;"></div>
       </div>
-      <div class="fi"><label>Açıklama</label>
-        <textarea id="sablon-aciklama" rows="2" placeholder="Şablon notu..."></textarea>
+
+      <!-- Döngü -->
+      <div class="fi"><label>Tekrar Sıklığı <span style="color:var(--red);">*</span></label>
+        <select id="sablon-periyot" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;">
+          <option value="Haftalık">📅 Haftalık</option>
+          <option value="2 Haftada Bir">📅 2 Haftada Bir</option>
+          <option value="Aylık" selected>📅 Aylık</option>
+          <option value="3 Aylık">📅 3 Aylık</option>
+          <option value="6 Aylık">📅 6 Aylık</option>
+          <option value="Yıllık">📅 Yıllık</option>
+        </select>
+      </div>
+
+      <!-- Başlangıç Tarihi -->
+      <div class="fi"><label>İlk İşlem Tarihi <span style="color:var(--red);">*</span></label>
+        <input type="date" id="sablon-baslangic">
+      </div>
+
+      <!-- Bitiş Tarihi (opsiyonel) -->
+      <div class="fi"><label>Bitiş Tarihi (boş = durdurana kadar devam)</label>
+        <input type="date" id="sablon-bitis">
+      </div>
+
+      <!-- Aktif toggle -->
+      <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;">
+        <input type="checkbox" id="sablon-aktif" checked style="width:18px;height:18px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;">Otomatik işlem aktif</div>
+          <div style="font-size:11px;color:var(--text3);">Kapatırsanız döngü durur</div>
+        </div>
+      </label>
+
+      <!-- Açıklama -->
+      <div class="fi"><label>Not (isteğe bağlı)</label>
+        <textarea id="sablon-aciklama" rows="2" placeholder="İşlem notu..."></textarea>
       </div>
     </div>
     <div class="modal-foot">
@@ -2279,7 +2358,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   <div class="modal" style="max-width:480px;max-height:90vh;"><div class="modal-handle"></div>
     <div class="modal-head"><h3 id="teklif-detay-baslik">Teklif</h3><button class="modal-close" onclick="closeModal('modal-teklif-detay')">✕</button></div>
     <div class="modal-body" style="padding:16px;" id="teklif-detay-content"></div>
-    <div class="modal-foot" id="teklif-detay-footer"></div>
+    <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--bg2);border-radius:0 0 var(--r-xl) var(--r-xl);flex-shrink:0;" id="teklif-detay-footer"></div>
   </div>
 </div>
 
@@ -2603,7 +2682,7 @@ async function loadDB(){
     DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
       alisFiyat:parseFloat(s.alis_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
-    DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,isim:s.isim,tip:s.tip,kat:s.kat,altKat:s.alt_kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',not:s.not||''}));
+    DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,baslik:s.baslik||s.isim||'',tip:s.tip||'Gider',hesap:s.hesap||'İşletme',kategori:s.kategori||s.kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',periyot:s.periyot||'Aylık',baslangic:s.baslangic||null,bitis:s.bitis||null,aktif:s.aktif!==false,sonIslemTarihi:s.son_islem_tarihi||null,aciklama:s.aciklama||s.not||''}));
     DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
     DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||'',maasTutar:parseFloat(p.maas_tutar)||0,maasDongusu:p.maas_dongusu||'Aylık',sgkNo:p.sgk_no||'',iseBaslama:p.ise_baslama||null}));
     DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,adres:p.adres||'',zorluk:p.zorluk||'Orta',enIyiFiyat:parseFloat(p.en_iyi_fiyat)||0,teklifFiyat:parseFloat(p.teklif_fiyat)||0,musteriTeklif:parseFloat(p.musteri_teklif)||0,malzemeTahmini:parseFloat(p.malzeme_tahmini)||0,iscilikTahmini:parseFloat(p.iscilik_tahmini)||0,malzemeler:p.malzemeler||'',teklifId:p.teklif_id||null,teklifKalemleri:p.teklif_kalemleri||'',teklifAciklama:p.teklif_aciklama||'',createdAt:p.created_at}));
@@ -2616,6 +2695,7 @@ async function loadDB(){
     DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
     // Fiyat listesi ve enflasyon geçmişini yükle (paralel)
     await Promise.all([loadFiyatlar(), loadFiyatGecmis(), loadStokFiyatGecmis()]);
+    await sablonlariKontrolEt();
     renderAll();
   }catch(e){
     console.error('loadDB:',e);
@@ -6609,28 +6689,29 @@ function showTeklifDetay(id){
   // Footer butonlar — 3 satır × 2 buton
   let footer='';
   if(USER_ROL!=='goruntule'){
-    const btnS='font-size:13px;padding:12px 6px;';
-    // Satır 1: Düzenle · Yazdır/PDF
-    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">
-      <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="${btnS}">✏️ Düzenle</button>
-      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${btnS}">🖨️ Yazdır / PDF</button>
+    const G='display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;';
+    const B='font-size:13px;padding:13px 8px;width:100%;';
+    // Satır 1
+    footer+=`<div style="${G}">
+      <button class="btn btn-secondary" onclick="closeModal('modal-teklif-detay');openTeklifModal(${id})" style="${B}">✏️ Düzenle</button>
+      <button class="btn btn-primary" onclick="teklifOnizlemeGoster(${id})" style="${B}">🖨️ Yazdır / PDF</button>
     </div>`;
-    // Satır 2: Durum · Onay/Proje
+    // Satır 2 — duruma göre değişen
     const gb1=t.durum!=='Onaylandı'
-      ?`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="${btnS}">📤 Gönderildi</button>`
-      :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${btnS}">💰 İşleme Dönüştür</button>`;
+      ?`<button class="btn btn-secondary" onclick="teklifDurumGuncelle(${id},'Gönderildi')" style="${B}">📤 Gönderildi</button>`
+      :`<button class="btn btn-secondary" onclick="teklifIslemeCevir(${id})" style="${B}">💰 İşleme Dönüştür</button>`;
     const gb2=(t.durum==='Gönderildi'||t.durum==='Taslak')
-      ?`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="${btnS}">🔗 Dijital Onay</button>`
-      :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${btnS};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Projeye Dönüştür</button>`;
-    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px;">${gb1}${gb2}</div>`;
-    // Satır 3: Onayla · Sil
+      ?`<button class="btn btn-secondary" onclick="teklifOnayLinki(${id})" style="${B}">🔗 Dijital Onay</button>`
+      :`<button class="btn btn-secondary" onclick="teklifdenProjeOlustur(${id})" style="${B};background:rgba(46,160,67,0.15);color:var(--green);border-color:rgba(46,160,67,0.3);">🏗️ Projeye Dönüştür</button>`;
+    footer+=`<div style="${G}">${gb1}${gb2}</div>`;
+    // Satır 3
     const gb3=t.durum==='Gönderildi'
-      ?`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="${btnS}">✅ Onayla</button>`
+      ?`<button class="btn btn-primary" onclick="teklifDurumGuncelle(${id},'Onaylandı')" style="${B}">✅ Onayla</button>`
       :`<div></div>`;
     const gb4=USER_ROL==='admin'
-      ?`<button class="btn btn-secondary" onclick="deleteTeklif(${id})" style="${btnS};color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);">🗑 Sil</button>`
+      ?`<button class="btn btn-secondary" onclick="deleteTeklif(${id})" style="${B};color:var(--red);border-color:rgba(232,128,128,0.4);background:rgba(232,128,128,0.08);">🗑 Sil</button>`
       :`<div></div>`;
-    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">${gb3}${gb4}</div>`;
+    footer+=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">${gb3}${gb4}</div>`;
   }
   document.getElementById('teklif-detay-footer').innerHTML=footer;
   document.getElementById('teklif-detay-content').scrollTop=0;
@@ -12179,28 +12260,44 @@ async function eklerModalAc(tip, kayitId) {
 // ŞABLONLAR SAYFASI
 // ============================================================
 
-function renderSablonlar(){
-  const el=document.getElementById('sablon-listesi');if(!el)return;
-  if(!DB.sablonlar||!DB.sablonlar.length){
-    el.innerHTML='<div class="empty-state"><div class="empty-title">Şablon yok</div><div class="empty-sub">+ Şablon butonuyla ekleyin</div></div>';
-    return;
+function sablonKisiAra(q){
+  const liste=document.getElementById('sablon-kisi-liste');
+  if(!liste)return;
+  if(!q||q.length<1){liste.style.display='none';return;}
+  const esl=DB.kisiler.filter(k=>(k.isim||'').toLowerCase().includes(q.toLowerCase())).slice(0,6);
+  if(!esl.length){liste.style.display='none';return;}
+  liste.innerHTML=esl.map(k=>`<div onclick="sablonKisiSec(${k.id},'${k.isim.replace(/'/g,"\\'")}');event.stopPropagation();"
+    style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);"
+    onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+    ${k.isim} <span style="font-size:11px;color:var(--text3);">${k.tip}</span>
+  </div>`).join('');
+  liste.style.display='block';
+}
+
+function sablonKisiSec(id, isim){
+  document.getElementById('sablon-kisi-id').value=id;
+  document.getElementById('sablon-kisi-ara').value=isim;
+  document.getElementById('sablon-kisi-secili').textContent='✓ Seçildi: '+isim;
+  const liste=document.getElementById('sablon-kisi-liste');
+  if(liste)liste.style.display='none';
+}
+
+function sablonTipDegis(){
+  const tip=document.querySelector('input[name="sablon-tip"]:checked')?.value||'Gider';
+  const katSel=document.getElementById('sablon-kategori');
+  if(!katSel)return;
+  if(tip==='Gelir'){
+    katSel.innerHTML=`<option value="İşletme Geliri">İşletme Geliri</option>
+      <option value="Şahsi Gelir">Şahsi Gelir</option>
+      <option value="Kira Geliri">Kira Geliri</option>
+      <option value="Maaş">Maaş</option>`;
+  }else{
+    katSel.innerHTML=`<option value="İşletme Gideri">İşletme Gideri</option>
+      <option value="Şahsi Gider">Şahsi Gider</option>
+      <option value="Kira Gideri">Kira Gideri</option>
+      <option value="Fatura">Fatura</option>
+      <option value="Maaş">Maaş</option>`;
   }
-  el.innerHTML=DB.sablonlar.map(s=>{
-    const k=getKisi(s.kisiId);
-    return `<div class="card" style="margin-bottom:10px;padding:14px 16px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-        <div style="flex:1;cursor:pointer;" onclick="showSablonDetay(${s.id})">
-          <div style="font-weight:700;font-size:14px;">${s.baslik||'Şablon'}</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:2px;">${k?k.isim:'—'} · ${s.periyot||'Aylık'} · ${fmt(s.tutar||0)} ₺</div>
-        </div>
-        <div style="display:flex;gap:4px;flex-shrink:0;">
-          <button class="btn btn-secondary btn-sm" onclick="sablonAnaliz(${s.id})" style="font-size:11px;padding:5px 8px;">📊 Analiz</button>
-          <button class="btn btn-secondary btn-sm" onclick="openSablonModal(${s.id})" style="font-size:11px;padding:5px 8px;">✏️</button>
-          <button class="btn btn-secondary btn-sm" onclick="deleteSablon(${s.id})" style="font-size:11px;padding:5px 8px;color:var(--red);">🗑</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 function openSablonModal(id){
@@ -12209,13 +12306,31 @@ function openSablonModal(id){
   document.getElementById('sablon-id').value=id||'';
   document.getElementById('sablon-baslik').value=s?.baslik||'';
   document.getElementById('sablon-tutar').value=s?.tutar||'';
-  document.getElementById('sablon-periyot').value=s?.periyot||'Aylık';
-  document.getElementById('sablon-kategori').value=s?.kategori||'';
   document.getElementById('sablon-aciklama').value=s?.aciklama||'';
+  document.getElementById('sablon-aktif').checked=s?s.aktif!==false:true;
   document.getElementById('sablon-kisi-id').value=s?.kisiId||'';
-  const ac=s?getKisi(s.kisiId):null;
-  const goster=document.getElementById('sablon-kisi-goster');
-  if(goster)goster.textContent=ac?ac.isim:'';
+  document.getElementById('sablon-kisi-ara').value=s?.kisiId?getKisi(s.kisiId)?.isim||'':'';
+  document.getElementById('sablon-kisi-secili').textContent=s?.kisiId?'✓ Seçildi: '+(getKisi(s.kisiId)?.isim||''):'';
+  document.getElementById('sablon-odeme').value=s?.odemeYontemi||'Nakit';
+  // Periyot
+  const per=document.getElementById('sablon-periyot');
+  if(per)per.value=s?.periyot||'Aylık';
+  // Tarihler
+  document.getElementById('sablon-baslangic').value=s?.baslangic||new Date().toISOString().split('T')[0];
+  document.getElementById('sablon-bitis').value=s?.bitis||'';
+  // Tip (gelir/gider)
+  const tipVal=s?.tip||'Gider';
+  document.querySelectorAll('input[name="sablon-tip"]').forEach(r=>r.checked=r.value===tipVal);
+  sablonTipDegis();
+  if(s?.kategori){
+    const ks=document.getElementById('sablon-kategori');
+    if(ks){
+      Array.from(ks.options).forEach(o=>{if(o.value===s.kategori)o.selected=true;});
+    }
+  }
+  // Hesap
+  const hesapVal=s?.hesap||'İşletme';
+  document.querySelectorAll('input[name="sablon-hesap"]').forEach(r=>r.checked=r.value===hesapVal);
   openModal('modal-sablon');
 }
 
@@ -12224,43 +12339,188 @@ async function saveSablon(btn){
   try{
     const id=document.getElementById('sablon-id').value;
     const kisiId=document.getElementById('sablon-kisi-id').value;
+    const tip=document.querySelector('input[name="sablon-tip"]:checked')?.value||'Gider';
+    const hesap=document.querySelector('input[name="sablon-hesap"]:checked')?.value||'İşletme';
+    const baslangic=document.getElementById('sablon-baslangic').value;
+    if(!baslangic){showToast('Başlangıç tarihi zorunlu','red');if(btn)btn.disabled=false;return;}
     const payload={
       baslik:document.getElementById('sablon-baslik').value.trim(),
       tutar:parseTutar(document.getElementById('sablon-tutar').value)||0,
       periyot:document.getElementById('sablon-periyot').value,
       kategori:document.getElementById('sablon-kategori').value,
+      tip, hesap,
+      odeme_yontemi:document.getElementById('sablon-odeme').value,
       aciklama:document.getElementById('sablon-aciklama').value,
-      kisi_id:kisiId||null
+      kisi_id:kisiId||null,
+      baslangic,
+      bitis:document.getElementById('sablon-bitis').value||null,
+      aktif:document.getElementById('sablon-aktif').checked,
+      son_islem_tarihi:null
     };
-    if(!payload.baslik){showToast('Başlık zorunlu','red');return;}
-    if(id)await sbFetch('sablonlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
-    else await sbFetch('sablonlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    if(!payload.baslik){showToast('Başlık zorunlu','red');if(btn)btn.disabled=false;return;}
+    if(!payload.tutar){showToast('Tutar girin','red');if(btn)btn.disabled=false;return;}
+    if(id){
+      await sbFetch('sablonlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    }else{
+      await sbFetch('sablonlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    }
     await loadDB();closeModal('modal-sablon');renderSablonlar();
-    showToast(id?'Güncellendi':'Şablon eklendi','green');
-  }catch(e){showToast('Hata: '+e.message,'red');}
+    showToast(id?'Güncellendi':'Şablon eklendi ve aktif','green');
+    // Hemen ilk işlemi oluştur mu?
+    if(!id&&payload.aktif){
+      const bugun=new Date().toISOString().split('T')[0];
+      if(payload.baslangic<=bugun){
+        await sablonIslemOlustur(payload,payload.baslangic);
+        showToast('İlk otomatik işlem oluşturuldu ✓','green');
+      }
+    }
+  }catch(e){showToast('Hata: '+e.message,'red');console.error(e);}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function sablonIslemOlustur(s, tarih){
+  // Şablondan islemler tablosuna işlem yaz
+  const kat=s.kategori||(s.tip==='Gelir'?'İşletme Geliri':'İşletme Gideri');
+  await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+    tarih:tarih+'T09:00:00',
+    tip:s.tip||'Gider',
+    statu:'Tamamlandı',
+    kat:kat,
+    alt_kat:s.baslik,
+    tutar:s.tutar,
+    odeme_yontemi:s.odeme_yontemi||s.odemeYontemi||'Nakit',
+    kisi_id:s.kisi_id||s.kisiId||null,
+    not:`Otomatik — ${s.baslik}${s.aciklama?' | '+s.aciklama:''}`
+  })});
+}
+
+function sablonSonrakiTarih(baslangic, periyot, sonIslem){
+  // Son işlem tarihinden sonraki tarih hesapla
+  const ref=sonIslem?new Date(sonIslem):new Date(baslangic);
+  const next=new Date(ref);
+  switch(periyot){
+    case 'Haftalık': next.setDate(next.getDate()+7); break;
+    case '2 Haftada Bir': next.setDate(next.getDate()+14); break;
+    case 'Aylık': next.setMonth(next.getMonth()+1); break;
+    case '3 Aylık': next.setMonth(next.getMonth()+3); break;
+    case '6 Aylık': next.setMonth(next.getMonth()+6); break;
+    case 'Yıllık': next.setFullYear(next.getFullYear()+1); break;
+    default: next.setMonth(next.getMonth()+1);
+  }
+  return next.toISOString().split('T')[0];
+}
+
+async function sablonlariKontrolEt(){
+  // Her loadDB'de çağrılır - vadesi gelen şablonları işler
+  if(!DB.sablonlar||!DB.sablonlar.length)return;
+  const bugun=new Date().toISOString().split('T')[0];
+  let islemYapildi=false;
+  for(const s of DB.sablonlar){
+    if(!s.aktif)continue;
+    if(s.bitis&&bugun>s.bitis)continue; // Bitiş geçmiş
+    // Sonraki işlem tarihini hesapla
+    const sonraki=s.sonIslemTarihi
+      ?sablonSonrakiTarih(s.baslangic,s.periyot,s.sonIslemTarihi)
+      :s.baslangic;
+    if(!sonraki||bugun<sonraki)continue; // Henüz vakti gelmemiş
+    // İşlem oluştur
+    try{
+      await sablonIslemOlustur(s, sonraki);
+      // son_islem_tarihi güncelle
+      await sbFetch('sablonlar?id=eq.'+s.id,{method:'PATCH',body:JSON.stringify({son_islem_tarihi:sonraki})});
+      islemYapildi=true;
+      console.log('Şablon işlemi oluşturuldu:',s.baslik,sonraki);
+    }catch(e){console.error('Şablon hata:',s.baslik,e);}
+  }
+  if(islemYapildi){
+    await loadDB(); // Yeni işlemleri yükle
+    showToast('Otomatik işlemler oluşturuldu ✓','green');
+  }
+}
+
+function renderSablonlar(){
+  const el=document.getElementById('sablon-listesi');if(!el)return;
+  if(!DB.sablonlar||!DB.sablonlar.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-title">Tekrarlayan işlem yok</div><div class="empty-sub">+ Şablon butonuyla ekleyin</div></div>';
+    return;
+  }
+  el.innerHTML=DB.sablonlar.map(s=>{
+    const k=getKisi(s.kisiId);
+    const bugun=new Date().toISOString().split('T')[0];
+    const sonraki=s.sonIslemTarihi
+      ?sablonSonrakiTarih(s.baslangic,s.periyot,s.sonIslemTarihi)
+      :s.baslangic;
+    const aktifRenk=s.aktif?'var(--green)':'var(--text3)';
+    const tipIcon=s.tip==='Gelir'?'💰':'💸';
+    return `<div class="card" style="margin-bottom:10px;padding:14px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;cursor:pointer;" onclick="showSablonDetay(${s.id})">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-size:16px;">${tipIcon}</span>
+            <span style="font-weight:700;font-size:14px;">${s.baslik}</span>
+            <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${s.aktif?'rgba(46,160,67,0.15)':'rgba(100,100,100,0.15)'};color:${aktifRenk};">${s.aktif?'Aktif':'Durduruldu'}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);">
+            ${k?k.isim+' · ':''}${s.periyot} · <span style="font-weight:600;color:${s.tip==='Gelir'?'var(--green)':'var(--red)'};">${fmt(s.tutar||0)} ₺</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">
+            Sonraki: ${sonraki||'—'}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;flex-direction:column;align-items:flex-end;">
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="openSablonModal(${s.id})" style="font-size:11px;padding:5px 8px;">✏️</button>
+            <button class="btn btn-secondary btn-sm" onclick="deleteSablon(${s.id})" style="font-size:11px;padding:5px 8px;color:var(--red);">🗑</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="sablonAktifToggle(${s.id},${!s.aktif})" style="font-size:11px;padding:4px 8px;color:${aktifRenk};">
+            ${s.aktif?'⏸ Durdur':'▶ Başlat'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function sablonAktifToggle(id, aktif){
+  await sbFetch('sablonlar?id=eq.'+id,{method:'PATCH',body:JSON.stringify({aktif})});
+  await loadDB();renderSablonlar();
+  showToast(aktif?'Şablon başlatıldı':'Şablon durduruldu', aktif?'green':'amber');
 }
 
 function showSablonDetay(id){
   const s=DB.sablonlar.find(x=>x.id===id);if(!s)return;
   const k=getKisi(s.kisiId);
-  let html='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:8px;">';
-  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Başlık</span><span style="font-weight:600;">${s.baslik}</span></div>`;
-  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Tutar</span><span style="font-weight:700;color:var(--green);">${fmt(s.tutar)} ₺</span></div>`;
-  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Periyot</span><span>${s.periyot}</span></div>`;
-  html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Kategori</span><span>${s.kategori||'—'}</span></div>`;
-  if(k)html+=`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);font-size:12px;">Kişi/Kurum</span><span>${k.isim}</span></div>`;
-  if(s.aciklama)html+=`<div style="margin-top:4px;font-size:12px;color:var(--text2);">📝 ${s.aciklama}</div>`;
+  const sonraki=s.sonIslemTarihi
+    ?sablonSonrakiTarih(s.baslangic,s.periyot,s.sonIslemTarihi)
+    :s.baslangic;
+  let html='<div style="display:flex;flex-direction:column;gap:8px;">';
+  const rows=[
+    ['Tür', (s.tip==='Gelir'?'💰 ':'💸 ')+(s.tip||'—')],
+    ['Hesap', s.hesap||'İşletme'],
+    ['Kategori', s.kategori||'—'],
+    ['Tutar', `<span style="font-weight:700;color:${s.tip==='Gelir'?'var(--green)':'var(--red)'};">${fmt(s.tutar)} ₺</span>`],
+    ['Ödeme', s.odemeYontemi||'—'],
+    ['Periyot', s.periyot||'—'],
+    ['Kişi/Kurum', k?k.isim:'—'],
+    ['Başlangıç', s.baslangic||'—'],
+    ['Bitiş', s.bitis||'Süresiz'],
+    ['Son İşlem', s.sonIslemTarihi||'Henüz yok'],
+    ['Sonraki İşlem', sonraki||'—'],
+    ['Durum', s.aktif?'<span style="color:var(--green);">Aktif</span>':'<span style="color:var(--text3);">Durduruldu</span>'],
+  ];
+  rows.forEach(([k2,v])=>{
+    html+=`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg2);border-radius:var(--r-sm);font-size:13px;">
+      <span style="color:var(--text3);">${k2}</span><span>${v}</span></div>`;
+  });
+  if(s.aciklama)html+=`<div style="padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);font-size:12px;color:var(--text2);">📝 ${s.aciklama}</div>`;
   html+='</div>';
   document.getElementById('sablon-detay-title').textContent=s.baslik;
   document.getElementById('sablon-detay-content').innerHTML=html;
   openModal('modal-sablon-detay');
 }
 
-function sablonAnaliz(id){showSablonDetay(id);}
-
 async function deleteSablon(id){
-  if(!confirm('Bu şablonu silmek istediğinizden emin misiniz?'))return;
+  if(!confirm('Bu şablonu ve otomatik döngüyü silmek istediğinizden emin misiniz?'))return;
   await sbFetch('sablonlar?id=eq.'+id,{method:'DELETE'});
   await loadDB();renderSablonlar();showToast('Şablon silindi','amber');
 }
