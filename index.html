@@ -12605,6 +12605,21 @@ function stokKarRaporuGoster(){
   document.body.appendChild(el);
 }
 
+
+
+// ============================================================
+// UYGULAMA BAŞLATMA — sayfa yüklenince oturum/desen kontrolü
+// ============================================================
+function _bootApp(){
+  initGlobalFileInputs();
+  temaYukle();
+  checkSession();
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',_bootApp);
+}else{
+  _bootApp();
+}
 </script>
 </body>
 </html>
