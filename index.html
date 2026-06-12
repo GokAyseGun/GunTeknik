@@ -698,6 +698,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="sablon-listesi"></div>
     </div>
 
+    <!-- TAVSİYELER SAYFASI -->
+    <div class="page" id="page-tavsiyeler">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">💡 Tavsiyeler</div>
+        <button class="btn btn-primary btn-sm" onclick="openTavsiyeModal()">+ Tavsiye</button>
+      </div>
+      <div style="position:relative;margin-bottom:14px;">
+        <input type="text" id="tavsiye-ara" placeholder="Başlık veya özet içinde ara..." autocomplete="off"
+          oninput="renderTavsiyeler()"
+          style="width:100%;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;">
+      </div>
+      <div id="tavsiye-listesi"></div>
+    </div>
+
     <div class="page" id="page-raporlar">
       <!-- Tahmin Grafikleri -->
       <div class="card" style="margin-bottom:16px;" id="rapor-tahmin-kart">
@@ -914,6 +928,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
     <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
+    <div class="nav-item" onclick="goPage('tavsiyeler',this)"><span class="nav-icon">💡</span><span>Tavsiyeler</span></div>
   </nav>
 </div>
 
@@ -1050,6 +1065,75 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
+
+
+<!-- TAVSİYE EKLE/DÜZENLE MODALı -->
+<div class="modal-ov" id="modal-tavsiye">
+  <div class="modal" style="max-width:520px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="tavsiye-modal-baslik">Tavsiye Ekle</h3><button class="modal-close" onclick="closeModal('modal-tavsiye')">✕</button></div>
+    <div class="modal-body fg">
+      <input type="hidden" id="tavsiye-id">
+      <div class="fi"><label>Başlık <span style="color:var(--red);">*</span></label>
+        <input type="text" id="tavsiye-baslik" placeholder="Manyetik Marş Rölesi" autocapitalize="sentences">
+      </div>
+      <div class="fi"><label>Özet <span style="color:var(--red);">*</span></label>
+        <input type="text" id="tavsiye-ozet" placeholder="Ne ile ne işlem yapıldığının kısa özeti" autocapitalize="sentences">
+      </div>
+      <div class="fi"><label>Açıklama <span style="color:var(--red);">*</span></label>
+        <textarea id="tavsiye-aciklama" rows="10" placeholder="Tüm detayları buraya yazın..."></textarea>
+      </div>
+      <!-- Dosya/Fotoğraf Yükleme -->
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
+        <div id="tavsiye-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+            📷 Kamera / Galeri
+            <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDosyaEkle(this,'tavsiye')">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+            📁 Dosya Seç
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDosyaEkle(this,'tavsiye')">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-tavsiye')">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="saveTavsiye(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAVSİYE DETAY MODALı -->
+<div class="modal-ov" id="modal-tavsiye-detay">
+  <div class="modal" style="max-width:520px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 id="tavsiye-detay-baslik">Tavsiye</h3><button class="modal-close" onclick="closeModal('modal-tavsiye-detay')">✕</button></div>
+    <div class="modal-body">
+      <div id="tavsiye-detay-ozet" style="font-size:13px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px;"></div>
+      <div id="tavsiye-detay-aciklama" style="font-size:14px;color:var(--text);white-space:pre-wrap;line-height:1.7;margin-bottom:14px;"></div>
+      <!-- Dosya/Fotoğraf Yükleme -->
+      <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
+        <div id="tavsiye-detay-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+        <div style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+            📷 Kamera / Galeri
+            <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="tavsiyeDetayDosyaEkle(this)">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+            📁 Dosya Seç
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="tavsiyeDetayDosyaEkle(this)">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-full" onclick="tavsiyeDuzenleAc()">✏️ Düzenle</button>
+      <button class="btn btn-primary btn-full" onclick="tavsiyeYazdirAc()">🖨️ Yazdır</button>
+    </div>
+  </div>
+</div>
 
 <!-- ŞABLON EKLE/DÜZENLE MODALı -->
 <div class="modal-ov" id="modal-sablon">
@@ -2607,12 +2691,12 @@ async function startApp(){
 }
 
 // ============================================================ VERİTABANI
-let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[],projeler:[],teklifler:[],butceLimitler:[],bankaKredileri:[],krediOdemeleri:[]};
+let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[],projeler:[],teklifler:[],butceLimitler:[],bankaKredileri:[],krediOdemeleri:[],tavsiyeler:[]};
 
 async function loadDB(){
   showLoading(true);
   try{
-    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri]=await Promise.all([
+    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri,tavsiyeler]=await Promise.all([
       sbFetch('kisiler?order=isim.asc&select=*'),
       sbFetch('islemler?order=tarih.desc&select=*'),
       sbFetch('odemeler?order=tarih.desc&select=*'),
@@ -2627,8 +2711,10 @@ async function loadDB(){
       sbFetch('teklifler?order=created_at.desc&select=*').catch(()=>[]),
       sbFetch('butce_limitler?select=*').catch(()=>[]),
       sbFetch('banka_kredileri?order=created_at.desc&select=*').catch(()=>[]),
-      sbFetch('kredi_odemeleri?order=odeme_tarihi.desc&select=*').catch(()=>[])
+      sbFetch('kredi_odemeleri?order=odeme_tarihi.desc&select=*').catch(()=>[]),
+      sbFetch('tavsiyeler?order=created_at.desc&select=*').catch(()=>[])
     ]);
+    DB.tavsiyeler=(tavsiyeler||[]).map(t=>({id:t.id,baslik:t.baslik||'',ozet:t.ozet||'',aciklama:t.aciklama||'',createdAt:t.created_at}));
     DB.bankaKredileri=(bankaKredileri||[]).map(k=>({
       id:k.id, bankaAdi:k.banka_adi, sube:k.sube||'', krediTuru:k.kredi_turu||'Ticari',
       krediTipi:k.kredi_tipi||'İhtiyaç', anapara:parseFloat(k.anapara)||0,
@@ -2761,7 +2847,7 @@ const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.is
 function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler'};
 
 function goPage(id,navEl){
   // Sayfa geçişinde tüm açık modalleri kapat
@@ -2945,6 +3031,7 @@ function renderAll(){
     if(pid==='fiyatlar')renderFiyatlar();
     if(pid==='raporlar')renderRaporIcgoru();
     if(pid==='sablonlar')renderSablonlar();
+    if(pid==='tavsiyeler')renderTavsiyeler();
     // Kredi paneli her zaman güncelle
     if(typeof renderKrediPanel==='function')renderKrediPanel();
     renderVergiDash();
@@ -12012,27 +12099,28 @@ function aiKrediYanit(soru){
 // ============================================================
 
 // tip: 'teklif' veya 'proje' — kayitId: kayıt ID'si (düzenleme modunda)
-let _eklerTeklifYeni = [];   // Yeni eklenen, henüz yüklenmemiş
-let _eklerProjeYeni  = [];   // Yeni eklenen, henüz yüklenmemiş
-let _eklerTeklifMevcut = []; // DB'den gelen mevcut ekler
-let _eklerProjeMevcut  = []; // DB'den gelen mevcut ekler
+let _eklerYeni = {teklif:[], proje:[], tavsiye:[]};   // Yeni eklenen, henüz yüklenmemiş
+let _eklerMevcut = {teklif:[], proje:[], tavsiye:[]}; // DB'den gelen mevcut ekler
+const EKLER_GRIDS = {teklif:['teklif-ekler-grid'], proje:['proje-ekler-grid'], tavsiye:['tavsiye-ekler-grid','tavsiye-detay-ekler-grid']};
+const EKLER_ALAN = {teklif:'teklif_id', proje:'proje_id', tavsiye:'tavsiye_id'};
+const EKLER_KLASOR = {teklif:'teklif-ekler', proje:'proje-ekler', tavsiye:'tavsiye-ekler'};
 
 async function eklerYukle(tip, kayitId) {
   if (!kayitId) return [];
   try {
-    const alan = tip === 'teklif' ? 'teklif_id' : 'proje_id';
+    const alan = EKLER_ALAN[tip]||'teklif_id';
     const data = await sbFetch(`ekler?${alan}=eq.${kayitId}&order=created_at.asc`);
     return data || [];
   } catch(e) { return []; }
 }
 
 function eklerGridGuncelle(tip) {
-  const gridId = tip === 'teklif' ? 'teklif-ekler-grid' : 'proje-ekler-grid';
-  const grid = document.getElementById(gridId);
-  if (!grid) return;
+  const gridIds = EKLER_GRIDS[tip]||[];
+  const grids = gridIds.map(g=>document.getElementById(g)).filter(Boolean);
+  if (!grids.length) return;
 
-  const mevcut = tip === 'teklif' ? _eklerTeklifMevcut : _eklerProjeMevcut;
-  const yeni   = tip === 'teklif' ? _eklerTeklifYeni   : _eklerProjeYeni;
+  const mevcut = _eklerMevcut[tip]||[];
+  const yeni   = _eklerYeni[tip]||[];
   const toplam = mevcut.length + yeni.length;
 
   let html = '';
@@ -12071,15 +12159,16 @@ function eklerGridGuncelle(tip) {
     </div>`;
   });
 
-  grid.innerHTML = html || '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Henüz dosya eklenmedi</div>';
+  const finalHtml = html || '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Henüz dosya eklenmedi</div>';
+  grids.forEach(g=>g.innerHTML=finalHtml);
 }
 
 function eklerDosyaEkle(input, tip) {
   const files = Array.from(input.files || []);
   if (!files.length) return;
 
-  const yeni = tip === 'teklif' ? _eklerTeklifYeni : _eklerProjeYeni;
-  const mevcut = tip === 'teklif' ? _eklerTeklifMevcut : _eklerProjeMevcut;
+  const yeni = _eklerYeni[tip];
+  const mevcut = _eklerMevcut[tip];
 
   const kalan = 6 - mevcut.length - yeni.length;
   if (kalan <= 0) { showToast('Maksimum 6 dosya yüklenebilir', 'amber'); return; }
@@ -12109,15 +12198,14 @@ function eklerDosyaEkle(input, tip) {
 }
 
 function eklerYeniSil(idx, tip) {
-  if (tip === 'teklif') _eklerTeklifYeni.splice(idx, 1);
-  else _eklerProjeYeni.splice(idx, 1);
+  _eklerYeni[tip].splice(idx, 1);
   eklerGridGuncelle(tip);
 }
 
 async function eklerMevcutSil(ekId, tip) {
   try {
     // Önce DB'den URL'i al, sonra storage'dan ve DB'den sil
-    const ekler = tip==='teklif'?_eklerTeklifMevcut:_eklerProjeMevcut;
+    const ekler = _eklerMevcut[tip]||[];
     const ek = ekler.find(e=>String(e.id)===String(ekId));
     if(ek&&(ek.url||ek.dosya_url)){
       const url=ek.url||ek.dosya_url;
@@ -12135,20 +12223,19 @@ async function eklerMevcutSil(ekId, tip) {
       }
     }
     await sbFetch('ekler?id=eq.' + ekId, { method: 'DELETE' });
-    if (tip === 'teklif') _eklerTeklifMevcut = _eklerTeklifMevcut.filter(e => String(e.id) !== String(ekId));
-    else _eklerProjeMevcut = _eklerProjeMevcut.filter(e => String(e.id) !== String(ekId));
+    _eklerMevcut[tip] = (_eklerMevcut[tip]||[]).filter(e => String(e.id) !== String(ekId));
     eklerGridGuncelle(tip);
     showToast('Dosya silindi', 'amber');
   } catch(e) { showToast('Silinemedi: ' + e.message, 'red'); }
 }
 
 async function eklerKaydet(tip, kayitId) {
-  const yeni = tip === 'teklif' ? _eklerTeklifYeni : _eklerProjeYeni;
+  const yeni = _eklerYeni[tip]||[];
   if (!yeni.length) return;
 
   const bucket = 'ekler';
-  const alan   = tip === 'teklif' ? 'teklif_id' : 'proje_id';
-  const klasor = tip === 'teklif' ? 'teklif-ekler' : 'proje-ekler';
+  const alan   = EKLER_ALAN[tip]||'teklif_id';
+  const klasor = EKLER_KLASOR[tip]||'teklif-ekler';
 
   const hatalar = [];
   for (const item of yeni) {
@@ -12172,8 +12259,7 @@ async function eklerKaydet(tip, kayitId) {
     } catch(e) { hatalar.push(item.file.name + ': ' + e.message); }
   }
 
-  if (tip === 'teklif') _eklerTeklifYeni = [];
-  else _eklerProjeYeni = [];
+  _eklerYeni[tip] = [];
 
   if (hatalar.length) showToast('Bazı dosyalar yüklenemedi: ' + hatalar[0], 'red');
 }
@@ -12181,8 +12267,8 @@ async function eklerKaydet(tip, kayitId) {
 async function eklerModalAc(tip, kayitId) {
   // Modal açılırken mevcut ekleri yükle ve yeni listesini sıfırla
   const mevcut = await eklerYukle(tip, kayitId);
-  if (tip === 'teklif') { _eklerTeklifMevcut = mevcut; _eklerTeklifYeni = []; }
-  else { _eklerProjeMevcut = mevcut; _eklerProjeYeni = []; }
+  _eklerMevcut[tip] = mevcut;
+  _eklerYeni[tip] = [];
   eklerGridGuncelle(tip);
 }
 
@@ -12619,6 +12705,242 @@ if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',_bootApp);
 }else{
   _bootApp();
+}
+
+
+// ============================================================
+// TAVSİYELER SAYFASI
+// ============================================================
+
+let _tavsiyeAktifId=null;
+
+function renderTavsiyeler(){
+  const el=document.getElementById('tavsiye-listesi');if(!el)return;
+  const q=(document.getElementById('tavsiye-ara')?.value||'').toLowerCase().trim();
+  let list=DB.tavsiyeler||[];
+  if(q){
+    list=list.filter(t=>(t.baslik||'').toLowerCase().includes(q)||(t.ozet||'').toLowerCase().includes(q));
+  }
+  if(!list.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-title">${q?'Sonuç bulunamadı':'Tavsiye yok'}</div><div class="empty-sub">${q?'Farklı bir kelime deneyin':'+ Tavsiye butonuyla ekleyin'}</div></div>`;
+    return;
+  }
+  el.innerHTML=list.map(t=>`<div class="card" style="margin-bottom:10px;padding:14px 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="showTavsiyeDetay(${t.id})">
+        <div style="font-weight:700;font-size:15px;margin-bottom:4px;">${t.baslik}</div>
+        <div style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${t.ozet}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
+        <button class="btn btn-secondary btn-sm" onclick="openTavsiyeModal(${t.id})" style="font-size:11px;padding:6px 9px;">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="deleteTavsiye(${t.id})" style="font-size:11px;padding:6px 9px;color:var(--red);">🗑</button>
+      </div>
+    </div>
+  </div>`).join('');
+  observeStagger();
+}
+
+async function openTavsiyeModal(id){
+  if(USER_ROL==='goruntule')return;
+  const t=id?DB.tavsiyeler.find(x=>x.id===id):null;
+  document.getElementById('tavsiye-modal-baslik').textContent=id?'Tavsiyeyi Düzenle':'Tavsiye Ekle';
+  document.getElementById('tavsiye-id').value=id||'';
+  document.getElementById('tavsiye-baslik').value=t?.baslik||'';
+  document.getElementById('tavsiye-ozet').value=t?.ozet||'';
+  document.getElementById('tavsiye-aciklama').value=t?.aciklama||'';
+  if(id){
+    await eklerModalAc('tavsiye',id);
+  }else{
+    _eklerMevcut.tavsiye=[];_eklerYeni.tavsiye=[];eklerGridGuncelle('tavsiye');
+  }
+  openModal('modal-tavsiye');
+}
+
+async function saveTavsiye(btn){
+  if(btn)btn.disabled=true;
+  try{
+    const id=document.getElementById('tavsiye-id').value;
+    const payload={
+      baslik:document.getElementById('tavsiye-baslik').value.trim(),
+      ozet:document.getElementById('tavsiye-ozet').value.trim(),
+      aciklama:document.getElementById('tavsiye-aciklama').value.trim()
+    };
+    if(!payload.baslik){showToast('Başlık zorunlu','red');if(btn)btn.disabled=false;return;}
+    if(!payload.ozet){showToast('Özet zorunlu','red');if(btn)btn.disabled=false;return;}
+    if(!payload.aciklama){showToast('Açıklama zorunlu','red');if(btn)btn.disabled=false;return;}
+    let tavsiyeKayitId=id?parseInt(id):null;
+    if(id){
+      await sbFetch('tavsiyeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    }else{
+      const r=await sbFetch('tavsiyeler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});
+      if(r&&r[0])tavsiyeKayitId=r[0].id;
+    }
+    if(tavsiyeKayitId) await eklerKaydet('tavsiye',tavsiyeKayitId).catch(()=>{});
+    await loadDB();closeModal('modal-tavsiye');renderTavsiyeler();
+    showToast(id?'Güncellendi':'Tavsiye eklendi','green');
+    // Eğer detay açıkken düzenlendiyse detayı da güncelle
+    if(_tavsiyeAktifId&&String(_tavsiyeAktifId)===String(id)){
+      showTavsiyeDetay(parseInt(id));
+    }
+  }catch(e){showToast('Hata: '+e.message,'red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+async function showTavsiyeDetay(id){
+  const t=DB.tavsiyeler.find(x=>x.id===id);if(!t)return;
+  _tavsiyeAktifId=id;
+  document.getElementById('tavsiye-detay-baslik').textContent=t.baslik;
+  document.getElementById('tavsiye-detay-ozet').textContent=t.ozet;
+  document.getElementById('tavsiye-detay-aciklama').textContent=t.aciklama;
+  openModal('modal-tavsiye-detay');
+  _eklerMevcut.tavsiye=await eklerYukle('tavsiye',id);
+  _eklerYeni.tavsiye=[];
+  eklerGridGuncelle('tavsiye');
+}
+
+async function tavsiyeDetayDosyaEkle(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length||!_tavsiyeAktifId){input.value='';return;}
+  const mevcut=_eklerMevcut.tavsiye||[];
+  const kalan=6-mevcut.length;
+  if(kalan<=0){showToast('Maksimum 6 dosya yüklenebilir','amber');input.value='';return;}
+  const eklenecek=files.slice(0,kalan);
+  if(files.length>kalan)showToast(`${files.length-kalan} dosya limit aşımı nedeniyle eklenmedi`,'amber');
+  input.disabled=true;
+  const hatalar=[];
+  for(const file of eklenecek){
+    try{
+      let dosya=file;
+      if(dosya.type.startsWith('image/'))dosya=await gorselSikistir(dosya,1200,0.78).catch(()=>dosya);
+      const url=await sbStorage('ekler',dosya,'tavsiye-ekler');
+      await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        tavsiye_id:_tavsiyeAktifId,
+        url,
+        dosya_adi:file.name,
+        dosya_tipi:file.type.includes('pdf')?'pdf':'image',
+        dosya_boyut:file.size
+      })});
+    }catch(e){hatalar.push(file.name+': '+e.message);}
+  }
+  input.value='';input.disabled=false;
+  _eklerMevcut.tavsiye=await eklerYukle('tavsiye',_tavsiyeAktifId);
+  eklerGridGuncelle('tavsiye');
+  if(hatalar.length)showToast('Bazı dosyalar yüklenemedi: '+hatalar[0],'red');
+  else showToast('Dosya eklendi','green');
+}
+
+function tavsiyeDuzenleAc(){
+  if(!_tavsiyeAktifId)return;
+  closeModal('modal-tavsiye-detay');
+  openTavsiyeModal(_tavsiyeAktifId);
+}
+
+async function deleteTavsiye(id){
+  if(!confirm('Bu tavsiyeyi silmek istediğinizden emin misiniz?'))return;
+  await sbFetch('tavsiyeler?id=eq.'+id,{method:'DELETE'});
+  await loadDB();renderTavsiyeler();
+  closeModal('modal-tavsiye-detay');
+  showToast('Tavsiye silindi','amber');
+}
+
+async function tavsiyeYazdirAc(){
+  const t=DB.tavsiyeler.find(x=>x.id===_tavsiyeAktifId);if(!t)return;
+  const tarihFmt=t.createdAt?new Date(t.createdAt).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'}):new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  // Görselleri çek
+  let tavsiyeEkleri=[];
+  try{tavsiyeEkleri=_eklerMevcut.tavsiye&&_eklerMevcut.tavsiye.length?_eklerMevcut.tavsiye:await eklerYukle('tavsiye',t.id);}catch(e){}
+  const resimEkler=(tavsiyeEkleri||[]).filter(e=>e.dosya_tipi!=='pdf').slice(0,6);
+  const pdfEkler=(tavsiyeEkleri||[]).filter(e=>e.dosya_tipi==='pdf');
+
+  const html=`<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${t.baslik} — Gün Teknik</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;}
+  .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
+  .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%);padding:36px 44px 32px;color:#fff;position:relative;overflow:hidden;}
+  .header::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%;}
+  .header::after{content:'';position:absolute;bottom:-60px;right:60px;width:160px;height:160px;background:rgba(255,255,255,0.03);border-radius:50%;}
+  .header-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+  .logo-block .logo-text{font-size:28px;font-weight:800;letter-spacing:-0.5px;color:#fff;}
+  .logo-block .logo-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;letter-spacing:2px;text-transform:uppercase;}
+  .doc-block{text-align:right;}
+  .doc-block .doc-label{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  .doc-block .doc-date{font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px;}
+  .accent-bar{height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa,transparent);margin-top:24px;border-radius:2px;position:relative;z-index:1;}
+  .title-band{padding:24px 44px;border-bottom:1px solid #e2e8f0;}
+  .title-band .baslik{font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.3px;margin-bottom:8px;}
+  .title-band .ozet{font-size:13px;color:#64748b;line-height:1.6;}
+  .body{flex:1;padding:32px 44px;}
+  .section-title{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;}
+  .aciklama-text{font-size:13px;color:#334155;line-height:1.9;white-space:pre-wrap;}
+  .footer{padding:12px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
+  .footer-text{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;}
+  @media print{
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+    @page{size:A4;margin:0;}
+    body{background:#fff;}
+    .page{box-shadow:none;margin:0;width:100%;min-height:100vh;}
+    .no-print{display:none!important;}
+  }
+  .print-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 20px;display:flex;gap:10px;justify-content:flex-end;position:sticky;top:0;z-index:100;}
+  @media print{.print-bar{display:none;}}
+</style>
+</head>
+<body>
+<div class="print-bar no-print">
+  <button onclick="window.print()" style="padding:9px 20px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">🖨️ Yazdır</button>
+</div>
+<div class="page">
+  <div class="header">
+    <div class="header-row">
+      <div class="logo-block">
+        <div class="logo-text">GÜN TEKNİK</div>
+        <div class="logo-sub">Teknik Hizmetler & Çözümler</div>
+      </div>
+      <div class="doc-block">
+        <div class="doc-label">Teknik Tavsiye</div>
+        <div class="doc-date">${tarihFmt}</div>
+      </div>
+    </div>
+    <div class="accent-bar"></div>
+  </div>
+  <div class="title-band">
+    <div class="baslik">${t.baslik}</div>
+    <div class="ozet">${t.ozet}</div>
+  </div>
+  <div class="body">
+    <div class="section-title">Detaylı Açıklama</div>
+    <div class="aciklama-text">${(t.aciklama||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+    ${resimEkler.length?`
+    <div class="section-title" style="margin-top:24px;">Görseller & Çizimler</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      ${resimEkler.map(e=>`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
+      </div>`).join('')}
+    </div>`:''}
+    ${pdfEkler.length?`
+    <div class="section-title" style="margin-top:24px;">Ekli Belgeler (PDF)</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${pdfEkler.map(e=>`<div style="font-size:12px;color:#334155;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">📄 ${e.dosya_adi||'PDF Dosyası'}</div>`).join('')}
+    </div>`:''}
+  </div>
+  <div class="footer">
+    <div class="footer-text">Gün Teknik Teknik Hizmetler</div>
+    <div class="footer-text">${tarihFmt}</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 </script>
 </body>
