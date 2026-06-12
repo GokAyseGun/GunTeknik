@@ -1715,21 +1715,19 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="fi">
         <label>Belge / Fotoğraf Ekle</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <label for="mi-file-kamera" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-            <span style="font-size:24px;">📷</span>Kamera
-          </label>
-          <label for="mi-file-galeri" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-            <span style="font-size:24px;">🖼️</span>Galeri
-          </label>
-          <label for="mi-file-belge" style="padding:14px 8px;border:2px dashed var(--border2);border-radius:var(--r-md);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.3s;text-align:center;">
-            <span style="font-size:24px;">📄</span>Belge
-          </label>
+        <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+          <div id="islem-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+          <div style="display:flex;gap:8px;">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+              📷 Kamera / Galeri
+              <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDosyaEkle(this,'islem')">
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+              📁 Dosya Seç
+              <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDosyaEkle(this,'islem')">
+            </label>
+          </div>
         </div>
-        <input type="file" id="mi-file-kamera" style="display:none;" accept="image/*" capture="environment" onchange="onDosyaSec(this,'mi-dosya-preview')">
-        <input type="file" id="mi-file-galeri" style="display:none;" accept="image/*" onchange="onDosyaSec(this,'mi-dosya-preview')">
-        <input type="file" id="mi-file-belge" style="display:none;" accept="application/pdf,.pdf,.doc,.docx" onchange="onDosyaSec(this,'mi-dosya-preview')">
-        <div id="mi-dosya-preview"></div>
       </div>
       <div class="fi" id="div-mi-kdv" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;">
       <div class="fi" id="div-mi-proje">
@@ -3277,11 +3275,11 @@ function renderIslemler(){
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
 }
 
-function showIslemDetay(id){
+async function showIslemDetay(id){
   const i=DB.islemler.find(x=>x.id===id);if(!i)return;
+  _islemAktifId=id;
   const k=getKisi(i.kisiId);const pos=i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak';const renk=pos?'var(--green)':'var(--red)';
   const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
-  const ekler=DB.ekler.filter(e=>String(e.islemId)===String(id));
   // Stok hareketleri
   const stokHar=DB.stokHareketleri.filter(h=>String(h.islemId)===String(id));
   let stokHtml='';
@@ -3301,16 +3299,21 @@ function showIslemDetay(id){
     const personelYardimci=DB.yardimciIslemleri.filter(y=>String(y.islemId)===String(id));
     personelHtml=`<div style="background:var(--bg2);padding:12px;border-radius:var(--r-sm);margin-top:4px;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Personel Payları</div>${i.personelIds.map(pid=>{const p=getPersonel(pid);const y=personelYardimci.find(x=>String(x.personelId)===String(pid));return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);"><span>${p?.isim||'Personel'}</span><span class="num c-amber">${y?fmt(y.tutar):'—'}</span></div>`;}).join('')}</div>`;
   }
-  // Ekler
-  let eklerHtml='';
-  if(ekler.length){
-    eklerHtml=`<div style="margin-top:8px;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Belgeler</div>
-    ${ekler.map(e=>{
-      const isImg=e.dosyaTipi==='resim'||/\.(jpg|jpeg|png|gif|webp)$/i.test(e.dosyaUrl||'');
-      if(isImg){return `<div style="margin-bottom:8px;position:relative;background:#000;border-radius:var(--r-sm);overflow:hidden;"><img src="${e.dosyaUrl}" alt="${e.dosyaAdi}" style="width:100%;max-height:300px;object-fit:contain;display:block;cursor:pointer;background:#111;" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')"><div style="position:absolute;top:6px;right:6px;display:flex;gap:4px;"><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:6px;font-size:12px;text-decoration:none;" onclick="event.stopPropagation()">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:rgba(200,50,50,0.85);color:white;border:none;padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">🗑</button></div></div>`;}
-      return `<div class="file-preview"><span class="file-icon" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;">📄</span><span class="file-name" onclick="openLightbox('${e.dosyaUrl}','${e.dosyaAdi}')" style="cursor:pointer;flex:1;">${e.dosyaAdi}</span><a href="${e.dosyaUrl}" download="${e.dosyaAdi}" style="color:var(--blue);font-size:13px;flex-shrink:0;">⬇</a><button onclick="deleteEk(${e.id},event)" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:2px;flex-shrink:0;">🗑</button></div>`;
-    }).join('')}</div>`;
-  }
+  // Ekler paneli (Fotoğraf & Çizim/PDF)
+  const eklerPanel=`<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-top:8px;">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
+    <div id="islem-detay-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+    <div style="display:flex;gap:8px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+        📷 Kamera / Galeri
+        <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'islem',_islemAktifId)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+        📁 Dosya Seç
+        <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'islem',_islemAktifId)">
+      </label>
+    </div>
+  </div>`;
   const editBtn=USER_ROL!=='goruntule'?`<button class="btn btn-secondary" style="flex:1" onclick="closeModal('modal-islem-detay');editIslem(${i.id},null)">✏️ Düzenle</button>`:'';
   document.getElementById('islem-detay-content').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
@@ -3328,10 +3331,13 @@ function showIslemDetay(id){
     ${stokHtml}
     ${personelHtml}
     ${i.not?`<div style="background:var(--bg2);padding:12px;border-radius:var(--r-sm);margin-top:8px;"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;">Not</div><div style="font-size:13px;">${i.not}</div></div>`:''}
-    ${eklerHtml}
+    ${eklerPanel}
     ${editBtn?`<div style="display:flex;gap:10px;margin-top:20px;">${editBtn}</div>`:''}
   `;
   openModal('modal-islem-detay');
+  _eklerMevcut.islem=await eklerYukle('islem',id);
+  _eklerYeni.islem=[];
+  eklerGridGuncelle('islem');
 }
 
 function row(lbl,val,color=''){return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);">${lbl}</span><span style="font-size:13px;font-weight:500;${color?'color:'+color:''}">${val}</span></div>`;}
@@ -3639,7 +3645,6 @@ function openIslemModal(){
   document.getElementById('mi-malzeme').value='';
   document.getElementById('mi-not').value='';
   document.getElementById('mi-vade').value='';
-  document.getElementById('mi-dosya-preview').innerHTML='';
   const tChk=document.getElementById('mi-taksit-chk');if(tChk)tChk.checked=false;
   document.getElementById('div-taksit').style.display='none';
   document.getElementById('div-mi-vade').style.display='none';
@@ -3650,9 +3655,7 @@ function openIslemModal(){
   const kdvDetay=document.getElementById('div-mi-kdv-detay');if(kdvDetay)kdvDetay.style.display='none';
   const kdvNo=document.getElementById('mi-kdv-no');if(kdvNo)kdvNo.value='';
   const kdvTutar=document.getElementById('mi-kdv-tutar');if(kdvTutar)kdvTutar.value='';
-  selectedFile=null;
-  document.getElementById('mi-dosya-preview').innerHTML='';
-  ['mi-file-kamera','mi-file-galeri','mi-file-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  _eklerMevcut.islem=[];_eklerYeni.islem=[];eklerGridGuncelle('islem');
   // Proje listesini güncelle
   const projeSel=document.getElementById('mi-proje-id');
   if(projeSel){projeSel.innerHTML='<option value="">— Proje seçme —</option>'+DB.projeler.filter(p=>p.durum==='Devam Ediyor').map(p=>`<option value="${p.id}">${p.isim}</option>`).join('');}
@@ -3667,11 +3670,12 @@ function openIslemModal(){
   openModal('modal-islem');
 }
 
-function editIslem(id,event){
+async function editIslem(id,event){
   if(event)event.stopPropagation();
   if(USER_ROL==='goruntule')return;
   const i=DB.islemler.find(x=>x.id===id);if(!i)return;
   openIslemModal();// önce sıfırla
+  await eklerModalAc('islem',id);
   document.getElementById('mi-title').textContent='İşlem Düzenle';
   document.getElementById('mi-id').value=i.id;
   document.getElementById('mi-tip').value=i.tip;onIslemTipChange();
@@ -4221,27 +4225,9 @@ async function saveIslem(btn){
     const seciliPersoneller=getSeciliPersoneller();
     const yardimciChk=document.getElementById('mi-yardimci-chk')?.checked;
     const personelIds=yardimciChk?seciliPersoneller.map(p=>p.id):[];
-    // Dosya yükleme
-    let dosyaUrl=null;let dosyaBase64=null;let storageHata=false;
-    if(selectedFile&&SB_TOKEN){
-      try{
-        dosyaUrl=await sbStorage('ekler',selectedFile);
-      }catch(e){
-        console.warn('Storage hatası, base64 deneniyor:',e.message);
-        storageHata=true;
-        try{
-          // 2MB altı dosyalar için base64 fallback
-          if(selectedFile.size<2*1024*1024){
-            dosyaBase64=await fileToBase64(selectedFile);
-            dosyaUrl=dosyaBase64;// data URL olarak kaydet
-          }else{
-            showToast('Dosya yuklenemedi: Supabase Storage bucket eksik. Storage bolumunden "ekler" bucket olusturun.','red');
-          }
-        }catch(e2){showToast('Dosya okunamadı','red');}
-      }
-    }
     if(eId){
       await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:localISOString(tarih),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId})});
+      await eklerKaydet('islem',parseInt(eId)).catch(()=>{});
       showToast('Güncellendi','green');
     }else{
       const isTaksit=document.getElementById('mi-taksit-chk')?.checked;
@@ -4275,12 +4261,8 @@ async function saveIslem(btn){
         const s=DB.stok.find(x=>x.id===satir.stokId);
         if(s)await sbFetch('stok?id=eq.'+satir.stokId,{method:'PATCH',body:JSON.stringify({miktar:Math.max(0,s.miktar-satir.miktar)})});
       }
-      // Ek
-      if(dosyaUrl&&result&&result[0]){
-        const tipi=selectedFile.type.includes('image')?'resim':'belge';
-        await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({islem_id:result[0].id,dosya_url:dosyaUrl,dosya_adi:selectedFile.name,dosya_tipi:tipi})});
-        if(storageHata&&dosyaBase64)showToast('Dosya yerel olarak kaydedildi (Storage bucket eksik)','amber');
-      }
+      // Ekler
+      if(result&&result[0]) await eklerKaydet('islem',result[0].id).catch(()=>{});
       // KDV / Vergi kaydı
       const kdvChk=document.getElementById('mi-kdv-chk')?.checked;
       const kdvTutar=parseFloat(document.getElementById('mi-kdv-tutar')?.value)||0;
@@ -6605,8 +6587,9 @@ async function guncelOnayToken(teklifId){
   return token;
 }
 
-function showTeklifDetay(id){
+async function showTeklifDetay(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
+  _teklifAktifId=id;
   const k=getKisi(t.kisiId);
   const durumRenk={Taslak:'var(--text3)',Gönderildi:'var(--blue)',Onaylandı:'var(--green)',Reddedildi:'var(--red)'};
   const renk=durumRenk[t.durum]||'var(--text3)';
@@ -6625,6 +6608,21 @@ function showTeklifDetay(id){
   });
   html+=`<div style="display:flex;justify-content:flex-end;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:12px;"><span style="font-size:16px;font-weight:700;color:var(--green);" class="num">Toplam: ${fmt(t.toplam)}</span></div>`;
   if(t.aciklama)html+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:12px;">${t.aciklama}</div>`;
+  // Dosya/Fotoğraf eki paneli
+  html+=`<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:12px;">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
+    <div id="teklif-detay-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+    <div style="display:flex;gap:8px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+        📷 Kamera / Galeri
+        <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'teklif',_teklifAktifId)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+        📁 Dosya Seç
+        <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'teklif',_teklifAktifId)">
+      </label>
+    </div>
+  </div>`;
   document.getElementById('teklif-detay-baslik').textContent='Teklif · '+fmtId(t.id);
   document.getElementById('teklif-detay-content').innerHTML=html;
   // Footer butonlar — 3 satır × 2 buton
@@ -6657,6 +6655,9 @@ function showTeklifDetay(id){
   document.getElementById('teklif-detay-footer').innerHTML=footer;
   document.getElementById('teklif-detay-content').scrollTop=0;
   openModal('modal-teklif-detay');
+  _eklerMevcut.teklif=await eklerYukle('teklif',id);
+  _eklerYeni.teklif=[];
+  eklerGridGuncelle('teklif');
 }
 
 async function teklifDurumGuncelle(id,durum){
@@ -11432,6 +11433,7 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
 // ── PROJE DETAY (ASYNC - TAM VERSİYON) ─────────────────
 async function showProjeDetay(id){
   const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+  _projeAktifId=id;
 
   // Modalı önce hemen aç, spinner göster
   document.getElementById('proje-detay-baslik').textContent=p.isim;
@@ -11561,6 +11563,21 @@ async function showProjeDetay(id){
     });
   }else{html+=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:4px;">Henüz not yok</div>`;}
   html+=`</div>`;
+  // EKLER (Fotoğraf & Çizim/PDF)
+  html+=`<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
+    <div id="proje-detay-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+    <div style="display:flex;gap:8px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
+        📷 Kamera / Galeri
+        <input type="file" accept="image/*,application/pdf" capture="environment" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'proje',_projeAktifId)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--text2);">
+        📁 Dosya Seç
+        <input type="file" accept="image/*,application/pdf" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'proje',_projeAktifId)">
+      </label>
+    </div>
+  </div>`;
   // BUTONLAR
   html+=`<div style="display:flex;flex-direction:column;gap:6px;">
     ${projeIscilikler.length?`<div style="margin-bottom:10px;">
@@ -11596,6 +11613,9 @@ async function showProjeDetay(id){
   </div>`;
   document.getElementById('proje-detay-baslik').textContent=p.isim;
   document.getElementById('proje-detay-content').innerHTML=html;
+  _eklerMevcut.proje=await eklerYukle('proje',id);
+  _eklerYeni.proje=[];
+  eklerGridGuncelle('proje');
 }
 
 
@@ -12099,17 +12119,24 @@ function aiKrediYanit(soru){
 // ============================================================
 
 // tip: 'teklif' veya 'proje' — kayitId: kayıt ID'si (düzenleme modunda)
-let _eklerYeni = {teklif:[], proje:[], tavsiye:[]};   // Yeni eklenen, henüz yüklenmemiş
-let _eklerMevcut = {teklif:[], proje:[], tavsiye:[]}; // DB'den gelen mevcut ekler
-const EKLER_GRIDS = {teklif:['teklif-ekler-grid'], proje:['proje-ekler-grid'], tavsiye:['tavsiye-ekler-grid','tavsiye-detay-ekler-grid']};
-const EKLER_ALAN = {teklif:'teklif_id', proje:'proje_id', tavsiye:'tavsiye_id'};
-const EKLER_KLASOR = {teklif:'teklif-ekler', proje:'proje-ekler', tavsiye:'tavsiye-ekler'};
+let _eklerYeni = {teklif:[], proje:[], tavsiye:[], islem:[]};   // Yeni eklenen, henüz yüklenmemiş
+let _eklerMevcut = {teklif:[], proje:[], tavsiye:[], islem:[]}; // DB'den gelen mevcut ekler
+const EKLER_GRIDS = {
+  teklif:['teklif-ekler-grid','teklif-detay-ekler-grid'],
+  proje:['proje-ekler-grid','proje-detay-ekler-grid'],
+  tavsiye:['tavsiye-ekler-grid','tavsiye-detay-ekler-grid'],
+  islem:['islem-ekler-grid','islem-detay-ekler-grid']
+};
+const EKLER_ALAN = {teklif:'teklif_id', proje:'proje_id', tavsiye:'tavsiye_id', islem:'islem_id'};
+const EKLER_KLASOR = {teklif:'teklif-ekler', proje:'proje-ekler', tavsiye:'tavsiye-ekler', islem:'islem-ekler'};
+// Detay pencerelerinde "şu an açık olan" kayıt id'leri (anlık yükleme için)
+let _teklifAktifId=null, _projeAktifId=null, _islemAktifId=null;
 
 async function eklerYukle(tip, kayitId) {
   if (!kayitId) return [];
   try {
     const alan = EKLER_ALAN[tip]||'teklif_id';
-    const data = await sbFetch(`ekler?${alan}=eq.${kayitId}&order=created_at.asc`);
+    const data = await sbFetch(`ekler?${alan}=eq.${kayitId}&order=id.asc`);
     return data || [];
   } catch(e) { return []; }
 }
@@ -12153,7 +12180,7 @@ function eklerGridGuncelle(tip) {
            </div>`
         : `<img src="${item.preview}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`
       }
-      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);font-size:9px;color:#aaa;text-align:center;padding:2px;">Yükleniyor...</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);font-size:9px;color:#aaa;text-align:center;padding:2px;">Kaydedilecek</div>
       <button onclick="eklerYeniSil(${i},'${tip}')"
         style="position:absolute;top:3px;right:3px;background:rgba(200,50,50,0.85);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
     </div>`;
@@ -12804,36 +12831,44 @@ async function showTavsiyeDetay(id){
   eklerGridGuncelle('tavsiye');
 }
 
-async function tavsiyeDetayDosyaEkle(input){
+// Detay penceresinde anlık (kaydet adımı olmadan) dosya yükleme - tüm tipler için generic
+async function eklerDetayDosyaEkle(input, tip, kayitId){
   const files=Array.from(input.files||[]);
-  if(!files.length||!_tavsiyeAktifId){input.value='';return;}
-  const mevcut=_eklerMevcut.tavsiye||[];
+  if(!files.length||!kayitId){input.value='';return;}
+  const mevcut=_eklerMevcut[tip]||[];
   const kalan=6-mevcut.length;
   if(kalan<=0){showToast('Maksimum 6 dosya yüklenebilir','amber');input.value='';return;}
   const eklenecek=files.slice(0,kalan);
   if(files.length>kalan)showToast(`${files.length-kalan} dosya limit aşımı nedeniyle eklenmedi`,'amber');
   input.disabled=true;
   const hatalar=[];
+  const alan=EKLER_ALAN[tip], klasor=EKLER_KLASOR[tip];
   for(const file of eklenecek){
     try{
       let dosya=file;
       if(dosya.type.startsWith('image/'))dosya=await gorselSikistir(dosya,1200,0.78).catch(()=>dosya);
-      const url=await sbStorage('ekler',dosya,'tavsiye-ekler');
+      const url=await sbStorage('ekler',dosya,klasor);
       await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-        tavsiye_id:_tavsiyeAktifId,
+        [alan]:kayitId,
         url,
         dosya_adi:file.name,
         dosya_tipi:file.type.includes('pdf')?'pdf':'image',
         dosya_boyut:file.size
       })});
-    }catch(e){hatalar.push(file.name+': '+e.message);}
+    }catch(e){
+      console.error('eklerDetayDosyaEkle hata:',e);
+      let msg=e.message||String(e);
+      try{const j=JSON.parse(msg);if(j.message)msg=j.message;}catch(_){}
+      hatalar.push(file.name+': '+msg);
+    }
   }
   input.value='';input.disabled=false;
-  _eklerMevcut.tavsiye=await eklerYukle('tavsiye',_tavsiyeAktifId);
-  eklerGridGuncelle('tavsiye');
-  if(hatalar.length)showToast('Bazı dosyalar yüklenemedi: '+hatalar[0],'red');
+  _eklerMevcut[tip]=await eklerYukle(tip,kayitId);
+  eklerGridGuncelle(tip);
+  if(hatalar.length)showToast('Yüklenemedi — '+hatalar[0],'red');
   else showToast('Dosya eklendi','green');
 }
+function tavsiyeDetayDosyaEkle(input){ eklerDetayDosyaEkle(input,'tavsiye',_tavsiyeAktifId); }
 
 function tavsiyeDuzenleAc(){
   if(!_tavsiyeAktifId)return;
