@@ -8406,11 +8406,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Geri tuşunu engelle — uygulama modu
   history.pushState(null,'',location.href);
   window.addEventListener('popstate',()=>history.pushState(null,'',location.href));
-  // Pull-to-refresh engeli
+  // Pull-to-refresh engeli — gerçek scrollable elementi bul
   document.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
   document.addEventListener('touchmove',e=>{
     const dy=e.touches[0].clientY-(_touchStartY||0);
-    if(dy>0&&(document.scrollingElement?.scrollTop||0)===0){e.preventDefault();}
+    if(dy<=0)return; // Yukarı kaydırma veya hareket yok — engelleme
+    // Dokunulan noktadan başlayıp en yakın kaydırılabilir (overflow-y) ataya çık
+    let el=e.target;
+    let scrollableTop=0;
+    while(el&&el!==document.body){
+      const style=window.getComputedStyle(el);
+      const canScroll=(style.overflowY==='auto'||style.overflowY==='scroll')&&el.scrollHeight>el.clientHeight;
+      if(canScroll){scrollableTop=el.scrollTop;break;}
+      el=el.parentElement;
+    }
+    // Kaydırılabilir element zaten en üstteyse ve aşağı çekiyorsa (pull-to-refresh) engelle
+    if(scrollableTop<=0){e.preventDefault();}
   },{passive:false});
 });
 
