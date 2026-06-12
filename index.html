@@ -12256,12 +12256,18 @@ async function eklerKaydet(tip, kayitId) {
           dosya_boyut: item.file.size
         })
       });
-    } catch(e) { hatalar.push(item.file.name + ': ' + e.message); }
+    } catch(e) {
+      console.error('eklerKaydet hata:', e);
+      let msg = e.message || String(e);
+      // Supabase hata JSON'u ise sadece message k\u0131sm\u0131n\u0131 al
+      try { const j = JSON.parse(msg); if (j.message) msg = j.message; } catch(_){}
+      hatalar.push(item.file.name + ': ' + msg);
+    }
   }
 
   _eklerYeni[tip] = [];
 
-  if (hatalar.length) showToast('Bazı dosyalar yüklenemedi: ' + hatalar[0], 'red');
+  if (hatalar.length) showToast('Yüklenemedi — ' + hatalar[0], 'red');
 }
 
 async function eklerModalAc(tip, kayitId) {
