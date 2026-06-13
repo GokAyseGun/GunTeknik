@@ -942,6 +942,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
 
+<!-- YAZDIR FOTOĞRAF SEÇİM MODALı -->
+<div class="modal-ov" id="modal-yazdir-foto-sec" style="z-index:10010;">
+  <div class="modal" style="max-width:480px;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div><h3>📷 Çıktıya Fotoğraf Ekle</h3><div style="font-size:11px;color:var(--text3);margin-top:2px;">En fazla 6 fotoğraf seçebilirsiniz · seçmeden de devam edebilirsiniz</div></div>
+      <button class="modal-close" onclick="yazdirFotoSecVazgec()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+      <div id="yazdir-foto-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary btn-full" onclick="yazdirFotoSecDevam()">Devam</button></div>
+  </div>
+</div>
+
 <!-- ENFLASYON MODALı -->
 <div class="modal-ov" id="modal-enflasyon" style="z-index:10007;">
   <div class="modal" style="max-width:540px;max-height:92vh;"><div class="modal-handle"></div>
@@ -3406,7 +3420,10 @@ async function statuDegistir(id,event){
 async function deleteIslem(id,event){
   if(event)event.stopPropagation();
   showConfirm('İşlemi Sil','Kalıcı silinecek.',async()=>{
-    try{await sbFetch('islemler?id=eq.'+id,{method:'DELETE'});await loadDB();showToast('Silindi','amber');}
+    try{
+      await eklerTopluSil('islem',id);
+      await sbFetch('islemler?id=eq.'+id,{method:'DELETE'});await loadDB();showToast('Silindi','amber');
+    }
     catch(e){showToast('Hata!','red');}
   },'🗑');
 }
@@ -5664,7 +5681,11 @@ async function saveVergiFatura(btn){
 
 async function deleteVergiFatura(id){
   showConfirm('Faturayı Sil','Bu fatura silinecek.',async()=>{
-    try{await sbFetch('vergi_faturalari?id=eq.'+id,{method:'DELETE'});closeModal('modal-vergi-detay');await loadDB();showToast('Silindi','amber');}
+    try{
+      const rows=await sbFetch('vergi_faturalari?id=eq.'+id+'&select=dosya_url').catch(()=>[]);
+      if(rows?.[0]?.dosya_url) await storageDosyaSil(rows[0].dosya_url);
+      await sbFetch('vergi_faturalari?id=eq.'+id,{method:'DELETE'});closeModal('modal-vergi-detay');await loadDB();showToast('Silindi','amber');
+    }
     catch(e){showToast('Hata!','red');}
   },'🗑');
 }
@@ -6501,6 +6522,7 @@ async function saveProje(btn){
 
 async function deleteProje(id){
   showConfirm('Projeyi Sil','Bu proje silinecek. İşlemler etkilenmez.',async()=>{
+    await eklerTopluSil('proje',id);
     await sbFetch('projeler?id=eq.'+id,{method:'DELETE'});
     await loadDB();closeModal('modal-proje-detay');showToast('Proje silindi','amber');
   },'🗑');
@@ -6704,6 +6726,7 @@ function teklifPdfIndir(id){
 
 async function deleteTeklif(id){
   showConfirm('Teklifi Sil','Bu teklif kalıcı olarak silinecek.',async()=>{
+    await eklerTopluSil('teklif',id);
     await sbFetch('teklifler?id=eq.'+id,{method:'DELETE'});
     await loadDB();closeModal('modal-teklif-detay');showToast('Silindi','amber');
   },'🗑');
@@ -8546,7 +8569,7 @@ function aiAyarKaydet(){
 
 // ============================================================ TEKLİF ÖNİZLEME
 
-async function teklifOnizlemeGoster(id){
+async function teklifOnizlemeGoster(id, secilenFotolar){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
   const k=getKisi(t.kisiId);
   const tarihFmt=new Date(t.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
@@ -8563,10 +8586,22 @@ async function teklifOnizlemeGoster(id){
   // Ekleri paralelde çek — UI bloklamasın, tamamlanınca devam et
   let teklifEkleri=[];
   try{const d=await Promise.race([
-    sbFetch('ekler?teklif_id=eq.'+id+'&order=created_at.asc'),
+    sbFetch('ekler?teklif_id=eq.'+id+'&order=id.asc'),
     new Promise(r=>setTimeout(()=>r([]),2000)) // 2sn timeout
   ]);teklifEkleri=d||[];}catch(e){}
-  const resimEkler=teklifEkleri.filter(e=>e.dosya_tipi!=='pdf').slice(0,6);
+  const tumGorseller=teklifEkleri.filter(e=>{
+    const u=(e.url||e.dosya_url||'').toLowerCase();
+    return e.dosya_tipi!=='pdf'&&!u.endsWith('.pdf');
+  });
+  // Yüklü görsel varsa, çıktıya eklenecekleri kullanıcıya seçtir
+  if(secilenFotolar===undefined){
+    if(tumGorseller.length){
+      yazdirFotoSecAc(tumGorseller,(secilen)=>teklifOnizlemeGoster(id,secilen));
+      return;
+    }
+    secilenFotolar=[];
+  }
+  const resimEkler=secilenFotolar;
 
   const malzemeRows=malzemeKalemleri.map((km,i)=>`
     <tr>
@@ -8741,7 +8776,6 @@ async function teklifOnizlemeGoster(id){
         <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
       </div>`).join('')}
     </div>
-    ${teklifEkleri.length>6?`<div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center;">+ ${teklifEkleri.length-6} görsel daha mevcut</div>`:''}
   </div>`:''}
   <div class="sign-section">
     <div class="sign-title">Onay & İmza</div>
@@ -11248,7 +11282,7 @@ async function projeNotEkle(projeId){
 // İŞ RAPORU — A4 TASARIM
 // ============================================================
 
-async function isRaporuYazdirAc(projeId){
+async function isRaporuYazdirAc(projeId, secilenFotolar){
   const p=DB.projeler.find(x=>x.id===projeId);
   if(!p)return;
   const k=getKisi(p.musteriId);
@@ -11262,10 +11296,23 @@ async function isRaporuYazdirAc(projeId){
       sbFetch('proje_malzemeler?proje_id=eq.'+projeId+'&order=id.asc'),
       sbFetch('proje_personeller?proje_id=eq.'+projeId),
       sbFetch('proje_notlar?proje_id=eq.'+projeId+'&order=created_at.asc'),
-      sbFetch('ekler?proje_id=eq.'+projeId+'&order=created_at.asc').catch(()=>[]),
+      sbFetch('ekler?proje_id=eq.'+projeId+'&order=id.asc').catch(()=>[]),
       sbFetch('proje_iscilikler?proje_id=eq.'+projeId+'&order=id.asc').catch(()=>[])
     ]);
-    malzemeler=md||[];personeller=pd||[];notlar=nd||[];projeEkleri=(ed||[]).filter(e=>e.dosya_tipi!=='pdf').slice(0,6);iscilikler=id_||[];
+    malzemeler=md||[];personeller=pd||[];notlar=nd||[];iscilikler=id_||[];
+    const tumGorseller=(ed||[]).filter(e=>{
+      const u=(e.url||e.dosya_url||'').toLowerCase();
+      return e.dosya_tipi!=='pdf'&&!u.endsWith('.pdf');
+    });
+    // Yüklü görsel varsa, çıktıya eklenecekleri kullanıcıya seçtir
+    if(secilenFotolar===undefined){
+      if(tumGorseller.length){
+        yazdirFotoSecAc(tumGorseller,(secilen)=>isRaporuYazdirAc(projeId,secilen));
+        return;
+      }
+      secilenFotolar=[];
+    }
+    projeEkleri=secilenFotolar;
   }catch(e){}
   const malzemeToplam=malzemeler.reduce((a,m)=>a+(parseFloat(m.toplam)||0),0);
   const iscilikToplam=iscilikler.reduce((a,i)=>a+(parseFloat(i.tutar)||0),0);
@@ -12206,6 +12253,7 @@ function eklerDosyaEkle(input, tip) {
   let bekleyen = eklenecek.length;
   eklenecek.forEach(file => {
     if (file.type === 'application/pdf') {
+      if(file.size>8*1024*1024) showToast(`${file.name}: PDF büyük (${(file.size/1024/1024).toFixed(1)} MB) — depolama için mümkünse küçük dosya seçin`,'amber');
       yeni.push({ file, preview: null });
       bekleyen--;
       if (bekleyen === 0) eklerGridGuncelle(tip);
@@ -12229,31 +12277,45 @@ function eklerYeniSil(idx, tip) {
   eklerGridGuncelle(tip);
 }
 
+// Bir storage URL'sinden bucket/path çıkarıp dosyayı Supabase Storage'dan siler
+async function storageDosyaSil(url){
+  if(!url) return;
+  const pathMatch=url.match(/\/storage\/v1\/object\/public\/([^?]+)/);
+  if(!pathMatch) return;
+  const fullPath=pathMatch[1];
+  const slashIdx=fullPath.indexOf('/');
+  const bucket=fullPath.substring(0,slashIdx);
+  const path=fullPath.substring(slashIdx+1);
+  await fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+path,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}
+  }).catch(()=>{});
+}
+
 async function eklerMevcutSil(ekId, tip) {
   try {
-    // Önce DB'den URL'i al, sonra storage'dan ve DB'den sil
     const ekler = _eklerMevcut[tip]||[];
     const ek = ekler.find(e=>String(e.id)===String(ekId));
-    if(ek&&(ek.url||ek.dosya_url)){
-      const url=ek.url||ek.dosya_url;
-      // Storage path'ini URL'den çıkar
-      const pathMatch=url.match(/\/storage\/v1\/object\/public\/([^?]+)/);
-      if(pathMatch){
-        const fullPath=pathMatch[1];
-        const slashIdx=fullPath.indexOf('/');
-        const bucket=fullPath.substring(0,slashIdx);
-        const path=fullPath.substring(slashIdx+1);
-        await fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+path,{
-          method:'DELETE',
-          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}
-        }).catch(()=>{});
-      }
-    }
+    await storageDosyaSil(ek?.url||ek?.dosya_url);
     await sbFetch('ekler?id=eq.' + ekId, { method: 'DELETE' });
     _eklerMevcut[tip] = (_eklerMevcut[tip]||[]).filter(e => String(e.id) !== String(ekId));
     eklerGridGuncelle(tip);
     showToast('Dosya silindi', 'amber');
   } catch(e) { showToast('Silinemedi: ' + e.message, 'red'); }
+}
+
+// Bir teklif/proje/işlem/tavsiye kaydı tamamen silinirken, ona bağlı TÜM ekleri
+// (storage dosyaları + ekler satırları) öksüz bırakmadan temizler
+async function eklerTopluSil(tip, kayitId){
+  if(!kayitId) return;
+  try{
+    const alan = EKLER_ALAN[tip]||'teklif_id';
+    const kayitlar = await sbFetch(`ekler?${alan}=eq.${kayitId}`);
+    for(const ek of (kayitlar||[])){
+      await storageDosyaSil(ek.url||ek.dosya_url);
+    }
+    await sbFetch(`ekler?${alan}=eq.${kayitId}`,{method:'DELETE'}).catch(()=>{});
+  }catch(e){console.warn('eklerTopluSil hata:',e);}
 }
 
 async function eklerKaydet(tip, kayitId) {
@@ -12847,6 +12909,7 @@ async function eklerDetayDosyaEkle(input, tip, kayitId){
     try{
       let dosya=file;
       if(dosya.type.startsWith('image/'))dosya=await gorselSikistir(dosya,1200,0.78).catch(()=>dosya);
+      else if(dosya.type==='application/pdf'&&dosya.size>8*1024*1024) showToast(`${dosya.name}: PDF büyük (${(dosya.size/1024/1024).toFixed(1)} MB) — depolama için mümkünse küçük dosya seçin`,'amber');
       const url=await sbStorage('ekler',dosya,klasor);
       await sbFetch('ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
         [alan]:kayitId,
@@ -12870,6 +12933,59 @@ async function eklerDetayDosyaEkle(input, tip, kayitId){
 }
 function tavsiyeDetayDosyaEkle(input){ eklerDetayDosyaEkle(input,'tavsiye',_tavsiyeAktifId); }
 
+// === Yazdırma çıktısına eklenecek fotoğrafları seçme modalı ===
+// (teklif/proje yazdır akışından, mevcut görseller arasından seçim yapılır)
+let _yazdirFotoSecili=[];
+let _yazdirFotoCallback=null;
+
+function yazdirFotoSecAc(gorseller, callback){
+  _yazdirFotoSecili=[];
+  _yazdirFotoCallback=callback;
+  window._yazdirFotoListesi=gorseller;
+  yazdirFotoGridCiz();
+  openModal('modal-yazdir-foto-sec');
+}
+
+function yazdirFotoGridCiz(){
+  const gorseller=window._yazdirFotoListesi||[];
+  const grid=document.getElementById('yazdir-foto-grid');
+  if(!grid)return;
+  grid.innerHTML=gorseller.map((e,i)=>{
+    const url=e.url||e.dosya_url;
+    const seciliIdx=_yazdirFotoSecili.findIndex(s=>(s.url||s.dosya_url)===url);
+    const secili=seciliIdx>=0;
+    return `<div onclick="yazdirFotoToggle(${i})" style="position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;border:2px solid ${secili?'var(--blue)':'var(--border)'};">
+      <img src="${url}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">
+      ${secili?`<div style="position:absolute;top:4px;right:4px;background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${seciliIdx+1}</div>`:''}
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0;grid-column:1/-1;">Görsel bulunamadı</div>';
+}
+
+function yazdirFotoToggle(i){
+  const gorseller=window._yazdirFotoListesi||[];
+  const e=gorseller[i];if(!e)return;
+  const url=e.url||e.dosya_url;
+  const idx=_yazdirFotoSecili.findIndex(s=>(s.url||s.dosya_url)===url);
+  if(idx>=0){_yazdirFotoSecili.splice(idx,1);}
+  else{
+    if(_yazdirFotoSecili.length>=6){showToast('En fazla 6 fotoğraf seçebilirsiniz','amber');return;}
+    _yazdirFotoSecili.push(e);
+  }
+  yazdirFotoGridCiz();
+}
+
+function yazdirFotoSecDevam(){
+  closeModal('modal-yazdir-foto-sec');
+  const cb=_yazdirFotoCallback; _yazdirFotoCallback=null;
+  const secim=_yazdirFotoSecili.slice();
+  if(cb) cb(secim);
+}
+
+function yazdirFotoSecVazgec(){
+  closeModal('modal-yazdir-foto-sec');
+  _yazdirFotoCallback=null;
+}
+
 function tavsiyeDuzenleAc(){
   if(!_tavsiyeAktifId)return;
   closeModal('modal-tavsiye-detay');
@@ -12878,6 +12994,7 @@ function tavsiyeDuzenleAc(){
 
 async function deleteTavsiye(id){
   if(!confirm('Bu tavsiyeyi silmek istediğinizden emin misiniz?'))return;
+  await eklerTopluSil('tavsiye',id);
   await sbFetch('tavsiyeler?id=eq.'+id,{method:'DELETE'});
   await loadDB();renderTavsiyeler();
   closeModal('modal-tavsiye-detay');
