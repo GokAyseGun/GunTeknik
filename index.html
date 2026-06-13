@@ -726,8 +726,34 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="rapor-icgoru" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
       <!-- Rapor kartları -->
       <div class="sec-title">Rapor Oluştur</div>
-      <div class="sec-title">Tekrar Eden Şablonlar</div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card" style="cursor:pointer;" onclick="generatePDF()">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--red-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📄</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">PDF Rapor</div>
+              <div style="font-size:12px;color:var(--text2);">Seçili döneme ait gelir-gider özeti, cari hesaplar ve personel durumu</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="cursor:pointer;" onclick="generateExcel()">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--green-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📊</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Excel Rapor (CSV)</div>
+              <div style="font-size:12px;color:var(--text2);">Tüm işlemler ödeme yöntemiyle birlikte Excel'de açılabilir formatta</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="cursor:pointer;" onclick="generateCariRapor()">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👥</div>
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Cari Hesap Raporu</div>
+              <div style="font-size:12px;color:var(--text2);">Tüm müşteri bakiyeleri, alacak ve borç özetleri</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -921,8 +947,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('projeler',this)"><span class="nav-icon">🏗️</span><span>Proje</span></div>
     <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
     <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
-    <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
     <div class="nav-item" onclick="goPage('stok',this)"><span class="nav-icon">📦</span><span>Stok</span></div>
+    <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
     <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
@@ -8770,7 +8796,7 @@ async function teklifOnizlemeGoster(id, secilenFotolar){
   <!-- İMZA -->
   ${resimEkler.length?`
   <div style="padding:20px 44px;border-top:1px solid #e2e8f0;">
-    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">İş Görselleri</div>
+    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">Ek Görseller</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
       ${resimEkler.map(e=>`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
         <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
@@ -11448,7 +11474,7 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <table><thead><tr><th class="thl">Tarih</th><th class="thl">Kategori</th><th class="thl">Statü</th><th class="thr">Tutar</th></tr></thead>
     <tbody>${islemRows}</tbody></table></div>`:''}
     ${p.aciklama?`<div class="sec"><div class="sec-ttl">ℹ️ Proje Açıklaması</div><div class="note"><div class="note-txt">${p.aciklama}</div></div></div>`:''}
-    ${projeEkleri.length?`<div class="sec"><div class="sec-ttl">📷 İş Görselleri</div>
+    ${projeEkleri.length?`<div class="sec"><div class="sec-ttl">📷 Ek Görseller</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
       ${projeEkleri.map(e=>`<div style="aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
         <img src="${e.url||e.dosya_url}" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous">
