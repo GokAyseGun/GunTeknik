@@ -5337,6 +5337,8 @@ const RAPOR_TANIMLARI=[
 ];
 function renderRaporListesi(){
   const el=document.getElementById('rapor-liste');if(!el)return;
+  const now=new Date();
+  const curAy=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   el.innerHTML=RAPOR_TANIMLARI.map(r=>`
     <div class="card">
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
@@ -5346,25 +5348,30 @@ function renderRaporListesi(){
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${r.aciklama}</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <div class="pay-method-btns" style="flex:1;" id="donem-${r.key}">
           <button type="button" class="pay-btn active" data-val="donem" onclick="raporDonemSec(this)">Dönem</button>
           <button type="button" class="pay-btn" data-val="tumu" onclick="raporDonemSec(this)">Tümü</button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="raporOlustur('${r.key}')" style="flex-shrink:0;">Oluştur</button>
+        <input type="month" class="month-input" id="donem-ay-${r.key}" value="${curAy}" style="width:120px;flex-shrink:0;">
       </div>
+      <button class="btn btn-primary btn-sm" onclick="raporOlustur('${r.key}')" style="width:100%;">Oluştur</button>
     </div>`).join('');
 }
 function raporDonemSec(btn){
-  btn.parentElement.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
+  const wrap=btn.parentElement;
+  wrap.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const ayInput=wrap.parentElement?.querySelector('input[type="month"]');
+  if(ayInput)ayInput.style.display=btn.dataset.val==='tumu'?'none':'';
 }
 function raporPeriyotBilgi(key){
   const sec=document.querySelector('#donem-'+key+' .pay-btn.active')?.dataset.val||'donem';
-  const fDate=sec==='tumu'?'':getMonth();
-  let label='Tüm Zamanlar';
-  if(fDate){const parts=fDate.split('-');label=AYLAR[parseInt(parts[1])-1]+' '+parts[0];}
-  return {fDate,label};
+  if(sec==='tumu')return {fDate:'',label:'Tüm Zamanlar'};
+  const ayVal=document.getElementById('donem-ay-'+key)?.value||'';
+  if(!ayVal)return {fDate:'',label:'Tüm Zamanlar'};
+  const parts=ayVal.split('-');
+  return {fDate:ayVal,label:AYLAR[parseInt(parts[1])-1]+' '+parts[0]};
 }
 function raporOlustur(key){
   const fns={gelirGider:raporGelirGider,islemler:raporIslemlerListesi,teklifler:raporTeklifler,projeler:raporProjeler,hesaplar:raporHesaplar,fiyatlar:raporFiyatlar,stok:raporStok,rehber:raporRehber,vergi:raporVergi,sablonlar:raporSablonlar,tavsiyeler:raporTavsiyeler};
