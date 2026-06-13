@@ -84,6 +84,10 @@ a{text-decoration:none;color:inherit;}
 /* DESEN GİRİŞ EKRANI */
 #desen-screen{position:fixed;inset:0;background:var(--bg);z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px 24px;animation:fadeIn 0.4s var(--ease);}
 #desen-screen.active{display:flex;}
+#parmak-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px 24px;animation:fadeIn 0.4s var(--ease);}
+#parmak-screen.active{display:flex;}
+.parmak-icon{width:90px;height:90px;border-radius:50%;background:var(--blue-lt);border:2px solid var(--blue-md);display:flex;align-items:center;justify-content:center;font-size:42px;margin:8px 0 20px;animation:parmakPulse 1.8s ease-in-out infinite;}
+@keyframes parmakPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
 .desen-baslik{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center;}
 .desen-alt{font-size:13px;color:var(--text3);margin-bottom:32px;text-align:center;}
 .desen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:28px;position:relative;}
@@ -393,6 +397,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="desen-hak"></div>
   </div>
   <button class="btn btn-secondary" onclick="desenVazgec()" id="btn-desen-vazgec" style="font-size:12px;padding:8px 16px;">Farklı hesapla giriş yap</button>
+</div>
+
+<!-- PARMAK İZİ EKRANI -->
+<div id="parmak-screen">
+  <div style="width:56px;height:56px;border-radius:var(--r-md);background:var(--blue-lt);border:1px solid var(--blue-md);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;">⚡</div>
+  <div class="desen-baslik">Gün Teknik</div>
+  <div class="desen-alt">Devam etmek için parmak izinizi kullanın</div>
+  <div class="parmak-icon">👆</div>
+  <div class="desen-durum" id="parmak-durum" style="min-height:18px;"></div>
+  <button class="btn btn-secondary" onclick="parmakIziVazgec()" style="font-size:12px;padding:8px 16px;margin-top:8px;">Desen ile gir</button>
 </div>
 
 <!-- GİRİŞ -->
@@ -1527,6 +1541,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="btn btn-secondary btn-full" id="btn-pwa-install" onclick="installPWA()" style="display:none;">📲 Uygulamayı Yükle</button>
       <button class="btn btn-secondary btn-full" onclick="showPWAManualGuide()">📲 Uygulama Kurulum Rehberi</button>
       <div style="height:1px;background:var(--border);"></div>
+      <button class="btn btn-secondary btn-full" id="btn-parmak-ayar" onclick="parmakIziKaydet()">👆 Parmak İzi ile Girişi Etkinleştir</button>
+      <button class="btn btn-secondary btn-full" id="btn-parmak-sil" onclick="parmakIziSil()" style="display:none;">🗑 Parmak İzi Kaydını Kaldır</button>
       <button class="btn btn-secondary btn-full" id="btn-desen-ayar" onclick="closeModal('modal-ayarlar');desenAyarla()">🔐 Giriş Deseni Belirle</button>
       <button class="btn btn-secondary btn-full" id="btn-desen-sil" onclick="desenSifirla()" style="display:none;">🗑 Deseni Kaldır</button>
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openButceModal()">💰 Bütçe Limitleri</button>
@@ -2592,7 +2608,7 @@ async function doLogin(){
     localStorage.setItem('sb_token',SB_TOKEN);localStorage.setItem('sb_refresh_token',d.refresh_token||'');localStorage.setItem('sb_user',JSON.stringify(CURRENT_USER));
     await loadUserRol();
     // Desen varsa doğrulat, yoksa direkt başlat
-    await desenKontrol(async()=>{await startApp();});
+    await cihazKilidiKontrol(async()=>{await startApp();});
   }catch(e){document.getElementById('err-pass').textContent='Bağlantı hatası';}
   finally{btn.disabled=false;btn.textContent='Giriş Yap';}
 }
@@ -2622,7 +2638,7 @@ async function checkSession(){
       if(!ok){
         // Refresh da olmadı — desen varsa desen sor, yoksa auth
         if(desenVarMi()){
-          await desenKontrol(async()=>{await startApp();});
+          await cihazKilidiKontrol(async()=>{await startApp();});
         }else{
           showAuthScreen();
         }
@@ -2631,12 +2647,12 @@ async function checkSession(){
     }
     await loadUserRol();
     // Token geçerli — desen varsa sor, yoksa direkt başlat
-    await desenKontrol(async()=>{await startApp();});
+    await cihazKilidiKontrol(async()=>{await startApp();});
   }catch(e){
     // Ağ hatası — desen varsa offline modda devam et
     if(CURRENT_USER){
       USER_ROL='admin';
-      await desenKontrol(async()=>{await startApp();});
+      await cihazKilidiKontrol(async()=>{await startApp();});
     }else{
       showAuthScreen();
     }
@@ -2665,6 +2681,7 @@ async function doLogout(){
   SB_TOKEN=null;SB_REFRESH_TOKEN=null;CURRENT_USER=null;
   localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh_token');localStorage.removeItem('sb_user');
   localStorage.removeItem(DESEN_KEY);
+  localStorage.removeItem(WEBAUTHN_KEY);
   location.reload();
 }
 
@@ -2686,6 +2703,7 @@ async function startApp(){
     if(btnSil)btnSil.style.display='none';
     if(btnAyar)btnAyar.textContent='🔐 Giriş Deseni Belirle';
   }
+  parmakIziBtnGuncelle();
   await loadDB();
   // AI sistemi başlat
   aiBaslat();
@@ -6184,6 +6202,7 @@ function printEtiket(){
 
 // ============================================================ DESEN SİSTEMİ
 const DESEN_KEY='gt_desen_hash';
+const WEBAUTHN_KEY='gt_webauthn_cred';
 const DESEN_MIN=4;// minimum 4 nokta
 let desenSekans=[];// çizilen desen indeksleri
 let desenMod='giris';// 'giris' | 'belirle1' | 'belirle2'
@@ -6236,6 +6255,102 @@ function desenVazgec(){
   SB_TOKEN=null;CURRENT_USER=null;
   localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh_token');localStorage.removeItem('sb_user');
   showAuthScreen();
+}
+
+// ── PARMAK İZİ / FACE ID (WebAuthn) ──
+let _parmakAbort=null;
+function parmakIziVarMi(){return !!localStorage.getItem(WEBAUTHN_KEY);}
+function parmakIziDesteklenir(){return !!(window.PublicKeyCredential&&navigator.credentials);}
+function _b64uToBuf(b64u){
+  const b64=b64u.replace(/-/g,'+').replace(/_/g,'/');
+  const pad=b64.length%4?4-(b64.length%4):0;
+  const bin=atob(b64+'='.repeat(pad));
+  const buf=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+  return buf;
+}
+async function parmakIziKaydet(){
+  if(!parmakIziDesteklenir()){showToast('Bu cihaz/tarayıcı parmak izi girişini desteklemiyor','red');return;}
+  try{
+    if(window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){
+      const av=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if(!av){showToast('Cihazda parmak izi / Face ID tanımlı görünmüyor','red');return;}
+    }
+  }catch(e){}
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'Gün Teknik'},
+      user:{id:new TextEncoder().encode(String(CURRENT_USER?.id||CURRENT_USER?.email||'kullanici')),name:CURRENT_USER?.email||'kullanici',displayName:CURRENT_USER?.email||'Kullanıcı'},
+      pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+      timeout:60000,attestation:'none'
+    }});
+    if(!cred)throw new Error('iptal');
+    localStorage.setItem(WEBAUTHN_KEY,cred.id);
+    showToast('Parmak izi / Face ID kaydedildi','green');
+  }catch(e){
+    if(e.name==='NotAllowedError')showToast('İşlem iptal edildi','amber');
+    else showToast('Kayıt başarısız: '+(e.message||e.name),'red');
+  }
+  parmakIziBtnGuncelle();
+}
+function parmakIziSil(){
+  showConfirm('Parmak İzini Kaldır','Bu cihaz için kayıtlı parmak izi / Face ID girişi silinecek. Emin misiniz?',()=>{
+    localStorage.removeItem(WEBAUTHN_KEY);
+    showToast('Parmak izi kaydı kaldırıldı','amber');
+    parmakIziBtnGuncelle();
+  },'🗑');
+}
+function parmakIziBtnGuncelle(){
+  const btn=document.getElementById('btn-parmak-ayar');
+  const btnSil=document.getElementById('btn-parmak-sil');
+  if(!btn)return;
+  if(!parmakIziDesteklenir()){btn.style.display='none';if(btnSil)btnSil.style.display='none';return;}
+  btn.style.display='flex';
+  if(parmakIziVarMi()){
+    btn.textContent='👆 Parmak İzini Yeniden Kaydet';
+    if(btnSil)btnSil.style.display='flex';
+  }else{
+    btn.textContent='👆 Parmak İzi ile Girişi Etkinleştir';
+    if(btnSil)btnSil.style.display='none';
+  }
+}
+function parmakEkraniAc(){
+  document.getElementById('parmak-screen').classList.add('active');
+  document.getElementById('desen-screen').classList.remove('active');
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').classList.remove('active');
+  const d=document.getElementById('parmak-durum');if(d)d.textContent='';
+}
+function parmakEkraniKapat(){
+  document.getElementById('parmak-screen').classList.remove('active');
+}
+async function parmakIziDogrula(){
+  _parmakAbort=new AbortController();
+  try{
+    const cred=await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{id:_b64uToBuf(localStorage.getItem(WEBAUTHN_KEY)),type:'public-key'}],
+      userVerification:'required',timeout:60000
+    },signal:_parmakAbort.signal});
+    return !!cred;
+  }catch(e){return false;}
+  finally{_parmakAbort=null;}
+}
+function parmakIziVazgec(){
+  if(_parmakAbort){try{_parmakAbort.abort();}catch(e){}}
+}
+// Oturum/desen kontrolünden önce çalışan cihaz kilidi: önce parmak izi, hata/yoksa desen
+async function cihazKilidiKontrol(devamCB){
+  desenStartCB=devamCB;
+  if(parmakIziVarMi()&&parmakIziDesteklenir()){
+    parmakEkraniAc();
+    const ok=await parmakIziDogrula();
+    parmakEkraniKapat();
+    if(ok){devamCB();return;}
+  }
+  desenKontrol(devamCB);
 }
 
 // Ayarlar'dan desen belirleme
