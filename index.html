@@ -726,35 +726,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="rapor-icgoru" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
       <!-- Rapor kartları -->
       <div class="sec-title">Rapor Oluştur</div>
-      <div style="display:flex;flex-direction:column;gap:14px;">
-        <div class="card" style="cursor:pointer;" onclick="generatePDF()">
-          <div style="display:flex;align-items:center;gap:16px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--red-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📄</div>
-            <div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">PDF Rapor</div>
-              <div style="font-size:12px;color:var(--text2);">Seçili döneme ait gelir-gider özeti, cari hesaplar ve personel durumu</div>
-            </div>
-          </div>
-        </div>
-        <div class="card" style="cursor:pointer;" onclick="generateExcel()">
-          <div style="display:flex;align-items:center;gap:16px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--green-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📊</div>
-            <div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Excel Rapor (CSV)</div>
-              <div style="font-size:12px;color:var(--text2);">Tüm işlemler ödeme yöntemiyle birlikte Excel'de açılabilir formatta</div>
-            </div>
-          </div>
-        </div>
-        <div class="card" style="cursor:pointer;" onclick="generateCariRapor()">
-          <div style="display:flex;align-items:center;gap:16px;">
-            <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👥</div>
-            <div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Cari Hesap Raporu</div>
-              <div style="font-size:12px;color:var(--text2);">Tüm müşteri bakiyeleri, alacak ve borç özetleri</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div id="rapor-liste" style="display:flex;flex-direction:column;gap:12px;"></div>
     </div>
 
     <!-- VERGİ -->
@@ -952,9 +924,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
     <div class="nav-item" onclick="goPage('vergi',this)"><span class="nav-icon">🧾</span><span>Vergi</span></div>
-    <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
     <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
     <div class="nav-item" onclick="goPage('tavsiyeler',this)"><span class="nav-icon">💡</span><span>Tavsiyeler</span></div>
+    <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
   </nav>
 </div>
 
@@ -3067,7 +3039,7 @@ function renderAll(){
     if(pid==='projeler')renderProjeler();
     if(pid==='teklifler')renderTeklifler();
     if(pid==='fiyatlar')renderFiyatlar();
-    if(pid==='raporlar')renderRaporIcgoru();
+    if(pid==='raporlar'){renderRaporIcgoru();renderRaporListesi();}
     if(pid==='sablonlar')renderSablonlar();
     if(pid==='tavsiyeler')renderTavsiyeler();
     // Kredi paneli her zaman güncelle
@@ -5293,140 +5265,287 @@ async function sendWhatsappImg(){
 }
 
 // ============================================================ RAPORLAR
-function generatePDF(){
-  const c=calcFinans();const fDate=getMonth();
-  const now=new Date();const fStr=AYLAR[now.getMonth()]+' '+now.getFullYear();
-  const topIs=DB.islemler.filter(i=>i.tip==='Gelir'&&(!fDate||(i.tarih||'').startsWith(fDate)));
-  const topGider=DB.islemler.filter(i=>i.tip==='Gider'&&(!fDate||(i.tarih||'').startsWith(fDate)));
-  const oyDagilim={Nakit:0,Kart:0,'İBAN':0};
-  topIs.filter(i=>i.statu==='Tamamlandı').forEach(i=>{oyDagilim[i.odemeYontemi]=(oyDagilim[i.odemeYontemi]||0)+i.tutar;});
-  const cariAlacak=Object.values(c.cD).filter(x=>x.bakiyeAll>0);const cariBorc=Object.values(c.cD).filter(x=>x.bakiyeAll<0);
-  const personelRows=DB.personeller.map(p=>{const b=c.personelBakiye[p.id]||0;return `<tr><td>${p.isim}</td><td>${p.pozisyon||'—'}</td><td>%${p.oran}</td><td style="color:${b>=0?'#22a85a':'#e53e3e'};font-weight:600;">${fmt(Math.abs(b))}</td></tr>`;}).join('');
+// --- Ortak rapor şablonu (A4, resmi/açık/minimal tasarım) ---
+function raporSayfaAc(baslik,periyotLabel,bodyHtml){
+  const now=new Date();
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Gün Teknik Rapor</title><style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    @page{size:A4;margin:20mm 15mm;}
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;font-size:11px;color:#1a202c;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .page{max-width:170mm;margin:0 auto;padding:0;}
-    .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #2d5be3;margin-bottom:24px;}
-    .logo{font-size:22px;font-weight:700;color:#2d5be3;letter-spacing:-0.5px;}
-    .logo sub{font-size:11px;font-weight:400;color:#718096;display:block;letter-spacing:0;}
-    .report-meta{text-align:right;color:#718096;font-size:10px;line-height:1.8;}
-    .section{margin-bottom:22px;}
-    .section-title{font-size:13px;font-weight:700;color:#2d5be3;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;}
-    .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
-    .kpi{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;}
-    .kpi .lbl{font-size:9px;font-weight:600;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
-    .kpi .val{font-size:17px;font-weight:700;letter-spacing:-0.5px;}
-    .kpi .val.green{color:#22a85a;}.kpi .val.red{color:#e53e3e;}.kpi .val.blue{color:#2d5be3;}.kpi .val.purple{color:#6d28d9;}
-    table{width:100%;border-collapse:collapse;font-size:10px;}
-    thead tr{background:#2d5be3;color:#fff;}
-    thead th{padding:8px 10px;text-align:left;font-weight:600;font-size:10px;}
-    tbody tr{border-bottom:1px solid #e2e8f0;}
-    tbody tr:nth-child(even){background:#f7fafc;}
-    tbody td{padding:7px 10px;}
-    .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:600;}
-    .badge-green{background:#c6f6d5;color:#22543d;}.badge-red{background:#fed7d7;color:#742a2a;}.badge-blue{background:#bee3f8;color:#2a4365;}
-    .footer{margin-top:24px;padding-top:10px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9px;color:#a0aec0;}
-    .oy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-    .oy-item{background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;text-align:center;}
-    .oy-item .oy-lbl{font-size:9px;color:#718096;margin-bottom:3px;}
-    .oy-item .oy-val{font-size:13px;font-weight:700;color:#2d5be3;}
-  </style></head><body><div class="page">
-    <div class="header">
-      <div class="logo">⚡ Gün Teknik<sub>Profesyonel ERP Raporu</sub></div>
-      <div class="report-meta"><div>${fDate?AYLAR[parseInt(fDate.split('-')[1])-1]+' '+fDate.split('-')[0]:fStr} Dönemi</div><div>Oluşturma: ${now.toLocaleDateString('tr-TR')}</div></div>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi"><div class="lbl">İşletme Geliri</div><div class="val green">${fmt(c.isGelir)}</div></div>
-      <div class="kpi"><div class="lbl">İşletme Gideri</div><div class="val red">${fmt(c.isGider)}</div></div>
-      <div class="kpi"><div class="lbl">Net Kâr</div><div class="val blue">${fmt(c.isKar)}</div></div>
-      <div class="kpi"><div class="lbl">Şahsi Gelir</div><div class="val green">${fmt(c.shGelir)}</div></div>
-      <div class="kpi"><div class="lbl">Şahsi Gider</div><div class="val red">${fmt(c.shGider)}</div></div>
-      <div class="kpi"><div class="lbl">Toplam Kasa</div><div class="val blue">${fmt(c.kasa)}</div></div>
-    </div>
-    <div class="section"><div class="section-title">Ödeme Yöntemi Dağılımı</div>
-      <div class="oy-grid">
-        <div class="oy-item"><div class="oy-lbl">💵 Nakit</div><div class="oy-val">${fmt(oyDagilim.Nakit)}</div></div>
-        <div class="oy-item"><div class="oy-lbl">💳 Kart</div><div class="oy-val">${fmt(oyDagilim.Kart)}</div></div>
-        <div class="oy-item"><div class="oy-lbl">🏦 İBAN</div><div class="oy-val">${fmt(oyDagilim['İBAN'])}</div></div>
-      </div>
-    </div>
-    <div class="section"><div class="section-title">Son İşlemler</div>
-      <table><thead><tr><th>Tarih</th><th>Fiş No</th><th>Kişi</th><th>Kategori</th><th>Tutar</th><th>Statü</th></tr></thead><tbody>
-        ${topIs.concat(topGider).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih)).slice(0,15).map(i=>{const k=getKisi(i.kisiId);const pos=i.tip==='Gelir';return`<tr><td>${dtS(i.tarih)}</td><td>${fmtId(i.id)}</td><td>${k?.isim||'—'}</td><td>${i.kat||'—'}</td><td style="font-weight:600;color:${pos?'#22a85a':'#e53e3e'};">${pos?'+':'-'}${fmt(i.tutar)}</td><td><span class="badge ${i.statu==='Bekliyor'?'badge-red':'badge-green'}">${i.statu}</span></td></tr>`;}).join('')}
-      </tbody></table>
-    </div>
-    ${personelRows?`<div class="section"><div class="section-title">Personel Durumu</div><table><thead><tr><th>Personel</th><th>Pozisyon</th><th>Kâr Payı</th><th>Bakiye</th></tr></thead><tbody>${personelRows}</tbody></table></div>`:''}
-    <div class="footer"><div>⚡ Gün Teknik ERP — Otomatik Rapor</div><div>${now.toLocaleDateString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</div></div>
-  </div></body></html>`);
-  w.document.close();setTimeout(()=>w.print(),600);
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>${baslik} · Gün Teknik</title><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@page{size:A4;margin:18mm 15mm;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;font-size:11px;color:#1a202c;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.page{max-width:170mm;margin:0 auto;}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #2d5be3;margin-bottom:22px;}
+.logo{font-size:22px;font-weight:700;color:#2d5be3;letter-spacing:-0.5px;}
+.logo sub{font-size:11px;font-weight:400;color:#718096;display:block;margin-top:2px;}
+.meta{text-align:right;color:#718096;font-size:10px;line-height:1.8;}
+.meta b{color:#2d5be3;}
+.section{margin-bottom:20px;}
+.section-title{font-size:12px;font-weight:700;color:#2d5be3;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;}
+.kpi-grid{display:grid;gap:10px;margin-bottom:20px;}
+.kpi{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;}
+.kpi .lbl{font-size:9px;font-weight:600;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+.kpi .val{font-size:18px;font-weight:700;letter-spacing:-0.5px;}
+.kpi .val.green{color:#22a85a;}.kpi .val.red{color:#e53e3e;}.kpi .val.blue{color:#2d5be3;}.kpi .val.purple{color:#6d28d9;}.kpi .val.amber{color:#d97706;}.kpi .val.teal{color:#0d9488;}
+table{width:100%;border-collapse:collapse;font-size:10px;}
+thead{display:table-header-group;}
+thead tr{background:#2d5be3;color:#fff;}
+thead th{padding:8px 10px;text-align:left;font-weight:600;font-size:10px;}
+tbody tr{border-bottom:1px solid #e2e8f0;}
+tbody tr:nth-child(even){background:#f7fafc;}
+tbody td{padding:7px 10px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;}
+.empty{text-align:center;padding:28px;color:#a0aec0;font-size:11px;background:#f7fafc;border-radius:8px;}
+.footer{margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9px;color:#a0aec0;}
+.no-print{position:fixed;top:14px;right:14px;}
+.no-print button{padding:9px 18px;border-radius:6px;border:none;background:#2d5be3;color:#fff;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(45,91,227,0.3);}
+@media print{.no-print{display:none;}}
+</style></head><body>
+<div class="no-print"><button onclick="window.print()">🖨️ Yazdır / PDF</button></div>
+<div class="page">
+  <div class="header">
+    <div class="logo">⚡ Gün Teknik<sub>${baslik}</sub></div>
+    <div class="meta"><div><b>${periyotLabel}</b></div><div>${now.toLocaleDateString('tr-TR')}</div></div>
+  </div>
+  ${bodyHtml}
+  <div class="footer"><div>Gün Teknik ERP Sistemi</div><div>Oluşturulma: ${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</div></div>
+</div>
+</body></html>`);
+  w.document.close();
+}
+function _rpKpi(items){
+  return `<div class="kpi-grid" style="grid-template-columns:repeat(${items.length},1fr);">${items.map(i=>`<div class="kpi"><div class="lbl">${i.lbl}</div><div class="val ${i.cls||''}">${i.val}</div></div>`).join('')}</div>`;
+}
+function _rpTable(headers,rowsHtml){
+  if(!rowsHtml)return '<div class="empty">Kayıt bulunmuyor.</div>';
+  return `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
 }
 
-function generateCariRapor(){
-  const c=calcFinans();const now=new Date();
+// --- Rapor kartları listesi (Dönem / Tümü seçimli) ---
+const RAPOR_TANIMLARI=[
+  {key:'gelirGider',icon:'💰',renk:'blue',baslik:'Gelir - Gider Özeti',aciklama:'Gelir, gider, net kâr/zarar; ödeme yöntemi ve kategori dağılımı'},
+  {key:'islemler',icon:'📋',renk:'blue',baslik:'İşlemler',aciklama:'Tüm gelir, gider ve finans hareketlerinin detaylı listesi'},
+  {key:'teklifler',icon:'📝',renk:'purple',baslik:'Teklifler',aciklama:'Tekliflerin durum ve tutar dökümü'},
+  {key:'projeler',icon:'🏗️',renk:'teal',baslik:'Projeler',aciklama:'Devam eden ve tamamlanan projelerin listesi'},
+  {key:'hesaplar',icon:'💳',renk:'green',baslik:'Cari Hesaplar',aciklama:'Müşteri ve firma bakiyeleri, alacak ve borç özetleri'},
+  {key:'fiyatlar',icon:'💵',renk:'amber',baslik:'Fiyat Listesi',aciklama:'Güncel hizmet ve ürün fiyatları'},
+  {key:'stok',icon:'📦',renk:'amber',baslik:'Stok Durumu',aciklama:'Malzeme envanteri, kritik seviyeler ve toplam değer'},
+  {key:'rehber',icon:'👥',renk:'blue',baslik:'Rehber',aciklama:'Müşteri, firma ve şahıs listesi ile bakiye durumları'},
+  {key:'vergi',icon:'🧾',renk:'red',baslik:'Vergi & Faturalar',aciklama:'Kesilen ve alınan faturaların KDV dökümü'},
+  {key:'sablonlar',icon:'📑',renk:'purple',baslik:'Şablonlar',aciklama:'Tekrar eden işlem şablonlarının durumu'},
+  {key:'tavsiyeler',icon:'💡',renk:'teal',baslik:'Tavsiyeler',aciklama:'Kayıtlı teknik notlar ve tavsiyeler'}
+];
+function renderRaporListesi(){
+  const el=document.getElementById('rapor-liste');if(!el)return;
+  el.innerHTML=RAPOR_TANIMLARI.map(r=>`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+        <div style="width:42px;height:42px;border-radius:var(--r-sm);background:var(--${r.renk}-lt);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${r.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;">${r.baslik}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${r.aciklama}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="pay-method-btns" style="flex:1;" id="donem-${r.key}">
+          <button type="button" class="pay-btn active" data-val="donem" onclick="raporDonemSec(this)">Dönem</button>
+          <button type="button" class="pay-btn" data-val="tumu" onclick="raporDonemSec(this)">Tümü</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="raporOlustur('${r.key}')" style="flex-shrink:0;">Oluştur</button>
+      </div>
+    </div>`).join('');
+}
+function raporDonemSec(btn){
+  btn.parentElement.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function raporPeriyotBilgi(key){
+  const sec=document.querySelector('#donem-'+key+' .pay-btn.active')?.dataset.val||'donem';
+  const fDate=sec==='tumu'?'':getMonth();
+  let label='Tüm Zamanlar';
+  if(fDate){const parts=fDate.split('-');label=AYLAR[parseInt(parts[1])-1]+' '+parts[0];}
+  return {fDate,label};
+}
+function raporOlustur(key){
+  const fns={gelirGider:raporGelirGider,islemler:raporIslemlerListesi,teklifler:raporTeklifler,projeler:raporProjeler,hesaplar:raporHesaplar,fiyatlar:raporFiyatlar,stok:raporStok,rehber:raporRehber,vergi:raporVergi,sablonlar:raporSablonlar,tavsiyeler:raporTavsiyeler};
+  if(fns[key])fns[key]();
+}
+
+// --- 1. Gelir - Gider Özeti ---
+function raporGelirGider(){
+  const p=raporPeriyotBilgi('gelirGider');
+  const items=DB.islemler.filter(i=>(i.tip==='Gelir'||i.tip==='Gider')&&i.statu==='Tamamlandı'&&(!p.fDate||(i.tarih||'').startsWith(p.fDate)));
+  const gelir=items.filter(i=>i.tip==='Gelir').reduce((s,i)=>s+(parseFloat(i.tutar)||0),0);
+  const gider=items.filter(i=>i.tip==='Gider').reduce((s,i)=>s+(parseFloat(i.tutar)||0),0);
+  const net=gelir-gider;
+  const oy={Nakit:{g:0,gd:0},Kart:{g:0,gd:0},'İBAN':{g:0,gd:0}};
+  items.forEach(i=>{const o=oy[i.odemeYontemi]||oy.Nakit;const t=parseFloat(i.tutar)||0;if(i.tip==='Gelir')o.g+=t;else o.gd+=t;});
+  const oyRows=Object.entries(oy).map(([k,v])=>`<tr><td>${k}</td><td style="color:#22a85a;font-weight:600;">${fmt(v.g)} ₺</td><td style="color:#e53e3e;font-weight:600;">${fmt(v.gd)} ₺</td><td style="font-weight:700;">${fmt(v.g-v.gd)} ₺</td></tr>`).join('');
+  const kat={};
+  items.forEach(i=>{const k=i.kat||'Diğer';if(!kat[k])kat[k]={tip:i.tip,top:0};kat[k].top+=parseFloat(i.tutar)||0;});
+  const katRows=Object.entries(kat).sort((a,b)=>b[1].top-a[1].top).map(([k,v])=>`<tr><td>${k}</td><td>${v.tip}</td><td style="font-weight:600;color:${v.tip==='Gelir'?'#22a85a':'#e53e3e'};">${fmt(v.top)} ₺</td></tr>`).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Gelir',val:fmt(gelir)+' ₺',cls:'green'},{lbl:'Toplam Gider',val:fmt(gider)+' ₺',cls:'red'},{lbl:'Net',val:fmt(net)+' ₺',cls:net>=0?'green':'red'}])}
+<div class="section"><div class="section-title">Ödeme Yöntemi Dağılımı</div>${_rpTable(['Yöntem','Gelir','Gider','Net'],oyRows)}</div>
+<div class="section"><div class="section-title">Kategori Dağılımı</div>${_rpTable(['Kategori','Tip','Toplam'],katRows)}</div>`;
+  raporSayfaAc('Gelir - Gider Özeti',p.label,body);
+}
+
+// --- 2. İşlemler ---
+function raporIslemlerListesi(){
+  const p=raporPeriyotBilgi('islemler');
+  const items=DB.islemler.filter(i=>!p.fDate||(i.tarih||'').startsWith(p.fDate)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const gelir=items.filter(i=>i.tip==='Gelir'&&i.statu==='Tamamlandı').reduce((s,i)=>s+(parseFloat(i.tutar)||0),0);
+  const gider=items.filter(i=>i.tip==='Gider'&&i.statu==='Tamamlandı').reduce((s,i)=>s+(parseFloat(i.tutar)||0),0);
+  const rows=items.map(i=>{
+    const k=getKisi(i.kisiId);
+    const renk=i.tip==='Gelir'?'#22a85a':i.tip==='Gider'?'#e53e3e':'#2d5be3';
+    return `<tr><td>${dtS(i.tarih)}</td><td>${fmtId(i.id)}</td><td><span class="badge" style="background:${renk}1a;color:${renk};">${i.tip||'-'}</span></td><td>${i.kat||'-'}</td><td>${k?k.isim:'-'}</td><td style="font-weight:600;color:${renk};">${fmt(i.tutar)} ₺</td><td>${i.odemeYontemi||'-'}</td><td>${i.statu||'-'}</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'İşlem Sayısı',val:items.length,cls:'blue'},{lbl:'Toplam Gelir',val:fmt(gelir)+' ₺',cls:'green'},{lbl:'Toplam Gider',val:fmt(gider)+' ₺',cls:'red'}])}
+<div class="section">${_rpTable(['Tarih','Fiş No','Tip','Kategori','Kişi','Tutar','Ödeme','Statü'],rows)}</div>`;
+  raporSayfaAc('İşlemler',p.label,body);
+}
+
+// --- 3. Teklifler ---
+function raporTeklifler(){
+  const p=raporPeriyotBilgi('teklifler');
+  const items=DB.teklifler.filter(t=>!p.fDate||(t.tarih||'').startsWith(p.fDate)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  const durumRenk={Taslak:'#a0aec0',Gönderildi:'#2d5be3','İletildi':'#2d5be3',Onaylandı:'#22a85a',Reddedildi:'#e53e3e'};
+  const onaylanan=items.filter(t=>t.durum==='Onaylandı');
+  const toplamOnay=onaylanan.reduce((s,t)=>s+(parseFloat(t.toplam||t.tutar)||0),0);
+  const rows=items.map(t=>{
+    const k=getKisi(t.kisiId);const renk=durumRenk[t.durum]||'#a0aec0';
+    return `<tr><td>${fmtId(t.id)}</td><td>${dtS(t.tarih)}</td><td>${k?k.isim:'-'}</td><td><span class="badge" style="background:${renk}1a;color:${renk};">${t.durum||'-'}</span></td><td style="font-weight:600;">${fmt(t.toplam||t.tutar||0)} ₺</td><td>${t.gecerlilikTarihi?dtS(t.gecerlilikTarihi):'-'}</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Teklif',val:items.length,cls:'blue'},{lbl:'Onaylanan',val:onaylanan.length,cls:'green'},{lbl:'Onaylanan Toplam',val:fmt(toplamOnay)+' ₺',cls:'green'}])}
+<div class="section">${_rpTable(['Teklif No','Tarih','Müşteri','Durum','Tutar','Geçerlilik'],rows)}</div>`;
+  raporSayfaAc('Teklifler',p.label,body);
+}
+
+// --- 4. Projeler ---
+function raporProjeler(){
+  const p=raporPeriyotBilgi('projeler');
+  const items=DB.projeler.filter(pr=>!p.fDate||(pr.baslangic||'').startsWith(p.fDate)).sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''));
+  const devamDurum=['Devam Ediyor','Aktif'];
+  const devam=items.filter(pr=>devamDurum.includes(pr.durum));
+  const tamam=items.filter(pr=>pr.durum==='Tamamlandı');
+  const durumRenk={'Devam Ediyor':'#2d5be3',Aktif:'#2d5be3',Tamamlandı:'#22a85a',Beklemede:'#d97706','İptal':'#e53e3e'};
+  const rows=items.map(pr=>{
+    const k=getKisi(pr.kisiId);const renk=durumRenk[pr.durum]||'#a0aec0';
+    return `<tr><td>#${pr.id}</td><td>${pr.isim||'-'}</td><td>${k?k.isim:'-'}</td><td><span class="badge" style="background:${renk}1a;color:${renk};">${pr.durum||'-'}</span></td><td>${dtS(pr.baslangic)}</td><td>${pr.bitis?dtS(pr.bitis):'-'}</td><td style="font-weight:600;">${fmt(pr.tutar||0)} ₺</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Proje',val:items.length,cls:'blue'},{lbl:'Devam Eden',val:devam.length,cls:'amber'},{lbl:'Tamamlanan',val:tamam.length,cls:'green'}])}
+<div class="section">${_rpTable(['No','İsim','Müşteri','Durum','Başlangıç','Bitiş','Tutar'],rows)}</div>`;
+  raporSayfaAc('Projeler',p.label,body);
+}
+
+// --- 5. Cari Hesaplar ---
+function raporHesaplar(){
+  const p=raporPeriyotBilgi('hesaplar');
+  const c=calcFinans();
   const alacaklar=Object.values(c.cD).filter(x=>x.bakiyeAll>0).sort((a,b)=>b.bakiyeAll-a.bakiyeAll);
   const borclar=Object.values(c.cD).filter(x=>x.bakiyeAll<0).sort((a,b)=>a.bakiyeAll-b.bakiyeAll);
-  const topAlacak=alacaklar.reduce((s,x)=>s+x.bakiyeAll,0);const topBorc=borclar.reduce((s,x)=>s+Math.abs(x.bakiyeAll),0);
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Cari Hesap Raporu</title><style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    @page{size:A4;margin:20mm 15mm;}*{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;font-size:11px;color:#1a202c;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .page{max-width:170mm;margin:0 auto;}
-    .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #2d5be3;margin-bottom:20px;}
-    .logo{font-size:22px;font-weight:700;color:#2d5be3;}
-    .logo sub{font-size:11px;font-weight:400;color:#718096;display:block;}
-    .meta{text-align:right;color:#718096;font-size:10px;line-height:1.8;}
-    .ozet-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
-    .ozet-box{border-radius:10px;padding:16px;text-align:center;}
-    .ozet-box.green{background:#f0fff4;border:2px solid #68d391;}
-    .ozet-box.red{background:#fff5f5;border:2px solid #fc8181;}
-    .ozet-box .lbl{font-size:10px;font-weight:600;color:#718096;text-transform:uppercase;margin-bottom:6px;}
-    .ozet-box .val{font-size:22px;font-weight:700;}
-    .ozet-box.green .val{color:#22a85a;}.ozet-box.red .val{color:#e53e3e;}
-    .section{margin-bottom:20px;}
-    .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;padding:8px 12px;border-radius:6px;}
-    .section-title.green{background:#f0fff4;color:#22543d;border-left:4px solid #48bb78;}
-    .section-title.red{background:#fff5f5;color:#742a2a;border-left:4px solid #fc8181;}
-    table{width:100%;border-collapse:collapse;font-size:10px;}
-    thead th{padding:8px 10px;text-align:left;font-weight:600;font-size:10px;background:#f7fafc;border-bottom:2px solid #e2e8f0;}
-    tbody tr{border-bottom:1px solid #e2e8f0;}
-    tbody tr:hover{background:#f7fafc;}
-    tbody td{padding:8px 10px;}
-    .net-satir{font-weight:700;background:#ebf8ff!important;border-top:2px solid #90cdf4;}
-    .footer{margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9px;color:#a0aec0;}
-  </style></head><body><div class="page">
-    <div class="header">
-      <div class="logo">⚡ Gün Teknik<sub>Cari Hesap Raporu</sub></div>
-      <div class="meta"><div>${now.toLocaleDateString('tr-TR')}</div><div>ERP Sistemi</div></div>
-    </div>
-    <div class="ozet-grid">
-      <div class="ozet-box green"><div class="lbl">📥 Toplam Alacak</div><div class="val">${fmt(topAlacak)}</div><div style="font-size:9px;color:#718096;margin-top:4px;">${alacaklar.length} hesap</div></div>
-      <div class="ozet-box red"><div class="lbl">📤 Toplam Borç</div><div class="val">${fmt(topBorc)}</div><div style="font-size:9px;color:#718096;margin-top:4px;">${borclar.length} hesap</div></div>
-    </div>
-    ${alacaklar.length?`<div class="section"><div class="section-title green">📥 Bize Borçlu Olanlar (${alacaklar.length})</div>
-      <table><thead><tr><th>Müşteri / Kurum</th><th>Kari No</th><th>Tip</th><th style="text-align:right">Bakiye</th></tr></thead><tbody>
-        ${alacaklar.map(x=>{const k=getKisi(x.id);return`<tr><td style="font-weight:600;">${x.ad||'—'}</td><td>${fmtKId(x.id)}</td><td>${k?.tip||'—'}</td><td style="text-align:right;font-weight:700;color:#22a85a;">${fmt(x.bakiyeAll)}</td></tr>`;}).join('')}
-        <tr class="net-satir"><td colspan="3" style="text-align:right;font-size:11px;">TOPLAM ALACAK</td><td style="text-align:right;color:#22a85a;">${fmt(topAlacak)}</td></tr>
-      </tbody></table></div>`:''}
-    ${borclar.length?`<div class="section"><div class="section-title red">📤 Biz Borçlu Olduğumuz Yerler (${borclar.length})</div>
-      <table><thead><tr><th>Müşteri / Kurum</th><th>Cari No</th><th>Tip</th><th style="text-align:right">Bakiye</th></tr></thead><tbody>
-        ${borclar.map(x=>{const k=getKisi(x.id);return`<tr><td style="font-weight:600;">${x.ad||'—'}</td><td>${fmtKId(x.id)}</td><td>${k?.tip||'—'}</td><td style="text-align:right;font-weight:700;color:#e53e3e;">${fmt(Math.abs(x.bakiyeAll))}</td></tr>`;}).join('')}
-        <tr class="net-satir"><td colspan="3" style="text-align:right;font-size:11px;">TOPLAM BORÇ</td><td style="text-align:right;color:#e53e3e;">${fmt(topBorc)}</td></tr>
-      </tbody></table></div>`:''}
-    <div class="footer"><div>⚡ Gün Teknik ERP</div><div>${now.toLocaleDateString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</div></div>
-  </div></body></html>`);
-  w.document.close();setTimeout(()=>w.print(),600);
+  const topAlacak=alacaklar.reduce((s,x)=>s+x.bakiyeAll,0);
+  const topBorc=borclar.reduce((s,x)=>s+Math.abs(x.bakiyeAll),0);
+  const rowsA=alacaklar.map(x=>`<tr><td>${fmtKId(x.id)}</td><td>${x.ad}</td><td>${x.tip}</td><td style="font-weight:600;color:#22a85a;">${fmt(x.bakiyeAll)} ₺</td></tr>`).join('');
+  const rowsB=borclar.map(x=>`<tr><td>${fmtKId(x.id)}</td><td>${x.ad}</td><td>${x.tip}</td><td style="font-weight:600;color:#e53e3e;">${fmt(Math.abs(x.bakiyeAll))} ₺</td></tr>`).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Alacak',val:fmt(topAlacak)+' ₺',cls:'green'},{lbl:'Toplam Borç',val:fmt(topBorc)+' ₺',cls:'red'},{lbl:'Net',val:fmt(topAlacak-topBorc)+' ₺',cls:(topAlacak-topBorc)>=0?'green':'red'}])}
+<div class="section"><div class="section-title">Bize Borçlu Olanlar (Alacaklarımız)</div>${_rpTable(['Cari No','İsim','Tip','Bakiye'],rowsA)}</div>
+<div class="section"><div class="section-title">Bizim Borçlu Olduğumuz Cariler</div>${_rpTable(['Cari No','İsim','Tip','Bakiye'],rowsB)}</div>`;
+  raporSayfaAc('Cari Hesaplar',p.label,body);
 }
 
-function generateExcel(){
-  const fDate=getMonth();const rows=DB.islemler.filter(i=>!fDate||(i.tarih||'').startsWith(fDate)).map(i=>{const k=getKisi(i.kisiId);return [dtS(i.tarih),fmtId(i.id),i.tip,i.kat||'',i.altKat||'',k?.isim||'',i.tutar,i.malzemeTutar||0,i.odemeYontemi||'',i.statu,i.not||''].join(';');});
-  const bom='\uFEFF';const header='Tarih;Fiş No;Tip;Kategori;Alt Kategori;Kişi;Tutar;Malzeme;Ödeme;Statü;Not';
-  const csv=bom+header+'\n'+rows.join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='guntek-islemler.csv';a.click();
+// --- 6. Fiyat Listesi ---
+function raporFiyatlar(){
+  const p=raporPeriyotBilgi('fiyatlar');
+  const items=(DB.fiyatlar||[]).slice().sort((a,b)=>(a.kategori||'').localeCompare(b.kategori||'')||(a.dal||'').localeCompare(b.dal||''));
+  const rows=items.map(f=>{
+    const ad=[f.dal,f.tarif].filter(Boolean).join(' — ')||'-';
+    return `<tr><td>${f.kategori||'-'}</td><td>${ad}</td><td style="font-weight:600;">${fmt(f.sabitFiyat||0)} ₺</td></tr>`;
+  }).join('');
+  const katSayi=new Set(items.map(f=>f.kategori)).size;
+  const body=`${_rpKpi([{lbl:'Toplam Hizmet',val:items.length,cls:'blue'},{lbl:'Kategori Sayısı',val:katSayi,cls:'purple'}])}
+<div class="section">${_rpTable(['Kategori','Hizmet / Dal','Fiyat'],rows)}</div>`;
+  raporSayfaAc('Fiyat Listesi',p.label,body);
 }
+
+// --- 7. Stok Durumu ---
+function raporStok(){
+  const p=raporPeriyotBilgi('stok');
+  const items=(DB.stok||[]).slice().sort((a,b)=>(a.kategori||'').localeCompare(b.kategori||'')||(a.ad||'').localeCompare(b.ad||''));
+  let toplamDeger=0,kritikSayi=0;
+  const rows=items.map(s=>{
+    const miktar=parseFloat(s.miktar)||0,fiyat=parseFloat(s.fiyat)||0,kritik=parseFloat(s.kritik)||0;
+    const deger=miktar*fiyat;toplamDeger+=deger;
+    const altKritik=kritik>0&&miktar<=kritik;if(altKritik)kritikSayi++;
+    return `<tr><td>${s.ad||'-'}</td><td>${s.kategori||'-'}</td><td style="${altKritik?'color:#e53e3e;font-weight:700;':''}">${miktar} ${s.birim||''}</td><td>${kritik||'-'}</td><td>${fmt(fiyat)} ₺</td><td style="font-weight:600;">${fmt(deger)} ₺</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Çeşit',val:items.length,cls:'blue'},{lbl:'Kritik Seviyede',val:kritikSayi,cls:kritikSayi>0?'red':'green'},{lbl:'Toplam Stok Değeri',val:fmt(toplamDeger)+' ₺',cls:'purple'}])}
+<div class="section">${_rpTable(['Malzeme','Kategori','Miktar','Kritik','Birim Fiyat','Toplam Değer'],rows)}</div>`;
+  raporSayfaAc('Stok Durumu',p.label,body);
+}
+
+// --- 8. Rehber ---
+function raporRehber(){
+  const p=raporPeriyotBilgi('rehber');
+  const c=calcFinans();
+  const items=(DB.kisiler||[]).slice().sort((a,b)=>(a.isim||'').localeCompare(b.isim||''));
+  const musteri=items.filter(k=>k.tip==='Müşteri'||k.tip==='Şahıs').length;
+  const firma=items.filter(k=>k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka').length;
+  const rows=items.map(k=>{
+    const bal=c.cD[k.id]?.bakiyeAll||0;
+    const renk=bal>0?'#22a85a':bal<0?'#e53e3e':'#a0aec0';
+    const etiket=bal>0?' (Alacak)':bal<0?' (Borç)':'';
+    return `<tr><td>${fmtKId(k.id)}</td><td>${k.isim||'-'}</td><td>${k.tip||'-'}</td><td>${k.tel||'-'}</td><td style="font-weight:600;color:${renk};">${fmt(Math.abs(bal))} ₺${etiket}</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Kayıt',val:items.length,cls:'blue'},{lbl:'Müşteri/Şahıs',val:musteri,cls:'teal'},{lbl:'Firma/Kurum',val:firma,cls:'purple'}])}
+<div class="section">${_rpTable(['Cari No','İsim','Tip','Telefon','Bakiye'],rows)}</div>`;
+  raporSayfaAc('Rehber',p.label,body);
+}
+
+// --- 9. Vergi & Faturalar ---
+function raporVergi(){
+  const p=raporPeriyotBilgi('vergi');
+  const items=(DB.vergiFaturalari||[]).filter(v=>!p.fDate||(v.tarih||'').startsWith(p.fDate)).sort((a,b)=>(b.tarih||'').localeCompare(a.tarih||''));
+  let topTutar=0,topKdv=0;
+  const rows=items.map(v=>{
+    topTutar+=parseFloat(v.tutar)||0;topKdv+=parseFloat(v.kdv_tutar)||0;
+    const renk=(v.tip==='Alınan'||v.tip==='Gelir')?'#22a85a':'#e53e3e';
+    return `<tr><td>${dtS(v.tarih)}</td><td><span class="badge" style="background:${renk}1a;color:${renk};">${v.tip||'-'}</span></td><td>${v.fatura_no||'-'}</td><td>${v.firma||'-'}</td><td>${v.vergi_no||'-'}</td><td style="font-weight:600;">${fmt(v.tutar||0)} ₺</td><td>${fmt(v.kdv_tutar||0)} ₺</td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Fatura Sayısı',val:items.length,cls:'blue'},{lbl:'Toplam Tutar',val:fmt(topTutar)+' ₺',cls:'purple'},{lbl:'Toplam KDV',val:fmt(topKdv)+' ₺',cls:'amber'}])}
+<div class="section">${_rpTable(['Tarih','Tip','Fatura No','Firma','Vergi No','Tutar','KDV'],rows)}</div>`;
+  raporSayfaAc('Vergi & Faturalar',p.label,body);
+}
+
+// --- 10. Şablonlar ---
+function raporSablonlar(){
+  const p=raporPeriyotBilgi('sablonlar');
+  let items=(DB.sablonlar||[]).slice();
+  if(p.fDate)items=items.filter(s=>(s.sonIslemTarihi||'').startsWith(p.fDate));
+  items.sort((a,b)=>(a.isim||'').localeCompare(b.isim||''));
+  const aktif=items.filter(s=>s.aktif).length;
+  const rows=items.map(s=>{
+    const renk=s.aktif?'#22a85a':'#a0aec0';
+    const tipRenk=s.tip==='Gelir'?'#22a85a':'#e53e3e';
+    return `<tr><td>${s.isim||'-'}</td><td><span class="badge" style="background:${tipRenk}1a;color:${tipRenk};">${s.tip||'-'}</span></td><td>${s.kat||'-'}</td><td style="font-weight:600;">${fmt(s.tutar||0)} ₺</td><td>${s.periyot||'-'}</td><td>${s.sonIslemTarihi?dtS(s.sonIslemTarihi):'-'}</td><td><span class="badge" style="background:${renk}1a;color:${renk};">${s.aktif?'Aktif':'Pasif'}</span></td></tr>`;
+  }).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Şablon',val:items.length,cls:'blue'},{lbl:'Aktif',val:aktif,cls:'green'},{lbl:'Pasif',val:items.length-aktif,cls:'red'}])}
+<div class="section">${_rpTable(['İsim','Tip','Kategori','Tutar','Periyot','Son İşlem','Durum'],rows)}</div>`;
+  raporSayfaAc('Şablonlar',p.label,body);
+}
+
+// --- 11. Tavsiyeler ---
+function raporTavsiyeler(){
+  const p=raporPeriyotBilgi('tavsiyeler');
+  const tar=t=>(t.tarih||t.created_at||t.createdAt||'')+'';
+  const items=(DB.tavsiyeler||[]).filter(t=>!p.fDate||tar(t).startsWith(p.fDate)).sort((a,b)=>tar(b).localeCompare(tar(a)));
+  const rows=items.map(t=>`<tr><td>${dtS(tar(t))}</td><td style="font-weight:600;">${t.baslik||'-'}</td><td>${t.ozet||'-'}</td></tr>`).join('');
+  const body=`${_rpKpi([{lbl:'Toplam Tavsiye',val:items.length,cls:'blue'}])}
+<div class="section">${_rpTable(['Tarih','Başlık','Özet'],rows)}</div>`;
+  raporSayfaAc('Tavsiyeler',p.label,body);
+}
+
 
 // ============================================================ ŞABLONLAR
 
