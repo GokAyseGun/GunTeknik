@@ -2689,6 +2689,7 @@ async function doLogout(){
 }
 
 async function startApp(){
+  sessionStorage.setItem('gt_session','1');
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
@@ -8790,6 +8791,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Geri tuşunu engelle — uygulama modu
   history.pushState(null,'',location.href);
   window.addEventListener('popstate',()=>history.pushState(null,'',location.href));
+  // El kitabından geri dönüldüğünde oturumu yeniden başlat (şifre/parmak isteme)
+  if(sessionStorage.getItem('gt_session')==='1'){
+    (async()=>{try{await startApp();}catch(e){console.warn('Oturum yenileme hatası',e);}})();
+  }
   // Pull-to-refresh engeli — gerçek scrollable elementi bul
   document.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
   document.addEventListener('touchmove',e=>{
