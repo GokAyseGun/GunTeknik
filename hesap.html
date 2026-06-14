@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07101f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Hesap Makinesi · El Kitabı · Gün Teknik</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+:root{
+  --bg:#07101f;--bg2:#0d1a2e;--surface:#111f36;--surface2:#172540;
+  --border:#1e3050;--border2:#243860;
+  --text:#e8f0fe;--text2:#8ba4c8;--text3:#4d6a94;
+  --blue:#7eb3f0;--blue-lt:rgba(126,179,240,0.12);--blue-md:rgba(126,179,240,0.22);
+  --green:#6fcf97;--green-lt:rgba(111,207,151,0.12);--green-md:rgba(111,207,151,0.25);
+  --red:#e88080;--red-lt:rgba(232,128,128,0.12);
+  --amber:#f0c472;--amber-lt:rgba(240,196,114,0.12);--amber-md:rgba(240,196,114,0.28);
+  --purple:#b39ddb;--purple-lt:rgba(179,157,219,0.12);
+  --teal:#7ecec4;--teal-lt:rgba(126,206,196,0.12);
+  --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:28px;
+  --nav-h:68px;--top-h:60px;
+  --ease:cubic-bezier(0.16,1,0.3,1);--ease-back:cubic-bezier(0.34,1.56,0.64,1);
+}
+[data-tema="acik"]{
+  --bg:#f0f4f8;--bg2:#e4ecf4;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#d0dce8;--border2:#b8cce0;
+  --text:#0f1c2e;--text2:#4a6080;--text3:#7a9ab8;
+  --blue:#1a6fd4;--blue-lt:rgba(26,111,212,0.1);--blue-md:rgba(26,111,212,0.2);
+  --green:#1a8a52;--green-lt:rgba(26,138,82,0.1);--green-md:rgba(26,138,82,0.25);
+  --red:#d42828;--red-lt:rgba(212,40,40,0.1);
+  --amber:#b07000;--amber-lt:rgba(176,112,0,0.1);--amber-md:rgba(176,112,0,0.25);
+  --purple:#6a3fb0;--purple-lt:rgba(106,63,176,0.1);
+  --teal:#1a8080;--teal-lt:rgba(26,128,128,0.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+@keyframes pageIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(0.92) translateY(8px)}to{opacity:1;transform:none}}
+
+/* TOP BAR */
+.top-bar{position:fixed;top:0;left:0;right:0;height:var(--top-h);background:rgba(13,26,46,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:200;}
+[data-tema="acik"] .top-bar{background:rgba(240,244,248,0.97);}
+.top-bar-back{width:38px;height:38px;border-radius:var(--r-md);background:var(--amber-lt);border:1px solid var(--amber-md);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:all .2s var(--ease);}
+.top-bar-back:active{transform:scale(0.9);}
+.top-bar-title{flex:1;}
+.top-bar-title h1{font-size:17px;font-weight:700;}
+.top-bar-title p{font-size:11px;color:var(--text3);}
+.theme-btn{width:38px;height:38px;border-radius:var(--r-md);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;}
+
+/* SEKME */
+.tab-bar{position:sticky;top:var(--top-h);z-index:190;background:var(--bg);padding:10px 16px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:6px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s var(--ease);white-space:nowrap;}
+.tab-btn.active{background:var(--amber-lt);border-color:var(--amber-md);color:var(--amber);}
+.tab-btn:active{transform:scale(0.94);}
+
+/* CONTENT */
+.content{padding-top:calc(var(--top-h)+58px);padding-bottom:calc(var(--nav-h)+20px);padding-left:16px;padding-right:16px;max-width:640px;margin:0 auto;animation:pageIn .4s var(--ease);}
+.hesap-section{display:none;}
+.hesap-section.active{display:block;}
+
+/* KART */
+.kart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:14px;}
+.kart-baslik{font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px;}
+.kart-alt{font-size:12px;color:var(--text3);margin-bottom:14px;}
+
+/* FORM */
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.fg input,.fg select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+.fg input:focus,.fg select:focus{border-color:var(--amber);}
+.fg input::-webkit-outer-spin-button,.fg input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.fg input::placeholder{color:var(--text3);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+@media(max-width:380px){.row2{grid-template-columns:1fr;}.row3{grid-template-columns:1fr 1fr;}}
+.unit-wrap{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .2s;}
+.unit-wrap:focus-within{border-color:var(--amber);}
+.unit-wrap input{border:none;border-radius:0;background:transparent;flex:1;padding:10px 12px;color:var(--text);font-size:14px;outline:none;-moz-appearance:textfield;}
+.unit-wrap input::-webkit-outer-spin-button,.unit-wrap input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.unit-lbl{padding:0 12px;font-size:12px;color:var(--text3);background:var(--bg2);border-left:1px solid var(--border);display:flex;align-items:center;white-space:nowrap;}
+
+/* BUTON */
+.btn-hesapla{width:100%;padding:13px;border-radius:var(--r-lg);background:linear-gradient(135deg,#f0c472,#e88080);color:#07101f;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;border:none;transition:all .2s var(--ease);}
+.btn-hesapla:hover{filter:brightness(1.08);}
+.btn-hesapla:active{transform:scale(0.97);}
+.btn-sifirla{width:100%;padding:9px;border-radius:var(--r-md);background:var(--surface2);border:1px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;margin-top:8px;transition:all .2s;}
+.btn-sifirla:active{transform:scale(0.97);}
+
+/* SONUÇ */
+.sonuc{display:none;margin-top:14px;background:linear-gradient(135deg,rgba(240,196,114,0.1),rgba(232,128,128,0.08));border:1px solid rgba(240,196,114,0.3);border-radius:var(--r-lg);padding:16px;animation:pop .3s var(--ease);}
+.sonuc.show{display:block;}
+.sonuc-lbl{font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.sonuc-val{font-size:30px;font-weight:800;color:var(--text);letter-spacing:-.5px;}
+.sonuc-unit{font-size:16px;font-weight:400;color:var(--text2);margin-left:4px;}
+.sonuc-detay{font-size:12px;color:var(--text3);margin-top:6px;line-height:1.6;}
+.sonuc-warn{margin-top:8px;background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;color:var(--red);display:none;}
+.sonuc-warn.show{display:block;}
+.sonuc-ok{margin-top:8px;background:var(--green-lt);border:1px solid var(--green-md);border-radius:var(--r-sm);padding:8px 12px;font-size:12px;color:var(--green);display:none;}
+.sonuc-ok.show{display:block;}
+.info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:var(--text2);margin-top:12px;display:flex;gap:8px;}
+
+/* ═══════════════════════════════════════
+   TEMEL FORMÜLLER — Formül Kartları
+═══════════════════════════════════════ */
+.formul-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+@media(min-width:480px){.formul-grid{grid-template-columns:1fr 1fr 1fr;}}
+.fkart{background:var(--surface);border:2px solid var(--border);border-radius:var(--r-lg);padding:12px 10px;cursor:pointer;transition:all .22s var(--ease);text-align:center;user-select:none;}
+.fkart:active{transform:scale(0.95);}
+.fkart.secili{border-color:var(--amber);background:var(--amber-lt);}
+.fkart-ust{font-size:18px;font-weight:800;color:var(--amber);font-family:Georgia,serif;letter-spacing:.3px;line-height:1.2;margin-bottom:4px;}
+.fkart-alt{font-size:9px;color:var(--text3);font-weight:600;}
+.hesap-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:14px;}
+.panel-formul{text-align:center;font-size:20px;font-weight:800;color:var(--amber);font-family:Georgia,serif;padding:12px;background:var(--amber-lt);border-radius:var(--r-md);margin-bottom:16px;border:1px solid var(--amber-md);}
+
+/* DİRENÇ RENK KODU */
+.bant-sira{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.bant-row{display:flex;align-items:center;gap:10px;}
+.bant-no{font-size:11px;font-weight:700;color:var(--text3);width:52px;flex-shrink:0;}
+.bant-select{flex:1;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:13px;outline:none;}
+.bant-select:focus{border-color:var(--amber);}
+.renk-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.15);}
+.direnc-sonuc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;text-align:center;margin-top:8px;}
+.direnc-val{font-size:28px;font-weight:800;color:var(--amber);}
+.direnc-tolerans{font-size:13px;color:var(--text3);margin-top:4px;}
+.direnc-bant-goster{display:flex;gap:4px;justify-content:center;margin-top:10px;align-items:stretch;}
+.direnc-bant{width:22px;border-radius:3px;min-height:44px;}
+.direnc-govde{background:#c8a84b;border-radius:6px;padding:6px;display:flex;gap:4px;align-items:center;justify-content:center;}
+
+/* ÇEMBER */
+.cember-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.cember-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;}
+.cember-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.cember-val{font-size:18px;font-weight:800;color:var(--text);margin-top:3px;}
+.cember-u{font-size:11px;color:var(--text3);}
+
+/* BOTTOM NAV */
+.bottom-nav{height:var(--nav-h);background:rgba(13,26,46,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);position:fixed;bottom:0;left:0;right:0;z-index:100;justify-content:center;gap:4px;}
+[data-tema="acik"] .bottom-nav{background:rgba(240,244,248,0.96);}
+.nav-item{flex:0 0 auto;min-width:68px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;border-radius:var(--r-md);transition:all .3s var(--ease);}
+.nav-item .nav-icon{font-size:21px;transition:transform .3s var(--ease-back);}
+.nav-item.active{color:var(--amber);}
+.nav-item.active .nav-icon{transform:translateY(-3px) scale(1.1);}
+.nav-item:active{transform:scale(0.92);}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-back" onclick="window.location.href='index.html'">⬅️</div>
+  <div class="top-bar-title"><h1>🔢 Hesap Makinesi</h1><p>Elektrik Teknik Hesapları</p></div>
+  <div class="theme-btn" onclick="toggleTema()" id="theme-btn">🌙</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="sekme('temel',this)">⚡ Temel Formüller</button>
+  <button class="tab-btn" onclick="sekme('gerilim',this)">📉 Gerilim Düşümü</button>
+  <button class="tab-btn" onclick="sekme('maliyet',this)">💰 Maliyet</button>
+  <button class="tab-btn" onclick="sekme('kablo',this)">🔌 Kablo Kesiti</button>
+  <button class="tab-btn" onclick="sekme('renk',this)">🌈 Renk Kodu</button>
+  <button class="tab-btn" onclick="sekme('cember',this)">⭕ Çap / Alan</button>
+</div>
+
+<div class="content">
+
+<!-- ══════════════════════════════════
+     1. TEMEL FORMÜLLER
+══════════════════════════════════ -->
+<div class="hesap-section active" id="sec-temel">
+
+  <!-- Ohm Yasası -->
+  <div class="kart">
+    <div class="kart-baslik">⚡ Ohm Yasası — Gerilim · Akım · Direnç</div>
+    <div class="kart-alt">Hesaplamak istediğin formüle tıkla, girişler otomatik değişir</div>
+    <div class="formul-grid">
+      <div class="fkart secili" onclick="ohm_sec(this,'u')" id="ohm_u">
+        <div class="fkart-ust">U = I × R</div><div class="fkart-alt">Gerilim bul</div>
+      </div>
+      <div class="fkart" onclick="ohm_sec(this,'i')" id="ohm_i">
+        <div class="fkart-ust">I = U / R</div><div class="fkart-alt">Akım bul</div>
+      </div>
+      <div class="fkart" onclick="ohm_sec(this,'r')" id="ohm_r">
+        <div class="fkart-ust">R = U / I</div><div class="fkart-alt">Direnç bul</div>
+      </div>
+      <div class="fkart" onclick="ohm_sec(this,'p1')" id="ohm_p1">
+        <div class="fkart-ust">P = U × I</div><div class="fkart-alt">Güç (U·I)</div>
+      </div>
+      <div class="fkart" onclick="ohm_sec(this,'p2')" id="ohm_p2">
+        <div class="fkart-ust">P = I² × R</div><div class="fkart-alt">Güç (I²·R)</div>
+      </div>
+      <div class="fkart" onclick="ohm_sec(this,'p3')" id="ohm_p3">
+        <div class="fkart-ust">P = U² / R</div><div class="fkart-alt">Güç (U²/R)</div>
+      </div>
+    </div>
+    <div class="hesap-panel" id="ohm-panel">
+      <div class="panel-formul" id="ohm-formul-goster">U = I × R</div>
+      <div id="ohm-inputs">
+        <div class="row2">
+          <div class="fg"><label id="ohm-l1">Akım (I)</label>
+            <div class="unit-wrap"><input type="number" id="ohm-v1" placeholder="0" step="any"><span class="unit-lbl" id="ohm-u1">A</span></div>
+          </div>
+          <div class="fg"><label id="ohm-l2">Direnç (R)</label>
+            <div class="unit-wrap"><input type="number" id="ohm-v2" placeholder="0" step="any"><span class="unit-lbl" id="ohm-u2">Ω</span></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-hesapla" onclick="ohm_hesapla()">Hesapla</button>
+      <div class="sonuc" id="ohm-sonuc">
+        <div class="sonuc-lbl" id="ohm-sl">Gerilim</div>
+        <div><span class="sonuc-val" id="ohm-sv">—</span><span class="sonuc-unit" id="ohm-su">V</span></div>
+        <div class="sonuc-detay" id="ohm-sd"></div>
+      </div>
+      <button class="btn-sifirla" onclick="sifirla('ohm')">↺ Temizle</button>
+    </div>
+  </div>
+
+  <!-- Güç Formülleri -->
+  <div class="kart">
+    <div class="kart-baslik">💡 Güç Hesabı — 1Φ ve 3Φ</div>
+    <div class="kart-alt">Sistem türü ve bilinenleri seç</div>
+    <div class="formul-grid">
+      <div class="fkart secili" onclick="guc_sec(this,'1f_p')" id="gf_1f_p">
+        <div class="fkart-ust">P = U·I·cosφ</div><div class="fkart-alt">1Φ Aktif güç</div>
+      </div>
+      <div class="fkart" onclick="guc_sec(this,'1f_i')" id="gf_1f_i">
+        <div class="fkart-ust">I = P/(U·cosφ)</div><div class="fkart-alt">1Φ Akım bul</div>
+      </div>
+      <div class="fkart" onclick="guc_sec(this,'3f_p')" id="gf_3f_p">
+        <div class="fkart-ust">P=√3·U·I·cosφ</div><div class="fkart-alt">3Φ Aktif güç</div>
+      </div>
+      <div class="fkart" onclick="guc_sec(this,'3f_i')" id="gf_3f_i">
+        <div class="fkart-ust">I=P/(√3·U·cosφ)</div><div class="fkart-alt">3Φ Akım bul</div>
+      </div>
+      <div class="fkart" onclick="guc_sec(this,'s')" id="gf_s">
+        <div class="fkart-ust">S = P / cosφ</div><div class="fkart-alt">Görünür güç</div>
+      </div>
+      <div class="fkart" onclick="guc_sec(this,'q')" id="gf_q">
+        <div class="fkart-ust">Q = P·tanφ</div><div class="fkart-alt">Reaktif güç</div>
+      </div>
+    </div>
+    <div class="hesap-panel" id="guc-panel">
+      <div class="panel-formul" id="guc-formul-goster">P = U · I · cosφ</div>
+      <div id="guc-inputs"></div>
+      <button class="btn-hesapla" onclick="guc_hesapla()">Hesapla</button>
+      <div class="sonuc" id="guc-sonuc">
+        <div class="sonuc-lbl" id="guc-sl">Aktif Güç</div>
+        <div><span class="sonuc-val" id="guc-sv">—</span><span class="sonuc-unit" id="guc-su">kW</span></div>
+        <div class="sonuc-detay" id="guc-sd"></div>
+      </div>
+      <button class="btn-sifirla" onclick="sifirla('guc')">↺ Temizle</button>
+    </div>
+  </div>
+
+  <!-- Enerji ve Çevrim -->
+  <div class="kart">
+    <div class="kart-baslik">🔋 Enerji ve Çevrim Formülleri</div>
+    <div class="kart-alt">Hesaplamak istediğin formüle tıkla</div>
+    <div class="formul-grid">
+      <div class="fkart secili" onclick="enerji_sec(this,'wh')" id="ef_wh">
+        <div class="fkart-ust">W = P × t</div><div class="fkart-alt">Enerji (Wh)</div>
+      </div>
+      <div class="fkart" onclick="enerji_sec(this,'eff')" id="ef_eff">
+        <div class="fkart-ust">η = P_çık/P_gir</div><div class="fkart-alt">Verim (%)</div>
+      </div>
+      <div class="fkart" onclick="enerji_sec(this,'joule')" id="ef_joule">
+        <div class="fkart-ust">Q = I²·R·t</div><div class="fkart-alt">Joule ısısı</div>
+      </div>
+      <div class="fkart" onclick="enerji_sec(this,'charge')" id="ef_charge">
+        <div class="fkart-ust">Q = I × t</div><div class="fkart-alt">Yük (Coulomb)</div>
+      </div>
+      <div class="fkart" onclick="enerji_sec(this,'kap')" id="ef_kap">
+        <div class="fkart-ust">C = Q / V</div><div class="fkart-alt">Kapasitans</div>
+      </div>
+      <div class="fkart" onclick="enerji_sec(this,'ind')" id="ef_ind">
+        <div class="fkart-ust">X_L = 2πfL</div><div class="fkart-alt">İndüktif reaktans</div>
+      </div>
+    </div>
+    <div class="hesap-panel" id="enerji-panel">
+      <div class="panel-formul" id="enerji-formul-goster">W = P × t</div>
+      <div id="enerji-inputs"></div>
+      <button class="btn-hesapla" onclick="enerji_hesapla()">Hesapla</button>
+      <div class="sonuc" id="enerji-sonuc">
+        <div class="sonuc-lbl" id="enerji-sl">Enerji</div>
+        <div><span class="sonuc-val" id="enerji-sv">—</span><span class="sonuc-unit" id="enerji-su">Wh</span></div>
+        <div class="sonuc-detay" id="enerji-sd"></div>
+      </div>
+      <button class="btn-sifirla" onclick="sifirla('enerji')">↺ Temizle</button>
+    </div>
+  </div>
+
+</div><!-- /sec-temel -->
+
+<!-- ══════════════════════════════════
+     2. GERİLİM DÜŞÜMÜ
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-gerilim">
+  <div class="kart">
+    <div class="kart-baslik">📉 Gerilim Düşümü Hesaplama</div>
+    <div class="kart-alt">IEC 60364 — ΔV = 2·ρ·L·I / A (tek faz) · ΔV = √3·ρ·L·I / A (3 faz)</div>
+    <div class="row2">
+      <div class="fg"><label>Sistem</label>
+        <select id="gd-sistem" onchange="gd_sistem_degis()">
+          <option value="1f">Tek Faz (230V)</option>
+          <option value="3f">Üç Faz (400V)</option>
+        </select>
+      </div>
+      <div class="fg"><label>İletken Malzeme</label>
+        <select id="gd-malzeme">
+          <option value="0.0175">Bakır (Cu)</option>
+          <option value="0.0286">Alüminyum (Al)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Akım (I)</label>
+        <div class="unit-wrap"><input type="number" id="gd-akim" placeholder="16" step="any"><span class="unit-lbl">A</span></div>
+      </div>
+      <div class="fg"><label>Güç Faktörü (cosφ)</label>
+        <div class="unit-wrap"><input type="number" id="gd-cosphi" placeholder="0.9" step="0.01" min="0.1" max="1" value="0.9"><span class="unit-lbl">—</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Hat Uzunluğu (L)</label>
+        <div class="unit-wrap"><input type="number" id="gd-uzunluk" placeholder="50" step="any"><span class="unit-lbl">m</span></div>
+      </div>
+      <div class="fg"><label>Kablo Kesiti (A)</label>
+        <div class="unit-wrap"><input type="number" id="gd-kesit" placeholder="2.5" step="any"><span class="unit-lbl">mm²</span></div>
+      </div>
+    </div>
+    <div class="fg"><label>Nominal Gerilim (Un)</label>
+      <div class="unit-wrap"><input type="number" id="gd-un" placeholder="230" value="230" step="any"><span class="unit-lbl">V</span></div>
+    </div>
+    <button class="btn-hesapla" onclick="gd_hesapla()">Hesapla</button>
+    <div class="sonuc" id="gd-sonuc">
+      <div class="sonuc-lbl">Gerilim Düşümü</div>
+      <div><span class="sonuc-val" id="gd-sv">—</span><span class="sonuc-unit">V</span></div>
+      <div class="sonuc-detay" id="gd-sd"></div>
+      <div class="sonuc-warn" id="gd-warn"></div>
+      <div class="sonuc-ok" id="gd-ok"></div>
+    </div>
+    <button class="btn-sifirla" onclick="sifirla('gd')">↺ Temizle</button>
+    <div class="info-box"><span>ℹ️</span><span>Konutlarda max %3 (≈6,9 V), sanayi ve uzun hatlarda max %5 (≈11,5 V) gerilim düşümüne izin verilir.</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     3. MALİYET HESAPLAMA
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-maliyet">
+  <div class="kart">
+    <div class="kart-baslik">💰 Elektrik Maliyet Hesaplama</div>
+    <div class="kart-alt">Cihazın enerji tüketimi ve maliyetini hesapla</div>
+    <div class="row2">
+      <div class="fg"><label>Cihaz Gücü (P)</label>
+        <div class="unit-wrap"><input type="number" id="mal-guc" placeholder="1000" step="any"><span class="unit-lbl" id="mal-guc-u">W</span></div>
+      </div>
+      <div class="fg"><label>Güç Birimi</label>
+        <select id="mal-birim" onchange="mal_birim()">
+          <option value="1">Watt (W)</option>
+          <option value="1000">Kilowatt (kW)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Günlük Kullanım Süresi</label>
+        <div class="unit-wrap"><input type="number" id="mal-sure" placeholder="8" step="any"><span class="unit-lbl">saat/gün</span></div>
+      </div>
+      <div class="fg"><label>Aylık Gün Sayısı</label>
+        <div class="unit-wrap"><input type="number" id="mal-gun" placeholder="30" value="30" step="any"><span class="unit-lbl">gün</span></div>
+      </div>
+    </div>
+    <div class="fg"><label>Birim Fiyat (TL/kWh)</label>
+      <div class="unit-wrap"><input type="number" id="mal-fiyat" placeholder="6.50" step="0.01"><span class="unit-lbl">₺/kWh</span></div>
+    </div>
+    <button class="btn-hesapla" onclick="mal_hesapla()">Hesapla</button>
+    <div class="sonuc" id="mal-sonuc">
+      <div class="sonuc-lbl">Aylık Maliyet</div>
+      <div><span class="sonuc-val" id="mal-sv">—</span><span class="sonuc-unit">₺</span></div>
+      <div class="sonuc-detay" id="mal-sd"></div>
+    </div>
+    <button class="btn-sifirla" onclick="sifirla('mal')">↺ Temizle</button>
+  </div>
+  <div class="kart">
+    <div class="kart-baslik">⚡ Çoklu Cihaz Karşılaştırması</div>
+    <div class="kart-alt">Eski ve yeni cihazı karşılaştır</div>
+    <div class="row2">
+      <div class="fg"><label>Eski Cihaz (W)</label>
+        <div class="unit-wrap"><input type="number" id="kar-eski" placeholder="60" step="any"><span class="unit-lbl">W</span></div>
+      </div>
+      <div class="fg"><label>Yeni Cihaz (W)</label>
+        <div class="unit-wrap"><input type="number" id="kar-yeni" placeholder="9" step="any"><span class="unit-lbl">W</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Günlük Kullanım</label>
+        <div class="unit-wrap"><input type="number" id="kar-sure" placeholder="8" step="any"><span class="unit-lbl">saat/gün</span></div>
+      </div>
+      <div class="fg"><label>Birim Fiyat</label>
+        <div class="unit-wrap"><input type="number" id="kar-fiyat" placeholder="6.50" step="0.01"><span class="unit-lbl">₺/kWh</span></div>
+      </div>
+    </div>
+    <button class="btn-hesapla" onclick="kar_hesapla()">Karşılaştır</button>
+    <div class="sonuc" id="kar-sonuc">
+      <div class="sonuc-lbl">Aylık Tasarruf</div>
+      <div><span class="sonuc-val" id="kar-sv">—</span><span class="sonuc-unit">₺</span></div>
+      <div class="sonuc-detay" id="kar-sd"></div>
+    </div>
+    <button class="btn-sifirla" onclick="sifirla('kar')">↺ Temizle</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     4. KABLO KESİTİ
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-kablo">
+  <div class="kart">
+    <div class="kart-baslik">🔌 Gerilim ve Akıma Göre Kablo Kesit Seçimi</div>
+    <div class="kart-alt">IEC 60364 — akım kapasitesi + gerilim düşümü kontrol</div>
+    <div class="row2">
+      <div class="fg"><label>Sistem</label>
+        <select id="kb-sistem">
+          <option value="1f">Tek Faz (230V)</option>
+          <option value="3f">Üç Faz (400V)</option>
+        </select>
+      </div>
+      <div class="fg"><label>İletken Malzeme</label>
+        <select id="kb-malzeme">
+          <option value="cu">Bakır (Cu)</option>
+          <option value="al">Alüminyum (Al)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Akım (I)</label>
+        <div class="unit-wrap"><input type="number" id="kb-akim" placeholder="16" step="any"><span class="unit-lbl">A</span></div>
+      </div>
+      <div class="fg"><label>Hat Uzunluğu (L)</label>
+        <div class="unit-wrap"><input type="number" id="kb-uzunluk" placeholder="30" step="any"><span class="unit-lbl">m</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Güç Faktörü (cosφ)</label>
+        <div class="unit-wrap"><input type="number" id="kb-cosphi" placeholder="0.9" step="0.01" value="0.9"><span class="unit-lbl">—</span></div>
+      </div>
+      <div class="fg"><label>Max Gerilim Düşümü</label>
+        <select id="kb-maxdv">
+          <option value="3">%3 — Konut</option>
+          <option value="5">%5 — Sanayi</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-hesapla" onclick="kb_hesapla()">Kesit Hesapla</button>
+    <div class="sonuc" id="kb-sonuc">
+      <div class="sonuc-lbl">Önerilen Kablo Kesiti</div>
+      <div><span class="sonuc-val" id="kb-sv">—</span><span class="sonuc-unit">mm²</span></div>
+      <div class="sonuc-detay" id="kb-sd"></div>
+    </div>
+    <button class="btn-sifirla" onclick="sifirla('kb')">↺ Temizle</button>
+    <div class="info-box"><span>ℹ️</span><span>Sonuç, hem akım kapasitesi hem gerilim düşümü kontrolünün her ikisini de karşılayan en küçük standart kesittir. Ek sıcaklık, gruplandırma katsayıları için revize edin.</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     5. DİRENÇ RENK KODU
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-renk">
+  <div class="kart">
+    <div class="kart-baslik">🌈 Direnç Renk Kodu Hesaplama</div>
+    <div class="kart-alt">Renkleri seç, direnç değerini ve toleransı bul</div>
+    <div class="fg"><label>Bant Sayısı</label>
+      <select id="rk-bant" onchange="rk_bantlar()">
+        <option value="4">4 Bant</option>
+        <option value="5">5 Bant</option>
+        <option value="6">6 Bant</option>
+      </select>
+    </div>
+    <div class="bant-sira" id="rk-bant-sira"></div>
+    <button class="btn-hesapla" onclick="rk_hesapla()">Değeri Hesapla</button>
+    <div id="rk-sonuc-wrap" style="display:none">
+      <div class="direnc-sonuc">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Direnç Değeri</div>
+        <div class="direnc-val" id="rk-val">—</div>
+        <div class="direnc-tolerans" id="rk-tol">—</div>
+        <div class="direnc-bant-goster" id="rk-bant-goster" style="margin-top:12px;justify-content:center;align-items:flex-end;gap:6px;"></div>
+      </div>
+    </div>
+    <button class="btn-sifirla" onclick="rk_sifirla()">↺ Sıfırla</button>
+  </div>
+  <div class="kart">
+    <div class="kart-baslik">📖 Renk Kodu Tablosu</div>
+    <div class="kart-alt">Referans tablosu</div>
+    <div id="rk-tablo"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     6. ÇAP / ALAN
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-cember">
+  <div class="kart">
+    <div class="kart-baslik">⭕ Çap · Alan · Çevre Hesaplama</div>
+    <div class="kart-alt">İki değeri gir, diğerleri otomatik hesaplanır</div>
+    <div class="formul-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="fkart secili" onclick="cember_sec(this,'d')" id="cb_d">
+        <div class="fkart-ust">A = π·r²</div><div class="fkart-alt">Çaptan alan</div>
+      </div>
+      <div class="fkart" onclick="cember_sec(this,'a')" id="cb_a">
+        <div class="fkart-ust">d = 2·√(A/π)</div><div class="fkart-alt">Alandan çap</div>
+      </div>
+      <div class="fkart" onclick="cember_sec(this,'c')" id="cb_c">
+        <div class="fkart-ust">A = C²/(4π)</div><div class="fkart-alt">Çevreden alan</div>
+      </div>
+      <div class="fkart" onclick="cember_sec(this,'kablo')" id="cb_kablo">
+        <div class="fkart-ust">d = 2·√(S/π)</div><div class="fkart-alt">Kablo kesit → çap</div>
+      </div>
+    </div>
+    <div class="hesap-panel" id="cember-panel">
+      <div class="panel-formul" id="cember-formul-goster">A = π × r²</div>
+      <div id="cember-inputs">
+        <div class="fg"><label>Çap (d)</label>
+          <div class="unit-wrap"><input type="number" id="cb-v1" placeholder="10" step="any"><span class="unit-lbl" id="cb-u1">mm</span></div>
+        </div>
+      </div>
+      <button class="btn-hesapla" onclick="cember_hesapla()">Hesapla</button>
+      <div class="sonuc" id="cember-sonuc">
+        <div class="sonuc-lbl" id="cember-sl">Alan</div>
+        <div><span class="sonuc-val" id="cember-sv">—</span><span class="sonuc-unit" id="cember-su">mm²</span></div>
+        <div class="sonuc-detay" id="cember-sd"></div>
+      </div>
+      <button class="btn-sifirla" onclick="sifirla('cember')">↺ Temizle</button>
+    </div>
+    <div class="info-box"><span>💡</span><span>Bakır tel çapından kesit hesabı: 1,5 mm çap → A = π×(0,75)² ≈ 1,77 mm²</span></div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<nav class="bottom-nav">
+  <div class="nav-item" onclick="window.location.href='../index.html'"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
+  <div class="nav-item active" onclick="window.location.href='hesap.html'"><span class="nav-icon">🔢</span><span>Hesaplama</span></div>
+  <div class="nav-item" onclick="window.location.href='semalar.html'"><span class="nav-icon">📐</span><span>Şemalar</span></div>
+  <div class="nav-item" onclick="window.location.href='teori.html'"><span class="nav-icon">📘</span><span>Teori</span></div>
+</nav>
+
+<script>
+// ──────────── TEMA ────────────
+const tema=localStorage.getItem('gt_tema')||'koyu';
+if(tema==='acik'){document.documentElement.setAttribute('data-tema','acik');document.getElementById('theme-btn').textContent='☀️';}
+function toggleTema(){
+  const a=document.documentElement.getAttribute('data-tema')==='acik';
+  document.documentElement.setAttribute('data-tema',a?'':'acik');
+  localStorage.setItem('gt_tema',a?'koyu':'acik');
+  document.getElementById('theme-btn').textContent=a?'🌙':'☀️';
+}
+
+// ──────────── SEKME ────────────
+function sekme(id,btn){
+  document.querySelectorAll('.hesap-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ──────────── YARDIMCILAR ────────────
+function fmt(n){
+  if(Math.abs(n)<0.001)return n.toExponential(3);
+  if(Math.abs(n)>=1e6)return (n/1e6).toFixed(3)+' M';
+  if(Math.abs(n)>=1000)return (n/1000).toFixed(3)+' k';
+  if(Math.abs(n)<0.1)return n.toFixed(4);
+  return parseFloat(n.toFixed(4)).toString();
+}
+function n(id){return parseFloat(document.getElementById(id).value);}
+function s(id){return document.getElementById(id).value;}
+function show(id){document.getElementById(id).classList.add('show');}
+function sifirla(prf){
+  document.querySelectorAll(`#${prf}-sonuc, #${prf}-sonuc-wrap`).forEach(e=>{if(e){e.classList.remove('show');if(e.id.endsWith('wrap'))e.style.display='none';}});
+  document.querySelectorAll(`[id^="${prf}-"]`).forEach(e=>{if(e.tagName==='INPUT')e.value='';});
+  const warns=['gd-warn','gd-ok'];warns.forEach(w=>{const e=document.getElementById(w);if(e){e.classList.remove('show');e.textContent='';}});
+}
+
+// ══════════════════════════════════════
+// 1. OHM YASASI
+// ══════════════════════════════════════
+let ohm_mod='u';
+const ohm_defs={
+  u:{f:'U = I × R',l1:'Akım (I)',u1:'A',l2:'Direnç (R)',u2:'Ω',sl:'Gerilim',su:'V'},
+  i:{f:'I = U / R',l1:'Gerilim (U)',u1:'V',l2:'Direnç (R)',u2:'Ω',sl:'Akım',su:'A'},
+  r:{f:'R = U / I',l1:'Gerilim (U)',u1:'V',l2:'Akım (I)',u2:'A',sl:'Direnç',su:'Ω'},
+  p1:{f:'P = U × I',l1:'Gerilim (U)',u1:'V',l2:'Akım (I)',u2:'A',sl:'Aktif Güç',su:'W'},
+  p2:{f:'P = I² × R',l1:'Akım (I)',u1:'A',l2:'Direnç (R)',u2:'Ω',sl:'Aktif Güç',su:'W'},
+  p3:{f:'P = U² / R',l1:'Gerilim (U)',u1:'V',l2:'Direnç (R)',u2:'Ω',sl:'Aktif Güç',su:'W'}
+};
+function ohm_sec(el,mod){
+  document.querySelectorAll('.fkart[id^="ohm_"]').forEach(e=>e.classList.remove('secili'));
+  el.classList.add('secili');
+  ohm_mod=mod;
+  const d=ohm_defs[mod];
+  document.getElementById('ohm-formul-goster').textContent=d.f;
+  document.getElementById('ohm-l1').textContent=d.l1;
+  document.getElementById('ohm-u1').textContent=d.u1;
+  document.getElementById('ohm-l2').textContent=d.l2;
+  document.getElementById('ohm-u2').textContent=d.u2;
+  document.getElementById('ohm-v1').value='';
+  document.getElementById('ohm-v2').value='';
+  document.getElementById('ohm-sonuc').classList.remove('show');
+}
+function ohm_hesapla(){
+  const a=n('ohm-v1'),b=n('ohm-v2');
+  if(isNaN(a)||isNaN(b)||a<=0||b<=0){alert('Geçerli değerler girin');return;}
+  let res,det='';
+  const d=ohm_defs[ohm_mod];
+  if(ohm_mod==='u'){res=a*b;det=`${a} A × ${b} Ω = ${fmt(res)} V`;}
+  else if(ohm_mod==='i'){res=a/b;det=`${a} V / ${b} Ω = ${fmt(res)} A`;}
+  else if(ohm_mod==='r'){res=a/b;det=`${a} V / ${b} A = ${fmt(res)} Ω`;}
+  else if(ohm_mod==='p1'){res=a*b;det=`${a} V × ${b} A = ${fmt(res)} W`;}
+  else if(ohm_mod==='p2'){res=a*a*b;det=`${a}² × ${b} = ${fmt(res)} W`;}
+  else if(ohm_mod==='p3'){res=a*a/b;det=`${a}² / ${b} = ${fmt(res)} W`;}
+  document.getElementById('ohm-sl').textContent=d.sl;
+  document.getElementById('ohm-sv').textContent=fmt(res);
+  document.getElementById('ohm-su').textContent=d.su;
+  document.getElementById('ohm-sd').textContent=det;
+  show('ohm-sonuc');
+}
+
+// ══════════════════════════════════════
+// GÜÇ HESABI
+// ══════════════════════════════════════
+let guc_mod='1f_p';
+const guc_defs={
+  '1f_p':{f:'P = U · I · cosφ',ins:[['Gerilim (U)','guc-u','V'],['Akım (I)','guc-i','A'],['cosφ','guc-cos','—']],sl:'Aktif Güç',su:'W'},
+  '1f_i':{f:'I = P / (U · cosφ)',ins:[['Güç (P)','guc-p','W'],['Gerilim (U)','guc-u','V'],['cosφ','guc-cos','—']],sl:'Akım',su:'A'},
+  '3f_p':{f:'P = √3 · U · I · cosφ',ins:[['Faz-faz Gerilim (U)','guc-u','V'],['Hat Akımı (I)','guc-i','A'],['cosφ','guc-cos','—']],sl:'Aktif Güç',su:'W'},
+  '3f_i':{f:'I = P / (√3 · U · cosφ)',ins:[['Güç (P)','guc-p','W'],['Faz-faz Gerilim (U)','guc-u','V'],['cosφ','guc-cos','—']],sl:'Hat Akımı',su:'A'},
+  's':{f:'S = P / cosφ',ins:[['Aktif Güç (P)','guc-p','W'],['cosφ','guc-cos','—']],sl:'Görünür Güç',su:'VA'},
+  'q':{f:'Q = P · tanφ',ins:[['Aktif Güç (P)','guc-p','W'],['cosφ','guc-cos','—']],sl:'Reaktif Güç',su:'VAR'}
+};
+function guc_sec(el,mod){
+  document.querySelectorAll('.fkart[id^="gf_"]').forEach(e=>e.classList.remove('secili'));
+  el.classList.add('secili');
+  guc_mod=mod;
+  const d=guc_defs[mod];
+  document.getElementById('guc-formul-goster').textContent=d.f;
+  const c=document.getElementById('guc-inputs');
+  c.innerHTML='';
+  const g=document.createElement('div');
+  g.className='row'+(d.ins.length>=3?'3':'2');
+  d.ins.forEach(([lbl,id,un])=>{
+    g.innerHTML+=`<div class="fg"><label>${lbl}</label><div class="unit-wrap"><input type="number" id="${id}" placeholder="0" step="any"><span class="unit-lbl">${un}</span></div></div>`;
+  });
+  c.appendChild(g);
+  document.getElementById('guc-sl').textContent=d.sl;
+  document.getElementById('guc-su').textContent=d.su;
+  document.getElementById('guc-sonuc').classList.remove('show');
+}
+function guc_hesapla(){
+  const d=guc_defs[guc_mod];
+  const vals={};
+  for(const [,id] of d.ins){const v=parseFloat(document.getElementById(id)?.value);if(isNaN(v)||v<=0){alert('Tüm alanları doldurun');return;}vals[id]=v;}
+  let res=0,det='';
+  const U=vals['guc-u']||0,I=vals['guc-i']||0,P=vals['guc-p']||0,cos=vals['guc-cos']||1;
+  if(guc_mod==='1f_p'){res=U*I*cos;det=`${U}V × ${I}A × ${cos} = ${fmt(res)} W = ${fmt(res/1000)} kW`;}
+  else if(guc_mod==='1f_i'){res=P/(U*cos);det=`${P}W / (${U}V × ${cos}) = ${fmt(res)} A`;}
+  else if(guc_mod==='3f_p'){res=Math.sqrt(3)*U*I*cos;det=`√3 × ${U}V × ${I}A × ${cos} = ${fmt(res)} W = ${fmt(res/1000)} kW`;}
+  else if(guc_mod==='3f_i'){res=P/(Math.sqrt(3)*U*cos);det=`${P}W / (√3 × ${U}V × ${cos}) = ${fmt(res)} A`;}
+  else if(guc_mod==='s'){res=P/cos;det=`${P}W / ${cos} = ${fmt(res)} VA = ${fmt(res/1000)} kVA`;}
+  else if(guc_mod==='q'){const tan=Math.tan(Math.acos(cos));res=P*tan;det=`${P}W × tan(arccos(${cos})) = ${fmt(res)} VAR`;}
+  document.getElementById('guc-sv').textContent=fmt(res);
+  document.getElementById('guc-sd').textContent=det;
+  show('guc-sonuc');
+}
+
+// ══════════════════════════════════════
+// ENERJİ VE ÇEVRİM
+// ══════════════════════════════════════
+let enerji_mod='wh';
+const enerji_defs={
+  wh:{f:'W = P × t',ins:[['Güç (P)','en-p','W'],['Süre (t)','en-t','saat']],sl:'Enerji',su:'Wh'},
+  eff:{f:'η = P_çıkış / P_giriş × 100',ins:[['Çıkış Gücü (P_out)','en-po','W'],['Giriş Gücü (P_in)','en-pi','W']],sl:'Verim',su:'%'},
+  joule:{f:'Q = I² × R × t',ins:[['Akım (I)','en-i','A'],['Direnç (R)','en-r','Ω'],['Süre (t)','en-t','sn']],sl:'Joule Isısı',su:'J'},
+  charge:{f:'Q = I × t',ins:[['Akım (I)','en-i','A'],['Süre (t)','en-t','sn']],sl:'Elektrik Yükü',su:'C'},
+  kap:{f:'C = Q / V',ins:[['Yük (Q)','en-q','C'],['Gerilim (V)','en-v','V']],sl:'Kapasitans',su:'F'},
+  ind:{f:'X_L = 2π × f × L',ins:[['Frekans (f)','en-f','Hz'],['Endüktans (L)','en-l','H']],sl:'İndüktif Reaktans',su:'Ω'}
+};
+function enerji_sec(el,mod){
+  document.querySelectorAll('.fkart[id^="ef_"]').forEach(e=>e.classList.remove('secili'));
+  el.classList.add('secili');
+  enerji_mod=mod;
+  const d=enerji_defs[mod];
+  document.getElementById('enerji-formul-goster').textContent=d.f;
+  const c=document.getElementById('enerji-inputs');
+  c.innerHTML='';
+  const g=document.createElement('div');
+  g.className=d.ins.length>=3?'row3':'row2';
+  d.ins.forEach(([lbl,id,un])=>{
+    g.innerHTML+=`<div class="fg"><label>${lbl}</label><div class="unit-wrap"><input type="number" id="${id}" placeholder="0" step="any"><span class="unit-lbl">${un}</span></div></div>`;
+  });
+  c.appendChild(g);
+  document.getElementById('enerji-sl').textContent=d.sl;
+  document.getElementById('enerji-su').textContent=d.su;
+  document.getElementById('enerji-sonuc').classList.remove('show');
+}
+function enerji_hesapla(){
+  const d=enerji_defs[enerji_mod];
+  const vals={};
+  for(const [,id] of d.ins){const v=parseFloat(document.getElementById(id)?.value);if(isNaN(v)){alert('Tüm alanları doldurun');return;}vals[id]=v;}
+  let res=0,det='';
+  if(enerji_mod==='wh'){res=vals['en-p']*vals['en-t'];det=`${vals['en-p']} W × ${vals['en-t']} saat = ${fmt(res)} Wh = ${fmt(res/1000)} kWh`;}
+  else if(enerji_mod==='eff'){res=(vals['en-po']/vals['en-pi'])*100;det=`${vals['en-po']} W / ${vals['en-pi']} W × 100 = %${fmt(res)}`;}
+  else if(enerji_mod==='joule'){res=vals['en-i']*vals['en-i']*vals['en-r']*vals['en-t'];det=`${vals['en-i']}² × ${vals['en-r']} × ${vals['en-t']} = ${fmt(res)} J`;}
+  else if(enerji_mod==='charge'){res=vals['en-i']*vals['en-t'];det=`${vals['en-i']} A × ${vals['en-t']} sn = ${fmt(res)} C`;}
+  else if(enerji_mod==='kap'){res=vals['en-q']/vals['en-v'];det=`${vals['en-q']} C / ${vals['en-v']} V = ${fmt(res)} F`;}
+  else if(enerji_mod==='ind'){res=2*Math.PI*vals['en-f']*vals['en-l'];det=`2π × ${vals['en-f']} Hz × ${vals['en-l']} H = ${fmt(res)} Ω`;}
+  document.getElementById('enerji-sv').textContent=fmt(res);
+  document.getElementById('enerji-sd').textContent=det;
+  show('enerji-sonuc');
+}
+
+// ══════════════════════════════════════
+// 2. GERİLİM DÜŞÜMÜ
+// ══════════════════════════════════════
+function gd_sistem_degis(){
+  const v=s('gd-sistem')==='3f'?400:230;
+  document.getElementById('gd-un').value=v;
+}
+function gd_hesapla(){
+  const rho=n('gd-malzeme'),I=n('gd-akim'),L=n('gd-uzunluk'),A=n('gd-kesit'),Un=n('gd-un'),cos=n('gd-cosphi');
+  if([rho,I,L,A,Un].some(isNaN)||[I,L,A,Un].some(v=>v<=0)){alert('Tüm alanları doldurun');return;}
+  const sistem=s('gd-sistem');
+  const k=sistem==='3f'?Math.sqrt(3):2;
+  const dV=k*rho*L*I/(A);
+  const pct=dV/Un*100;
+  document.getElementById('gd-sv').textContent=fmt(dV);
+  document.getElementById('gd-sd').textContent=`%${pct.toFixed(2)} düşüm · Formül: ${k===2?'2':'√3'}×${rho}×${L}×${I}/${A} = ${fmt(dV)} V`;
+  const maxpct=3;
+  const w=document.getElementById('gd-warn'),ok=document.getElementById('gd-ok');
+  if(pct>5){w.textContent=`⚠️ %${pct.toFixed(2)} düşüm kritik sınırı (%5) aşıyor! Kesit artırın veya hat kısaltın.`;w.classList.add('show');ok.classList.remove('show');}
+  else if(pct>maxpct){w.textContent=`⚠️ %${pct.toFixed(2)} düşüm konut sınırını (%3) aşıyor. Sanayi uygulamalarında %5'e kadar kabul edilir.`;w.classList.add('show');ok.classList.remove('show');}
+  else{ok.textContent=`✅ %${pct.toFixed(2)} düşüm — %3 sınırı içinde, uygundur.`;ok.classList.add('show');w.classList.remove('show');}
+  show('gd-sonuc');
+}
+
+// ══════════════════════════════════════
+// 3. MALİYET
+// ══════════════════════════════════════
+function mal_birim(){const u=s('mal-birim');document.getElementById('mal-guc-u').textContent=u==='1'?'W':'kW';}
+function mal_hesapla(){
+  const P=n('mal-guc')*n('mal-birim'),saat=n('mal-sure'),gun=n('mal-gun'),fiyat=n('mal-fiyat');
+  if([P,saat,gun,fiyat].some(isNaN)||[P,saat,gun,fiyat].some(v=>v<=0)){alert('Tüm alanları doldurun');return;}
+  const kwh_gun=P/1000*saat,kwh_ay=kwh_gun*gun,maliyet=kwh_ay*fiyat,yillik=maliyet*12;
+  document.getElementById('mal-sv').textContent=maliyet.toFixed(2);
+  document.getElementById('mal-sd').textContent=`Günlük: ${kwh_gun.toFixed(3)} kWh · Aylık: ${kwh_ay.toFixed(2)} kWh · Yıllık: ≈${(kwh_ay*12).toFixed(1)} kWh / ≈${yillik.toFixed(2)} ₺`;
+  show('mal-sonuc');
+}
+function kar_hesapla(){
+  const eski=n('kar-eski'),yeni=n('kar-yeni'),saat=n('kar-sure'),fiyat=n('kar-fiyat');
+  if([eski,yeni,saat,fiyat].some(isNaN)||[eski,yeni,saat,fiyat].some(v=>v<=0)){alert('Tüm alanları doldurun');return;}
+  const mAy_e=(eski/1000)*saat*30*fiyat,mAy_y=(yeni/1000)*saat*30*fiyat,tas=mAy_e-mAy_y;
+  document.getElementById('kar-sv').textContent=tas.toFixed(2);
+  document.getElementById('kar-sd').textContent=`Eski: ${mAy_e.toFixed(2)} ₺/ay · Yeni: ${mAy_y.toFixed(2)} ₺/ay · Yıllık tasarruf: ${(tas*12).toFixed(2)} ₺`;
+  show('kar-sonuc');
+}
+
+// ══════════════════════════════════════
+// 4. KABLO KESİTİ
+// ══════════════════════════════════════
+const KB_CU_1F=[{s:1.5,Imax:15},{s:2.5,Imax:20},{s:4,Imax:27},{s:6,Imax:34},{s:10,Imax:46},{s:16,Imax:61},{s:25,Imax:80},{s:35,Imax:99},{s:50,Imax:119},{s:70,Imax:151},{s:95,Imax:182}];
+const KB_CU_3F=[{s:1.5,Imax:13},{s:2.5,Imax:17},{s:4,Imax:23},{s:6,Imax:29},{s:10,Imax:40},{s:16,Imax:54},{s:25,Imax:70},{s:35,Imax:86},{s:50,Imax:103},{s:70,Imax:130},{s:95,Imax:158}];
+const KB_AL_1F=[{s:4,Imax:16},{s:6,Imax:20},{s:10,Imax:28},{s:16,Imax:37},{s:25,Imax:49},{s:35,Imax:60},{s:50,Imax:73},{s:70,Imax:93},{s:95,Imax:112}];
+const KB_AL_3F=[{s:4,Imax:13},{s:6,Imax:16},{s:10,Imax:22},{s:16,Imax:29},{s:25,Imax:38},{s:35,Imax:47},{s:50,Imax:57},{s:70,Imax:73},{s:95,Imax:87}];
+function kb_hesapla(){
+  const I=n('kb-akim'),L=n('kb-uzunluk'),cos=n('kb-cosphi'),maxpct=n('kb-maxdv');
+  if([I,L,cos].some(isNaN)||[I,L,cos].some(v=>v<=0)){alert('Tüm alanları doldurun');return;}
+  const sistem=s('kb-sistem'),malz=s('kb-malzeme');
+  const Un=sistem==='3f'?400:230;
+  const rho=malz==='cu'?0.0175:0.0286;
+  const k=sistem==='3f'?Math.sqrt(3):2;
+  const maxDV=Un*maxpct/100;
+  const tablo=malz==='cu'?(sistem==='1f'?KB_CU_1F:KB_CU_3F):(sistem==='1f'?KB_AL_1F:KB_AL_3F);
+  // Akım kapasitesine göre min kesit
+  const byI=tablo.find(r=>r.Imax>=I);
+  // Gerilim düşümüne göre min kesit: A >= k*rho*L*I/maxDV
+  const Amin_dv=k*rho*L*I/maxDV;
+  const byDV=tablo.find(r=>r.s>=Amin_dv);
+  const secim=byI&&byDV?(byI.s>byDV.s?byI:byDV):(byI||byDV);
+  if(!secim){document.getElementById('kb-sv').textContent='>95';document.getElementById('kb-sd').textContent='95 mm² üzeri özel hesaplama gerekir.';show('kb-sonuc');return;}
+  const dV_actual=k*rho*L*I/secim.s;
+  const pct_actual=dV_actual/Un*100;
+  document.getElementById('kb-sv').textContent=secim.s;
+  document.getElementById('kb-sd').textContent=`Max akım kapasitesi: ${secim.Imax} A · Gerilim düşümü: ${dV_actual.toFixed(2)} V (%${pct_actual.toFixed(2)}) · Akım kapasitesine göre: ${byI?byI.s:'—'} mm² · Gerilim düşümüne göre: ≥${Amin_dv.toFixed(2)} mm² → Seçilen: ${secim.s} mm²`;
+  show('kb-sonuc');
+}
+
+// ══════════════════════════════════════
+// 5. DİRENÇ RENK KODU
+// ══════════════════════════════════════
+const RK_RENKLER=[
+  {ad:'Siyah',hex:'#1a1a1a',rakam:0,carpan:1,tolerans:null},
+  {ad:'Kahverengi',hex:'#8B4513',rakam:1,carpan:10,tolerans:'±1%'},
+  {ad:'Kırmızı',hex:'#CC2200',rakam:2,carpan:100,tolerans:'±2%'},
+  {ad:'Turuncu',hex:'#FF6600',rakam:3,carpan:1000,tolerans:null},
+  {ad:'Sarı',hex:'#FFD700',rakam:4,carpan:10000,tolerans:null},
+  {ad:'Yeşil',hex:'#228B22',rakam:5,carpan:100000,tolerans:'±0.5%'},
+  {ad:'Mavi',hex:'#1a4fd6',rakam:6,carpan:1000000,tolerans:'±0.25%'},
+  {ad:'Mor',hex:'#8B008B',rakam:7,carpan:10000000,tolerans:'±0.1%'},
+  {ad:'Gri',hex:'#808080',rakam:8,carpan:100000000,tolerans:'±0.05%'},
+  {ad:'Beyaz',hex:'#ddddcc',rakam:9,carpan:1000000000,tolerans:null},
+  {ad:'Altın',hex:'#DAA520',rakam:null,carpan:0.1,tolerans:'±5%'},
+  {ad:'Gümüş',hex:'#C0C0C0',rakam:null,carpan:0.01,tolerans:'±10%'}
+];
+function rk_bantlar(){
+  const adet=parseInt(s('rk-bant'));
+  const div=document.getElementById('rk-bant-sira');
+  div.innerHTML='';
+  for(let i=0;i<adet;i++){
+    const isRakam=i<(adet-2);
+    const isCarpan=i===adet-2;
+    const isTol=i===adet-1;
+    const isTcr=adet===6&&i===adet-1;
+    let renkler=RK_RENKLER;
+    if(isTol) renkler=RK_RENKLER.filter(r=>r.tolerans);
+    else if(isCarpan) renkler=RK_RENKLER;
+    else renkler=RK_RENKLER.filter(r=>r.rakam!==null);
+    const lbl=isTcr?'6. Bant (TCR)':isTol?`${adet}. Bant (Tolerans)`:isCarpan?`${adet-1}. Bant (Çarpan)`:i===0?'1. Bant (Rakam)':i===1?'2. Bant (Rakam)':`${i+1}. Bant (Rakam)`;
+    const id=`rk-s${i}`;
+    let opts=renkler.map(r=>`<option value="${r.ad}" style="background:${r.hex}">${r.ad} — ${isCarpan?'×'+r.carpan:isTol?r.tolerans:r.rakam}</option>`).join('');
+    if(i<2) opts='<option value="">Renk seç</option>'+opts;
+    div.innerHTML+=`<div class="bant-row">
+      <span class="bant-no">${lbl.split('(')[0].trim()}</span>
+      <div class="renk-dot" id="rk-dot${i}" style="background:#333"></div>
+      <select class="bant-select" id="${id}" onchange="rk_dot(${i})">${opts}</select>
+    </div>`;
+  }
+  document.getElementById('rk-sonuc-wrap').style.display='none';
+}
+function rk_dot(i){
+  const v=s(`rk-s${i}`);
+  const r=RK_RENKLER.find(x=>x.ad===v);
+  document.getElementById(`rk-dot${i}`).style.background=r?r.hex:'#333';
+}
+function rk_hesapla(){
+  const adet=parseInt(s('rk-bant'));
+  let rakamlar=[];
+  for(let i=0;i<adet-2;i++){
+    const v=s(`rk-s${i}`);if(!v){alert(`${i+1}. bant seçin`);return;}
+    const r=RK_RENKLER.find(x=>x.ad===v);
+    if(r===undefined||r.rakam===null){alert(`${i+1}. bant için rakam rengi seçin`);return;}
+    rakamlar.push(r.rakam);
+  }
+  const carpanRenk=RK_RENKLER.find(x=>x.ad===s(`rk-s${adet-2}`));
+  const tolRenk=RK_RENKLER.find(x=>x.ad===s(`rk-s${adet-1}`));
+  if(!carpanRenk){alert('Çarpan bandı seçin');return;}
+  if(!tolRenk){alert('Tolerans bandı seçin');return;}
+  let taban=parseInt(rakamlar.join(''));
+  let deger=taban*carpanRenk.carpan;
+  let birim='Ω';
+  if(deger>=1e6){deger/=1e6;birim='MΩ';}
+  else if(deger>=1000){deger/=1000;birim='kΩ';}
+  document.getElementById('rk-val').textContent=`${parseFloat(deger.toFixed(4))} ${birim}`;
+  document.getElementById('rk-tol').textContent=tolRenk.tolerans?`Tolerans: ${tolRenk.tolerans}`:'';
+  // Görsel bantlar
+  const gb=document.getElementById('rk-bant-goster');
+  gb.innerHTML='';
+  const govde=document.createElement('div');
+  govde.className='direnc-govde';
+  for(let i=0;i<adet;i++){
+    const rc=RK_RENKLER.find(x=>x.ad===s(`rk-s${i}`));
+    const bant=document.createElement('div');
+    bant.className='direnc-bant';
+    bant.style.cssText=`background:${rc?rc.hex:'#333'};min-height:50px;`;
+    if(i===adet-1){bant.style.marginLeft='8px';}
+    govde.appendChild(bant);
+  }
+  gb.appendChild(govde);
+  document.getElementById('rk-sonuc-wrap').style.display='block';
+}
+function rk_sifirla(){
+  document.getElementById('rk-sonuc-wrap').style.display='none';
+  rk_bantlar();
+}
+
+// RENK KODU TABLOSU
+function rk_tablo_olustur(){
+  const div=document.getElementById('rk-tablo');
+  let h=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+  <tr style="background:var(--surface2)"><th style="padding:7px 10px;text-align:left;color:var(--text2)">Renk</th><th style="padding:7px;text-align:center;color:var(--text2)">Rakam</th><th style="padding:7px;text-align:center;color:var(--text2)">Çarpan</th><th style="padding:7px;text-align:center;color:var(--text2)">Tolerans</th></tr>`;
+  RK_RENKLER.forEach(r=>{
+    h+=`<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:7px 10px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${r.hex};vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,0.15)"></span>${r.ad}</td>
+    <td style="padding:7px;text-align:center;color:var(--text2)">${r.rakam!==null?r.rakam:'—'}</td>
+    <td style="padding:7px;text-align:center;color:var(--text2)">×${r.carpan<1?r.carpan:r.carpan>=1e9?'1G':r.carpan>=1e6?r.carpan/1e6+'M':r.carpan>=1000?r.carpan/1000+'k':r.carpan}</td>
+    <td style="padding:7px;text-align:center;color:var(--text2)">${r.tolerans||'—'}</td></tr>`;
+  });
+  h+='</table></div>';
+  div.innerHTML=h;
+}
+
+// ══════════════════════════════════════
+// 6. ÇEMBER / ÇAP / ALAN
+// ══════════════════════════════════════
+let cember_mod='d';
+const cember_defs={
+  d:{f:'A = π × r² = π × (d/2)²',lbl:'Çap (d)',id:'cb-v1',birim:'mm',sl:'Alan',su:'mm²'},
+  a:{f:'d = 2 × √(A / π)',lbl:'Alan (A)',id:'cb-v1',birim:'mm²',sl:'Çap',su:'mm'},
+  c:{f:'A = C² / (4π)',lbl:'Çevre (C)',id:'cb-v1',birim:'mm',sl:'Alan',su:'mm²'},
+  kablo:{f:'d = 2 × √(S / π) — Kablo tel çapı',lbl:'Kesit (S)',id:'cb-v1',birim:'mm²',sl:'Tel Çapı (d)',su:'mm'}
+};
+function cember_sec(el,mod){
+  document.querySelectorAll('.fkart[id^="cb_"]').forEach(e=>e.classList.remove('secili'));
+  el.classList.add('secili');
+  cember_mod=mod;
+  const d=cember_defs[mod];
+  document.getElementById('cember-formul-goster').textContent=d.f;
+  document.getElementById('cember-inputs').innerHTML=`<div class="fg"><label>${d.lbl}</label><div class="unit-wrap"><input type="number" id="${d.id}" placeholder="0" step="any"><span class="unit-lbl" id="cb-u1">${d.birim}</span></div></div>`;
+  document.getElementById('cember-sl').textContent=d.sl;
+  document.getElementById('cember-su').textContent=d.su;
+  document.getElementById('cember-sonuc').classList.remove('show');
+}
+function cember_hesapla(){
+  const v=parseFloat(document.getElementById('cb-v1')?.value);
+  if(isNaN(v)||v<=0){alert('Geçerli değer girin');return;}
+  const d=cember_defs[cember_mod];
+  let res=0,det='';
+  if(cember_mod==='d'){const r=v/2;res=Math.PI*r*r;const C=Math.PI*v;det=`Yarıçap r=${r} mm · Alan=${fmt(res)} mm² · Çevre=${fmt(C)} mm`;}
+  else if(cember_mod==='a'){res=2*Math.sqrt(v/Math.PI);const C=Math.PI*res;det=`Çap=${fmt(res)} mm · Yarıçap=${fmt(res/2)} mm · Çevre=${fmt(C)} mm`;}
+  else if(cember_mod==='c'){res=v*v/(4*Math.PI);const dia=v/Math.PI;det=`Alan=${fmt(res)} mm² · Çap=${fmt(dia)} mm`;}
+  else if(cember_mod==='kablo'){res=2*Math.sqrt(v/Math.PI);det=`${v} mm² kesitli iletkende her bir tel çapı ≈ ${fmt(res)} mm · Gerçek tel çapı sarım faktörüne göre farklılık gösterebilir.`;}
+  document.getElementById('cember-sv').textContent=fmt(res);
+  document.getElementById('cember-sd').textContent=det;
+  show('cember-sonuc');
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+guc_sec(document.getElementById('gf_1f_p'),'1f_p');
+enerji_sec(document.getElementById('ef_wh'),'wh');
+rk_bantlar();
+rk_tablo_olustur();
+</script>
+</body>
+</html>

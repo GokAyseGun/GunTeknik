@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07101f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Teori · El Kitabı · Gün Teknik</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#07101f;--bg2:#0d1a2e;--surface:#111f36;--surface2:#172540;
+  --border:#1e3050;--border2:#243860;
+  --text:#e8f0fe;--text2:#8ba4c8;--text3:#4d6a94;
+  --blue:#7eb3f0;--blue-lt:rgba(126,179,240,0.12);--blue-md:rgba(126,179,240,0.22);
+  --green:#6fcf97;--green-lt:rgba(111,207,151,0.12);
+  --red:#e88080;--red-lt:rgba(232,128,128,0.12);
+  --amber:#f0c472;--amber-lt:rgba(240,196,114,0.12);
+  --purple:#b39ddb;--purple-lt:rgba(179,157,219,0.12);
+  --teal:#7ecec4;--teal-lt:rgba(126,206,196,0.12);
+  --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:28px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.3);--shadow-md:0 8px 24px rgba(0,0,0,0.4);
+  --nav-h:68px;--top-h:60px;
+  --ease:cubic-bezier(0.16,1,0.3,1);--ease-back:cubic-bezier(0.34,1.56,0.64,1);
+}
+[data-tema="acik"]{
+  --bg:#f0f4f8;--bg2:#e4ecf4;--surface:#ffffff;--surface2:#f8fafc;
+  --border:#d0dce8;--border2:#b8cce0;
+  --text:#0f1c2e;--text2:#4a6080;--text3:#7a9ab8;
+  --blue:#1a6fd4;--blue-lt:rgba(26,111,212,0.1);--blue-md:rgba(26,111,212,0.2);
+  --green:#1a8a52;--green-lt:rgba(26,138,82,0.1);
+  --red:#d42828;--red-lt:rgba(212,40,40,0.1);
+  --amber:#b07000;--amber-lt:rgba(176,112,0,0.1);
+  --purple:#6a3fb0;--purple-lt:rgba(106,63,176,0.1);
+  --teal:#1a8080;--teal-lt:rgba(26,128,128,0.1);
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+@keyframes pageIn{from{opacity:0;transform:translateY(20px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* TOP BAR */
+.top-bar{position:fixed;top:0;left:0;right:0;height:var(--top-h);background:rgba(13,26,46,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:200;}
+[data-tema="acik"] .top-bar{background:rgba(240,244,248,0.97);}
+.top-bar-back{width:38px;height:38px;border-radius:var(--r-md);background:var(--blue-lt);border:1px solid var(--blue-md);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:all 0.2s var(--ease);}
+.top-bar-back:active{transform:scale(0.9);}
+.top-bar-title{flex:1;}
+.top-bar-title h1{font-size:17px;font-weight:700;color:var(--text);}
+.top-bar-title p{font-size:11px;color:var(--text3);}
+.theme-btn{width:38px;height:38px;border-radius:var(--r-md);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.2s var(--ease);}
+
+/* SEARCH */
+.search-wrap{position:sticky;top:var(--top-h);z-index:190;background:var(--bg);padding:10px 16px 0;}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 14px;transition:border-color 0.2s;}
+.search-box:focus-within{border-color:var(--blue);}
+.search-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;}
+.search-box input::placeholder{color:var(--text3);}
+.search-icon{font-size:17px;color:var(--text3);}
+.search-clear{font-size:14px;color:var(--text3);cursor:pointer;display:none;padding:2px 4px;}
+.search-clear.show{display:block;}
+
+/* CAT FİLTRE */
+.cat-bar{position:sticky;top:calc(var(--top-h) + 50px);z-index:180;background:var(--bg);padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.cat-bar::-webkit-scrollbar{display:none;}
+.cat-btn{flex-shrink:0;padding:5px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s var(--ease);white-space:nowrap;}
+.cat-btn.active{background:var(--blue-lt);border-color:var(--blue-md);color:var(--blue);}
+.cat-btn:active{transform:scale(0.94);}
+
+/* CONTENT */
+.content{padding-top:calc(var(--top-h) + 104px);padding-bottom:calc(var(--nav-h) + 24px);padding-left:16px;padding-right:16px;animation:pageIn 0.4s var(--ease);max-width:680px;margin:0 auto;}
+
+/* SECTION LABEL */
+.section-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;margin-top:22px;padding-left:4px;display:flex;align-items:center;gap:6px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* KONU KART */
+.konu-list{display:flex;flex-direction:column;gap:8px;}
+.konu-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color 0.2s;}
+.konu-card.hidden{display:none;}
+.konu-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none;}
+.konu-header:active{background:var(--surface2);}
+.konu-icon{width:42px;height:42px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ki-blue{background:var(--blue-lt);border:1px solid var(--blue-md);}
+.ki-green{background:var(--green-lt);border:1px solid rgba(111,207,151,0.3);}
+.ki-amber{background:var(--amber-lt);border:1px solid rgba(240,196,114,0.3);}
+.ki-purple{background:var(--purple-lt);border:1px solid rgba(179,157,219,0.3);}
+.ki-teal{background:var(--teal-lt);border:1px solid rgba(126,206,196,0.3);}
+.ki-red{background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);}
+.konu-info{flex:1;min-width:0;}
+.konu-title{font-size:14px;font-weight:700;color:var(--text);}
+.konu-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.konu-chevron{font-size:18px;color:var(--text3);transition:transform 0.3s var(--ease);line-height:1;}
+.konu-card.open .konu-chevron{transform:rotate(90deg);}
+.konu-card.open{border-color:var(--border2);}
+
+/* İÇERİK */
+.konu-body{display:none;padding:0 16px 18px;border-top:1px solid var(--border);animation:fadeUp 0.3s var(--ease);}
+.konu-card.open .konu-body{display:block;}
+
+/* İÇERİK BİLEŞENLERİ */
+.para{font-size:13px;color:var(--text2);line-height:1.7;margin-top:12px;}
+.para strong{color:var(--text);font-weight:600;}
+.formul{background:rgba(126,179,240,0.08);border:1px solid var(--blue-md);border-radius:var(--r-md);padding:12px 16px;margin-top:10px;text-align:center;}
+.formul .f-main{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:0.5px;font-family:Georgia,serif;}
+.formul .f-alt{font-size:11px;color:var(--text3);margin-top:4px;}
+.bilgi-tablo{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;border-radius:var(--r-md);overflow:hidden;}
+.bilgi-tablo th{background:var(--surface2);color:var(--text2);padding:8px 10px;text-align:left;font-weight:600;font-size:11px;}
+.bilgi-tablo td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+.bilgi-tablo td strong{color:var(--text);}
+.bilgi-tablo tr:last-child td{border-bottom:none;}
+.bilgi-tablo tr:hover td{background:var(--blue-lt);}
+.info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--r-md);padding:10px 14px;margin-top:10px;font-size:12px;color:var(--text2);display:flex;gap:8px;}
+.info-box .ib-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.warn-box{background:var(--amber-lt);border:1px solid rgba(240,196,114,0.3);border-radius:var(--r-md);padding:10px 14px;margin-top:10px;font-size:12px;color:var(--text2);display:flex;gap:8px;}
+.warn-box .ib-icon{font-size:15px;flex-shrink:0;}
+.tehlike-box{background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);border-radius:var(--r-md);padding:10px 14px;margin-top:10px;font-size:12px;color:var(--text2);display:flex;gap:8px;}
+.sub-baslik{font-size:12px;font-weight:700;color:var(--text);margin-top:14px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.madde-list{margin-top:6px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:4px;}
+.madde-list li{font-size:12px;color:var(--text2);padding:5px 10px;background:var(--surface2);border-radius:var(--r-sm);display:flex;gap:8px;align-items:flex-start;}
+.madde-list li::before{content:'›';color:var(--blue);font-weight:700;flex-shrink:0;}
+.renk-bant{display:inline-block;width:36px;height:14px;border-radius:4px;vertical-align:middle;margin-right:4px;border:1px solid rgba(255,255,255,0.15);}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;margin:2px;}
+.chip-blue{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-md);}
+.chip-green{background:var(--green-lt);color:var(--green);border:1px solid rgba(111,207,151,0.3);}
+.chip-amber{background:var(--amber-lt);color:var(--amber);border:1px solid rgba(240,196,114,0.3);}
+.chip-red{background:var(--red-lt);color:var(--red);border:1px solid rgba(232,128,128,0.3);}
+.chip-purple{background:var(--purple-lt);color:var(--purple);border:1px solid rgba(179,157,219,0.3);}
+.chip-teal{background:var(--teal-lt);color:var(--teal);border:1px solid rgba(126,206,196,0.3);}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.kv-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;}
+.kv-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
+.kv-val{font-size:16px;font-weight:800;color:var(--text);margin-top:2px;}
+.kv-unit{font-size:11px;color:var(--text3);font-weight:400;}
+.no-result{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;display:none;}
+.no-result.show{display:block;}
+
+/* BOTTOM NAV */
+.bottom-nav{height:var(--nav-h);background:rgba(13,26,46,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);position:fixed;bottom:0;left:0;right:0;z-index:100;justify-content:center;gap:4px;}
+[data-tema="acik"] .bottom-nav{background:rgba(240,244,248,0.96);}
+.nav-item{flex:0 0 auto;min-width:68px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;border-radius:var(--r-md);transition:all 0.3s var(--ease);}
+.nav-item .nav-icon{font-size:21px;transition:transform 0.3s var(--ease-back);}
+.nav-item.active{color:var(--blue);}
+.nav-item.active .nav-icon{transform:translateY(-3px) scale(1.1);}
+.nav-item:active{transform:scale(0.92);}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-back" onclick="window.location.href='index.html'">⬅️</div>
+  <div class="top-bar-title">
+    <h1>📘 Teori</h1>
+    <p>Elektrik Teknik Referansı</p>
+  </div>
+  <div class="theme-btn" onclick="toggleTema()" id="theme-btn">🌙</div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="arama" placeholder="Konu, terim veya formül ara…" oninput="aramaYap(this.value)" autocomplete="off">
+    <span class="search-clear" id="arama-clear" onclick="aramaSifirla()">✕</span>
+  </div>
+</div>
+
+<div class="cat-bar" id="cat-bar">
+  <button class="cat-btn active" data-cat="hepsi" onclick="katFiltrele('hepsi',this)">Hepsi</button>
+  <button class="cat-btn" data-cat="temel" onclick="katFiltrele('temel',this)">⚡ Temel</button>
+  <button class="cat-btn" data-cat="elektromekanik" onclick="katFiltrele('elektromekanik',this)">⚙️ Elektromekanik</button>
+  <button class="cat-btn" data-cat="koruma" onclick="katFiltrele('koruma',this)">🛡️ Koruma</button>
+  <button class="cat-btn" data-cat="kablo" onclick="katFiltrele('kablo',this)">🔌 Kablo</button>
+  <button class="cat-btn" data-cat="topraklama" onclick="katFiltrele('topraklama',this)">🌍 Topraklama</button>
+  <button class="cat-btn" data-cat="aydinlatma" onclick="katFiltrele('aydinlatma',this)">💡 Aydınlatma</button>
+  <button class="cat-btn" data-cat="ek" onclick="katFiltrele('ek',this)">📚 Ek Bilgiler</button>
+</div>
+
+<div class="content" id="content">
+<div class="no-result" id="no-result">🔍 Sonuç bulunamadı</div>
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 1: TEMEL KAVRAMLAR
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="temel">⚡ Temel Kavramlar</div>
+<div class="konu-list">
+
+<!-- GERİLİM -->
+<div class="konu-card" data-cat="temel" data-keys="gerilim voltaj volt elektrik potansiyel fark emk">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">🔋</div>
+    <div class="konu-info"><div class="konu-title">Gerilim</div><div class="konu-sub">Voltaj · Elektrik potansiyel farkı</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Gerilim (U veya V)</strong>, iki nokta arasındaki elektrik potansiyel farkıdır. Birimi <strong>Volt (V)</strong>'tur. Bir iletken üzerinde yük taşımak için gereken enerjiyi ifade eder.</div>
+    <div class="formul"><div class="f-main">U = W / Q</div><div class="f-alt">U: Gerilim (V) &nbsp;|&nbsp; W: Enerji (J) &nbsp;|&nbsp; Q: Yük (C)</div></div>
+    <div class="sub-baslik">Gerilim Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Sembol</th><th>Açıklama</th></tr>
+      <tr><td><strong>DC (Doğru Akım)</strong></td><td>V<sub>DC</sub></td><td>Yön değiştirmez, sabit değer</td></tr>
+      <tr><td><strong>AC (Alternatif Akım)</strong></td><td>V<sub>AC</sub></td><td>Sinüs dalgası, yön ve büyüklük değişir</td></tr>
+      <tr><td><strong>Faz-Nötr</strong></td><td>230 V</td><td>Türkiye şebeke gerilimi</td></tr>
+      <tr><td><strong>Faz-Faz</strong></td><td>400 V</td><td>Üç fazlı sistemde fazlar arası gerilim</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">ℹ️</span><span>Pil: 1,5 V · Araç aküsü: 12 V · Ev şebekesi: 230 V · Yüksek gerilim: 1 kV üzeri</span></div>
+  </div>
+</div>
+
+<!-- AKIM -->
+<div class="konu-card" data-cat="temel" data-keys="akım amper elektron hareket iletim şiddet">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">⚡</div>
+    <div class="konu-info"><div class="konu-title">Akım</div><div class="konu-sub">Amper · Elektron akışı · Yük hareketi</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Elektrik akımı (I)</strong>, bir iletken kesitinden birim zamanda geçen elektrik yükü miktarıdır. Birimi <strong>Amper (A)</strong>'dir.</div>
+    <div class="formul"><div class="f-main">I = Q / t</div><div class="f-alt">I: Akım (A) &nbsp;|&nbsp; Q: Yük (Coulomb) &nbsp;|&nbsp; t: Süre (saniye)</div></div>
+    <div class="sub-baslik">Akım Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Açıklama</th><th>Kullanım</th></tr>
+      <tr><td><strong>DC (Doğru Akım)</strong></td><td>Tek yönlü, sabit akış</td><td>Pil, akü, güneş paneli</td></tr>
+      <tr><td><strong>AC (Alternatif Akım)</strong></td><td>Yön periyodik değişir, 50 Hz</td><td>Şebeke, ev tesisatı</td></tr>
+    </table>
+    <div class="sub-baslik">Referans Değerler</div>
+    <ul class="madde-list">
+      <li>1 mA altı: Hissedilmez veya hafif his</li>
+      <li>10–15 mA: Bırakamama eşiği (tehlikeli)</li>
+      <li>30 mA: Kalp fibrilasyonu riski (RCD eşiği bu yüzden 30 mA)</li>
+      <li>100 mA üzeri: Ölümcül olabilir</li>
+    </ul>
+    <div class="tehlike-box"><span class="ib-icon">⚠️</span><span>30 mA ve üzeri akımlar insan vücudu için ölümcül olabilir. Kaçak akım rölesi (RCD) 30 mA'da devreyi keser.</span></div>
+  </div>
+</div>
+
+<!-- DİRENÇ -->
+<div class="konu-card" data-cat="temel" data-keys="direnç ohm iletkenlik özdirenç resistans malzeme">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-red">🔴</div>
+    <div class="konu-info"><div class="konu-title">Direnç</div><div class="konu-sub">Ohm (Ω) · Akıma karşı engel · Özdirenç</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Direnç (R)</strong>, bir malzemenin elektrik akımının geçişine karşı gösterdiği direnci ifade eder. Birimi <strong>Ohm (Ω)</strong>'dur.</div>
+    <div class="formul"><div class="f-main">R = ρ × L / A</div><div class="f-alt">ρ: Özdirenç (Ω·m) &nbsp;|&nbsp; L: Uzunluk (m) &nbsp;|&nbsp; A: Kesit (m²)</div></div>
+    <div class="sub-baslik">Malzeme Özdirençleri (20°C)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Malzeme</th><th>ρ (Ω·mm²/m)</th><th>Kullanım</th></tr>
+      <tr><td><strong>Bakır (Cu)</strong></td><td>0,0175</td><td>İletken, kablo</td></tr>
+      <tr><td><strong>Alüminyum (Al)</strong></td><td>0,0286</td><td>Hava hattı, trafo sarım</td></tr>
+      <tr><td><strong>Demir (Fe)</strong></td><td>0,100</td><td>Topraklama iletkeni</td></tr>
+      <tr><td><strong>Gümüş (Ag)</strong></td><td>0,0160</td><td>Elektronik kontak</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">ℹ️</span><span>Sıcaklık artışıyla metal iletkenlerin direnci artar; yarı iletken ve karbonun direnci ise azalır.</span></div>
+  </div>
+</div>
+
+<!-- GÜÇ -->
+<div class="konu-card" data-cat="temel" data-keys="güç watt aktif reaktif görünür güç faktörü cos phi kvar kva">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-purple">💡</div>
+    <div class="konu-info"><div class="konu-title">Güç</div><div class="konu-sub">Watt · Aktif · Reaktif · Görünür güç</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Elektrik gücü üç farklı bileşenden oluşur. Bunları birbirinden ayırt etmek kompanzasyon ve enerji verimliliği açısından kritiktir.</div>
+    <div class="kv-grid">
+      <div class="kv-box"><div class="kv-label">Aktif Güç</div><div class="kv-val">P <span class="kv-unit">kW</span></div></div>
+      <div class="kv-box"><div class="kv-label">Reaktif Güç</div><div class="kv-val">Q <span class="kv-unit">kVAR</span></div></div>
+      <div class="kv-box"><div class="kv-label">Görünür Güç</div><div class="kv-val">S <span class="kv-unit">kVA</span></div></div>
+      <div class="kv-box"><div class="kv-label">Güç Faktörü</div><div class="kv-val">cos φ</div></div>
+    </div>
+    <div class="formul"><div class="f-main">P = U × I × cos φ &nbsp;&nbsp; S = U × I &nbsp;&nbsp; Q = U × I × sin φ</div><div class="f-alt">Tek fazlı formüller</div></div>
+    <div class="formul"><div class="f-main">P = √3 × U × I × cos φ</div><div class="f-alt">3 fazlı sistem (U: faz-faz gerilimi)</div></div>
+    <div class="sub-baslik">Güç Üçgeni İlişkisi</div>
+    <div class="para">S² = P² + Q² &nbsp;→&nbsp; Görünür güç, aktif ve reaktif gücün bileşkesidir. cos φ = P/S olup 1'e yakın olması istenir (yüksek verimlilik).</div>
+    <div class="info-box"><span class="ib-icon">💡</span><span>Türkiye'de dağıtım şirketleri cos φ &lt; 0,90 olan abonelerden reaktif enerji bedeli tahsil eder. Kompanzasyon tesisi kurarak bu ceza önlenir.</span></div>
+  </div>
+</div>
+
+<!-- OHM KANUNU -->
+<div class="konu-card" data-cat="temel" data-keys="ohm kanunu yasa gerilim akım direnç formül hesap">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">📐</div>
+    <div class="konu-info"><div class="konu-title">Ohm Kanunu</div><div class="konu-sub">V = I × R · Temel elektrik yasası</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Ohm Kanunu</strong>, bir iletken üzerindeki gerilim, akım ve direnç arasındaki doğrusal ilişkiyi tanımlar. Georg Simon Ohm tarafından 1827'de formüle edilmiştir.</div>
+    <div class="formul"><div class="f-main">V = I × R</div><div class="f-alt">V: Gerilim (Volt) &nbsp;|&nbsp; I: Akım (Amper) &nbsp;|&nbsp; R: Direnç (Ohm)</div></div>
+    <div class="sub-baslik">Türev Formüller</div>
+    <table class="bilgi-tablo">
+      <tr><th>Aranılan</th><th>Formül</th><th>Birim</th></tr>
+      <tr><td><strong>Gerilim (V)</strong></td><td>V = I × R</td><td>Volt</td></tr>
+      <tr><td><strong>Akım (I)</strong></td><td>I = V / R</td><td>Amper</td></tr>
+      <tr><td><strong>Direnç (R)</strong></td><td>R = V / I</td><td>Ohm (Ω)</td></tr>
+      <tr><td><strong>Güç (P)</strong></td><td>P = V × I = I²R = V²/R</td><td>Watt</td></tr>
+    </table>
+    <div class="sub-baslik">Pratik Örnek</div>
+    <div class="para">Bir elektrikli ısıtıcı 230 V'a bağlı ve 1000 W güç çekiyor. Akımı bul:<br>I = P / V = 1000 / 230 = <strong>4,35 A</strong> &nbsp;→&nbsp; Direnci: R = V / I = 230 / 4,35 = <strong>52,9 Ω</strong></div>
+  </div>
+</div>
+
+<!-- KİRCHHOFF YASALARI -->
+<div class="konu-card" data-cat="temel" data-keys="kirchhoff kak kgk düğüm çevre akım gerilim yasası devre analiz">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-purple">🔄</div>
+    <div class="konu-info"><div class="konu-title">Kirchhoff Yasaları</div><div class="konu-sub">KAK · KGK · Devre analizi</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">1. Kirchhoff Akım Kanunu (KAK)</div>
+    <div class="para">Bir devre düğümüne giren akımların toplamı, o düğümden çıkan akımların toplamına eşittir. <strong>Yük korunumu</strong> ilkesine dayanır.</div>
+    <div class="formul"><div class="f-main">ΣI<sub>giren</sub> = ΣI<sub>çıkan</sub></div><div class="f-alt">Bir düğümdeki toplam akım sıfırdır: ΣI = 0</div></div>
+    <div class="divider"></div>
+    <div class="sub-baslik">2. Kirchhoff Gerilim Kanunu (KGK)</div>
+    <div class="para">Kapalı bir devre çevresinde gerilim yükselmelerinin toplamı, gerilim düşümlerinin toplamına eşittir. <strong>Enerji korunumu</strong> ilkesine dayanır.</div>
+    <div class="formul"><div class="f-main">ΣV = 0 (kapalı çevrede)</div><div class="f-alt">Tüm gerilimler işaretli toplanınca sıfır olur</div></div>
+    <div class="sub-baslik">Pratik Kullanım</div>
+    <ul class="madde-list">
+      <li>Seri devrede toplam gerilim, her elemandaki gerilim düşümleri toplamına eşittir</li>
+      <li>Paralel devrede tüm elemanlar aynı gerilime sahiptir</li>
+      <li>Kompleks devre analizinde düğüm ve çevre denklem sistemi kurulur</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SERİ VE PARALEL -->
+<div class="konu-card" data-cat="temel" data-keys="paralel seri bağlantı devre direnç kondansatör bobin hesap">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">🔗</div>
+    <div class="konu-info"><div class="konu-title">Seri ve Paralel Bağlantılar</div><div class="konu-sub">Devre bağlantı türleri · Eşdeğer direnç</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">Seri Bağlantı</div>
+    <div class="para">Elemanlar arka arkaya bağlanır. Aynı akım tüm elemanlardan geçer. Toplam direnç en büyüktür.</div>
+    <div class="formul"><div class="f-main">R<sub>toplam</sub> = R₁ + R₂ + R₃ + …</div><div class="f-alt">Her elemandaki gerilim: V<sub>n</sub> = I × R<sub>n</sub></div></div>
+    <div class="divider"></div>
+    <div class="sub-baslik">Paralel Bağlantı</div>
+    <div class="para">Elemanlar aynı iki noktaya bağlanır. Tüm elemanlarda aynı gerilim vardır. Toplam direnç en küçük elemanın direncinden daha küçüktür.</div>
+    <div class="formul"><div class="f-main">1/R<sub>toplam</sub> = 1/R₁ + 1/R₂ + 1/R₃</div><div class="f-alt">2 direnç için: R = (R₁ × R₂) / (R₁ + R₂)</div></div>
+    <div class="sub-baslik">Karşılaştırma</div>
+    <table class="bilgi-tablo">
+      <tr><th>Özellik</th><th>Seri</th><th>Paralel</th></tr>
+      <tr><td>Akım</td><td>Her yerde eşit</td><td>Her kolda farklı</td></tr>
+      <tr><td>Gerilim</td><td>Bölüşülür</td><td>Her yerde eşit</td></tr>
+      <tr><td>R toplam</td><td>Artar</td><td>Azalır</td></tr>
+      <tr><td>1 eleman açılırsa</td><td>Tüm devre kesilir</td><td>Diğerleri çalışır</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">🏠</span><span>Ev tesisatındaki tüm prizler ve lambalar paralel bağlıdır — bu yüzden bir lamba yanınca diğerleri etkilenmez.</span></div>
+  </div>
+</div>
+
+<!-- KISA DEVRE -->
+<div class="konu-card" data-cat="temel" data-keys="kısa devre arıza akım fazla sigorta aşırı ark">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-red">💥</div>
+    <div class="konu-info"><div class="konu-title">Kısa Devre</div><div class="konu-sub">Arıza akımı · Koruma · Tehlike</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Kısa devre</strong>, elektrik devresinde faz ile nötr veya faz ile toprak arasında istem dışı oluşan düşük dirençli bağlantıdır. Bu durumda direnç neredeyse sıfıra düşer ve akım aşırı derecede yükselir.</div>
+    <div class="formul"><div class="f-main">I<sub>kd</sub> = U / Z<sub>kd</sub></div><div class="f-alt">Z<sub>kd</sub>: Kısa devre empedansı çok küçüktür → I çok büyür</div></div>
+    <div class="sub-baslik">Kısa Devre Nedenleri</div>
+    <ul class="madde-list">
+      <li>İzolasyon hasarı (yaşlanma, mekanik darbe, nem)</li>
+      <li>Yanlış bağlantı veya montaj hatası</li>
+      <li>Hayvan, böcek, fare kaynaklı iletken teması</li>
+      <li>Aşırı ısınma sonucu izolasyon erimesi</li>
+    </ul>
+    <div class="sub-baslik">Sonuçları ve Korunma</div>
+    <ul class="madde-list">
+      <li>Büyük ısı açığa çıkması → yangın riski</li>
+      <li>Ark oluşumu → parlama, patlama</li>
+      <li>Ekipman hasarı, kablo yanması</li>
+      <li>Koruma: Sigortalar, OKK'lar kısa devre akımında devreyi anında keser</li>
+    </ul>
+    <div class="tehlike-box"><span class="ib-icon">⚠️</span><span>Kısa devre akımları binlerce Amper'e ulaşabilir. Doğru hesaplanmış ve seçilmiş koruma cihazları zorunludur.</span></div>
+  </div>
+</div>
+
+<!-- ELEKTRİK TEKNİK TERİMLERİ -->
+<div class="konu-card" data-cat="temel" data-keys="terim sözlük frekans empedans kondansatör bobin endüktans kapasitans faz açısı">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-green">📖</div>
+    <div class="konu-info"><div class="konu-title">Elektrik Teknik Terimleri</div><div class="konu-sub">Sözlük · Frekans, Empedans, Reaktans ve daha fazlası</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <table class="bilgi-tablo">
+      <tr><th>Terim</th><th>Sembol</th><th>Birim</th><th>Açıklama</th></tr>
+      <tr><td><strong>Frekans</strong></td><td>f</td><td>Hz</td><td>Saniyedeki periyot sayısı. Şebekede 50 Hz.</td></tr>
+      <tr><td><strong>Periyot</strong></td><td>T</td><td>s</td><td>T = 1/f. Bir tam dalganın süresi.</td></tr>
+      <tr><td><strong>Empedans</strong></td><td>Z</td><td>Ω</td><td>AC devrede toplam akım engeli. Z = √(R²+X²)</td></tr>
+      <tr><td><strong>Reaktans</strong></td><td>X</td><td>Ω</td><td>Bobin (X<sub>L</sub>) ve kondansatör (X<sub>C</sub>) direnci</td></tr>
+      <tr><td><strong>Endüktans</strong></td><td>L</td><td>H (Henry)</td><td>Bobin, akım değişimine karşı koyar</td></tr>
+      <tr><td><strong>Kapasitans</strong></td><td>C</td><td>F (Farad)</td><td>Kondansatör, yük depolama kapasitesi</td></tr>
+      <tr><td><strong>İletkenlik</strong></td><td>G</td><td>S (Siemens)</td><td>G = 1/R, direncin tersi</td></tr>
+      <tr><td><strong>Faz Açısı</strong></td><td>φ</td><td>°</td><td>Gerilim ve akım arasındaki faz farkı</td></tr>
+      <tr><td><strong>EMK</strong></td><td>E</td><td>V</td><td>Elektromotor kuvvet — kaynak gerilimi</td></tr>
+      <tr><td><strong>Akı</strong></td><td>Φ</td><td>Wb (Weber)</td><td>Manyetik alan gücü × alan</td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- /konu-list temel -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 2: ELEKTROMEKANİK DÖNÜŞTÜRÜCÜLERi
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="elektromekanik">⚙️ Elektromekanik Dönüştürücüler</div>
+<div class="konu-list">
+
+<!-- TRANSFORMATÖR -->
+<div class="konu-card" data-cat="elektromekanik" data-keys="transformatör trafo sarım oran gerilim primer sekonder verim çekirdek">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">🔃</div>
+    <div class="konu-info"><div class="konu-title">Transformatör</div><div class="konu-sub">Gerilim dönüştürme · Sarım oranı · Verim</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Transformatör</strong>, manyetik endüksiyonu kullanarak AC gerilimi ve akımı değiştiren elektromekanik cihazdır. Çekirdeğe sarılı primer ve sekonder sargılardan oluşur.</div>
+    <div class="formul"><div class="f-main">U₁/U₂ = N₁/N₂ = I₂/I₁</div><div class="f-alt">U: Gerilim &nbsp;|&nbsp; N: Sarım sayısı &nbsp;|&nbsp; I: Akım</div></div>
+    <div class="sub-baslik">Transformatör Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Açıklama</th></tr>
+      <tr><td><strong>Yükseltici (Step-up)</strong></td><td>N₂ > N₁, gerilimi yükseltir, akımı düşürür</td></tr>
+      <tr><td><strong>Alçaltıcı (Step-down)</strong></td><td>N₂ &lt; N₁, gerilimi düşürür, akımı artırır</td></tr>
+      <tr><td><strong>İzolasyon Trafosu</strong></td><td>N₁ = N₂, galvanik izolasyon sağlar</td></tr>
+      <tr><td><strong>Ototrafo</strong></td><td>Ortak sargı, küçük oran değişimi</td></tr>
+      <tr><td><strong>Akım Trafosu (CT)</strong></td><td>Büyük akımları ölçüm için küçültür</td></tr>
+      <tr><td><strong>Dağıtım Trafosu</strong></td><td>OG → AG, 10 kV → 400 V, şehir şebekesi</td></tr>
+    </table>
+    <div class="sub-baslik">Verim ve Kayıplar</div>
+    <div class="para">η = P<sub>çıkış</sub> / P<sub>giriş</sub> × 100 (%). Kayıplar: Demir kaybı (histerezis + eddy akımı) + Bakır kaybı (I²R ısısı). Büyük dağıtım trafoları %98–99 verime sahiptir.</div>
+  </div>
+</div>
+
+<!-- ELEKTRİK JENERATÖRÜ -->
+<div class="konu-card" data-cat="elektromekanik" data-keys="jeneratör alternatör dinamo üretec elektrik üretim mekanik">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-green">⚡</div>
+    <div class="konu-info"><div class="konu-title">Elektrik Jeneratörü</div><div class="konu-sub">Mekanik → Elektrik enerjisi · Alternatör · Dinamo</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Jeneratör</strong>, mekanik enerjiyi elektrik enerjisine dönüştürür. Faraday'ın elektromanyetik endüksiyonu ilkesine göre çalışır: dönen iletken, manyetik alanda EMK üretir.</div>
+    <div class="formul"><div class="f-main">E = N × B × L × v</div><div class="f-alt">N: Sarım sayısı &nbsp;|&nbsp; B: Manyetik akı (T) &nbsp;|&nbsp; L: İletken boyu &nbsp;|&nbsp; v: Hız</div></div>
+    <div class="sub-baslik">Jeneratör Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Çıkış</th><th>Kullanım</th></tr>
+      <tr><td><strong>Alternatör (AC)</strong></td><td>AC, 50 Hz</td><td>Güç santralleri, yedek güç</td></tr>
+      <tr><td><strong>Dinamo (DC)</strong></td><td>DC</td><td>Araç şarj sistemi, kaynak makinesi</td></tr>
+    </table>
+    <div class="sub-baslik">Senkronizasyon Şartları</div>
+    <ul class="madde-list">
+      <li>Şebekeyle aynı frekans (50 Hz)</li>
+      <li>Aynı faz sırası</li>
+      <li>Aynı gerilim büyüklüğü ve faz açısı</li>
+    </ul>
+    <div class="info-box"><span class="ib-icon">🏗️</span><span>Türkiye'de yedek güç amaçlı dizel jeneratörler genellikle 230/400 V, 50 Hz üretir. Devir sayısı 1500 dev/dak (4 kutuplu) veya 3000 dev/dak (2 kutuplu) olur.</span></div>
+  </div>
+</div>
+
+<!-- ELEKTRİK MOTORU -->
+<div class="konu-card" data-cat="elektromekanik" data-keys="motor asenkron senkron devir tork güç rotor stator sürücü">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">⚙️</div>
+    <div class="konu-info"><div class="konu-title">Elektrik Motoru</div><div class="konu-sub">Asenkron · Senkron · Devir · Tork</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Elektrik motoru</strong>, elektrik enerjisini mekanik enerjiye dönüştürür. En yaygın türü, endüstride kullanılan <strong>asenkron (indüksiyon) motordur</strong>.</div>
+    <div class="formul"><div class="f-main">n<sub>s</sub> = (120 × f) / p</div><div class="f-alt">n<sub>s</sub>: Senkron devir (dev/dak) &nbsp;|&nbsp; f: Frekans (Hz) &nbsp;|&nbsp; p: Kutup sayısı</div></div>
+    <div class="sub-baslik">Yaygın Senkron Devirler (50 Hz)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Kutup Sayısı</th><th>Senkron Devir</th><th>Asenkron Devir (~%5 kayma)</th></tr>
+      <tr><td>2 kutup</td><td>3000 dev/dak</td><td>~2850 dev/dak</td></tr>
+      <tr><td>4 kutup</td><td>1500 dev/dak</td><td>~1410 dev/dak</td></tr>
+      <tr><td>6 kutup</td><td>1000 dev/dak</td><td>~960 dev/dak</td></tr>
+      <tr><td>8 kutup</td><td>750 dev/dak</td><td>~720 dev/dak</td></tr>
+    </table>
+    <div class="formul"><div class="f-main">T = 9550 × P / n</div><div class="f-alt">T: Tork (N·m) &nbsp;|&nbsp; P: Güç (kW) &nbsp;|&nbsp; n: Devir (dev/dak)</div></div>
+    <div class="sub-baslik">Motor Koruma Sınıfı (IE)</div>
+    <ul class="madde-list">
+      <li><strong>IE1</strong> — Standart verim (eski tip)</li>
+      <li><strong>IE2</strong> — Yüksek verim (minimum standart)</li>
+      <li><strong>IE3</strong> — Premium verim (AB'de zorunlu &gt;0,75 kW)</li>
+      <li><strong>IE4</strong> — Süper premium verim</li>
+    </ul>
+  </div>
+</div>
+
+<!-- KONDANSATÖRLÜ MOTOR BAĞLANTISI -->
+<div class="konu-card" data-cat="elektromekanik" data-keys="tek fazlı motor kondansatör çalışma başlatma bağlantı uc fazlı">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">🔌</div>
+    <div class="konu-info"><div class="konu-title">Üç Fazlı Motorun Kondansatörlü Bağlantısı</div><div class="konu-sub">Tek faz kaynakta 3 fazlı motor kullanımı</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Sahada tek faz kaynak (220 V) varken üç fazlı motor çalıştırılması gerektiğinde <strong>kondansatör fazla</strong> yöntemi kullanılır. Bu yöntemde kondansatör, gerilimde 90° faz kayması yaratarak eksik fazı simüle eder.</div>
+    <div class="sub-baslik">Bağlantı Prensibi</div>
+    <ul class="madde-list">
+      <li>Motor üçgen (Δ) bağlantıda olmalıdır</li>
+      <li>230 V tek faz kaynağa iki uç bağlanır</li>
+      <li>Üçüncü uca seri kondansatör bağlanır, diğer uç faz veya nötre bağlanır</li>
+      <li>Kondansatör değeri motor gücüne göre hesaplanır</li>
+    </ul>
+    <div class="formul"><div class="f-main">C ≈ 70 × P(kW) / U²</div><div class="f-alt">Yaklaşık kondansatör değeri (μF) hesabı</div></div>
+    <div class="sub-baslik">Kondansatör Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Kullanım</th></tr>
+      <tr><td><strong>Çalışma Kondansatörü</strong></td><td>Sürekli devrede kalır, motor çalışırken</td></tr>
+      <tr><td><strong>Başlatma Kondansatörü</strong></td><td>Yalnızca start anında devrededir, ardından kesilir</td></tr>
+    </table>
+    <div class="warn-box"><span class="ib-icon">⚠️</span><span>Bu yöntemle motor nominal gücünün yalnızca %60–70'ini verir. Yüksek torklu uygulamalarda uygun değildir.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list elektromekanik -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 3: KORUMA VE OTOMASYON CİHAZLARI
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="koruma">🛡️ Koruma ve Otomasyon Cihazları</div>
+<div class="konu-list">
+
+<!-- OTOMATİK DEVRE KESİCİ -->
+<div class="konu-card" data-cat="koruma" data-keys="otomatik devre kesici sigorta okk mcb mccb aşırı akım termal manyetik eğri B C D">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-red">🔲</div>
+    <div class="konu-info"><div class="konu-title">Otomatik Devre Kesici (OKK)</div><div class="konu-sub">MCB · MCCB · B, C, D eğrisi · Aşırı akım koruması</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Otomatik devre kesici (sigorta)</strong>, aşırı yük ve kısa devre akımlarına karşı devreyi koruyan, tekrar kullanılabilen koruma cihazıdır. İki mekanizması vardır: <strong>termal</strong> (aşırı yük) ve <strong>manyetik</strong> (kısa devre).</div>
+    <div class="sub-baslik">Eğri Tipleri (Açma Karakteristikleri)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Eğri</th><th>Manyetik Açma</th><th>Kullanım Alanı</th></tr>
+      <tr><td><strong>B Eğrisi</strong></td><td>3–5 × I<sub>n</sub></td><td>Ev tesisatı, aydınlatma, hassas elektronik</td></tr>
+      <tr><td><strong>C Eğrisi</strong></td><td>5–10 × I<sub>n</sub></td><td>En yaygın — genel amaçlı kullanım</td></tr>
+      <tr><td><strong>D Eğrisi</strong></td><td>10–20 × I<sub>n</sub></td><td>Motor, trafo, büyük yükler (yüksek start akımı)</td></tr>
+      <tr><td><strong>K/Z Eğrisi</strong></td><td>8–12 × I<sub>n</sub></td><td>Motor ve yarı iletken koruması</td></tr>
+    </table>
+    <div class="sub-baslik">Standart Akım Değerleri</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+      <span class="chip chip-blue">6 A</span><span class="chip chip-blue">10 A</span><span class="chip chip-blue">16 A</span><span class="chip chip-blue">20 A</span><span class="chip chip-blue">25 A</span><span class="chip chip-blue">32 A</span><span class="chip chip-blue">40 A</span><span class="chip chip-blue">50 A</span><span class="chip chip-blue">63 A</span>
+    </div>
+    <div class="sub-baslik">MCB vs MCCB</div>
+    <table class="bilgi-tablo">
+      <tr><th>Özellik</th><th>MCB</th><th>MCCB</th></tr>
+      <tr><td>Akım aralığı</td><td>≤125 A</td><td>100–1600 A</td></tr>
+      <tr><td>Kesme kapasitesi</td><td>6–10 kA</td><td>10–100 kA</td></tr>
+      <tr><td>Kullanım</td><td>Konut, küçük sanayi</td><td>Büyük sanayi, dağıtım</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- RCD KAÇAK AKIM -->
+<div class="konu-card" data-cat="koruma" data-keys="kaçak akım rcd elcb rccb 30ma toprak kaçak koruma can güvenliği">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-green">🛡️</div>
+    <div class="konu-info"><div class="konu-title">Kaçak Akım Koruma Cihazı (RCD)</div><div class="konu-sub">RCCB · ELCB · 30 mA · Can güvenliği</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>RCD (Residual Current Device)</strong>, faz ve nötr arasındaki akım dengesizliğini sürekli izler. Fark 30 mA'yı aştığında (kaçak akım) devreyi milisaniyeler içinde keserek can güvenliğini korur.</div>
+    <div class="formul"><div class="f-main">I<sub>kaçak</sub> = I<sub>faz</sub> − I<sub>nötr</sub></div><div class="f-alt">Bu fark 30 mA'yı geçerse &lt;30 ms içinde açar</div></div>
+    <div class="sub-baslik">Hassasiyet Değerleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Hassasiyet</th><th>Kullanım</th></tr>
+      <tr><td><strong>10 mA</strong></td><td>Tıbbi alanlar, özel hassas uygulamalar</td></tr>
+      <tr><td><strong>30 mA</strong></td><td>Standart konut — can koruması için minimum</td></tr>
+      <tr><td><strong>100 mA</strong></td><td>Yangın koruması amaçlı, dağıtım panoları</td></tr>
+      <tr><td><strong>300 mA</strong></td><td>Hat koruması, seçici koruma sistemleri</td></tr>
+    </table>
+    <div class="sub-baslik">RCD Türleri</div>
+    <ul class="madde-list">
+      <li><strong>AC Tipi</strong> — Yalnızca sinüsoidal kaçak akımları algılar (eski)</li>
+      <li><strong>A Tipi</strong> — AC + DC pulslu kaçak akımları algılar (tavsiye edilen)</li>
+      <li><strong>F Tipi</strong> — Frekans konvertörlü sistemler için</li>
+      <li><strong>B Tipi</strong> — Tüm kaçak akım türleri (EV şarj, güneş sistemi)</li>
+    </ul>
+    <div class="info-box"><span class="ib-icon">📋</span><span>Türkiye'de konutlarda banyo, mutfak, dış mekan ve garaj devrelerinde 30 mA RCD zorunludur (TS HD 60364).</span></div>
+  </div>
+</div>
+
+<!-- DİFERANSİYEL OTOMATİK -->
+<div class="konu-card" data-cat="koruma" data-keys="diferansiyel otomatik rcbo kaçak akım kesici kombine sigorta">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-purple">🔲</div>
+    <div class="konu-info"><div class="konu-title">Diferansiyel Otomatik Kesici</div><div class="konu-sub">RCBO · OKK + RCD tek cihazda</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>RCBO (Residual Current Circuit Breaker with Overcurrent protection)</strong>, kaçak akım koruma (RCD) ile aşırı akım korumasını (OKK) tek bir cihazda birleştirir.</div>
+    <div class="sub-baslik">RCD vs RCBO Karşılaştırması</div>
+    <table class="bilgi-tablo">
+      <tr><th>Özellik</th><th>RCD (RCCB)</th><th>RCBO</th></tr>
+      <tr><td>Kaçak akım koruması</td><td>✅</td><td>✅</td></tr>
+      <tr><td>Aşırı akım koruması</td><td>❌ (ayrı OKK gerekir)</td><td>✅ dahil</td></tr>
+      <tr><td>Pano yeri</td><td>Fazla yer kaplar (2 cihaz)</td><td>Tek modül, tasarruflu</td></tr>
+      <tr><td>Maliyet</td><td>Daha uygun (toplam benzer)</td><td>Biraz pahalı ama pratik</td></tr>
+      <tr><td>Arıza tespiti</td><td>Hangi hat olduğu belli değil</td><td>Hat bazlı, kolay tespit</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">💡</span><span>Modern konut panolarında her devre için ayrı RCBO kullanmak hem güvenliği artırır hem de arıza tespitini kolaylaştırır.</span></div>
+  </div>
+</div>
+
+<!-- GERİLİM KONTROL RÖLESİ -->
+<div class="konu-card" data-cat="koruma" data-keys="gerilim kontrol rölesi over under voltage relay aşırı düşük düzensizlik asimetri">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">📊</div>
+    <div class="konu-info"><div class="konu-title">Gerilim Kontrol Rölesi</div><div class="konu-sub">Aşırı / Düşük gerilim · Asimetri · Faz sırası koruması</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Gerilim kontrol rölesi</strong>, şebeke gerilimini sürekli izleyerek belirlenen sınırlar dışına çıkıldığında devreyi keser veya alarm verir. Özellikle hassas ekipmanlar ve motorlar için kritiktir.</div>
+    <div class="sub-baslik">Koruma Fonksiyonları</div>
+    <table class="bilgi-tablo">
+      <tr><th>Fonksiyon</th><th>Açıklama</th><th>Tipik Eşik</th></tr>
+      <tr><td><strong>Aşırı Gerilim</strong></td><td>U &gt; nominal</td><td>+10%</td></tr>
+      <tr><td><strong>Düşük Gerilim</strong></td><td>U &lt; nominal</td><td>−15%</td></tr>
+      <tr><td><strong>Faz Kaybı</strong></td><td>3Φ'dan bir faz yok</td><td>—</td></tr>
+      <tr><td><strong>Asimetri</strong></td><td>Fazlar arası dengesizlik</td><td>&gt;%5</td></tr>
+      <tr><td><strong>Faz Sırası</strong></td><td>Yanlış faz sırası</td><td>—</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">⚙️</span><span>Motorlarda faz kaybı çok tehlikelidir — kalan iki fazdan aşırı akım çeker ve motor yanar. Gerilim kontrol rölesi bu durumda devreyi hemen keser.</span></div>
+  </div>
+</div>
+
+<!-- MANYETİK KONTAKTÖR -->
+<div class="konu-card" data-cat="koruma" data-keys="kontaktör manyetik bobin kontak AC DC kumanda güç devresi">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">🔌</div>
+    <div class="konu-info"><div class="konu-title">Manyetik Kontaktör</div><div class="konu-sub">Güç anahtarı · Kumanda devresi · NO/NC kontak</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Kontaktör</strong>, küçük bir kumanda sinyaliyle büyük güç devrelerini açıp kapayan elektromanyetik anahtarlama cihazıdır. Motorlar, ısıtıcılar ve aydınlatma sistemlerinde kullanılır.</div>
+    <div class="sub-baslik">Kontak Terminolojisi</div>
+    <table class="bilgi-tablo">
+      <tr><th>Terim</th><th>Açıklama</th></tr>
+      <tr><td><strong>NO (Normally Open)</strong></td><td>Normalde açık — bobin enerjisiz: açık, enerjili: kapalı</td></tr>
+      <tr><td><strong>NC (Normally Closed)</strong></td><td>Normalde kapalı — bobin enerjisiz: kapalı, enerjili: açık</td></tr>
+      <tr><td><strong>Ana Kontak</strong></td><td>Güç devresini taşır (3 faz için L1-L2-L3)</td></tr>
+      <tr><td><strong>Yardımcı Kontak</strong></td><td>Kumanda ve sinyal devreleri</td></tr>
+    </table>
+    <div class="sub-baslik">Kontaktör Seçim Kriterleri</div>
+    <ul class="madde-list">
+      <li><strong>AC-1:</strong> Dirençsel ve az endüktif yükler (ısıtıcı, aydınlatma)</li>
+      <li><strong>AC-2:</strong> Yaralı rotor motorlar, başlatma ve durdurmada</li>
+      <li><strong>AC-3:</strong> Kafes rotorlu motorlar — en yaygın kategorisi</li>
+      <li><strong>AC-4:</strong> Ters dönüş, inching, plugging uygulamaları</li>
+    </ul>
+    <div class="info-box"><span class="ib-icon">💡</span><span>Kontaktör bobini AC veya DC olabilir. Türkiye'de kumanda gerilimi genellikle 220 V AC (tek faz) veya 24 V DC (PLC sistemlerinde) kullanılır.</span></div>
+  </div>
+</div>
+
+<!-- SİGORTA ÇEŞİTLERİ -->
+<div class="konu-card" data-cat="koruma" data-keys="sigorta eriyebilir gG aM nh bıçaklı tüp cam sigorta seçimi">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-red">🔴</div>
+    <div class="konu-info"><div class="konu-title">Sigorta Çeşitleri</div><div class="konu-sub">gG · aM · NH · Tüp · Bıçaklı sigorta</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Eriyen telli sigortalar (fuse)</strong>, aşırı akım geçtiğinde iç teli eriyerek devreyi kalıcı olarak kesen tek kullanımlık koruma elemanlarıdır.</div>
+    <div class="sub-baslik">Sigorta Karakteristik Harfleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Harf</th><th>Açıklama</th></tr>
+      <tr><td><strong>g</strong></td><td>Tam aralık — hem yükleme hem kısa devre korur</td></tr>
+      <tr><td><strong>a</strong></td><td>Kısmi aralık — yalnızca kısa devreyi keser</td></tr>
+      <tr><td><strong>G</strong></td><td>Genel amaçlı kablo koruması</td></tr>
+      <tr><td><strong>M</strong></td><td>Motor koruması</td></tr>
+      <tr><td><strong>B</strong></td><td>Maden koruma</td></tr>
+      <tr><td><strong>R</strong></td><td>Yarı iletken koruması (çok hızlı)</td></tr>
+    </table>
+    <div class="sub-baslik">Fiziksel Türler</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tür</th><th>Akım Aralığı</th><th>Kullanım</th></tr>
+      <tr><td><strong>Tüp (cam/porselen)</strong></td><td>0,1–25 A</td><td>Elektronik, cihaz içi koruma</td></tr>
+      <tr><td><strong>D-Tip (Diazed)</strong></td><td>2–63 A</td><td>Konut, küçük tesisat</td></tr>
+      <tr><td><strong>NH (Bıçaklı)</strong></td><td>35–1250 A</td><td>Pano, dağıtım sistemi</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- SPD AŞIRI GERİLİM -->
+<div class="konu-card" data-cat="koruma" data-keys="spd aşırı gerilim koruma yıldırım parafudr tip 1 2 3 dalgalanma">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">⚡</div>
+    <div class="konu-info"><div class="konu-title">Aşırı Gerilim Koruma Cihazı (SPD)</div><div class="konu-sub">Parafudr · Yıldırım koruma · Tip 1 / 2 / 3</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>SPD (Surge Protection Device)</strong> — Parafudr — yıldırım düşmesi, şebeke dalgalanmaları veya anahtarlama kaynaklı geçici aşırı gerilimleri topraklama yoluyla süperiz ederek ekipmanları korur.</div>
+    <div class="sub-baslik">SPD Tipleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tip</th><th>Kullanım yeri</th><th>Standart akım</th></tr>
+      <tr><td><strong>Tip 1</strong></td><td>Ana bina panosu, yıldırım parafudresi yanına</td><td>I<sub>imp</sub> 12,5 kA</td></tr>
+      <tr><td><strong>Tip 2</strong></td><td>Dağıtım panoları, en yaygın</td><td>I<sub>max</sub> 20–40 kA</td></tr>
+      <tr><td><strong>Tip 3</strong></td><td>Prizde, cihaz yanında (uzatma kablosu tipi)</td><td>U<sub>oc</sub> ≤ 1,2/50 μs</td></tr>
+    </table>
+    <div class="sub-baslik">Teknoloji Türleri</div>
+    <ul class="madde-list">
+      <li><strong>MOV (Metal Oksit Varistör)</strong> — Tip 2-3'de yaygın, eşik geriliminde iletken hale gelir</li>
+      <li><strong>Hava Boşluklu (Ark Borusu)</strong> — Tip 1'de, büyük enerji tahliyesi</li>
+      <li><strong>TVS Diyotu</strong> — Elektronik kart koruması, çok hızlı</li>
+    </ul>
+    <div class="warn-box"><span class="ib-icon">⚠️</span><span>SPD'ler sınırsız kullanım ömrüne sahip değildir. Büyük bir darbe sonrası durum göstergesini kontrol edin; gerekirse değiştirin.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list koruma -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 4: KABLO VE İLETKENLER
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="kablo">🔌 Kablo ve İletkenler</div>
+<div class="konu-list">
+
+<!-- KABLO BAĞLANTI YÖNTEMLERİ -->
+<div class="konu-card" data-cat="kablo" data-keys="kablo bağlantı ek yöntem raychem klemens iletken birleştirme lehim sıkıştırma">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-green">🔗</div>
+    <div class="konu-info"><div class="konu-title">Kablo Bağlantı Yöntemleri</div><div class="konu-sub">Klemens · Ek manşonu · Kıstırmalı · Lehim</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">Bağlantı Yöntemi Karşılaştırması</div>
+    <table class="bilgi-tablo">
+      <tr><th>Yöntem</th><th>Avantaj</th><th>Dezavantaj</th></tr>
+      <tr><td><strong>Klemens (vida)</strong></td><td>Güvenli, sökülebilir</td><td>Titreşimde gevşeyebilir</td></tr>
+      <tr><td><strong>Ek manşonu (kıstırma)</strong></td><td>Hızlı, kompakt</td><td>Özel takım gerekir</td></tr>
+      <tr><td><strong>Baston/Kıstırmalı Klemens</strong></td><td>Çok hızlı montaj</td><td>Küçük kesitler için</td></tr>
+      <tr><td><strong>Lehim</strong></td><td>Düşük direnç</td><td>Isı hasarı riski, zaman alır</td></tr>
+      <tr><td><strong>Isı kılıfı (shrink)</strong></td><td>İzolasyon ve koruma</td><td>Tek kullanımlık</td></tr>
+    </table>
+    <div class="sub-baslik">Klemens Seçim Kriterleri</div>
+    <ul class="madde-list">
+      <li>Maksimum akım taşıma kapasitesi kablo kesitiyle eşleşmeli</li>
+      <li>Çalışma gerilimi klemens anma gerilimine uygun olmalı</li>
+      <li>Ortam şartlarına göre IP koruma sınıfı seçilmeli</li>
+      <li>Bakır ve alüminyum iletkenler için ayrı klemens kullanılmalı</li>
+    </ul>
+    <div class="warn-box"><span class="ib-icon">⚠️</span><span>Bağlantı noktasındaki gevşeklik direnç artışına → ısınmaya → yangına neden olur. Tüm bağlantılar sıkma torku spesifikasyonuna uygun yapılmalıdır.</span></div>
+  </div>
+</div>
+
+<!-- KABLO KESİT SEÇİMİ -->
+<div class="konu-card" data-cat="kablo" data-keys="kablo kesit seçimi akım kapasitesi mm2 bakır alüminyum güç iletken boyutlandırma">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">📏</div>
+    <div class="konu-info"><div class="konu-title">Güç ve Akıma Göre Kablo Kesit Seçimi</div><div class="konu-sub">mm² tablosu · Bakır / Alüminyum · Kurulum tipi</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Kablo seçiminde iki kriterin de sağlanması gerekir: <strong>akım taşıma kapasitesi</strong> ve <strong>gerilim düşümü sınırı</strong> (max %3 konut, %5 sanayi).</div>
+    <div class="sub-baslik">Bakır Kablo — Akım Kapasitesi (Boru içi, 30°C)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Kesit (mm²)</th><th>Tek Faz (A)</th><th>Üç Faz (A)</th><th>Tipik Kullanım</th></tr>
+      <tr><td><strong>1,5</strong></td><td>15</td><td>13</td><td>Aydınlatma devresi</td></tr>
+      <tr><td><strong>2,5</strong></td><td>20</td><td>17</td><td>Priz devresi, küçük cihazlar</td></tr>
+      <tr><td><strong>4</strong></td><td>27</td><td>23</td><td>Çamaşır makinesi, ocak</td></tr>
+      <tr><td><strong>6</strong></td><td>34</td><td>29</td><td>Klima, kombi</td></tr>
+      <tr><td><strong>10</strong></td><td>46</td><td>40</td><td>Elektrikli ısıtıcı, küçük motor</td></tr>
+      <tr><td><strong>16</strong></td><td>61</td><td>54</td><td>3 kW+ motor, kaynak makinesi</td></tr>
+      <tr><td><strong>25</strong></td><td>80</td><td>70</td><td>5–7,5 kW motor</td></tr>
+      <tr><td><strong>35</strong></td><td>99</td><td>86</td><td>10–11 kW motor</td></tr>
+      <tr><td><strong>50</strong></td><td>119</td><td>103</td><td>15 kW motor</td></tr>
+      <tr><td><strong>70</strong></td><td>151</td><td>130</td><td>22 kW motor</td></tr>
+      <tr><td><strong>95</strong></td><td>182</td><td>158</td><td>30 kW motor</td></tr>
+    </table>
+    <div class="info-box"><span class="ib-icon">ℹ️</span><span>Kablo gruplanması, yüksek ortam sıcaklığı ve boru içi kurulum gibi durumlarda tablo değerleri düzeltme katsayılarıyla çarpılarak azaltılır.</span></div>
+  </div>
+</div>
+
+<!-- RENK KODLAMASI -->
+<div class="konu-card" data-cat="kablo" data-keys="renk kodu kablo iletken faz nötr toprak renk standart kahverengi mavi sarı yeşil">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">🌈</div>
+    <div class="konu-info"><div class="konu-title">İletken Renk Kodlaması</div><div class="konu-sub">IEC 60446 · Faz · Nötr · Toprak</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">IEC 60446 — Kablo Renk Standartları</div>
+    <table class="bilgi-tablo">
+      <tr><th>İletken</th><th>Renk</th><th>Açıklama</th></tr>
+      <tr><td><strong>Faz L1</strong></td><td><span class="renk-bant" style="background:#8B4513;"></span> Kahverengi</td><td>3 fazlı sistemde 1. faz</td></tr>
+      <tr><td><strong>Faz L2</strong></td><td><span class="renk-bant" style="background:#1a1a1a;border:1px solid #666;"></span> Siyah</td><td>3 fazlı sistemde 2. faz</td></tr>
+      <tr><td><strong>Faz L3</strong></td><td><span class="renk-bant" style="background:#888;"></span> Gri</td><td>3 fazlı sistemde 3. faz</td></tr>
+      <tr><td><strong>Tek Faz (L)</strong></td><td><span class="renk-bant" style="background:#8B4513;"></span> Kahverengi</td><td>Faz iletken</td></tr>
+      <tr><td><strong>Nötr (N)</strong></td><td><span class="renk-bant" style="background:#4a90d9;"></span> Mavi</td><td>Nötr iletken</td></tr>
+      <tr><td><strong>Toprak / PE</strong></td><td><span class="renk-bant" style="background:#228B22;"></span><span class="renk-bant" style="background:#FFD700;"></span> Sarı-Yeşil</td><td>Koruyucu toprak iletkeni</td></tr>
+      <tr><td><strong>PEN (Birleşik)</strong></td><td>Sarı-Yeşil + mavi uç</td><td>TN-C sisteminde N+PE birleşik</td></tr>
+    </table>
+    <div class="warn-box"><span class="ib-icon">⚠️</span><span>Eski Alman tesisatlarında L=Siyah, N=Mavi, PE=Sarı-Yeşil olabilir. Türkiye'de bazı eski tesisatlarda da farklı renkler bulunabilir — tesisat üzerinde mutlaka gerilim ölçümü yapın.</span></div>
+    <div class="sub-baslik">DC Sistemlerde Renk</div>
+    <table class="bilgi-tablo">
+      <tr><th>İletken</th><th>Renk</th></tr>
+      <tr><td>Pozitif (+)</td><td><span class="renk-bant" style="background:#e11;"></span> Kırmızı</td></tr>
+      <tr><td>Negatif (−)</td><td><span class="renk-bant" style="background:#1a1a1a;border:1px solid #666;"></span> Siyah</td></tr>
+      <tr><td>Toprak</td><td><span class="renk-bant" style="background:#228B22;"></span><span class="renk-bant" style="background:#FFD700;"></span> Sarı-Yeşil</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ELEKTRİK PANOSU -->
+<div class="konu-card" data-cat="kablo" data-keys="pano elektrik tablo dağıtım bileşen ray sigorta düzeni">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">🗃️</div>
+    <div class="konu-info"><div class="konu-title">Elektrik Panosu</div><div class="konu-sub">Dağıtım panosu · Bileşenler · Montaj sırası</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Elektrik panosu, enerjiyi dağıtan, koruyan ve izleyen merkezi bağlantı noktasıdır. Doğru sıralama hem güvenlik hem de bakım kolaylığı için önemlidir.</div>
+    <div class="sub-baslik">Tipik Konut Panosu Montaj Sırası (Yukarıdan aşağıya)</div>
+    <ul class="madde-list">
+      <li><strong>1.</strong> Ana giriş sigortası / şalter (2 kutuplu)</li>
+      <li><strong>2.</strong> Enerji sayacı (varsa)</li>
+      <li><strong>3.</strong> SPD (Parafudr) — yıldırım ve dalgalanma koruması</li>
+      <li><strong>4.</strong> Ana RCD (100 mA) — yangın koruması için</li>
+      <li><strong>5.</strong> Devre bazlı RCBO veya OKK + RCD grubu</li>
+      <li><strong>6.</strong> Nötr ve toprak bara</li>
+    </ul>
+    <div class="sub-baslik">Bağlantı Kuralları</div>
+    <ul class="madde-list">
+      <li>Faz (kahverengi) üst terminale, nötr (mavi) alt terminale</li>
+      <li>Toprak iletkeni (sarı-yeşil) hiçbir kesici üzerinden geçmez</li>
+      <li>Nötr bara ile toprak bara pano içinde ayrı tutulur (TN-S)</li>
+      <li>Her devrenin etiketlenmesi bakım için zorunludur</li>
+    </ul>
+    <div class="info-box"><span class="ib-icon">📋</span><span>Panoya her ekleme veya değişiklikten sonra yalıtım direnci ve topraklama ölçümü yapılmalı, enerji verilmeden önce kontrol edilmelidir.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list kablo -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 5: TOPRAKLAMA
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="topraklama">🌍 Topraklama</div>
+<div class="konu-list">
+
+<!-- TOPRAKLAMA SİSTEM TÜRLERİ -->
+<div class="konu-card" data-cat="topraklama" data-keys="topraklama tn tt it sistem türü pe nötr bağlantı şebeke">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-green">🌍</div>
+    <div class="konu-info"><div class="konu-title">Topraklama Sistem Türleri</div><div class="konu-sub">TN-S · TN-C · TN-C-S · TT · IT</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Topraklama sistemleri IEC 60364'e göre harflerle tanımlanır. <strong>1. harf</strong>: güç kaynağı topraklama bağlantısı (T=Toprak, I=İzole). <strong>2. harf</strong>: yük tarafı topraklama (T=Bağımsız toprak, N=Nötr).</div>
+    <div class="sub-baslik">Sistem Türleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Sistem</th><th>Tanım</th><th>Kullanım</th></tr>
+      <tr><td><strong>TN-S</strong></td><td>N ve PE ayrı iletkenler — tercih edilen modern sistem</td><td>Konut, ofis, modern sanayi</td></tr>
+      <tr><td><strong>TN-C</strong></td><td>N ve PE birleşik (PEN iletken) — 4 iletken</td><td>Eski tesisatlar, hava hatları</td></tr>
+      <tr><td><strong>TN-C-S</strong></td><td>Binaya girişte PEN, sonra N+PE ayrılır</td><td>Türkiye'de en yaygın konut tipi</td></tr>
+      <tr><td><strong>TT</strong></td><td>Şebeke topraklı, bina bağımsız toprak elektrodu</td><td>Kırsal, eski şebeke</td></tr>
+      <tr><td><strong>IT</strong></td><td>Şebeke izole veya yüksek direnç üzerinden topraklı</td><td>Hastane ameliyathane, kritik tesis</td></tr>
+    </table>
+    <div class="sub-baslik">TN-S Sistemi Avantajları</div>
+    <ul class="madde-list">
+      <li>Kaçak akım anında net arıza akımı oluşur, RCD hızlı açar</li>
+      <li>Nötr ve PE ayrı olduğu için toprak gürültüsü hassas ekipmanı etkilemez</li>
+      <li>Güvenlik açısından en üstün sistem</li>
+    </ul>
+  </div>
+</div>
+
+<!-- POTANSİYEL DENGELEME -->
+<div class="konu-card" data-cat="topraklama" data-keys="potansiyel dengeleme eşit potansiyel bara ek topraklama bağlantı köprü">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">🔗</div>
+    <div class="konu-info"><div class="konu-title">Potansiyel Dengeleme Sistemi</div><div class="konu-sub">Eşit potansiyel · Dokunma gerilimi · Bağlantı barası</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Potansiyel dengeleme (equipotential bonding)</strong>, aynı mekanda bulunan tüm iletken kütleleri ve metal parçaları birbirine ve toprağa bağlayarak aralarındaki gerilim farkını ortadan kaldırır. <strong>Dokunma gerilimine karşı</strong> temel koruma yöntemidir.</div>
+    <div class="sub-baslik">Ana Potansiyel Dengeleme (MEB)</div>
+    <ul class="madde-list">
+      <li>Su, gaz, ısıtma boruları → Toprak barasına bağlanır</li>
+      <li>Metal yapı iskeletleri ve kirişler</li>
+      <li>Havalandırma kanalları ve asansör rayları</li>
+      <li>Telekominikasyon altyapısı metal kılıfları</li>
+    </ul>
+    <div class="sub-baslik">Ek (Yerel) Potansiyel Dengeleme</div>
+    <div class="para">Banyo, mutfak gibi ıslak hacimlerde tüm metal kütleler yerel bir bağlantı barası üzerinden birbirine bağlanır. Banyo havzası, küvet, duş teknesi, radyatör, metal çerçeveler dahil edilir.</div>
+    <div class="formul"><div class="f-main">R<sub>bağlantı</sub> ≤ 50 V / I<sub>koruma akımı</sub></div><div class="f-alt">Dokunma gerilimi 50 V'u geçmemeli (normal koşullar)</div></div>
+    <div class="tehlike-box"><span class="ib-icon">⚠️</span><span>Banyolarda potansiyel dengeleme yapılmadan RCD koruması tek başına yeterli değildir. Her ikisi de zorunludur.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list topraklama -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 6: AYDINLATMA
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="aydinlatma">💡 Aydınlatma</div>
+<div class="konu-list">
+
+<!-- LAMBA SOKET DUY -->
+<div class="konu-card" data-cat="aydinlatma" data-keys="lamba soket duy E27 E14 GU10 G13 ampul tipi">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">💡</div>
+    <div class="konu-info"><div class="konu-title">Lamba Soket ve Duy Tipleri</div><div class="konu-sub">E27 · E14 · GU10 · G13 · B22</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <table class="bilgi-tablo">
+      <tr><th>Soket Tipi</th><th>Duy çapı</th><th>Kullanım</th></tr>
+      <tr><td><strong>E27</strong></td><td>27 mm vidalı</td><td>Standart ampul — en yaygın konut</td></tr>
+      <tr><td><strong>E14</strong></td><td>14 mm vidalı</td><td>Küçük ampul, avize, gece lambası</td></tr>
+      <tr><td><strong>GU10</strong></td><td>10 mm pinli</td><td>Spot lamba, tavan armatür</td></tr>
+      <tr><td><strong>GU5.3 / MR16</strong></td><td>5,3 mm pinli</td><td>12V spot, düşük gerilim</td></tr>
+      <tr><td><strong>G13</strong></td><td>13 mm pinli</td><td>Floresan tüp (T8)</td></tr>
+      <tr><td><strong>G5</strong></td><td>5 mm pinli</td><td>T5 ince floresan tüp</td></tr>
+      <tr><td><strong>B22</strong></td><td>22 mm bajonlü</td><td>İngiliz standardı, bazı sanayi</td></tr>
+      <tr><td><strong>R7s</strong></td><td>7 mm pinli</td><td>Halojen çubuk lamba</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- LÜMEN LÜKS -->
+<div class="konu-card" data-cat="aydinlatma" data-keys="lümen lüks işık akısı aydınlık şiddeti candela watt verim">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">☀️</div>
+    <div class="konu-info"><div class="konu-title">Lümen ve Lüks</div><div class="konu-sub">Işık akısı · Aydınlık şiddeti · Fotometri</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">Temel Işık Birimleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Büyüklük</th><th>Sembol</th><th>Birim</th><th>Tanım</th></tr>
+      <tr><td><strong>Işık Akısı</strong></td><td>Φ</td><td>lm (Lümen)</td><td>Lambadan toplam yayılan ışık miktarı</td></tr>
+      <tr><td><strong>Aydınlık Şiddeti</strong></td><td>E</td><td>lx (Lüks)</td><td>Yüzey başına düşen ışık = lm/m²</td></tr>
+      <tr><td><strong>Işıl Yoğunluk</strong></td><td>I</td><td>cd (Candela)</td><td>Belirli yönde ışıl güç</td></tr>
+      <tr><td><strong>Parlaklık</strong></td><td>L</td><td>cd/m²</td><td>Yüzey parlaklığı (dazzle)</td></tr>
+    </table>
+    <div class="formul"><div class="f-main">E (lüks) = Φ (lümen) / A (m²)</div><div class="f-alt">Yüzey alanına düşen ışık akısı</div></div>
+    <div class="sub-baslik">Önerilen Aydınlık Düzeyleri (EN 12464)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Mekan</th><th>Önerilen lüks</th></tr>
+      <tr><td>Koridor, giriş</td><td>100 lx</td></tr>
+      <tr><td>Oturma odası</td><td>200 lx</td></tr>
+      <tr><td>Mutfak, çalışma odası</td><td>300–500 lx</td></tr>
+      <tr><td>Ofis çalışma masası</td><td>500 lx</td></tr>
+      <tr><td>Çizim, hassas işler</td><td>750–1000 lx</td></tr>
+      <tr><td>Ameliyathane</td><td>10.000 lx+</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- RENK SICAKLIĞI -->
+<div class="konu-card" data-cat="aydinlatma" data-keys="renk sıcaklığı kelvin warm cool daylight beyaz sarı LED CRI">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-purple">🌡️</div>
+    <div class="konu-info"><div class="konu-title">Renk Sıcaklığı</div><div class="konu-sub">Kelvin · Warm White · Cool White · CRI</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Renk sıcaklığı</strong>, ışığın tonunu tanımlar. Birimi <strong>Kelvin (K)</strong>'dir. Düşük K = sıcak sarımsı ışık; yüksek K = serin mavi-beyaz ışık.</div>
+    <table class="bilgi-tablo">
+      <tr><th>Renk Sıcaklığı</th><th>Ton</th><th>Kullanım</th></tr>
+      <tr><td><strong>2700–3000 K</strong></td><td>🟡 Sıcak Beyaz</td><td>Yatak odası, oturma odası, restoranlar</td></tr>
+      <tr><td><strong>3500–4000 K</strong></td><td>🟨 Nötr Beyaz</td><td>Mutfak, banyo, ofis</td></tr>
+      <tr><td><strong>5000–6500 K</strong></td><td>⬜ Soğuk Beyaz / Gün ışığı</td><td>Fabrika, atölye, hastane, dış mekan</td></tr>
+    </table>
+    <div class="sub-baslik">Renk Doğruluk İndeksi (CRI / Ra)</div>
+    <div class="para"><strong>CRI</strong>, bir ışık kaynağının renkleri gerçeğe ne kadar yakın gösterdiğini ölçer. 100 mükemmel (güneş ışığı). LED seçiminde CRI &gt; 80 tavsiye edilir, hassas renk çalışması için CRI &gt; 90.</div>
+    <div class="info-box"><span class="ib-icon">💡</span><span>Mağaza ürün aydınlatması: 3000 K + CRI&gt;90 → ürünler daha canlı görünür. Soğuk depo: 5000 K yeterli. Sanat galerisi: 2700 K + CRI=98+</span></div>
+  </div>
+</div>
+
+<!-- ŞERİT LED -->
+<div class="konu-card" data-cat="aydinlatma" data-keys="şerit led strip 12v 24v smd ip rgb sürücü güç kaynağı">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">🌈</div>
+    <div class="konu-info"><div class="konu-title">Şerit LED</div><div class="konu-sub">SMD tipi · 12V / 24V · IP koruma · Güç hesabı</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">Yaygın SMD Tipleri</div>
+    <table class="bilgi-tablo">
+      <tr><th>Tip</th><th>Chip boyutu</th><th>Özellik</th></tr>
+      <tr><td><strong>SMD 3528</strong></td><td>3,5 × 2,8 mm</td><td>Tek renkli, düşük güç, dekorasyon</td></tr>
+      <tr><td><strong>SMD 5050</strong></td><td>5,0 × 5,0 mm</td><td>RGB veya yüksek lümen, yaygın</td></tr>
+      <tr><td><strong>SMD 2835</strong></td><td>2,8 × 3,5 mm</td><td>Verimli, yüksek lümen/W</td></tr>
+      <tr><td><strong>COB</strong></td><td>Çok çipli</td><td>Uniform ışık, yüksek yoğunluk</td></tr>
+    </table>
+    <div class="sub-baslik">IP Koruma — Şerit LED</div>
+    <table class="bilgi-tablo">
+      <tr><th>IP Sınıfı</th><th>Koruma</th><th>Kullanım</th></tr>
+      <tr><td><strong>IP20</strong></td><td>Korumasız</td><td>Kuru iç mekan (kapalı profil)</td></tr>
+      <tr><td><strong>IP54</strong></td><td>Toz + su sıçrama</td><td>Mutfak altı, banyo dışarısı</td></tr>
+      <tr><td><strong>IP65</strong></td><td>Toz geçirmez + su jeti</td><td>Dış mekan, banyo içi</td></tr>
+      <tr><td><strong>IP67/68</strong></td><td>Su geçirmez (daldırma)</td><td>Havuz, bataklık alan</td></tr>
+    </table>
+    <div class="sub-baslik">Güç Hesabı ve Sürücü Seçimi</div>
+    <div class="para">Şerit uzunluğu × W/m değeri = toplam güç. Sürücü gücü = toplam güç × 1,2 (güvenlik payı).</div>
+    <div class="formul"><div class="f-main">P<sub>sürücü</sub> = L (m) × W/m × 1,2</div><div class="f-alt">Örnek: 5m × 14,4 W/m × 1,2 = 86,4 W sürücü</div></div>
+    <div class="warn-box"><span class="ib-icon">⚠️</span><span>24V sistemlerde gerilim düşümü daha azdır — 5 metre üzeri şeritleerde 24V tercih edin. 12V'da 3–4 metreden uzun şeritleri beslemek için ortadan ek besleme yapın.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list aydinlatma -->
+
+<!-- ══════════════════════════════════════════
+     BÖLÜM 7: EK BİLGİLER
+══════════════════════════════════════════ -->
+<div class="section-label" data-cat="ek">📚 Ek Bilgiler</div>
+<div class="konu-list">
+
+<!-- ACİL DURUM AŞIRI GERİLİM -->
+<div class="konu-card" data-cat="ek" data-keys="acil durum aşırı gerilim yıldırım güç dalgası EMC EMI surge transient">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-red">⚡</div>
+    <div class="konu-info"><div class="konu-title">Acil Durum Aşırı Gerilim Detayları</div><div class="konu-sub">Surge · Transient · EMI · Yıldırım enerji sınıfları</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">Aşırı gerilimler (geçici darbeler / surge) ns-μs mertebesinde çok kısa ama yıkıcı enerji darbelerdir. Kaynakları ve enerji büyüklükleri korumanın tasarımını belirler.</div>
+    <div class="sub-baslik">Aşırı Gerilim Sınıfları (IEC 60664-1)</div>
+    <table class="bilgi-tablo">
+      <tr><th>Kategori</th><th>Zirve Gerilim</th><th>Örnek</th></tr>
+      <tr><td><strong>Kategorı IV</strong></td><td>6 kV</td><td>Sayaç, ana giriş ekipmanı</td></tr>
+      <tr><td><strong>Kategori III</strong></td><td>4 kV</td><td>Dağıtım panosu, devre kesiciler</td></tr>
+      <tr><td><strong>Kategori II</strong></td><td>2,5 kV</td><td>Ev aletleri, sabit ekipman</td></tr>
+      <tr><td><strong>Kategori I</strong></td><td>1,5 kV</td><td>Hassas elektronik, koruma altında</td></tr>
+    </table>
+    <div class="sub-baslik">Yıldırım Koruması Seviyeleri (LPL)</div>
+    <table class="bilgi-tablo">
+      <tr><th>LPL</th><th>Maks. tepe akım</th><th>Kullanım</th></tr>
+      <tr><td><strong>LPL-I</strong></td><td>200 kA</td><td>Patlayıcı depo, kritik tesis</td></tr>
+      <tr><td><strong>LPL-II</strong></td><td>150 kA</td><td>Endüstriyel tesis</td></tr>
+      <tr><td><strong>LPL-III</strong></td><td>100 kA</td><td>Konut, ticari bina</td></tr>
+      <tr><td><strong>LPL-IV</strong></td><td>100 kA</td><td>Basit yapılar (min koruma)</td></tr>
+    </table>
+    <div class="sub-baslik">Geçici Aşırı Gerilim (TOV) Kaynakları</div>
+    <ul class="madde-list">
+      <li>Yıldırım düşmesi — En yüksek enerjili darbe</li>
+      <li>Anahtarlama darbesi — Büyük motorlar, kondansatör grupları</li>
+      <li>Güç şebekesi arızası — Faz kopması, toprak arızası</li>
+      <li>ESD (Elektrostatik Boşalma) — Düşük enerji ama hassas elektronik için tehlikeli</li>
+    </ul>
+  </div>
+</div>
+
+<!-- IP KORUMA DERECELERİ -->
+<div class="konu-card" data-cat="ek" data-keys="ip koruma derece ingress protection toz su dayanım sınıf tanım">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-blue">🛡️</div>
+    <div class="konu-info"><div class="konu-title">IP Koruma Dereceleri Tanımları</div><div class="konu-sub">IEC 60529 · Toz · Su koruması · Tam tablo</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para">IP (Ingress Protection) kodu iki rakamdan oluşur. <strong>1. rakam</strong>: katı cisim ve toz koruması. <strong>2. rakam</strong>: sıvı koruması.</div>
+    <div class="sub-baslik">1. Rakam — Toz / Katı Cisim</div>
+    <table class="bilgi-tablo">
+      <tr><th>Rakam</th><th>Koruma</th></tr>
+      <tr><td><strong>0</strong></td><td>Korumasız</td></tr>
+      <tr><td><strong>1</strong></td><td>50 mm'den büyük cisimler (el)</td></tr>
+      <tr><td><strong>2</strong></td><td>12,5 mm'den büyük (parmak)</td></tr>
+      <tr><td><strong>3</strong></td><td>2,5 mm'den büyük (alet)</td></tr>
+      <tr><td><strong>4</strong></td><td>1 mm'den büyük (tel, vida)</td></tr>
+      <tr><td><strong>5</strong></td><td>Tozdan korumalı (tam geçirmez değil)</td></tr>
+      <tr><td><strong>6</strong></td><td>Toz geçirmez (tam koruma)</td></tr>
+    </table>
+    <div class="sub-baslik">2. Rakam — Su / Sıvı</div>
+    <table class="bilgi-tablo">
+      <tr><th>Rakam</th><th>Koruma</th></tr>
+      <tr><td><strong>0</strong></td><td>Korumasız</td></tr>
+      <tr><td><strong>1</strong></td><td>Dikey su damlası</td></tr>
+      <tr><td><strong>2</strong></td><td>15°'ye kadar damlama</td></tr>
+      <tr><td><strong>3</strong></td><td>60°'ye kadar yağmur (yağmurluk)</td></tr>
+      <tr><td><strong>4</strong></td><td>Her yönden su sıçraması</td></tr>
+      <tr><td><strong>5</strong></td><td>Her yönden su jeti (düşük basınç)</td></tr>
+      <tr><td><strong>6</strong></td><td>Güçlü su jeti (yüksek basınç)</td></tr>
+      <tr><td><strong>7</strong></td><td>1 m derinlikte 30 dak. daldırma</td></tr>
+      <tr><td><strong>8</strong></td><td>Belirlenen derinlikte uzun süreli daldırma</td></tr>
+    </table>
+    <div class="sub-baslik">Yaygın IP Kombinasyonları</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-blue">IP20</span><span style="font-size:10px;color:var(--text3)">İç mekan</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-teal">IP44</span><span style="font-size:10px;color:var(--text3)">Banyo/mutfak</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-green">IP54</span><span style="font-size:10px;color:var(--text3)">Yarı dış mekan</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-amber">IP65</span><span style="font-size:10px;color:var(--text3)">Dış mekan</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-purple">IP67</span><span style="font-size:10px;color:var(--text3)">Su geçirmez</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="chip chip-red">IP68</span><span style="font-size:10px;color:var(--text3)">Derin su</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- JOULE-LENZ YASASI -->
+<div class="konu-card" data-cat="ek" data-keys="joule lenz yasası ısı enerji elektrik kayıp iletken q formül">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-amber">🌡️</div>
+    <div class="konu-info"><div class="konu-title">Joule–Lenz Yasası</div><div class="konu-sub">Elektrik ısısı · Q = I²Rt · Isı kaybı hesabı</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Joule-Lenz Yasası</strong>, bir iletken üzerinden akım geçtiğinde açığa çıkan ısı enerjisini tanımlar. Joule (İngiliz) ve Lenz (Rus) bağımsız olarak aynı yasayı keşfetmiştir (1840-1842).</div>
+    <div class="formul"><div class="f-main">Q = I² × R × t</div><div class="f-alt">Q: Isı (Joule) &nbsp;|&nbsp; I: Akım (A) &nbsp;|&nbsp; R: Direnç (Ω) &nbsp;|&nbsp; t: Süre (s)</div></div>
+    <div class="sub-baslik">Pratik Yorumlar</div>
+    <ul class="madde-list">
+      <li>Akım iki katına çıkarsa ısı <strong>4 katı</strong> olur (I² ilişkisi)</li>
+      <li>Kablo direnç tasarımı: Uzun veya ince iletkenler daha çok ısınır</li>
+      <li>Ev ısıtıcıları ve elektrik ocakları bu yasayla çalışır (yüksek R, yüksek Q)</li>
+      <li>İletkenler bu nedenle düşük dirençli bakırdan yapılır</li>
+    </ul>
+    <div class="sub-baslik">Güç olarak ifade</div>
+    <div class="formul"><div class="f-main">P<sub>ısı</sub> = I² × R &nbsp;&nbsp;(Watt)</div><div class="f-alt">Bu değer kablo kayıplarını hesaplamak için kullanılır</div></div>
+    <div class="info-box"><span class="ib-icon">💡</span><span>10 mm² bakır kablo, 1 Ω/km direnç değerine sahiptir. 100 A akımda 1 km'de P = 100² × 1 = 10.000 W ısı kaybı olur — bu yüzden büyük hatlarda kesit artışı kritiktir.</span></div>
+  </div>
+</div>
+
+<!-- COULOMB YASASI -->
+<div class="konu-card" data-cat="ek" data-keys="coulomb yasası elektrostatik yük kuvvet mesafe formül">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-purple">🔵</div>
+    <div class="konu-info"><div class="konu-title">Coulomb Yasası</div><div class="konu-sub">Elektrostatik kuvvet · Yük · Mesafe</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="para"><strong>Coulomb Yasası</strong>, iki elektrik yükü arasındaki kuvveti tanımlar. Charles Augustin de Coulomb tarafından 1785'te formüle edilmiştir. Elektrik alanı kavramının temelidir.</div>
+    <div class="formul"><div class="f-main">F = k × (q₁ × q₂) / r²</div><div class="f-alt">k = 8,99 × 10⁹ N·m²/C² (Coulomb sabiti) &nbsp;|&nbsp; r: Yükler arası mesafe (m)</div></div>
+    <div class="sub-baslik">Temel Özellikler</div>
+    <ul class="madde-list">
+      <li>Aynı işaretli yükler <strong>iter</strong>, zıt işaretliler <strong>çeker</strong></li>
+      <li>Kuvvet, mesafenin karesiyle ters orantılı: mesafe 2 katına çıkarsa kuvvet 4'te 1'e düşer</li>
+      <li>Kuvvet, her iki yükle doğru orantılı</li>
+      <li>Elektromanyetizmaya olan yeri Newton'un yerçekimine benzer</li>
+    </ul>
+    <div class="sub-baslik">Elektrik Alan İlişkisi</div>
+    <div class="formul"><div class="f-main">E = k × q / r² &nbsp;&nbsp;→&nbsp;&nbsp; F = q × E</div><div class="f-alt">Bir yükün çevresinde oluşturduğu elektrik alan</div></div>
+  </div>
+</div>
+
+<!-- SAĞ EL SOL EL KURALLARI -->
+<div class="konu-card" data-cat="ek" data-keys="sağ el sol el kuralı motor jeneratör manyetik alan kuvvet Fleming">
+  <div class="konu-header" onclick="toggle(this)">
+    <div class="konu-icon ki-teal">✋</div>
+    <div class="konu-info"><div class="konu-title">Sağ El ve Sol El Kuralları</div><div class="konu-sub">Fleming kuralları · Motor · Jeneratör · Sarım yönü</div></div>
+    <span class="konu-chevron">›</span>
+  </div>
+  <div class="konu-body">
+    <div class="sub-baslik">1. Sol El Kuralı — Motor (Kuvvet Yönü)</div>
+    <div class="para">Sol elin işaret parmağı manyetik alan yönünde (K kutuptan N kutba), orta parmak akım yönünde tutulursa; <strong>baş parmak</strong> elektromanyetik kuvvet (hareket) yönünü gösterir.</div>
+    <ul class="madde-list">
+      <li>İşaret parmağı → B (Manyetik Alan)</li>
+      <li>Orta parmak → I (Akım yönü)</li>
+      <li>Baş parmak → F (Kuvvet / Hareket)</li>
+    </ul>
+    <div class="divider"></div>
+    <div class="sub-baslik">2. Sağ El Kuralı — Jeneratör (EMK Yönü)</div>
+    <div class="para">Sağ elin işaret parmağı manyetik alan yönünde, baş parmak hareket yönünde tutulursa; <strong>orta parmak</strong> indüklenen EMK (akım) yönünü gösterir.</div>
+    <ul class="madde-list">
+      <li>İşaret parmağı → B (Manyetik Alan)</li>
+      <li>Baş parmak → v (Hareket / hız yönü)</li>
+      <li>Orta parmak → E (İndüklenen EMK)</li>
+    </ul>
+    <div class="divider"></div>
+    <div class="sub-baslik">3. Sağ El Sarım Kuralı — Bobin Kutupları</div>
+    <div class="para">Sağ el bir bobin veya sargıyı kavrar şekilde tutulduğunda, <strong>parmaklar akım yönünde</strong> kıvrılırsa; <strong>baş parmak</strong> manyetik alan kuzey kutbunu (N) gösterir.</div>
+    <div class="info-box"><span class="ib-icon">🧲</span><span>Bu kurallar motor sargısı tasarımı, konduktör kuvvet analizi ve bobin polaritesi belirlenmesinde temel araçlardır.</span></div>
+  </div>
+</div>
+
+</div><!-- /konu-list ek -->
+
+</div><!-- /content -->
+
+<nav class="bottom-nav">
+  <div class="nav-item" onclick="window.location.href='../index.html'"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
+  <div class="nav-item" onclick="window.location.href='hesap.html'"><span class="nav-icon">🔢</span><span>Hesaplama</span></div>
+  <div class="nav-item" onclick="window.location.href='semalar.html'"><span class="nav-icon">📐</span><span>Şemalar</span></div>
+  <div class="nav-item active" onclick="window.location.href='teori.html'"><span class="nav-icon">📘</span><span>Teori</span></div>
+</nav>
+
+<script>
+// Tema
+const tema = localStorage.getItem('gt_tema') || 'koyu';
+if(tema === 'acik'){ document.documentElement.setAttribute('data-tema','acik'); document.getElementById('theme-btn').textContent = '☀️'; }
+function toggleTema(){
+  const acik = document.documentElement.getAttribute('data-tema') === 'acik';
+  document.documentElement.setAttribute('data-tema', acik ? '' : 'acik');
+  localStorage.setItem('gt_tema', acik ? 'koyu' : 'acik');
+  document.getElementById('theme-btn').textContent = acik ? '🌙' : '☀️';
+}
+
+// Akordiyon
+function toggle(header){
+  const card = header.closest('.konu-card');
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.konu-card.open').forEach(c => c.classList.remove('open'));
+  if(!isOpen) card.classList.add('open');
+}
+
+// Kategori filtresi
+let aktifKat = 'hepsi';
+function katFiltrele(kat, btn){
+  aktifKat = kat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.konu-card').forEach(card => {
+    const c = card.getAttribute('data-cat');
+    card.classList.toggle('hidden', kat !== 'hepsi' && c !== kat);
+  });
+  document.querySelectorAll('.section-label').forEach(el => {
+    const c = el.getAttribute('data-cat');
+    el.style.display = (kat === 'hepsi' || c === kat) ? '' : 'none';
+  });
+  aramaYap(document.getElementById('arama').value);
+}
+
+// Arama
+function aramaYap(q){
+  const q2 = q.toLowerCase().trim();
+  document.getElementById('arama-clear').classList.toggle('show', q2.length > 0);
+  let gorunenVar = false;
+  document.querySelectorAll('.konu-card').forEach(card => {
+    const c = card.getAttribute('data-cat');
+    const katOK = aktifKat === 'hepsi' || c === aktifKat;
+    if(!katOK){ card.classList.add('hidden'); return; }
+    const keys = card.getAttribute('data-keys') || '';
+    const title = card.querySelector('.konu-title')?.textContent || '';
+    const sub = card.querySelector('.konu-sub')?.textContent || '';
+    const body = card.querySelector('.konu-body')?.textContent || '';
+    const match = !q2 || keys.includes(q2) || title.toLowerCase().includes(q2) || sub.toLowerCase().includes(q2) || body.toLowerCase().includes(q2);
+    card.classList.toggle('hidden', !match);
+    if(match) gorunenVar = true;
+    if(match && q2) card.classList.add('open');
+  });
+  document.getElementById('no-result').classList.toggle('show', !gorunenVar && q2.length > 0);
+  document.querySelectorAll('.section-label').forEach(el => {
+    const c = el.getAttribute('data-cat');
+    if(aktifKat !== 'hepsi' && c !== aktifKat){ el.style.display = 'none'; return; }
+    el.style.display = '';
+  });
+}
+function aramaSifirla(){
+  document.getElementById('arama').value = '';
+  aramaYap('');
+}
+</script>
+</body>
+</html>
