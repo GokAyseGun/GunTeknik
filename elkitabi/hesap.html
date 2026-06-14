@@ -162,6 +162,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
   <button class="tab-btn" onclick="sekme('kablo',this)">🔌 Kablo Kesiti</button>
   <button class="tab-btn" onclick="sekme('renk',this)">🌈 Renk Kodu</button>
   <button class="tab-btn" onclick="sekme('cember',this)">⭕ Çap / Alan</button>
+  <button class="tab-btn" onclick="sekme('guc-sarfiyat',this)">🔋 Toplam Güç</button>
+  <button class="tab-btn" onclick="sekme('gunes',this)">☀️ Güneş Paneli</button>
 </div>
 
 <div class="content">
@@ -586,6 +588,118 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
     <div class="info-box"><span>💡</span><span>Bakır tel çapından kesit hesabı: 1,5 mm çap → A = π×(0,75)² ≈ 1,77 mm²</span></div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════
+     7. TOPLAM GÜÇ SARFİYATI
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-guc-sarfiyat">
+
+  <div class="kart">
+    <div class="kart-baslik">🔋 Toplam Güç Sarfiyatı</div>
+    <div class="kart-alt">Ürünleri ekle → toplam akım, watt ve gerekli kablo kesitini hesapla</div>
+
+    <div class="row2">
+      <div class="fg"><label>Sistem Türü</label>
+        <select id="gs-sistem" onchange="gs_sistem_degis()">
+          <option value="1f">Tek Faz (230V)</option>
+          <option value="3f">Üç Faz (400V)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Nominal Gerilim</label>
+        <div class="unit-wrap"><input type="number" id="gs-volt" value="230" step="any"><span class="unit-lbl">V</span></div>
+      </div>
+    </div>
+
+    <!-- Ürün listesi -->
+    <div id="gs-urun-listesi" style="display:flex;flex-direction:column;gap:8px;margin:12px 0;"></div>
+
+    <button onclick="gs_urun_ekle()" style="width:100%;padding:10px;border-radius:var(--r-md);background:var(--green-lt);border:1px dashed var(--green-md);color:var(--green);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">＋ Ürün Ekle</button>
+
+    <!-- Kablo kurulum seçenekleri -->
+    <div id="gs-kablo-panel" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-top:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🔌 Kablo Bilgileri (Kesit Hesabı)</div>
+      <div class="row2">
+        <div class="fg"><label>İletken Tipi</label>
+          <select id="gs-iletken">
+            <option value="cu">Bakır (Cu)</option>
+            <option value="al">Alüminyum (Al)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Kurulum Tipi</label>
+          <select id="gs-kurulum">
+            <option value="boru">Boru içi / Sıva altı</option>
+            <option value="acik">Açık / Kablo kanalı</option>
+            <option value="hava">Hava hattı</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Hat Uzunluğu (m)</label>
+        <div class="unit-wrap"><input type="number" id="gs-uzunluk" placeholder="20" step="any"><span class="unit-lbl">m</span></div>
+      </div>
+    </div>
+
+    <button class="btn-hesapla" style="margin-top:12px;" onclick="gs_hesapla()">Hesapla</button>
+
+    <div class="sonuc" id="gs-sonuc" style="display:none;">
+      <div id="gs-sonuc-icerik"></div>
+    </div>
+    <button class="btn-sifirla" onclick="gs_sifirla()">↺ Temizle</button>
+  </div>
+
+</div><!-- /sec-guc-sarfiyat -->
+
+<!-- ══════════════════════════════════
+     8. GÜNEŞ PANELİ HESABI
+══════════════════════════════════ -->
+<div class="hesap-section" id="sec-gunes">
+
+  <div class="kart">
+    <div class="kart-baslik">☀️ Güneş Paneli Sistemi Hesabı</div>
+    <div class="kart-alt">Muğla bölgesi · Ürün bazlı tüketim → tam sistem önerisi</div>
+
+    <div class="row2">
+      <div class="fg"><label>Şebeke Bağlantısı</label>
+        <select id="gn-sebeke">
+          <option value="off">Off-Grid (Tam bağımsız)</option>
+          <option value="hybrid">Hibrit (Şebeke + Panel)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Panel Türü</label>
+        <select id="gn-panel-tip">
+          <option value="mono">Monokristal (%20 verim)</option>
+          <option value="poli">Polikristal (%16 verim)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="fg"><label>Özerklik Süresi</label>
+        <div class="unit-wrap"><input type="number" id="gn-ozerlik" value="2" min="1" max="7" step="1"><span class="unit-lbl">gün</span></div>
+      </div>
+      <div class="fg"><label>Sistem Gerilimi</label>
+        <select id="gn-volt">
+          <option value="auto">Otomatik Seçim</option>
+          <option value="12">12V</option>
+          <option value="24">24V</option>
+          <option value="48">48V</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tüketici listesi -->
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Tüketiciler</div>
+    <div id="gn-urun-listesi" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+    <button onclick="gn_urun_ekle()" style="width:100%;padding:10px;border-radius:var(--r-md);background:var(--amber-lt);border:1px dashed var(--amber-md);color:var(--amber);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;">＋ Tüketici Ekle</button>
+
+    <button class="btn-hesapla" onclick="gn_hesapla()">Sistemi Hesapla</button>
+
+    <div class="sonuc" id="gn-sonuc" style="display:none;">
+      <div id="gn-sonuc-icerik"></div>
+    </div>
+    <button class="btn-sifirla" onclick="gn_sifirla()">↺ Temizle</button>
+  </div>
+
+</div><!-- /sec-gunes -->
 
 </div><!-- /content -->
 
@@ -1069,6 +1183,401 @@ function hzSifirla() {
 enerji_sec(document.getElementById('ef_wh'),'wh');
 rk_bantlar();
 rk_tablo_olustur();
+
+// ══════════════════════════════════════════════════════
+// TOPLAM GÜÇ SARFİYATI
+// ══════════════════════════════════════════════════════
+
+// Kablo kesit tabloları (IEC 60364, boru içi 30°C)
+const GS_KESIT_CU_1F = [{s:1.5,Im:15},{s:2.5,Im:20},{s:4,Im:27},{s:6,Im:34},{s:10,Im:46},{s:16,Im:61},{s:25,Im:80},{s:35,Im:99},{s:50,Im:119},{s:70,Im:151},{s:95,Im:182}];
+const GS_KESIT_CU_3F = [{s:1.5,Im:13},{s:2.5,Im:17},{s:4,Im:23},{s:6,Im:29},{s:10,Im:40},{s:16,Im:54},{s:25,Im:70},{s:35,Im:86},{s:50,Im:103},{s:70,Im:130},{s:95,Im:158}];
+const GS_KESIT_AL_1F = [{s:4,Im:16},{s:6,Im:20},{s:10,Im:28},{s:16,Im:37},{s:25,Im:49},{s:35,Im:60},{s:50,Im:73},{s:70,Im:93},{s:95,Im:112}];
+const GS_KESIT_AL_3F = [{s:4,Im:13},{s:6,Im:16},{s:10,Im:22},{s:16,Im:29},{s:25,Im:38},{s:35,Im:47},{s:50,Im:57},{s:70,Im:73},{s:95,Im:87}];
+// Açık havada %25 fazla, hava hattında %30 fazla kapasiteli varsayarız (basitleştirilmiş)
+const GS_KURULUM_KATSAYI = {boru:1.0, acik:0.8, hava:0.75}; // düzeltme katsayısı (daha kısıtlayıcı)
+
+let gs_urun_sayac = 0;
+
+function gs_sistem_degis(){
+  const v = document.getElementById('gs-sistem').value === '3f' ? 400 : 230;
+  document.getElementById('gs-volt').value = v;
+}
+
+function gs_urun_ekle(){
+  gs_urun_sayac++;
+  const id = gs_urun_sayac;
+  const div = document.createElement('div');
+  div.id = `gs-urun-${id}`;
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;position:relative;';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:12px;font-weight:700;color:var(--text);">Ürün ${id}</span>
+      <button onclick="gs_urun_sil(${id})" style="background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);color:var(--red);border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer;">✕ Sil</button>
+    </div>
+    <div class="fg"><label style="font-size:10px;color:var(--text3);">Ürün Adı (opsiyonel)</label>
+      <input type="text" id="gs-ad-${id}" placeholder="Lamba, motor..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label style="font-size:10px;color:var(--text3);">Akım (A)</label>
+        <div class="unit-wrap"><input type="number" id="gs-akim-${id}" placeholder="—" step="any" oninput="gs_sync(${id},'a')" style="font-weight:600;"><span class="unit-lbl">A</span></div>
+      </div>
+      <div class="fg"><label style="font-size:10px;color:var(--text3);">Güç (W)</label>
+        <div class="unit-wrap"><input type="number" id="gs-guc-${id}" placeholder="—" step="any" oninput="gs_sync(${id},'w')" style="font-weight:600;"><span class="unit-lbl">W</span></div>
+      </div>
+    </div>
+    <div class="fg" style="margin-top:4px;"><label style="font-size:10px;color:var(--text3);">Adet</label>
+      <div class="unit-wrap"><input type="number" id="gs-adet-${id}" value="1" min="1" step="1"><span class="unit-lbl">adet</span></div>
+    </div>`;
+  document.getElementById('gs-urun-listesi').appendChild(div);
+  // Kablo panelini göster
+  document.getElementById('gs-kablo-panel').style.display = 'block';
+}
+
+function gs_urun_sil(id){
+  const el = document.getElementById(`gs-urun-${id}`);
+  if(el) el.remove();
+  if(document.getElementById('gs-urun-listesi').children.length === 0){
+    document.getElementById('gs-kablo-panel').style.display = 'none';
+  }
+}
+
+function gs_sync(id, degisen){
+  const volt = parseFloat(document.getElementById('gs-volt').value) || 230;
+  const aEl = document.getElementById(`gs-akim-${id}`);
+  const wEl = document.getElementById(`gs-guc-${id}`);
+  const a = parseFloat(aEl.value);
+  const w = parseFloat(wEl.value);
+  if(degisen === 'a' && !isNaN(a) && a > 0){
+    wEl.value = parseFloat((a * volt).toFixed(3));
+    wEl.style.color = 'var(--green)';
+    aEl.style.color = 'var(--text)';
+  } else if(degisen === 'w' && !isNaN(w) && w > 0){
+    aEl.value = parseFloat((w / volt).toFixed(4));
+    aEl.style.color = 'var(--green)';
+    wEl.style.color = 'var(--text)';
+  }
+}
+
+function gs_hesapla(){
+  const volt = parseFloat(document.getElementById('gs-volt').value) || 230;
+  const sistem = document.getElementById('gs-sistem').value;
+  const satirlar = document.getElementById('gs-urun-listesi').children;
+  if(satirlar.length === 0){alert('En az bir ürün ekleyin');return;}
+
+  let toplamW = 0;
+  const detaylar = [];
+  for(let i = 1; i <= gs_urun_sayac; i++){
+    const row = document.getElementById(`gs-urun-${i}`);
+    if(!row) continue;
+    const w = parseFloat(document.getElementById(`gs-guc-${i}`)?.value);
+    const adet = parseInt(document.getElementById(`gs-adet-${i}`)?.value) || 1;
+    const ad = document.getElementById(`gs-ad-${i}`)?.value || `Ürün ${i}`;
+    if(isNaN(w) || w <= 0){alert(`"${ad}" için güç değeri girin`);return;}
+    const topW = w * adet;
+    toplamW += topW;
+    detaylar.push({ad, w, adet, topW});
+  }
+
+  const toplamA = toplamW / volt;
+  const guvenlikA = toplamA * 1.25; // %25 güvenlik payı
+  const guvenlikW = toplamW * 1.25;
+
+  // Kablo kesiti
+  let kesitHTML = '';
+  const uzunluk = parseFloat(document.getElementById('gs-uzunluk')?.value);
+  const iletken = document.getElementById('gs-iletken')?.value || 'cu';
+  const kurulum = document.getElementById('gs-kurulum')?.value || 'boru';
+
+  if(!isNaN(uzunluk) && uzunluk > 0){
+    const rho = iletken === 'cu' ? 0.0175 : 0.0286;
+    const k = sistem === '3f' ? Math.sqrt(3) : 2;
+    const Un = volt;
+    const maxDV = Un * 0.03; // %3 sınırı
+    const Amin_dv = k * rho * uzunluk * guvenlikA / maxDV;
+    const tablo = iletken === 'cu' ? (sistem === '1f' ? GS_KESIT_CU_1F : GS_KESIT_CU_3F) : (sistem === '1f' ? GS_KESIT_AL_1F : GS_KESIT_AL_3F);
+    const kats = GS_KURULUM_KATSAYI[kurulum] || 1;
+    const byI = tablo.find(r => r.Im * kats >= guvenlikA);
+    const byDV = tablo.find(r => r.s >= Amin_dv);
+    const secim = byI && byDV ? (byI.s > byDV.s ? byI : byDV) : (byI || byDV);
+    if(secim){
+      const dV = k * rho * uzunluk * guvenlikA / secim.s;
+      kesitHTML = `
+        <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔌 Önerilen Kablo Kesiti</div>
+          <div style="font-size:26px;font-weight:800;color:var(--amber);">${secim.s} mm²</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">${iletken === 'cu' ? 'Bakır' : 'Alüminyum'} · Max kapasitesi: ${(secim.Im * kats).toFixed(0)} A · Gerilim düşümü: ${dV.toFixed(2)} V (%${(dV/Un*100).toFixed(2)})</div>
+        </div>`;
+    } else {
+      kesitHTML = `<div style="margin-top:10px;background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);border-radius:var(--r-md);padding:10px;font-size:12px;color:var(--red);">⚠️ 95 mm² üzeri kesit gerekiyor — özel hesaplama yapın.</div>`;
+    }
+  }
+
+  // Ürün detay tablosu
+  let tablo_html = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;">
+    <tr style="background:var(--surface2);"><th style="padding:6px 8px;text-align:left;color:var(--text2);">Ürün</th><th style="padding:6px;text-align:center;color:var(--text2);">W</th><th style="padding:6px;text-align:center;color:var(--text2);">Adet</th><th style="padding:6px;text-align:center;color:var(--text2);">Toplam W</th><th style="padding:6px;text-align:center;color:var(--text2);">A</th></tr>`;
+  detaylar.forEach(d => {
+    tablo_html += `<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;color:var(--text2);">${d.ad}</td><td style="padding:6px;text-align:center;color:var(--text2);">${d.w}</td><td style="padding:6px;text-align:center;color:var(--text2);">${d.adet}</td><td style="padding:6px;text-align:center;font-weight:600;color:var(--text);">${d.topW}</td><td style="padding:6px;text-align:center;color:var(--text2);">${(d.topW/volt).toFixed(2)}</td></tr>`;
+  });
+  tablo_html += `</table>`;
+
+  const html = `
+    ${tablo_html}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;">Toplam Güç</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text);">${fmt(toplamW)} <span style="font-size:13px;font-weight:400;color:var(--text3);">W</span></div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;">Toplam Akım</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text);">${fmt(toplamA)} <span style="font-size:13px;font-weight:400;color:var(--text3);">A</span></div>
+      </div>
+    </div>
+    <div style="background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:var(--r-md);padding:10px;text-align:center;margin-bottom:4px;">
+      <div style="font-size:10px;color:var(--amber);font-weight:700;text-transform:uppercase;margin-bottom:2px;">%25 Güvenlik Payı Eklenmiş Tasarım Değerleri</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${fmt(guvenlikW)} W &nbsp;·&nbsp; ${fmt(guvenlikA)} A</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">Sigorta ve kablo seçimi bu değerlere göre yapılmalıdır</div>
+    </div>
+    ${kesitHTML}`;
+
+  const sonucDiv = document.getElementById('gs-sonuc');
+  document.getElementById('gs-sonuc-icerik').innerHTML = html;
+  sonucDiv.style.display = 'block';
+  sonucDiv.classList.add('show');
+}
+
+function gs_sifirla(){
+  gs_urun_sayac = 0;
+  document.getElementById('gs-urun-listesi').innerHTML = '';
+  document.getElementById('gs-kablo-panel').style.display = 'none';
+  const s = document.getElementById('gs-sonuc');
+  s.style.display = 'none'; s.classList.remove('show');
+  document.getElementById('gs-sonuc-icerik').innerHTML = '';
+  document.getElementById('gs-sistem').value = '1f';
+  document.getElementById('gs-volt').value = '230';
+}
+
+// ══════════════════════════════════════════════════════
+// GÜNEŞ PANELİ HESABI
+// Muğla bölgesi — Günlük PSH (Peak Sun Hours): 5.2 saat (yıllık ortalama)
+// ══════════════════════════════════════════════════════
+const GN_PSH = 5.2;       // Muğla PSH
+const GN_SISTEM_VER = 0.80; // Sistem verimi (inverter + kablo + ısı kayıpları)
+const GN_DOD = 0.80;        // Depth of Discharge (AGM/GEL %80, Lityum %90)
+const GN_PANEL_GUES = {mono: 0.20, poli: 0.16}; // Panel verimi
+const GN_PANEL_W = {mono: 400, poli: 330};       // Standart panel gücü (W)
+
+let gn_urun_sayac = 0;
+
+function gn_urun_ekle(){
+  gn_urun_sayac++;
+  const id = gn_urun_sayac;
+  const div = document.createElement('div');
+  div.id = `gn-urun-${id}`;
+  div.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:12px;font-weight:700;color:var(--text);">Tüketici ${id}</span>
+      <button onclick="gn_urun_sil(${id})" style="background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);color:var(--red);border-radius:8px;padding:3px 10px;font-size:11px;cursor:pointer;">✕ Sil</button>
+    </div>
+    <div class="fg"><label style="font-size:10px;color:var(--text3);">Tüketici Adı</label>
+      <input type="text" id="gn-ad-${id}" placeholder="TV, lamba, buzdolabı..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div class="fg"><label style="font-size:10px;color:var(--text3);">Güç (W)</label>
+        <div class="unit-wrap"><input type="number" id="gn-guc-${id}" placeholder="—" step="any" oninput="gn_sync(${id})" style="font-weight:600;"><span class="unit-lbl">W</span></div>
+      </div>
+      <div class="fg"><label style="font-size:10px;color:var(--text3);">Adet</label>
+        <div class="unit-wrap"><input type="number" id="gn-adet-${id}" value="1" min="1" step="1"><span class="unit-lbl">ad</span></div>
+      </div>
+      <div class="fg"><label style="font-size:10px;color:var(--text3);">Çalışma Süresi</label>
+        <div class="unit-wrap"><input type="number" id="gn-sure-${id}" placeholder="4" step="any"><span class="unit-lbl">sa/gün</span></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--green);margin-top:4px;" id="gn-wh-${id}"></div>`;
+  document.getElementById('gn-urun-listesi').appendChild(div);
+}
+
+function gn_urun_sil(id){
+  const el = document.getElementById(`gn-urun-${id}`);
+  if(el) el.remove();
+}
+
+function gn_sync(id){
+  const w = parseFloat(document.getElementById(`gn-guc-${id}`).value);
+  const adet = parseInt(document.getElementById(`gn-adet-${id}`).value) || 1;
+  const sure = parseFloat(document.getElementById(`gn-sure-${id}`).value);
+  const lblEl = document.getElementById(`gn-wh-${id}`);
+  if(!isNaN(w) && !isNaN(sure)){
+    lblEl.textContent = `→ Günlük tüketim: ${fmt(w * adet * sure)} Wh`;
+  }
+}
+
+function gn_hesapla(){
+  const satirlar = document.getElementById('gn-urun-listesi').children;
+  if(satirlar.length === 0){alert('En az bir tüketici ekleyin');return;}
+
+  let toplamWh = 0;
+  const detaylar = [];
+
+  for(let i = 1; i <= gn_urun_sayac; i++){
+    const row = document.getElementById(`gn-urun-${i}`);
+    if(!row) continue;
+    const w = parseFloat(document.getElementById(`gn-guc-${i}`)?.value);
+    const adet = parseInt(document.getElementById(`gn-adet-${i}`)?.value) || 1;
+    const sure = parseFloat(document.getElementById(`gn-sure-${i}`)?.value);
+    const ad = document.getElementById(`gn-ad-${i}`)?.value || `Tüketici ${i}`;
+    if(isNaN(w) || w <= 0){alert(`"${ad}" için güç değeri girin`);return;}
+    if(isNaN(sure) || sure <= 0){alert(`"${ad}" için çalışma süresi girin`);return;}
+    const wh = w * adet * sure;
+    toplamWh += wh;
+    detaylar.push({ad, w, adet, sure, wh});
+  }
+
+  // Güvenlik payı %25
+  const toplamWhGuvenlik = toplamWh * 1.25;
+
+  // Sistem gerilimi — otomatik seçim
+  let voltSec = parseInt(document.getElementById('gn-volt').value);
+  if(isNaN(voltSec) || document.getElementById('gn-volt').value === 'auto'){
+    voltSec = toplamWhGuvenlik < 1500 ? 12 : toplamWhGuvenlik < 5000 ? 24 : 48;
+  }
+
+  const ozerlik = parseInt(document.getElementById('gn-ozerlik').value) || 2;
+  const sebeke = document.getElementById('gn-sebeke').value;
+  const panelTip = document.getElementById('gn-panel-tip').value;
+  const panelVerim = GN_PANEL_GUES[panelTip];
+  const panelW = GN_PANEL_W[panelTip];
+
+  // ── PANEL HESABI ──────────────────────────────────
+  // Gerekli günlük enerji / (PSH × sistem verimi)
+  const gerekliPanelW = toplamWhGuvenlik / (GN_PSH * GN_SISTEM_VER);
+  const panelAdet = Math.ceil(gerekliPanelW / panelW);
+  const toplamPanelW = panelAdet * panelW;
+  // Panel alanı: 400W monokristal ≈ 1.7m² (2.1×0.81m standart)
+  const panelAlani = panelTip === 'mono' ? panelAdet * 1.70 : panelAdet * 1.95;
+
+  // ── AKÜ HESABI ──────────────────────────────────
+  // Kapasite (Ah): (Wh × özerklik) / (Volt × DoD)
+  const akuWhGereken = toplamWhGuvenlik * ozerlik;
+  const akuAh = Math.ceil(akuWhGereken / (voltSec * GN_DOD));
+  // Akü tipi önerisi
+  let akuTip, akuAciklama;
+  if(akuAh <= 200 && ozerlik <= 2){
+    akuTip = 'AGM (VRLA)';
+    akuAciklama = 'Bakımsız, güvenli, orta ömür (~5 yıl). Küçük sistemler için ideal.';
+  } else if(akuAh > 200 || ozerlik > 2){
+    akuTip = 'GEL veya Lityum LiFePO4';
+    akuAciklama = akuAh > 400 ? 'Büyük kapasite için Lityum LiFePO4 önerilir. Uzun ömür (10+ yıl), hafif, DoD %90.' : 'GEL: Derin deşarj toleranslı, orta maliyet. Lityum: Pahalı ama %90 DoD, 10 yıl+.';
+  }
+  // Akü seri/paralel
+  const akuSeriBaglanti = voltSec / 12; // 12V akü varsayımı
+  const akuWhToplam = akuAh * voltSec;
+
+  // ── İNVERTER HESABI ──────────────────────────────────
+  const maxAnlikW = detaylar.reduce((max, d) => Math.max(max, d.w * d.adet), 0);
+  const inverterW = Math.ceil((maxAnlikW * 1.5) / 100) * 100; // %50 pay, 100W yuvarlama
+  // VA (güç faktörü 0.9 varsayım)
+  const inverterVA = Math.ceil(inverterW / 0.9);
+
+  // ── ŞARJ KONTROL CİHAZI ──────────────────────────────────
+  const sarjAkim = Math.ceil(toplamPanelW / voltSec * 1.25);
+  const sarjTip = panelAdet > 4 || voltSec >= 48 ? 'MPPT' : 'MPPT (PWM de kullanılabilir)';
+
+  // ── TÜKETİCİ TABLOSU ──────────────────────────────────
+  let tuketiciTablo = `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;">
+    <tr style="background:var(--surface2);"><th style="padding:5px 8px;text-align:left;color:var(--text2);">Tüketici</th><th style="padding:5px;text-align:center;color:var(--text2);">W</th><th style="padding:5px;text-align:center;color:var(--text2);">Adet</th><th style="padding:5px;text-align:center;color:var(--text2);">Saat</th><th style="padding:5px;text-align:center;color:var(--text2);">Wh/gün</th></tr>`;
+  detaylar.forEach(d => {
+    tuketiciTablo += `<tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;color:var(--text2);">${d.ad}</td><td style="padding:5px;text-align:center;color:var(--text2);">${d.w}</td><td style="padding:5px;text-align:center;color:var(--text2);">${d.adet}</td><td style="padding:5px;text-align:center;color:var(--text2);">${d.sure}h</td><td style="padding:5px;text-align:center;font-weight:600;color:var(--text);">${fmt(d.wh)}</td></tr>`;
+  });
+  tuketiciTablo += `<tr style="background:var(--amber-lt);"><td colspan="4" style="padding:6px 8px;font-weight:700;color:var(--amber);">Toplam (ham)</td><td style="padding:6px;text-align:center;font-weight:800;color:var(--amber);">${fmt(toplamWh)} Wh</td></tr>`;
+  tuketiciTablo += `<tr style="background:var(--red-lt);"><td colspan="4" style="padding:6px 8px;font-weight:700;color:var(--red);">+%25 Güvenlik Payı</td><td style="padding:6px;text-align:center;font-weight:800;color:var(--red);">${fmt(toplamWhGuvenlik.toFixed(0))} Wh</td></tr>`;
+  tuketiciTablo += `</table>`;
+
+  // ── SONUÇ KARTI ──────────────────────────────────
+  const sonucKartlari = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:4px;">☀️ Panel</div>
+        <div style="font-size:24px;font-weight:800;color:var(--amber);">${panelAdet} adet</div>
+        <div style="font-size:11px;color:var(--text3);">${panelW}W ${panelTip === 'mono' ? 'Monokristal' : 'Polikristal'}<br>${toplamPanelW}W toplam · ~${panelAlani.toFixed(1)} m²</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:4px;">🔋 Akü</div>
+        <div style="font-size:24px;font-weight:800;color:var(--blue);">${akuAh} Ah</div>
+        <div style="font-size:11px;color:var(--text3);">${voltSec}V · ${akuTip}<br>${akuWhToplam} Wh · ${ozerlik} gün özerklik</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:4px;">⚡ İnverter</div>
+        <div style="font-size:24px;font-weight:800;color:var(--green);">${inverterW} W</div>
+        <div style="font-size:11px;color:var(--text3);">${inverterVA} VA · Saf Sinüs<br>${voltSec}V DC → 230V AC</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:4px;">🔆 Şarj Kontrol</div>
+        <div style="font-size:24px;font-weight:800;color:var(--purple);">${sarjAkim} A</div>
+        <div style="font-size:11px;color:var(--text3);">${sarjTip}<br>${voltSec}V sistem · ${toplamPanelW}W panel</div>
+      </div>
+    </div>`;
+
+  // Akü bağlantı notu
+  let akuBaglanti = '';
+  if(akuSeriBaglanti > 1){
+    akuBaglanti = `<div style="background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:8px;">
+      <strong>Akü Bağlantısı:</strong> 12V'luk aküleri ${akuSeriBaglanti} seri bağla → ${voltSec}V elde edilir. Kapasite düşükse paralel gruplar da eklenebilir.
+    </div>`;
+  }
+
+  // Şebeke notu
+  let sebekeNot = '';
+  if(sebeke === 'hybrid'){
+    sebekeNot = `<div style="background:var(--green-lt);border:1px solid var(--green-md);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:8px;">
+      <strong>Hibrit Sistem:</strong> Güneş önce tüketicilere, fazlası aküye gider. Akü dolunca şebekeye verilir (enerji satışı için lisans gerekli). Şebeke, akü bittiğinde otomatik devreye girer. Hibrit inverter (On-Grid + akü destekli) kullanın.
+    </div>`;
+  }
+
+  // ── UYGULAMA VE DİKKAT EDİLECEKLER ──────────────────────────────────
+  const dikkat = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-top:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">📋 Uygulama ve Dikkat Edilecekler</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--amber);">
+          <strong>Panel Yönü:</strong> Muğla'da paneller <strong>güneye (180°)</strong> bakmalı. Optimum eğim açısı <strong>30–35°</strong> (yıllık verim için). Yazın 20°, kışın 45° ayarlanabilir.
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--blue);">
+          <strong>Akü Sıcaklığı:</strong> Muğla yazlarında sıcaklık 40°C'ye çıkar. AGM/GEL aküler <strong>25°C üstünde kapasite kaybeder</strong>. Aküyü gölgede, havalandırmalı yerde tutun. Lityum bu konuda daha toleranslıdır.
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--green);">
+          <strong>Kablo Kesitleri:</strong> Panel → Şarj kontrol: <strong>${Math.ceil(sarjAkim * 1.25 / 10) * 10 >= 30 ? '6–10 mm² Cu' : '4–6 mm² Cu'}</strong>. Akü → İnverter: <strong>${inverterW > 2000 ? '16–25 mm² Cu (kısa tut, max 1m)' : '10–16 mm² Cu'}</strong>. DC tarafı kısa tutulmalı.
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--purple);">
+          <strong>Sigorta ve Koruma:</strong> Panel → Şarj kontrol arası DC sigorta (${Math.ceil(sarjAkim * 1.25)}A). Akü çıkışına DC devre kesici. İnverter çıkışına standart AC sigorta. Parafudr (Tip 2) tüm DC hatlara eklenmeli.
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--red);">
+          <strong>Gölgelenme:</strong> Tek panel gölgelenirse tüm string etkilenir. Gölge riski varsa <strong>mikro inverter veya güç optimize edici</strong> kullanın. Paneller arasında en az <strong>30 cm</strong> mesafe bırakın (hava sirkülasyonu için).
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--teal);">
+          <strong>Bakım:</strong> Muğla'da toz ve çam iğnesi sorunu var. Panelleri <strong>ayda 1–2 kez temiz su ile silin</strong> (deterjan kullanma). Akü terminallerini 6 ayda bir kontrol edin. Kış aylarında (Aralık–Ocak) üretim %40–50 düşer, buna göre planlama yapın.
+        </div>
+        ${sebeke === 'hybrid' ? `<div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface);border-radius:var(--r-sm);border-left:3px solid var(--green);">
+          <strong>Yasal Durum:</strong> Türkiye'de 10 kWp altı sistemler için <strong>lisans gerekmez</strong>. TEDAŞ/EDAŞ'a bağlantı başvurusu yapılır. Fazla enerji şebekeye 3.44 ₺/kWh (2024) birim fiyatla satılabilir (yeşil enerji faturası mahsubu).
+        </div>` : ''}
+      </div>
+    </div>`;
+
+  const html = tuketiciTablo + sonucKartlari + akuBaglanti + sebekeNot + dikkat;
+
+  const sonucDiv = document.getElementById('gn-sonuc');
+  document.getElementById('gn-sonuc-icerik').innerHTML = html;
+  sonucDiv.style.display = 'block';
+  sonucDiv.classList.add('show');
+}
+
+function gn_sifirla(){
+  gn_urun_sayac = 0;
+  document.getElementById('gn-urun-listesi').innerHTML = '';
+  const s = document.getElementById('gn-sonuc');
+  s.style.display = 'none'; s.classList.remove('show');
+  document.getElementById('gn-sonuc-icerik').innerHTML = '';
+}
 </script>
 </body>
 </html>
