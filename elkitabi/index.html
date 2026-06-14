@@ -170,7 +170,7 @@ a{text-decoration:none;color:inherit;}
 
 <!-- TOP BAR -->
 <div class="top-bar">
-  <div class="top-bar-back" onclick="window.location.href='../index.html'">⬅️</div>
+  <div class="top-bar-back" onclick="geriDon()">⬅️</div>
   <div class="top-bar-title">
     <h1>📗 El Kitabı</h1>
     <p>Elektrik Teknik Referansı</p>
@@ -192,16 +192,16 @@ a{text-decoration:none;color:inherit;}
   <div class="section-label">Bölümler</div>
   <div class="menu-grid">
 
-    <a class="menu-card" href="teori.html">
-      <div class="menu-card-icon blue">📘</div>
+    <a class="menu-card" href="hesap.html">
+      <div class="menu-card-icon amber">🔢</div>
       <div class="menu-card-body">
-        <div class="menu-card-title">Teori</div>
-        <div class="menu-card-desc">Ohm Yasası, Kirchhoff, güç formülleri, kablo kesiti, koruma sınıfları ve daha fazlası</div>
+        <div class="menu-card-title">Hesaplama</div>
+        <div class="menu-card-desc">Ohm, güç, gerilim düşümü, kablo kesiti, maliyet ve renk kodu hesaplamaları</div>
         <div class="tag-row">
           <span class="tag">Ohm</span>
-          <span class="tag">Kirchhoff</span>
-          <span class="tag">IP Sınıfı</span>
-          <span class="tag">Kablo</span>
+          <span class="tag">Gerilim Düşümü</span>
+          <span class="tag">Kablo Kesiti</span>
+          <span class="tag">Maliyet</span>
         </div>
       </div>
       <div class="menu-card-arrow">›</div>
@@ -222,16 +222,16 @@ a{text-decoration:none;color:inherit;}
       <div class="menu-card-arrow">›</div>
     </a>
 
-    <a class="menu-card" href="hesap.html">
-      <div class="menu-card-icon amber">🔢</div>
+    <a class="menu-card" href="teori.html">
+      <div class="menu-card-icon blue">📘</div>
       <div class="menu-card-body">
-        <div class="menu-card-title">Hesap Makinesi</div>
-        <div class="menu-card-desc">Gerilim düşümü, kablo kesiti, güç, kompanzasyon hesaplamaları</div>
+        <div class="menu-card-title">Teori</div>
+        <div class="menu-card-desc">Ohm Yasası, Kirchhoff, güç formülleri, kablo kesiti, koruma sınıfları ve daha fazlası</div>
         <div class="tag-row">
-          <span class="tag">Kesit</span>
-          <span class="tag">Gerilim Düşümü</span>
-          <span class="tag">Güç</span>
-          <span class="tag">Kompanzasyon</span>
+          <span class="tag">Ohm</span>
+          <span class="tag">Kirchhoff</span>
+          <span class="tag">IP Sınıfı</span>
+          <span class="tag">Kablo</span>
         </div>
       </div>
       <div class="menu-card-arrow">›</div>
@@ -251,6 +251,10 @@ a{text-decoration:none;color:inherit;}
 
 <script>
 // Tema
+function geriDon(){
+  // Ana sayfaya dön, oturum zaten açık — şifre/parmak izi istemez
+  window.location.href='../index.html';
+}
 const tema = localStorage.getItem('gt_tema') || 'koyu';
 if(tema === 'acik') { document.documentElement.setAttribute('data-tema','acik'); document.getElementById('theme-btn').textContent = '☀️'; }
 
