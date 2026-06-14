@@ -58,7 +58,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 .tab-btn:active{transform:scale(0.94);}
 
 /* CONTENT */
-.content{padding-top:calc(var(--top-h)+58px);padding-bottom:calc(var(--nav-h)+20px);padding-left:16px;padding-right:16px;max-width:640px;margin:0 auto;animation:pageIn .4s var(--ease);}
+.content{padding-top:calc(var(--top-h) + 68px);padding-bottom:calc(var(--nav-h)+20px);padding-left:16px;padding-right:16px;max-width:640px;margin:0 auto;animation:pageIn .4s var(--ease);}
 .hesap-section{display:none;}
 .hesap-section.active{display:block;}
 
@@ -150,7 +150,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 <body>
 
 <div class="top-bar">
-  <div class="top-bar-back" onclick="window.location.href='index.html'">⬅️</div>
+  <div class="top-bar-back" onclick="geriDon()">⬅️</div>
   <div class="top-bar-title"><h1>🔢 Hesap Makinesi</h1><p>Elektrik Teknik Hesapları</p></div>
   <div class="theme-btn" onclick="toggleTema()" id="theme-btn">🌙</div>
 </div>
@@ -170,6 +170,44 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
      1. TEMEL FORMÜLLER
 ══════════════════════════════════ -->
 <div class="hesap-section active" id="sec-temel">
+
+  <!-- HIZ KARTI: V / I / W DEĞİŞTİRMELİ -->
+  <div class="kart" style="border:2px solid var(--amber-md);background:linear-gradient(135deg,rgba(240,196,114,0.07),rgba(232,128,128,0.04));">
+    <div class="kart-baslik">⚡ Hızlı Ohm Hesabı</div>
+    <div class="kart-alt">İki değeri gir, üçüncüsü anında hesaplansın</div>
+    <!-- 3 değiştirilebilir alan -->
+    <div class="row3" style="gap:8px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Gerilim</div>
+        <div class="unit-wrap" id="hz-v-wrap">
+          <input type="number" id="hz-v" placeholder="—" step="any" oninput="hzHesapla('v')" style="font-weight:700;">
+          <span class="unit-lbl">V</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Akım</div>
+        <div class="unit-wrap" id="hz-i-wrap">
+          <input type="number" id="hz-i" placeholder="—" step="any" oninput="hzHesapla('i')" style="font-weight:700;">
+          <span class="unit-lbl">A</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Güç</div>
+        <div class="unit-wrap" id="hz-w-wrap">
+          <input type="number" id="hz-w" placeholder="—" step="any" oninput="hzHesapla('w')" style="font-weight:700;">
+          <span class="unit-lbl">W</span>
+        </div>
+      </div>
+    </div>
+    <!-- Direnç sonucu -->
+    <div id="hz-r-satir" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text3);">Direnç (R = V / I)</span>
+      <span style="font-size:18px;font-weight:800;color:var(--text);" id="hz-r-val">—</span>
+    </div>
+    <!-- Formül göster -->
+    <div id="hz-formul" style="text-align:center;font-size:13px;color:var(--text3);padding:4px 0;min-height:20px;"></div>
+    <button class="btn-sifirla" onclick="hzSifirla()" style="margin-top:8px;">↺ Temizle</button>
+  </div>
 
   <!-- Ohm Yasası -->
   <div class="kart">
@@ -539,7 +577,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 </div><!-- /content -->
 
 <nav class="bottom-nav">
-  <div class="nav-item" onclick="window.location.href='../index.html'"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
+  <div class="nav-item" onclick="geriDon()"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
   <div class="nav-item active" onclick="window.location.href='hesap.html'"><span class="nav-icon">🔢</span><span>Hesaplama</span></div>
   <div class="nav-item" onclick="window.location.href='semalar.html'"><span class="nav-icon">📐</span><span>Şemalar</span></div>
   <div class="nav-item" onclick="window.location.href='teori.html'"><span class="nav-icon">📘</span><span>Teori</span></div>
@@ -547,6 +585,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
 
 <script>
 // ──────────── TEMA ────────────
+function geriDon(){
+  // Ana sayfaya dön — sessionStorage oturum var, şifre/parmak istenmez
+  window.location.href='../index.html';
+}
 const tema=localStorage.getItem('gt_tema')||'koyu';
 if(tema==='acik'){document.documentElement.setAttribute('data-tema','acik');document.getElementById('theme-btn').textContent='☀️';}
 function toggleTema(){
@@ -936,6 +978,67 @@ function cember_hesapla(){
 // INIT
 // ══════════════════════════════════════
 guc_sec(document.getElementById('gf_1f_p'),'1f_p');
+
+// ── HIZ KARTI JS ─────────────────────────────────────────
+function hzHesapla(degisen){
+  const vEl=document.getElementById('hz-v');
+  const iEl=document.getElementById('hz-i');
+  const wEl=document.getElementById('hz-w');
+  const V=parseFloat(vEl.value);
+  const I=parseFloat(iEl.value);
+  const W=parseFloat(wEl.value);
+
+  // Hangi iki alan doluysa üçüncüyü hesapla
+  // Kullanıcının girdiği alan (degisen) dışındakilerden hesapla
+  let hesaplanan=null, sonuc=null, formul='';
+
+  if(degisen!=='v' && !isNaN(I) && !isNaN(W) && I>0 && W>0){
+    // V = W / I
+    sonuc=W/I; hesaplanan='v';
+    formul=`V = W / I = ${W} / ${I} = ${fmt(sonuc)} V`;
+  } else if(degisen!=='i' && !isNaN(V) && !isNaN(W) && V>0 && W>0){
+    // I = W / V
+    sonuc=W/V; hesaplanan='i';
+    formul=`I = W / V = ${W} / ${V} = ${fmt(sonuc)} A`;
+  } else if(degisen!=='w' && !isNaN(V) && !isNaN(I) && V>0 && I>0){
+    // W = V × I
+    sonuc=V*I; hesaplanan='w';
+    formul=`W = V × I = ${V} × ${I} = ${fmt(sonuc)} W`;
+  }
+
+  // Hesaplanan alanı doldur
+  if(hesaplanan && sonuc!==null){
+    const el=document.getElementById('hz-'+hesaplanan);
+    el.value=parseFloat(sonuc.toFixed(4));
+    el.style.color='var(--amber)';
+    // R hesapla
+    const fV=parseFloat(document.getElementById('hz-v').value);
+    const fI=parseFloat(document.getElementById('hz-i').value);
+    const rSatir=document.getElementById('hz-r-satir');
+    const rVal=document.getElementById('hz-r-val');
+    if(!isNaN(fV) && !isNaN(fI) && fI>0){
+      rSatir.style.display='flex';
+      rVal.textContent=fmt(fV/fI)+' Ω';
+    }
+    document.getElementById('hz-formul').textContent=formul;
+  } else {
+    // Sadece bir alan var — diğerlerini temizle (sadece hesaplanan kısmı)
+    document.getElementById('hz-r-satir').style.display='none';
+    document.getElementById('hz-formul').textContent='';
+    ['v','i','w'].forEach(k=>{
+      const el=document.getElementById('hz-'+k);
+      if(k!==degisen) el.style.color='';
+    });
+  }
+}
+function hzSifirla(){
+  ['v','i','w'].forEach(k=>{
+    const el=document.getElementById('hz-'+k);
+    el.value=''; el.style.color='';
+  });
+  document.getElementById('hz-r-satir').style.display='none';
+  document.getElementById('hz-formul').textContent='';
+}
 enerji_sec(document.getElementById('ef_wh'),'wh');
 rk_bantlar();
 rk_tablo_olustur();
