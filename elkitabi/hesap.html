@@ -678,7 +678,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-
       </div>
       <div class="fg"><label>Sistem Gerilimi</label>
         <select id="gn-volt">
-          <option value="auto">Otomatik Seçim</option>
           <option value="12">12V</option>
           <option value="24">24V</option>
           <option value="48">48V</option>
@@ -1282,34 +1281,75 @@ function gs_hesapla(){
   const guvenlikA = toplamA * 1.25; // %25 güvenlik payı
   const guvenlikW = toplamW * 1.25;
 
-  // Kablo kesiti
+  // Kablo kesiti — her zaman en az akıma göre çıkar, uzunluk varsa DV de kontrol edilir
   let kesitHTML = '';
   const uzunluk = parseFloat(document.getElementById('gs-uzunluk')?.value);
   const iletken = document.getElementById('gs-iletken')?.value || 'cu';
   const kurulum = document.getElementById('gs-kurulum')?.value || 'boru';
+  const kats = GS_KURULUM_KATSAYI[kurulum] || 1;
+  const tablo = iletken === 'cu' ? (sistem === '1f' ? GS_KESIT_CU_1F : GS_KESIT_CU_3F)
+                                 : (sistem === '1f' ? GS_KESIT_AL_1F : GS_KESIT_AL_3F);
+  const rho = iletken === 'cu' ? 0.0175 : 0.0286;
+  const k_faz = sistem === '3f' ? Math.sqrt(3) : 2;
+  const Un = volt;
 
+  // Akıma göre minimum kesit (her zaman)
+  const byI = tablo.find(r => r.Im * kats >= guvenlikA);
+
+  // Hat uzunluğu girilmişse gerilim düşümüne göre de kontrol et
+  let byDV = null;
+  let dvBilgi = '';
   if(!isNaN(uzunluk) && uzunluk > 0){
-    const rho = iletken === 'cu' ? 0.0175 : 0.0286;
-    const k = sistem === '3f' ? Math.sqrt(3) : 2;
-    const Un = volt;
-    const maxDV = Un * 0.03; // %3 sınırı
-    const Amin_dv = k * rho * uzunluk * guvenlikA / maxDV;
-    const tablo = iletken === 'cu' ? (sistem === '1f' ? GS_KESIT_CU_1F : GS_KESIT_CU_3F) : (sistem === '1f' ? GS_KESIT_AL_1F : GS_KESIT_AL_3F);
-    const kats = GS_KURULUM_KATSAYI[kurulum] || 1;
-    const byI = tablo.find(r => r.Im * kats >= guvenlikA);
-    const byDV = tablo.find(r => r.s >= Amin_dv);
-    const secim = byI && byDV ? (byI.s > byDV.s ? byI : byDV) : (byI || byDV);
-    if(secim){
-      const dV = k * rho * uzunluk * guvenlikA / secim.s;
-      kesitHTML = `
-        <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔌 Önerilen Kablo Kesiti</div>
-          <div style="font-size:26px;font-weight:800;color:var(--amber);">${secim.s} mm²</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:4px;">${iletken === 'cu' ? 'Bakır' : 'Alüminyum'} · Max kapasitesi: ${(secim.Im * kats).toFixed(0)} A · Gerilim düşümü: ${dV.toFixed(2)} V (%${(dV/Un*100).toFixed(2)})</div>
-        </div>`;
+    const maxDV = Un * 0.03;
+    const Amin_dv = k_faz * rho * uzunluk * guvenlikA / maxDV;
+    byDV = tablo.find(r => r.s >= Amin_dv);
+  }
+
+  // İkisinden büyük olanı seç
+  let secim = null;
+  if(byI && byDV) secim = byI.s >= byDV.s ? byI : byDV;
+  else secim = byI || byDV;
+
+  if(secim){
+    const maxI = (secim.Im * kats).toFixed(0);
+    let dvSatir = '';
+    if(!isNaN(uzunluk) && uzunluk > 0){
+      const dV = k_faz * rho * uzunluk * guvenlikA / secim.s;
+      const dvPct = (dV / Un * 100).toFixed(2);
+      const dvRenk = parseFloat(dvPct) > 3 ? 'var(--red)' : 'var(--green)';
+      dvSatir = `<div style="font-size:11px;color:${dvRenk};margin-top:3px;">Gerilim düşümü: ${dV.toFixed(2)} V (%${dvPct}) · Hat: ${uzunluk} m</div>`;
     } else {
-      kesitHTML = `<div style="margin-top:10px;background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);border-radius:var(--r-md);padding:10px;font-size:12px;color:var(--red);">⚠️ 95 mm² üzeri kesit gerekiyor — özel hesaplama yapın.</div>`;
+      dvSatir = `<div style="font-size:11px;color:var(--text3);margin-top:3px;">Hat uzunluğu gir → gerilim düşümü de hesaplansın</div>`;
     }
+    const secimNeden = byDV && secim.s === byDV.s && (!byI || byDV.s > byI.s)
+      ? '(gerilim düşümü kriteri belirleyici)'
+      : '(akım kapasitesi kriteri belirleyici)';
+    const cap = (2 * Math.sqrt(secim.s / Math.PI)).toFixed(2);
+    kesitHTML = `
+      <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🔌 Önerilen Kablo Kesiti</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Alan</div>
+            <div style="display:flex;align-items:baseline;justify-content:center;gap:4px;">
+              <span style="font-size:28px;font-weight:800;color:var(--amber);">${secim.s}</span>
+              <span style="font-size:14px;font-weight:600;color:var(--text3);">mm²</span>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Çap (iletken)</div>
+            <div style="display:flex;align-items:baseline;justify-content:center;gap:4px;">
+              <span style="font-size:28px;font-weight:800;color:var(--teal);">${cap}</span>
+              <span style="font-size:14px;font-weight:600;color:var(--text3);">mm</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);">${iletken === 'cu' ? 'Bakır (Cu)' : 'Alüminyum (Al)'} · Max akım: <strong>${maxI} A</strong> · ${secimNeden}</div>
+        ${dvSatir}
+        <div style="margin-top:6px;font-size:11px;color:var(--text3);">Kurulum: ${kurulum === 'boru' ? 'Boru içi / Sıva altı' : kurulum === 'acik' ? 'Açık / Kablo kanalı' : 'Hava hattı'}</div>
+      </div>`;
+  } else {
+    kesitHTML = `<div style="margin-top:10px;background:var(--red-lt);border:1px solid rgba(232,128,128,0.3);border-radius:var(--r-md);padding:10px;font-size:12px;color:var(--red);">⚠️ 95 mm² üzeri kesit gerekiyor — uzman hesabı yapın.</div>`;
   }
 
   // Ürün detay tablosu
@@ -1436,11 +1476,8 @@ function gn_hesapla(){
   // Güvenlik payı %25
   const toplamWhGuvenlik = toplamWh * 1.25;
 
-  // Sistem gerilimi — otomatik seçim
-  let voltSec = parseInt(document.getElementById('gn-volt').value);
-  if(isNaN(voltSec) || document.getElementById('gn-volt').value === 'auto'){
-    voltSec = toplamWhGuvenlik < 1500 ? 12 : toplamWhGuvenlik < 5000 ? 24 : 48;
-  }
+  // Sistem gerilimi — kullanıcı seçimi
+  const voltSec = parseInt(document.getElementById('gn-volt').value) || 24;
 
   const ozerlik = parseInt(document.getElementById('gn-ozerlik').value) || 2;
   const sebeke = document.getElementById('gn-sebeke').value;
