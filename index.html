@@ -951,10 +951,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="fab-item" id="fab-islem" onclick="openIslemModal();closeFab()">💸 İşlem Ekle</div>
     <div class="fab-item" id="fab-borc" onclick="openBorcModal();closeFab()">🏦 Finansman Ekle</div>
   </div>
-  <!-- El Kitabı uçan butonu -->
-  <button onclick="window.location.href='elkitabi/index.html'" style="width:46px;height:46px;font-size:22px;background:linear-gradient(135deg,#6fcf97,#7eb3f0);border:none;border-radius:50%;color:white;box-shadow:0 6px 20px rgba(111,207,151,0.45);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.3s,box-shadow 0.3s;" title="El Kitabı" onmouseenter="this.style.transform='scale(1.12)'" onmouseleave="this.style.transform='scale(1)'">📗</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
+
+<!-- El Kitabı bağımsız uçan butonu — her zaman görünür, giriş sonrası -->
+<button id="elkitabi-fab" onclick="window.location.href='elkitabi/index.html'" style="display:none;position:fixed;bottom:calc(var(--nav-h) + 16px);left:18px;width:50px;height:50px;font-size:24px;background:linear-gradient(135deg,#6fcf97,#7eb3f0);border:none;border-radius:50%;color:white;box-shadow:0 6px 20px rgba(111,207,151,0.4);cursor:pointer;align-items:center;justify-content:center;z-index:940;transition:transform 0.25s,box-shadow 0.25s;" title="El Kitabı" onmouseenter="this.style.transform='scale(1.12)';this.style.boxShadow='0 10px 28px rgba(111,207,151,0.6)'" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 6px 20px rgba(111,207,151,0.4)'">📗</button>
 
 <!-- YAZDIR FOTOĞRAF SEÇİM MODALı -->
 <div class="modal-ov" id="modal-yazdir-foto-sec" style="z-index:10010;">
@@ -2693,6 +2694,9 @@ async function startApp(){
   document.getElementById('app').classList.add('active');
   document.getElementById('fab-container').classList.add('visible');
   if(USER_ROL==='goruntule')document.getElementById('fab-container').classList.remove('visible');
+  // El Kitabı butonu her rol için görünür
+  const ekFab=document.getElementById('elkitabi-fab');
+  if(ekFab){ekFab.style.display='flex';}
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
   // Desen butonlarını güncelle
