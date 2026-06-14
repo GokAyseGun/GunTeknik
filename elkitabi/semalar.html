@@ -51,7 +51,7 @@ a{text-decoration:none;color:inherit;}
 .top-bar-title h1{font-size:17px;font-weight:700;}
 .top-bar-title p{font-size:11px;color:var(--text3);}
 .theme-btn{width:38px;height:38px;border-radius:var(--r-md);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;}
-.search-wrap{position:sticky;top:var(--top-h);z-index:190;background:var(--bg);padding:10px 16px 0;}
+.search-wrap{position:sticky;top:calc(var(--top-h) + 2px);z-index:190;background:var(--bg);padding:10px 16px 0;}
 .search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 14px;transition:border-color 0.2s;}
 .search-box:focus-within{border-color:var(--green);}
 .search-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;}
@@ -59,12 +59,12 @@ a{text-decoration:none;color:inherit;}
 .search-icon{font-size:17px;color:var(--text3);}
 .search-clear{font-size:14px;color:var(--text3);cursor:pointer;display:none;padding:2px 4px;}
 .search-clear.show{display:block;}
-.cat-bar{position:sticky;top:calc(var(--top-h) + 50px);z-index:180;background:var(--bg);padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.cat-bar{position:sticky;top:calc(var(--top-h) + 52px);z-index:180;background:var(--bg);padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
 .cat-bar::-webkit-scrollbar{display:none;}
 .cat-btn{flex-shrink:0;padding:5px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s var(--ease);white-space:nowrap;}
 .cat-btn.active{background:var(--green-lt);border-color:var(--green-md);color:var(--green);}
 .cat-btn:active{transform:scale(0.94);}
-.content{padding-top:calc(var(--top-h) + 108px);padding-bottom:calc(var(--nav-h) + 20px);padding-left:16px;padding-right:16px;animation:pageIn 0.4s var(--ease);max-width:680px;margin:0 auto;}
+.content{padding-top:calc(var(--top-h) + 106px);padding-bottom:calc(var(--nav-h) + 20px);padding-left:16px;padding-right:16px;animation:pageIn 0.4s var(--ease);max-width:680px;margin:0 auto;}
 .section-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;margin-top:22px;padding-left:4px;display:flex;align-items:center;gap:6px;}
 .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
 .sema-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -118,7 +118,7 @@ a{text-decoration:none;color:inherit;}
 </head>
 <body>
 <div class="top-bar">
-  <div class="top-bar-back" onclick="window.location.href='index.html'">⬅️</div>
+  <div class="top-bar-back" onclick="geriDon()">⬅️</div>
   <div class="top-bar-title"><h1>📐 Şemalar</h1><p>Bağlantı Şemaları Kitaplığı</p></div>
   <div class="theme-btn" onclick="toggleTema()" id="theme-btn">🌙</div>
 </div>
@@ -744,7 +744,7 @@ a{text-decoration:none;color:inherit;}
 </div>
 
 <nav class="bottom-nav">
-  <div class="nav-item" onclick="window.location.href='../index.html'"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
+  <div class="nav-item" onclick="geriDon()"><span class="nav-icon">🏠</span><span>Ana Sayfa</span></div>
   <div class="nav-item" onclick="window.location.href='hesap.html'"><span class="nav-icon">🔢</span><span>Hesaplama</span></div>
   <div class="nav-item active" onclick="window.location.href='semalar.html'"><span class="nav-icon">📐</span><span>Şemalar</span></div>
   <div class="nav-item" onclick="window.location.href='teori.html'"><span class="nav-icon">📘</span><span>Teori</span></div>
@@ -752,6 +752,10 @@ a{text-decoration:none;color:inherit;}
 
 <script>
 // Tema
+function geriDon(){
+  // Ana sayfaya dön — sessionStorage oturum var, şifre/parmak istenmez
+  window.location.href='../index.html';
+}
 const tema=localStorage.getItem('gt_tema')||'koyu';
 if(tema==='acik'){document.documentElement.setAttribute('data-tema','acik');document.getElementById('theme-btn').textContent='☀️';}
 function toggleTema(){
