@@ -941,6 +941,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
     <div class="nav-item" onclick="goPage('tavsiyeler',this)"><span class="nav-icon">💡</span><span>Tavsiyeler</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
+    <div class="nav-item" onclick="openModal('modal-ai')" style="color:#8b5cf6;"><span class="nav-icon">✦</span><span>AI Asistan</span></div>
   </nav>
 </div>
 
@@ -950,7 +951,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="fab-item" id="fab-islem" onclick="openIslemModal();closeFab()">💸 İşlem Ekle</div>
     <div class="fab-item" id="fab-borc" onclick="openBorcModal();closeFab()">🏦 Finansman Ekle</div>
   </div>
-  <button class="fab-btn" onclick="openModal('modal-ai')" style="width:46px;height:46px;font-size:20px;background:linear-gradient(135deg,var(--blue),#8b5cf6);border:none;border-radius:50%;color:white;box-shadow:var(--shadow-md);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="AI Asistan">✦</button>
+  <!-- El Kitabı uçan butonu -->
+  <button onclick="window.location.href='elkitabi/index.html'" style="width:46px;height:46px;font-size:22px;background:linear-gradient(135deg,#6fcf97,#7eb3f0);border:none;border-radius:50%;color:white;box-shadow:0 6px 20px rgba(111,207,151,0.45);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.3s,box-shadow 0.3s;" title="El Kitabı" onmouseenter="this.style.transform='scale(1.12)'" onmouseleave="this.style.transform='scale(1)'">📗</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
 
