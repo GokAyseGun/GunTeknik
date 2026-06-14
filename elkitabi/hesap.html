@@ -993,108 +993,78 @@ function cember_hesapla(){
 guc_sec(document.getElementById('gf_1f_p'),'1f_p');
 
 // ── HIZ KARTI JS ────────────────────────────────────────
-// Hangi alanların kullanıcı tarafından doldurulduğunu takip et
-const hzKullanici = {v:false, i:false, w:false};
-const HZ_HESAP_RENK = 'var(--green)';
-const HZ_GIRIS_RENK = 'var(--text)';
+// Kullanıcının bizzat yazdığı alanları takip et
+// "hesaplanan" alan bu listede YER ALMAZ — oninput sadece kullanıcı yazınca tetiklenir
+let hzKullanici = {v:false, i:false, w:false};
 
 function hzGir(alan) {
   const el = document.getElementById('hz-' + alan);
   const val = el.value.trim();
-
-  if (val === '') {
-    // Kullanıcı sildi — bu alanı sıfırla
-    hzKullanici[alan] = false;
-    el.style.color = HZ_GIRIS_RENK;
-  } else {
-    // Kullanıcı yazdı
-    hzKullanici[alan] = true;
-    el.style.color = HZ_GIRIS_RENK;
-  }
-
+  // Kullanıcı bu alana yazdı veya sildi
+  hzKullanici[alan] = (val !== '');
+  el.style.color = 'var(--text)'; // kullanıcı girişi beyaz
+  // Önceki hesaplanan alanı sıfırla (yeni kombinasyon için)
+  hzSonucTemizle();
   hzHesapla();
 }
 
-function hzHesapla() {
-  const vEl = document.getElementById('hz-v');
-  const iEl = document.getElementById('hz-i');
-  const wEl = document.getElementById('hz-w');
-
-  const V = hzKullanici.v ? parseFloat(vEl.value) : NaN;
-  const I = hzKullanici.i ? parseFloat(iEl.value) : NaN;
-  const W = hzKullanici.w ? parseFloat(wEl.value) : NaN;
-
-  // Kaç alan dolu?
-  const doluAlanlar = [hzKullanici.v, hzKullanici.i, hzKullanici.w].filter(Boolean).length;
-
-  // Önceki otomatik hesaplananı temizle
-  const bosAlan = !hzKullanici.v ? 'v' : !hzKullanici.i ? 'i' : !hzKullanici.w ? 'w' : null;
-
-  if (doluAlanlar < 2) {
-    // Yeterli girdi yok — hesaplanan varsa temizle
-    if (bosAlan) {
-      const bosEl = document.getElementById('hz-' + bosAlan);
-      bosEl.value = '';
-      bosEl.style.color = HZ_GIRIS_RENK;
-    }
-    document.getElementById('hz-r-satir').style.display = 'none';
-    document.getElementById('hz-formul').textContent = '';
-    return;
-  }
-
-  let sonuc = null, hedef = null, formulMetni = '';
-
-  if (!hzKullanici.v && !isNaN(W) && !isNaN(I) && I !== 0) {
-    // V = W / I
-    sonuc = W / I; hedef = 'v';
-    formulMetni = `V = W ÷ I = ${fmt(W)} ÷ ${fmt(I)} = ${fmt(sonuc)} V`;
-  } else if (!hzKullanici.i && !isNaN(W) && !isNaN(V) && V !== 0) {
-    // I = W / V
-    sonuc = W / V; hedef = 'i';
-    formulMetni = `I = W ÷ V = ${fmt(W)} ÷ ${fmt(V)} = ${fmt(sonuc)} A`;
-  } else if (!hzKullanici.w && !isNaN(V) && !isNaN(I)) {
-    // W = V × I
-    sonuc = V * I; hedef = 'w';
-    formulMetni = `W = V × I = ${fmt(V)} × ${fmt(I)} = ${fmt(sonuc)} W`;
-  }
-
-  if (hedef !== null && sonuc !== null) {
-    const hedefEl = document.getElementById('hz-' + hedef);
-    hedefEl.value = parseFloat(sonuc.toFixed(4));
-    hedefEl.style.color = HZ_HESAP_RENK; // Yeşil — otomatik hesaplanan
-
-    // Direnç: V ve I ikisi de hazırsa göster
-    const fV = parseFloat(document.getElementById('hz-v').value);
-    const fI = parseFloat(document.getElementById('hz-i').value);
-    const rSatir = document.getElementById('hz-r-satir');
-    if (!isNaN(fV) && !isNaN(fI) && fI !== 0) {
-      rSatir.style.display = 'flex';
-      document.getElementById('hz-r-val').textContent = fmt(fV / fI) + ' Ω';
-    } else {
-      rSatir.style.display = 'none';
-    }
-
-    document.getElementById('hz-formul').textContent = formulMetni;
-  }
-}
-
-function hzSifirla() {
+function hzSonucTemizle() {
+  // Kullanıcının yazmadığı alanları temizle
   ['v','i','w'].forEach(k => {
-    const el = document.getElementById('hz-' + k);
-    el.value = '';
-    el.style.color = HZ_GIRIS_RENK;
-    hzKullanici[k] = false;
+    if (!hzKullanici[k]) {
+      const el = document.getElementById('hz-' + k);
+      el.value = '';
+      el.style.color = 'var(--text)';
+    }
   });
   document.getElementById('hz-r-satir').style.display = 'none';
   document.getElementById('hz-formul').textContent = '';
 }
-function hzSifirla(){
-  ['v','i','w'].forEach(k=>{
-    const el=document.getElementById('hz-'+k);
-    el.value=''; el.style.color='';
+
+function hzHesapla() {
+  const dolu = Object.values(hzKullanici).filter(Boolean).length;
+  if (dolu < 2) return; // En az 2 alan gerekli
+
+  const V = hzKullanici.v ? parseFloat(document.getElementById('hz-v').value) : NaN;
+  const I = hzKullanici.i ? parseFloat(document.getElementById('hz-i').value) : NaN;
+  const W = hzKullanici.w ? parseFloat(document.getElementById('hz-w').value) : NaN;
+
+  let hedef = null, sonuc = null, formul = '';
+
+  if (!hzKullanici.v && !isNaN(W) && !isNaN(I) && I !== 0) {
+    hedef='v'; sonuc=W/I; formul=`V = W ÷ I = ${fmt(W)} ÷ ${fmt(I)} = ${fmt(sonuc)} V`;
+  } else if (!hzKullanici.i && !isNaN(W) && !isNaN(V) && V !== 0) {
+    hedef='i'; sonuc=W/V; formul=`I = W ÷ V = ${fmt(W)} ÷ ${fmt(V)} = ${fmt(sonuc)} A`;
+  } else if (!hzKullanici.w && !isNaN(V) && !isNaN(I)) {
+    hedef='w'; sonuc=V*I; formul=`W = V × I = ${fmt(V)} × ${fmt(I)} = ${fmt(sonuc)} W`;
+  }
+
+  if (hedef && sonuc !== null) {
+    const hedefEl = document.getElementById('hz-' + hedef);
+    hedefEl.value = parseFloat(sonuc.toFixed(4));
+    hedefEl.style.color = 'var(--green)'; // otomatik sonuç yeşil
+
+    // Direnç satırı
+    const fV = parseFloat(document.getElementById('hz-v').value);
+    const fI = parseFloat(document.getElementById('hz-i').value);
+    if (!isNaN(fV) && !isNaN(fI) && fI !== 0) {
+      document.getElementById('hz-r-satir').style.display = 'flex';
+      document.getElementById('hz-r-val').textContent = fmt(fV/fI) + ' Ω';
+    }
+    document.getElementById('hz-formul').textContent = formul;
+  }
+}
+
+function hzSifirla() {
+  // Tüm state'i sıfırla
+  hzKullanici = {v:false, i:false, w:false};
+  ['v','i','w'].forEach(k => {
+    const el = document.getElementById('hz-' + k);
+    el.value = '';
+    el.style.color = 'var(--text)';
   });
-  document.getElementById('hz-r-satir').style.display='none';
-  document.getElementById('hz-formul').textContent='';
+  document.getElementById('hz-r-satir').style.display = 'none';
+  document.getElementById('hz-formul').textContent = '';
 }
 enerji_sec(document.getElementById('ef_wh'),'wh');
 rk_bantlar();
