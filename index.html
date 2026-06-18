@@ -7325,7 +7325,7 @@ function whatsappHatirlatici(kisiId){
   }else{
     mesaj+=`Bilginize: Hesabınızda ${fmt(Math.abs(bakiye))} ₺ borcunuz bulunmaktadır.\n\nGün Teknik`;
   }
-  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+  const url='https://wa.me/'+(t=>(t.startsWith('+')?t.replace(/\D/g,''):(t.replace(/\D/g,'').startsWith('0')?'90'+t.replace(/\D/g,'').slice(1):t.replace(/\D/g,''))))(k.tel||'')+'?text='+encodeURIComponent(mesaj);
   window.open(url,'_blank');
 }
 
@@ -7563,7 +7563,7 @@ Herhangi bir sorunuz için bizimle iletişime geçebilirsiniz. İlginiz için te
 
 Gün Teknik`;
   if(k?.tel){
-    window.open('https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(msg),'_blank');
+    window.open('https://wa.me/'+(t=>(t.startsWith('+')?t.replace(/\D/g,''):(t.replace(/\D/g,'').startsWith('0')?'90'+t.replace(/\D/g,'').slice(1):t.replace(/\D/g,''))))(k.tel||'')+'?text='+encodeURIComponent(msg),'_blank');
   }else{
     showInfoModal('🔗 Onay Linki',
       '<div style="font-size:13px;color:var(--text2);margin-bottom:10px;">Müşteri telefonu kayıtlı değil. Linki kopyalayıp manuel gönderin:</div>'+
@@ -10394,7 +10394,7 @@ function whatsappGecmisIhtar(kisiId){
   const k=getKisi(kisiId);if(!k||!k.tel){showToast('Telefon numarası yok','amber');return;}
   const isim=k.firmaUnvan||k.isim;
   const mesaj=`Sayın ${isim},\n\nKarşılıklı güvene dayalı iş birliğimiz kapsamında tarafınıza sağladığımız finansman desteğine ilişkin olarak size ulaşıyoruz. Kayıtlarımızı incelediğimizde, daha önce karşılıklı olarak mutabık kaldığımız ödeme tarihinin geçmiş olmasına rağmen, ilgili tutarın hesaplarımıza henüz yansımadığını görmekteyiz.\n\nYaşanan bu gecikmenin anlık bir gözden kaçma durumundan kaynaklandığını umuyor, hesap mutabakatımızı sağlayabilmemiz adına ilgili ödemenin en kısa sürede eksiksiz bir şekilde tarafımıza gerçekleştirilmesini rica ediyoruz.\n\nSürece dair aklınıza takılan herhangi bir soru, karşılaştığınız beklenmedik bir durum veya netleştirmek istediğiniz bir husus olursa, çözüm odaklı ilerleyebilmemiz için lütfen bizimle iletişime geçiniz.\n\nSaygılarımızla,\nGün Teknik`;
-  const url='https://wa.me/90'+k.tel.replace(/\D/g,'').replace(/^0/,'')+'?text='+encodeURIComponent(mesaj);
+  const url='https://wa.me/'+(t=>(t.startsWith('+')?t.replace(/\D/g,''):(t.replace(/\D/g,'').startsWith('0')?'90'+t.replace(/\D/g,'').slice(1):t.replace(/\D/g,''))))(k.tel||'')+'?text='+encodeURIComponent(mesaj);
   window.open(url,'_blank');
 }
 
