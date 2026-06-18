@@ -934,6 +934,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
     <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
     <div class="nav-item" onclick="goPage('stok',this)"><span class="nav-icon">📦</span><span>Stok</span></div>
+    <div class="nav-item" onclick="window.location.href='elkitabi/index.html'" style="color:var(--blue);"><span class="nav-icon">📗</span><span>El Kitabı</span></div>
     <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
     <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
@@ -941,7 +942,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
     <div class="nav-item" onclick="goPage('tavsiyeler',this)"><span class="nav-icon">💡</span><span>Tavsiyeler</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
-    <div class="nav-item" onclick="openModal('modal-ai')" style="color:#8b5cf6;"><span class="nav-icon">✦</span><span>AI Asistan</span></div>
   </nav>
 </div>
 
@@ -951,11 +951,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="fab-item" id="fab-islem" onclick="openIslemModal();closeFab()">💸 İşlem Ekle</div>
     <div class="fab-item" id="fab-borc" onclick="openBorcModal();closeFab()">🏦 Finansman Ekle</div>
   </div>
+  <button class="fab-btn" onclick="openModal('modal-ai')" style="width:46px;height:46px;font-size:20px;background:linear-gradient(135deg,var(--blue),#8b5cf6);border:none;border-radius:50%;color:white;box-shadow:var(--shadow-md);cursor:pointer;display:flex;align-items:center;justify-content:center;" title="AI Asistan">✦</button>
   <button class="fab-btn" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
-
-<!-- El Kitabı bağımsız uçan butonu — her zaman görünür, giriş sonrası -->
-<button id="elkitabi-fab" onclick="window.location.href='elkitabi/index.html'" style="display:none;position:fixed;bottom:calc(var(--nav-h) + 16px);left:18px;width:50px;height:50px;font-size:24px;background:linear-gradient(135deg,#6fcf97,#7eb3f0);border:none;border-radius:50%;color:white;box-shadow:0 6px 20px rgba(111,207,151,0.4);cursor:pointer;align-items:center;justify-content:center;z-index:940;transition:transform 0.25s,box-shadow 0.25s;" title="El Kitabı" onmouseenter="this.style.transform='scale(1.12)';this.style.boxShadow='0 10px 28px rgba(111,207,151,0.6)'" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 6px 20px rgba(111,207,151,0.4)'">📗</button>
 
 <!-- YAZDIR FOTOĞRAF SEÇİM MODALı -->
 <div class="modal-ov" id="modal-yazdir-foto-sec" style="z-index:10010;">
@@ -2689,15 +2687,11 @@ async function doLogout(){
 }
 
 async function startApp(){
-  sessionStorage.setItem('gt_session','1');
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
   document.getElementById('fab-container').classList.add('visible');
   if(USER_ROL==='goruntule')document.getElementById('fab-container').classList.remove('visible');
-  // El Kitabı butonu her rol için görünür
-  const ekFab=document.getElementById('elkitabi-fab');
-  if(ekFab){ekFab.style.display='flex';}
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
   // Desen butonlarını güncelle
@@ -5583,7 +5577,7 @@ function raporTavsiyeler(){
 
 
 // ============================================================ YARDIMCI
-function goWhatsapp(tel){const t=(tel||'').replace(/\D/g,'');const num='90'+(t.startsWith('0')?t.slice(1):t);window.open('https://wa.me/'+num,'_blank');}
+function goWhatsapp(tel){const t=(tel||'').trim();const digits=t.replace(/\D/g,'');const num=t.startsWith('+')?digits:(digits.startsWith('0')?'90'+digits.slice(1):digits);window.open('https://wa.me/'+num,'_blank');}
 
 function exportData(){
   const data={tarih:localISOString(new Date()),islemler:DB.islemler,kisiler:DB.kisiler,odemeler:DB.odemeler,stok:DB.stok,personeller:DB.personeller};
@@ -8791,10 +8785,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Geri tuşunu engelle — uygulama modu
   history.pushState(null,'',location.href);
   window.addEventListener('popstate',()=>history.pushState(null,'',location.href));
-  // El kitabından geri dönüldüğünde oturumu yeniden başlat (şifre/parmak isteme)
-  if(sessionStorage.getItem('gt_session')==='1'){
-    (async()=>{try{await startApp();}catch(e){console.warn('Oturum yenileme hatası',e);}})();
-  }
   // Pull-to-refresh engeli — gerçek scrollable elementi bul
   document.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
   document.addEventListener('touchmove',e=>{
