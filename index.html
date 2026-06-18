@@ -4555,8 +4555,8 @@ function showKisiDetay(id){
   html+='<div style="text-align:right;"><div style="font-size:11px;color:var(--text3);">'+durum+'</div>';
   html+='<div style="font-weight:700;font-size:20px;color:'+renk+';" class="num">'+fmt(Math.abs(bakiye))+'</div></div></div>';
   if(k.tel){
-    const telSafe=(k.tel||'').replace(/\D/g,'');
-    const waNum='90'+(telSafe.startsWith('0')?telSafe.slice(1):telSafe);
+    const telSafe=(k.tel||'').trim();
+    const waNum=telSafe.startsWith('+')?telSafe.replace(/\D/g,''):(telSafe.replace(/\D/g,'').startsWith('0')?'90'+telSafe.replace(/\D/g,'').slice(1):telSafe.replace(/\D/g,''));
     html+='<div style="display:flex;gap:8px;margin-bottom:8px;">';
     html+='<a href="tel:'+k.tel+'" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(126,179,240,0.1);border:1px solid rgba(126,179,240,0.3);border-radius:var(--r-sm);color:var(--blue);font-weight:600;font-size:13px;text-decoration:none;">📞 '+k.tel+'</a>';
     html+='<a href="https://wa.me/'+waNum+'" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:10px 14px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:var(--r-sm);color:#25d166;font-size:18px;text-decoration:none;">💬</a>';
@@ -5256,7 +5256,7 @@ function sendWhatsapp(){
   if(!selectedIrsaliye)return;
   const k=getKisi(selectedIrsaliye.kisiId);const tel=k?.tel?.replace(/\D/g,'')||'';
   const fis=renderFis(selectedIrsaliye);
-  const url='https://wa.me/'+(tel?'90'+tel.replace(/^0/,''):'')+'?text='+encodeURIComponent(fis);
+  const url='https://wa.me/'+(tel?(t=>(t.startsWith('+')?t.replace(/\D/g,''):(t.replace(/\D/g,'').startsWith('0')?'90'+t.replace(/\D/g,'').slice(1):t.replace(/\D/g,''))))(tel):'')+'?text='+encodeURIComponent(fis);
   window.open(url,'_blank');
 }
 
