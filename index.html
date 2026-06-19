@@ -274,6 +274,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 .fab-item.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
 .fab-item:hover{background:var(--bg2);border-color:var(--blue);color:var(--blue);}
 .fab-btn{width:56px;height:56px;border-radius:50%;pointer-events:auto;background:var(--grad-main);color:white;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(126,179,240,0.35);cursor:pointer;transition:transform 0.5s var(--ease-back),box-shadow 0.4s var(--ease);border:none;}
+.fab-elkitabi{position:fixed;bottom:calc(var(--nav-h) + 16px);left:18px;z-index:950;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1.5px solid var(--blue-md);color:var(--blue);font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,0.35);cursor:pointer;transition:transform 0.3s var(--ease),box-shadow 0.3s var(--ease);text-decoration:none;}
+.fab-elkitabi:active{transform:scale(0.92);}
 .fab-btn.open{transform:rotate(135deg);}
 
 /* VADE BANNER */
@@ -934,7 +936,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('cari',this)"><span class="nav-icon">💳</span><span>Hesaplar</span></div>
     <div class="nav-item" onclick="goPage('fiyatlar',this)"><span class="nav-icon">💰</span><span>Fiyatlar</span></div>
     <div class="nav-item" onclick="goPage('stok',this)"><span class="nav-icon">📦</span><span>Stok</span></div>
-    <div class="nav-item" onclick="window.location.href='elkitabi/index.html'" style="color:var(--blue);"><span class="nav-icon">📗</span><span>El Kitabı</span></div>
     <div class="nav-item" onclick="goPage('rehber',this)"><span class="nav-icon">👥</span><span>Rehber</span></div>
     <div class="nav-item" onclick="goPage('personel',this)"><span class="nav-icon">👷</span><span>Personel</span></div>
     <div class="nav-item" onclick="goPage('irsaliye',this)"><span class="nav-icon">🖨️</span><span>Fiş</span></div>
@@ -944,6 +945,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
   </nav>
 </div>
+
+<!-- EL KİTABI YÜZEN BUTON -->
+<a class="fab-elkitabi" href="elkitabi/index.html" title="El Kitabı">📗</a>
 
 <!-- FAB -->
 <div class="fab-container" id="fab-container">
