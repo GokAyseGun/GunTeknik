@@ -1364,6 +1364,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <select id="fiyat-kategori" onchange="fiyatDalGuncelle()" style="padding:13px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;width:100%;">
             <option value="">Seçin</option>
             <option>Elektrik</option><option>Klima</option>
+            <option>TV, Uydu, Çanak</option><option>İnternet</option>
             <option>Sıhhi Tesisat</option><option>Metal</option><option>Ahşap</option>
           </select>
         </div>
@@ -3446,7 +3447,7 @@ async function deleteIslem(id,event){
 }
 
 // ============================================================ İŞLEM FORMU
-const ISLETME_HİZ={"Elektrik":["Tamirat","Tadilat","Montaj","TV Montaj","Kablo ve Hat Çekme","Tavan Led Döşeme","Avize Montaj / Tamir","Dekoratif Aydınlatma","Klima Elektrik Bağlantısı","Tesisat Yenileme","İnternet Arıza","İnternet Kablo Çekme","Priz / Anahtar Tamiri","Priz / Anahtar Montajı","Sigorta Arızası / Değişimi","Pano Montajı"],"Klima":["Kart Arıza","Motor Arıza","Gaz Dolumu","Elektrik Arıza","Montaj","İç Ünite Temizliği","Dış Ünite Temizliği","Su Tahliye Sorunu","Yer Değiştirme Sök/Tak","Tesisat Döşeme"],"Sıhhi Tesisat":["Döşeme","Arıza","Montaj","Tamir","Şofben Montaj","Tıkanıklık Açma","Su Kaçağı Tespiti","Su Kaçağı Tamiratı"],"Metal":["Kaynak İşçilik","Ferforje","Korkuluk","Küpeşte","Panel Çit","Demir Kapı/Pencere","Bahçe Kapısı","Teras Kapama","Çatı Kapama","Garaj Yapımı"],"Ahşap":["İşçilik","Tamir","Dekoratif Ürün","Lambri","Zımpara","Cila"]};
+const ISLETME_HİZ={"Elektrik":["Tamirat","Tadilat","Montaj","TV Montaj","Kablo ve Hat Çekme","Tavan Led Döşeme","Avize Montaj / Tamir","Dekoratif Aydınlatma","Klima Elektrik Bağlantısı","Tesisat Yenileme","Priz / Anahtar Tamiri","Priz / Anahtar Montajı","Sigorta Arızası / Değişimi","Pano Montajı"],"Klima":["Kart Arıza","Motor Arıza","Gaz Dolumu","Elektrik Arıza","Montaj","İç Ünite Temizliği","Dış Ünite Temizliği","Su Tahliye Sorunu","Yer Değiştirme Sök/Tak","Tesisat Döşeme"],"TV, Uydu, Çanak":["Çanak Montaj (Yeni)","Çanak Montaj (Eski)","Çanak Kablolama","Çanak Sinyal Ayar","Çanak Arıza","Lnb Değişimi","F Konnektör Tamir/Değişim"],"İnternet":["İnternet Arıza","İnternet Kablo Çekme","Telefon Hat Arıza/Değişim","Ethernet Hat Arıza/Değişim","Telefon Hat Döşeme","Ethernet Hat Döşeme","RJ11/RJ45 Jak Arıza/Değişim","Modem Montaj"],"Sıhhi Tesisat":["Döşeme","Arıza","Montaj","Tamir","Şofben Montaj","Tıkanıklık Açma","Su Kaçağı Tespiti","Su Kaçağı Tamiratı"],"Metal":["Kaynak İşçilik","Ferforje","Korkuluk","Küpeşte","Panel Çit","Demir Kapı/Pencere","Bahçe Kapısı","Teras Kapama","Çatı Kapama","Garaj Yapımı"],"Ahşap":["İşçilik","Tamir","Dekoratif Ürün","Lambri","Zımpara","Cila"]};
 const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım","Kredi Taksiti","Banka Kredisi / Finansman"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
 
 function selectPayMethod(btn,hiddenId,modalId){
@@ -10438,8 +10439,10 @@ function teklifPollBaslat(){
 
 // Kategori-Dal eşleşmesi
 const FIYAT_KATEGORILER = {
-  'Elektrik': ['Tamirat','Tadilat','Montaj','TV Montaj','Kablo ve Hat Çekme','Tavan Led Döşeme','Avize Montaj / Tamir','Dekoratif Aydınlatma','Klima Elektrik Bağlantısı','Tesisat Yenileme','İnternet Arıza','İnternet Kablo Çekme','Priz / Anahtar Tamiri','Priz / Anahtar Montajı','Sigorta Arızası / Değişimi','Pano Montajı'],
+  'Elektrik': ['Tamirat','Tadilat','Montaj','TV Montaj','Kablo ve Hat Çekme','Tavan Led Döşeme','Avize Montaj / Tamir','Dekoratif Aydınlatma','Klima Elektrik Bağlantısı','Tesisat Yenileme','Priz / Anahtar Tamiri','Priz / Anahtar Montajı','Sigorta Arızası / Değişimi','Pano Montajı'],
   'Klima': ['Kart Arıza','Motor Arıza','Gaz Dolumu','Elektrik Arıza','Montaj','İç Ünite Temizliği','Dış Ünite Temizliği','Su Tahliye Sorunu','Yer Değiştirme Sök/Tak','Tesisat Döşeme'],
+  'TV, Uydu, Çanak': ['Çanak Montaj (Yeni)','Çanak Montaj (Eski)','Çanak Kablolama','Çanak Sinyal Ayar','Çanak Arıza','Lnb Değişimi','F Konnektör Tamir/Değişim'],
+  'İnternet': ['İnternet Arıza','İnternet Kablo Çekme','Telefon Hat Arıza/Değişim','Ethernet Hat Arıza/Değişim','Telefon Hat Döşeme','Ethernet Hat Döşeme','RJ11/RJ45 Jak Arıza/Değişim','Modem Montaj'],
   'Sıhhi Tesisat': ['Döşeme','Arıza','Montaj','Tamir','Şofben Montaj','Tıkanıklık Açma','Su Kaçağı Tespiti','Su Kaçağı Tamiratı'],
   'Metal': ['Kaynak İşçilik','Ferforje','Korkuluk','Küpeşte','Panel Çit','Demir Kapı/Pencere','Bahçe Kapısı','Teras Kapama','Çatı Kapama','Garaj Yapımı'],
   'Ahşap': ['İşçilik','Tamir','Dekoratif Ürün','Lambri','Zımpara','Cila']
