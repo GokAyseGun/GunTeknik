@@ -11110,10 +11110,17 @@ async function teklifdenProjeOlustur(teklifId){
       const malzemeKalemleri=(t.kalemler||[]).filter(km=>km.tip!=='iscilik');
       // İşçilik kalemlerini proje işçilik planına gerçek kayıt olarak aktar
       const iscillikKalemleri=(t.kalemler||[]).filter(km=>km.tip==='iscilik');
+      console.log('[teklifdenProjeOlustur] t.kalemler:',t.kalemler);
+      console.log('[teklifdenProjeOlustur] iscillikKalemleri:',iscillikKalemleri);
       for(const km of iscillikKalemleri){
-        await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-          proje_id:projeId,aciklama:km.aciklama,tutar:km.toplam||km.birimFiyat||0
-        })}).catch(()=>{});
+        try{
+          const r=await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
+            proje_id:projeId,aciklama:km.aciklama,tutar:km.toplam||km.birimFiyat||0,personel_id:null
+          })});
+          console.log('[teklifdenProjeOlustur] iscilik kayit sonucu:',r);
+        }catch(e){
+          console.error('[teklifdenProjeOlustur] iscilik kayit HATASI:',e);
+        }
       }
       for(const km of malzemeKalemleri){
         await sbFetch('proje_malzemeler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
