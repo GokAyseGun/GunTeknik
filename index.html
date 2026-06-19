@@ -11108,12 +11108,11 @@ async function teklifdenProjeOlustur(teklifId){
     if(result&&result[0]){
       const projeId=result[0].id;
       const malzemeKalemleri=(t.kalemler||[]).filter(km=>km.tip!=='iscilik');
-      // İşçilik kalemlerini proje notu olarak kaydet
+      // İşçilik kalemlerini proje işçilik planına gerçek kayıt olarak aktar
       const iscillikKalemleri=(t.kalemler||[]).filter(km=>km.tip==='iscilik');
-      if(iscillikKalemleri.length){
-        const iscillikNot='İşçilik (Tekliften):\n'+iscillikKalemleri.map(km=>`• ${km.aciklama}: ${fmt(km.toplam)} ₺`).join('\n');
-        await sbFetch('proje_notlar',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-          proje_id:result[0].id,not_metni:iscillikNot
+      for(const km of iscillikKalemleri){
+        await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+          proje_id:projeId,aciklama:km.aciklama,tutar:km.toplam||km.birimFiyat||0
         })}).catch(()=>{});
       }
       for(const km of malzemeKalemleri){
@@ -11657,6 +11656,28 @@ async function showProjeDetay(id){
     });
   }else{html+=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">Henüz malzeme eklenmedi</div>`;}
   html+=`</div>`;
+  // İŞÇİLİK
+  html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">🔧 İşçilik Planı</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${iscilikToplam>0?`<span style="font-size:12px;color:var(--amber);font-weight:600;">${fmt(iscilikToplam)} ₺</span>`:''}
+        <button onclick="projeIscilikEkleModal(${id})" class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;">+ Ekle</button>
+      </div>
+    </div>`;
+  if(projeIscilikler.length){
+    projeIscilikler.forEach(i=>{
+      const per=DB.personeller.find(p=>p.id===i.personel_id);
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--r-sm);font-size:12px;margin-bottom:3px;">
+        <div style="flex:1;"><b>${i.aciklama}</b>${per?` <span style="color:var(--text3);">· ${per.isim}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="num" style="color:var(--text2);">${fmt(i.tutar)} ₺</span>
+          <button onclick="projeIscilikSil(${i.id},${id})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;">✕</button>
+        </div>
+      </div>`;
+    });
+  }else{html+=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">Henüz işçilik eklenmedi</div>`;}
+  html+=`</div>`;
   // PERSONEL
   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -11724,23 +11745,6 @@ async function showProjeDetay(id){
   </div>`;
   // BUTONLAR
   html+=`<div style="display:flex;flex-direction:column;gap:6px;">
-    ${projeIscilikler.length?`<div style="margin-bottom:10px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">🔧 İşçilik</span>
-      <span style="font-size:12px;font-weight:700;color:var(--amber);">${fmt(iscilikToplam)} ₺</span>
-    </div>
-    ${projeIscilikler.map(i=>{
-      const per=DB.personeller.find(p=>p.id===i.personel_id);
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;font-size:12px;">
-        <div><div style="font-weight:600;">${i.aciklama}</div>${per?`<div style="font-size:11px;color:var(--text3);">${per.isim}</div>`:''}</div>
-        <span style="font-weight:700;color:var(--amber);">${fmt(i.tutar)} ₺</span>
-      </div>`;
-    }).join('')}
-    </div>`:''}
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
-      <button class="btn btn-secondary btn-full" onclick="projeMalzemeEkleModal(${id})" style="font-size:13px;">📦 Malzeme</button>
-      <button class="btn btn-secondary btn-full" onclick="projeIscilikEkleModal(${id})" style="font-size:13px;">🔧 İşçilik</button>
-    </div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
       <button class="btn btn-secondary btn-full" onclick="projePersonelEkleModal(${id})" style="font-size:13px;">👷 Ekip</button>
       <button class="btn btn-secondary btn-full" onclick="projeAraOdemeModal(${id})" style="font-size:13px;background:rgba(46,160,67,0.12);color:var(--green);border-color:rgba(46,160,67,0.3);">💳 Ara Ödeme</button>
@@ -12776,6 +12780,13 @@ async function projeIscilikKaydet(projeId){
   document.getElementById('pis-popup')?.remove();
   document.getElementById('pis-overlay')?.remove();
   showToast('İşçilik eklendi','green');
+  showProjeDetay(projeId);
+}
+async function projeIscilikSil(iscilikId,projeId){
+  try{
+    await sbFetch('proje_iscilikler?id=eq.'+iscilikId,{method:'DELETE'});
+    showToast('İşçilik silindi','green');
+  }catch(e){showToast('Hata: '+e.message,'red');}
   showProjeDetay(projeId);
 }
 
