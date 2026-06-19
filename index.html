@@ -11110,16 +11110,13 @@ async function teklifdenProjeOlustur(teklifId){
       const malzemeKalemleri=(t.kalemler||[]).filter(km=>km.tip!=='iscilik');
       // İşçilik kalemlerini proje işçilik planına gerçek kayıt olarak aktar
       const iscillikKalemleri=(t.kalemler||[]).filter(km=>km.tip==='iscilik');
-      console.log('[teklifdenProjeOlustur] t.kalemler:',t.kalemler);
-      console.log('[teklifdenProjeOlustur] iscillikKalemleri:',iscillikKalemleri);
       for(const km of iscillikKalemleri){
         try{
-          const r=await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
-            proje_id:projeId,aciklama:km.aciklama,tutar:km.toplam||km.birimFiyat||0,personel_id:null
+          await sbFetch('proje_iscilikler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+            proje_id:projeId,aciklama:km.aciklama,tutar:km.toplam||km.birimFiyat||0
           })});
-          console.log('[teklifdenProjeOlustur] iscilik kayit sonucu:',r);
         }catch(e){
-          console.error('[teklifdenProjeOlustur] iscilik kayit HATASI:',e);
+          console.error('teklifdenProjeOlustur işçilik kaydı hatası:',e);
         }
       }
       for(const km of malzemeKalemleri){
@@ -11527,8 +11524,9 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <div class="ic"><div class="il">Müşteri</div><div class="iv">${k?k.isim:'—'}</div>${k?.tel?`<div class="is">📞 ${k.tel}</div>`:''}</div>
     <div class="ic"><div class="il">Durum</div><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${drn}18;color:${drn};border:1px solid ${drn}44;margin-top:2px;">${p.durum}</span></div>
   </div>
-  <div class="kpi-band" style="grid-template-columns:repeat(2,1fr);">
+  <div class="kpi-band" style="grid-template-columns:repeat(3,1fr);">
     <div class="kpi"><div class="kl">Teklif</div><div class="kv" style="color:#1d4ed8;">${fmt(p.teklifFiyat||0)} ₺</div></div>
+    <div class="kpi"><div class="kl">Ara Toplam</div><div class="kv" style="color:#b45309;">${fmt(malzemeToplam+iscilikToplam)} ₺</div></div>
     <div class="kpi" style="border-right:none;"><div class="kl">Gerçekleşen</div><div class="kv" style="color:#15803d;">${fmt(ciro)} ₺</div></div>
   </div>
   <div class="body">
@@ -11601,7 +11599,6 @@ async function showProjeDetay(id){
   const islemler=DB.islemler.filter(x=>x.projeId===id).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
   const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-  const kar=ciro-gider;
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
   const renk=durumRenk[p.durum]||'var(--blue)';
   let projeMalzemeler=[],projePersoneller=[],projeNotlar=[],projeIscilikler=[];
@@ -11635,10 +11632,11 @@ async function showProjeDetay(id){
     ${p.aciklama?`<div style="font-size:12px;color:var(--text2);margin-top:8px;padding:8px;background:rgba(0,0,0,0.15);border-radius:var(--r-sm);">${p.aciklama}</div>`:''}
   </div>`;
   // FİNANSAL
+  const projeAraToplam=malzemeToplam+iscilikToplam;
   html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
-    <div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Teklif</div><div class="num" style="font-weight:700;font-size:14px;color:var(--blue);">${fmt(p.teklifFiyat||0)} ₺</div></div>
-    <div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Gerçekleşen</div><div class="num" style="font-weight:700;font-size:14px;color:var(--green);">${fmt(ciro)} ₺</div></div>
-    <div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Kâr/Zarar</div><div class="num" style="font-weight:700;font-size:14px;color:${kar>=0?'var(--green)':'var(--red)'};">${kar<0?'-':''}${fmt(Math.abs(kar))} ₺</div></div>
+    <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Teklif</div><div class="num" style="font-weight:700;font-size:13px;color:var(--blue);">${fmt(p.teklifFiyat||0)} ₺</div></div>
+    <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Ara Toplam</div><div class="num" style="font-weight:700;font-size:13px;color:var(--amber);">${fmt(projeAraToplam)} ₺</div></div>
+    <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Gerçekleşen</div><div class="num" style="font-weight:700;font-size:13px;color:var(--green);">${fmt(ciro)} ₺</div></div>
   </div>`;
   // MALZEME
   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
