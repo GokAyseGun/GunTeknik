@@ -3313,6 +3313,24 @@ async function showIslemDetay(id){
   if(i.malzemeTutar>0){
     malzemeHtml=`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);">Malzeme Tutarı</span><span style="font-size:13px;font-weight:500;color:var(--amber);">${fmt(i.malzemeTutar)}</span></div>`;
   }
+  // Malzeme/İşçilik kalem listesi (islem_kalemleri tablosundan)
+  let kalemler=[];
+  try{kalemler=await sbFetch('islem_kalemleri?islem_id=eq.'+id+'&order=id.asc')||[];}catch(e){}
+  const kalemMalzeme=kalemler.filter(k=>k.tip==='malzeme');
+  const kalemIscilik=kalemler.filter(k=>k.tip==='iscilik');
+  let kalemListesiHtml='';
+  if(kalemMalzeme.length){
+    kalemListesiHtml+=`<div style="background:var(--bg2);padding:12px;border-radius:var(--r-sm);margin-top:4px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">📦 Malzeme Kalemleri (${kalemMalzeme.length})</div>
+      ${kalemMalzeme.map(km=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);"><span>${km.aciklama} <span style="color:var(--text3);">${km.miktar} ${km.birim||'Adet'}</span></span><span class="num" style="color:var(--amber);">${fmt(km.toplam)} ₺</span></div>`).join('')}
+    </div>`;
+  }
+  if(kalemIscilik.length){
+    kalemListesiHtml+=`<div style="background:var(--bg2);padding:12px;border-radius:var(--r-sm);margin-top:4px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">🔧 İşçilik Kalemleri (${kalemIscilik.length})</div>
+      ${kalemIscilik.map(km=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);"><span>${km.aciklama}</span><span class="num" style="color:var(--green);">${fmt(km.toplam)} ₺</span></div>`).join('')}
+    </div>`;
+  }
   // Personel
   let personelHtml='';
   if(i.personelIds&&i.personelIds.length){
@@ -3348,6 +3366,7 @@ async function showIslemDetay(id){
     ${row('Ödeme',(oyIcon[i.odemeYontemi]||'💵')+' '+(i.odemeYontemi||'Nakit'))}
     ${row('Statü',i.statu,i.statu==='Bekliyor'?'var(--amber)':'var(--green)')}
     ${malzemeHtml}
+    ${kalemListesiHtml}
     ${stokHtml}
     ${personelHtml}
     ${i.not?`<div style="background:var(--bg2);padding:12px;border-radius:var(--r-sm);margin-top:8px;"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;">Not</div><div style="font-size:13px;">${i.not}</div></div>`:''}
@@ -3496,26 +3515,33 @@ async function openProjeTamamlaModal(projeId){
   document.getElementById('ptm-ms-summary').textContent='Seçim Yapın';
 
   // Özet göster
-  let iscilikler=[],notlar=[],projeEkler=[];
+  let iscilikler=[],notlar=[],projeEkler=[],giderler=[];
   try{iscilikler=await sbFetch('proje_iscilikler?proje_id=eq.'+projeId)||[];}catch(e){}
   try{notlar=await sbFetch('proje_notlar?proje_id=eq.'+projeId)||[];}catch(e){}
   try{projeEkler=await sbFetch('ekler?proje_id=eq.'+projeId)||[];}catch(e){}
+  try{giderler=await sbFetch('proje_giderler?proje_id=eq.'+projeId)||[];}catch(e){}
+  const malzemeToplamOzet=malzemeler.reduce((a,m)=>a+(parseFloat(m.toplam)||0),0);
+  const iscilikToplamOzet=iscilikler.reduce((a,i)=>a+(parseFloat(i.tutar)||0),0);
+  const giderToplamOzet=giderler.reduce((a,g)=>a+(parseFloat(g.tutar)||0),0);
   const ozetEl=document.getElementById('ptm-ozet');
   const ozetIc=document.getElementById('ptm-ozet-ic');
   if(ozetEl&&ozetIc){
     let ozet=`<div style="margin-bottom:4px;">✅ İşletme Geliri olarak işlem oluşturulacak</div>`;
     if(malzemeler.length)
-      ozet+=`<div style="margin-bottom:4px;">📦 ${malzemeler.length} malzeme kalemi aktarılacak</div>`;
+      ozet+=`<div style="margin-bottom:4px;">📦 ${malzemeler.length} malzeme kalemi aktarılacak (${fmt(malzemeToplamOzet)} ₺)</div>`;
     if(iscilikler.length)
-      ozet+=`<div style="margin-bottom:4px;">🔧 ${iscilikler.length} işçilik kalemi aktarılacak</div>`;
+      ozet+=`<div style="margin-bottom:4px;">🔧 ${iscilikler.length} işçilik kalemi aktarılacak (${fmt(iscilikToplamOzet)} ₺)</div>`;
+    if(giderler.length)
+      ozet+=`<div style="margin-bottom:4px;">🧾 Tahmini gider düşülecek (${fmt(giderToplamOzet)} ₺) — işleme aktarılmaz, sadece hak ediş hesabında kullanılır</div>`;
     if(stokMalzemeler.length)
       ozet+=`<div style="margin-bottom:4px;">📉 ${stokMalzemeler.length} stok kalemi düşülecek</div>`;
     if(notlar.length)
       ozet+=`<div style="margin-bottom:4px;">📝 ${notlar.length} proje notu aktarılacak</div>`;
     if(projeEkler.length)
       ozet+=`<div style="margin-bottom:4px;">🖼️ ${projeEkler.length} görsel/ek aktarılacak</div>`;
-    if(personeller.length)
-      ozet+=`<div style="margin-bottom:4px;">👷 ${personeller.length} personel için hak ediş açılacak</div>`;
+    if(personeller.length){
+      ozet+=`<div style="margin-bottom:4px;">👷 ${personeller.length} personel için hak ediş açılacak — <span style="color:var(--text3);">Net Kâr = Gerçekleşen Tutar − Malzeme − İşçilik − Gider üzerinden</span></div>`;
+    }
     ozetIc.innerHTML=ozet;
     ozetEl.style.display='block';
   }
@@ -3580,6 +3606,12 @@ async function projejiTamamla(btn){
       notMetni+='\n\nProje Notları:\n'+notlar.map(n=>'• '+n.not_metni).join('\n');
     }
 
+    // Personeller listesini ana kayıttan önce çek (hem personel_ids hem hak ediş hesabı için)
+    let personeller=[],giderler=[];
+    try{personeller=await sbFetch('proje_personeller?proje_id=eq.'+projeId)||[];}catch(e){}
+    try{giderler=await sbFetch('proje_giderler?proje_id=eq.'+projeId)||[];}catch(e){}
+    const personelIdsListe=personeller.filter(pp=>pp.personel_id).map(pp=>pp.personel_id);
+
     // 1. Ana işlem kaydı — İşletme Geliri
     const result=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
       tarih:tarih+'T12:00:00',tip:'Gelir',statu:'Tamamlandı',
@@ -3588,6 +3620,7 @@ async function projejiTamamla(btn){
       odeme_yontemi:odeme,
       kisi_id:p.musteriId||null,
       proje_id:projeId,
+      personel_ids:personelIdsListe.length?personelIdsListe:null,
       "not":notMetni,
       fatura_var:faturaVar
     })});
@@ -3628,17 +3661,16 @@ async function projejiTamamla(btn){
       }
     }
 
-    // 5. Personel hak edişleri — oran varsa net tutardan hesapla, yoksa manuel_tutar kullan
-    let personeller=[];
-    try{personeller=await sbFetch('proje_personeller?proje_id=eq.'+projeId)||[];}catch(e){}
-    const netTutar=Math.max(0,tutar-malzemeToplam-iscilikToplam);
+    // 5. Personel hak edişleri — NET KÂR üzerinden hesaplanır: Ciro - Malzeme - İşçilik - Gider (tahmini)
+    const giderToplam=giderler.reduce((a,g)=>a+(parseFloat(g.tutar)||0),0);
+    const netKar=Math.max(0,tutar-malzemeToplam-iscilikToplam-giderToplam);
     for(const pp of personeller){
       if(!pp.personel_id)continue;
       const per=DB.personeller.find(x=>x.id===pp.personel_id);
       if(!per)continue;
       let pay=0;
       if(pp.oran>0){
-        pay=Math.round(netTutar*(pp.oran/100)*100)/100;
+        pay=Math.round(netKar*(pp.oran/100)*100)/100;
       }else if(pp.manuel_tutar>0){
         pay=pp.manuel_tutar;
       }
@@ -3649,7 +3681,7 @@ async function projejiTamamla(btn){
           tarih:tarih+'T12:00:00',
           tip:'Hak Edis',
           tutar:pay,
-          "not":`${p.isim} projesi hak edişi`+(pp.oran?` — %${pp.oran} Pay`:'')
+          "not":`${p.isim} projesi hak edişi`+(pp.oran?` — %${pp.oran} Pay (Net Kârdan)`:'')
         })}).catch(()=>{});
       }
     }
@@ -3772,6 +3804,27 @@ async function editIslem(id,event){
     kalemler.forEach(k=>islemKalemEkle(k,k.tip==='iscilik'));
     calcIslemToplam();
   }catch(e){}
+  // Personel hak edişlerini yükle (checkbox + oran/tutar doldur)
+  if(i.personelIds&&i.personelIds.length){
+    try{
+      const yardimciKayitlar=await sbFetch('yardimci_islemleri?islem_id=eq.'+id)||[];
+      i.personelIds.forEach(pid=>{
+        const chk=document.getElementById('ppchk-'+pid);
+        if(chk){
+          chk.checked=true;
+          onPersonelPayChk(pid);
+          const y=yardimciKayitlar.find(x=>String(x.personel_id)===String(pid));
+          if(y){
+            const oranMatch=(y.not||'').match(/%([\d.]+)/);
+            const oranEl=document.getElementById('pps-oran-'+pid);
+            const tutarEl=document.getElementById('pps-tutar-'+pid);
+            if(oranMatch&&oranEl){oranEl.value=oranMatch[1];}
+            else if(tutarEl){tutarEl.value=y.tutar||'';}
+          }
+        }
+      });
+    }catch(e){}
+  }
   document.querySelectorAll('#modal-islem .pay-btn').forEach(b=>{b.classList.toggle('active',b.dataset.val===(i.odemeYontemi||'Nakit'));});
   document.getElementById('mi-odeme').value=i.odemeYontemi||'Nakit';
   if(i.altKat&&i.altKat!=='-'&&i.tip==='Gelir'&&i.kat==='İşletme Geliri'){
@@ -6996,18 +7049,36 @@ function icsEscape(str){
 
 // ============================================================ PROJELER
 
-function renderProjeler(){
+async function renderProjeler(){
   const list=document.getElementById('list-projeler');if(!list)return;
   const filtre=document.getElementById('proje-filtre')?.value||'';
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
   const projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
   if(!projeler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Proje yok</div><div class="empty-sub">+ Proje butonuna bas</div></div>';return;}
+  // Tüm projelerin tahmini gider/malzeme/işçilik toplamlarını tek seferde çek
+  const projeIdler=projeler.map(p=>p.id).join(',');
+  let tahminGiderMap={},tahminMalzemeMap={},tahminIscilikMap={};
+  try{
+    const [gd,md,id_]=await Promise.all([
+      sbFetch('proje_giderler?proje_id=in.('+projeIdler+')').catch(()=>[]),
+      sbFetch('proje_malzemeler?proje_id=in.('+projeIdler+')').catch(()=>[]),
+      sbFetch('proje_iscilikler?proje_id=in.('+projeIdler+')').catch(()=>[])
+    ]);
+    (gd||[]).forEach(g=>{tahminGiderMap[g.proje_id]=(tahminGiderMap[g.proje_id]||0)+(parseFloat(g.tutar)||0);});
+    (md||[]).forEach(m=>{tahminMalzemeMap[m.proje_id]=(tahminMalzemeMap[m.proje_id]||0)+(parseFloat(m.toplam)||0);});
+    (id_||[]).forEach(i=>{tahminIscilikMap[i.proje_id]=(tahminIscilikMap[i.proje_id]||0)+(parseFloat(i.tutar)||0);});
+  }catch(e){}
   list.innerHTML=projeler.map((p,i)=>{
     const k=getKisi(p.musteriId);
     const islemler=DB.islemler.filter(x=>x.projeId===p.id);
-    const ciro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-    const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-    const kar=ciro-gider;
+    const gercekCiro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+    const gercekGider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+    // Proje tamamlanmadıysa (henüz gerçekleşen işlem yoksa) tahmini değerleri göster
+    const tamamlandi=p.durum==='Tamamlandı'&&gercekCiro>0;
+    const ciro=tamamlandi?gercekCiro:0;
+    const tahminGider=(tahminGiderMap[p.id]||0)+(tahminMalzemeMap[p.id]||0)+(tahminIscilikMap[p.id]||0);
+    const gider=tamamlandi?gercekGider:tahminGider;
+    const kar=tamamlandi?(gercekCiro-gercekGider):(- tahminGider);
     const renk=durumRenk[p.durum]||'var(--blue)';
     return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;border-left:3px solid ${renk};" onclick="showProjeDetay(${p.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
@@ -11985,18 +12056,20 @@ async function showProjeDetay(id){
   const gider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
   const renk=durumRenk[p.durum]||'var(--blue)';
-  let projeMalzemeler=[],projePersoneller=[],projeNotlar=[],projeIscilikler=[];
+  let projeMalzemeler=[],projePersoneller=[],projeNotlar=[],projeIscilikler=[],projeGiderler=[];
   try{
-    const [md,pd,nd,id_]=await Promise.all([
+    const [md,pd,nd,id_,gd]=await Promise.all([
       sbFetch('proje_malzemeler?proje_id=eq.'+id+'&order=id.asc'),
       sbFetch('proje_personeller?proje_id=eq.'+id),
       sbFetch('proje_notlar?proje_id=eq.'+id+'&order=created_at.desc'),
-      sbFetch('proje_iscilikler?proje_id=eq.'+id+'&order=id.asc').catch(()=>[])
+      sbFetch('proje_iscilikler?proje_id=eq.'+id+'&order=id.asc').catch(()=>[]),
+      sbFetch('proje_giderler?proje_id=eq.'+id+'&order=id.asc').catch(()=>[])
     ]);
-    projeMalzemeler=md||[];projePersoneller=pd||[];projeNotlar=nd||[];projeIscilikler=id_||[];
+    projeMalzemeler=md||[];projePersoneller=pd||[];projeNotlar=nd||[];projeIscilikler=id_||[];projeGiderler=gd||[];
   }catch(e){}
   const malzemeToplam=projeMalzemeler.reduce((a,m)=>a+(parseFloat(m.toplam)||0),0);
   const iscilikToplam=projeIscilikler.reduce((a,i)=>a+(parseFloat(i.tutar)||0),0);
+  const giderToplam=projeGiderler.reduce((a,g)=>a+(parseFloat(g.tutar)||0),0);
   let html='';
   // BAŞLIK
   html+=`<div style="background:linear-gradient(135deg,var(--surface),var(--bg2));border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:12px;">
@@ -12017,10 +12090,15 @@ async function showProjeDetay(id){
   </div>`;
   // FİNANSAL
   const projeAraToplam=malzemeToplam+iscilikToplam;
-  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+  const projeNetKar=ciro-malzemeToplam-iscilikToplam-giderToplam;
+  html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
     <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Teklif</div><div class="num" style="font-weight:700;font-size:13px;color:var(--blue);">${fmt(p.teklifFiyat||0)} ₺</div></div>
     <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Ara Toplam</div><div class="num" style="font-weight:700;font-size:13px;color:var(--amber);">${fmt(projeAraToplam)} ₺</div></div>
     <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Gerçekleşen</div><div class="num" style="font-weight:700;font-size:13px;color:var(--green);">${fmt(ciro)} ₺</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px;">
+    <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Tahmini Gider</div><div class="num" style="font-weight:700;font-size:13px;color:var(--red);">${fmt(giderToplam)} ₺</div></div>
+    <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Net Kâr (Tahmini)</div><div class="num" style="font-weight:700;font-size:13px;color:${projeNetKar>=0?'var(--green)':'var(--red)'};">${projeNetKar<0?'-':''}${fmt(Math.abs(projeNetKar))} ₺</div></div>
   </div>`;
   // MALZEME
   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
@@ -12066,6 +12144,27 @@ async function showProjeDetay(id){
       </div>`;
     });
   }else{html+=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">Henüz işçilik eklenmedi</div>`;}
+  html+=`</div>`;
+  // GİDER PLANI (tahmini, hiçbir zaman işleme aktarılmaz)
+  html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">🧾 Gider Planı <span style="text-transform:none;font-weight:400;color:var(--text3);">(tahmini)</span></div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${giderToplam>0?`<span style="font-size:12px;color:var(--red);font-weight:600;">${fmt(giderToplam)} ₺</span>`:''}
+        <button onclick="projeGiderEkleModal(${id})" class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;">+ Ekle</button>
+      </div>
+    </div>`;
+  if(projeGiderler.length){
+    projeGiderler.forEach(g=>{
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--r-sm);font-size:12px;margin-bottom:3px;">
+        <div style="flex:1;"><b>${g.aciklama}</b></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="num" style="color:var(--text2);">${fmt(g.tutar)} ₺</span>
+          <button onclick="projeGiderSil(${g.id},${id})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;">✕</button>
+        </div>
+      </div>`;
+    });
+  }else{html+=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">Henüz gider eklenmedi</div>`;}
   html+=`</div>`;
   // PERSONEL
   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
@@ -13175,6 +13274,54 @@ async function projeIscilikSil(iscilikId,projeId){
   try{
     await sbFetch('proje_iscilikler?id=eq.'+iscilikId,{method:'DELETE'});
     showToast('İşçilik silindi','green');
+  }catch(e){showToast('Hata: '+e.message,'red');}
+  showProjeDetay(projeId);
+}
+
+// --- GİDER PLANI (proje içi tahmini gider — hiçbir zaman işleme aktarılmaz) ---
+function projeGiderEkleModal(projeId){
+  document.getElementById('pgd-popup')?.remove();
+  document.getElementById('pgd-overlay')?.remove();
+  const el=document.createElement('div');
+  el.id='pgd-popup';
+  el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);z-index:99999;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+  el.innerHTML=`<div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:14px;font-weight:700;">🧾 Gider Ekle</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:-6px;">Bu tutar tahminidir, işlemlere aktarılmaz.</div>
+    <input type="text" id="pgd-aciklama" placeholder="Gider açıklaması (örn. İş yemeği, sarf malzeme)" autocapitalize="words"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <input type="number" id="pgd-tutar" placeholder="Tutar (₺)" inputmode="numeric"
+      style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="document.getElementById('pgd-popup').remove();document.getElementById('pgd-overlay').remove();" class="btn btn-secondary btn-sm">İptal</button>
+      <button onclick="projeGiderKaydet(${projeId})" class="btn btn-primary btn-sm">Kaydet</button>
+    </div>
+  </div>`;
+  const overlay=document.createElement('div');
+  overlay.id='pgd-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99998;';
+  overlay.onclick=()=>{overlay.remove();el.remove();};
+  document.body.appendChild(overlay);
+  document.body.appendChild(el);
+  setTimeout(()=>document.getElementById('pgd-aciklama')?.focus(),80);
+}
+async function projeGiderKaydet(projeId){
+  const aciklama=document.getElementById('pgd-aciklama')?.value?.trim();
+  const tutar=parseTutar(document.getElementById('pgd-tutar')?.value)||0;
+  if(!aciklama){showToast('Açıklama girin','red');return;}
+  if(!tutar){showToast('Tutar girin','red');return;}
+  await sbFetch('proje_giderler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+    proje_id:projeId,aciklama,tutar
+  })});
+  document.getElementById('pgd-popup')?.remove();
+  document.getElementById('pgd-overlay')?.remove();
+  showToast('Gider eklendi','green');
+  showProjeDetay(projeId);
+}
+async function projeGiderSil(giderId,projeId){
+  try{
+    await sbFetch('proje_giderler?id=eq.'+giderId,{method:'DELETE'});
+    showToast('Gider silindi','green');
   }catch(e){showToast('Hata: '+e.message,'red');}
   showProjeDetay(projeId);
 }
