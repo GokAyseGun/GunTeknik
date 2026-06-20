@@ -745,6 +745,33 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="rapor-liste" style="display:flex;flex-direction:column;gap:12px;"></div>
     </div>
 
+    <!-- REKLAM PERFORMANSI -->
+    <div class="page" id="page-reklam">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="sec-title mt0" style="margin:0">📈 Google Ads Performansı</div>
+        <div id="reklam-son-guncelleme" style="font-size:11px;color:var(--text3);"></div>
+      </div>
+
+      <div class="pay-method-btns" id="reklam-donem-sec" style="margin-bottom:14px;">
+        <button type="button" class="pay-btn" data-val="bugun" onclick="reklamDonemSec(this)">Bugün</button>
+        <button type="button" class="pay-btn active" data-val="7gun" onclick="reklamDonemSec(this)">Son 7 Gün</button>
+        <button type="button" class="pay-btn" data-val="30gun" onclick="reklamDonemSec(this)">Son 30 Gün</button>
+      </div>
+
+      <div id="reklam-kpi-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;"></div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Günlük Harcama / Dönüşüm</div>
+        <div id="reklam-grafik"></div>
+      </div>
+
+      <div id="reklam-bos" style="display:none;text-align:center;padding:40px 20px;color:var(--text3);">
+        <div style="font-size:32px;margin-bottom:10px;">📊</div>
+        <div style="font-size:13px;">Henüz reklam verisi bulunmuyor.<br>Veriler saatlik olarak otomatik güncellenir.</div>
+      </div>
+    </div>
+
+
     <!-- VERGİ -->
     <div class="page" id="page-vergi">
 
@@ -943,6 +970,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('sablonlar',this)"><span class="nav-icon">📑</span><span>Şablonlar</span></div>
     <div class="nav-item" onclick="goPage('tavsiyeler',this)"><span class="nav-icon">💡</span><span>Tavsiyeler</span></div>
     <div class="nav-item" onclick="goPage('raporlar',this)"><span class="nav-icon">📄</span><span>Rapor</span></div>
+    <div class="nav-item" onclick="goPage('reklam',this)"><span class="nav-icon">📈</span><span>Reklam</span></div>
   </nav>
 </div>
 
@@ -2835,7 +2863,7 @@ const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.is
 function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı'};
 
 function goPage(id,navEl){
   // Sayfa geçişinde tüm açık modalleri kapat
@@ -3018,6 +3046,7 @@ function renderAll(){
     if(pid==='teklifler')renderTeklifler();
     if(pid==='fiyatlar')renderFiyatlar();
     if(pid==='raporlar'){renderRaporIcgoru();renderRaporListesi();}
+    if(pid==='reklam')renderReklam();
     if(pid==='sablonlar')renderSablonlar();
     if(pid==='tavsiyeler')renderTavsiyeler();
     // Kredi paneli her zaman güncelle
@@ -5608,6 +5637,153 @@ function raporTavsiyeler(){
   const body=`${_rpKpi([{lbl:'Toplam Tavsiye',val:items.length,cls:'blue'}])}
 <div class="section">${_rpTable(['Tarih','Başlık','Özet'],rows)}</div>`;
   raporSayfaAc('Tavsiyeler',p.label,body);
+}
+
+// ============================================================ REKLAM (Google Ads)
+let _reklamVeri=[];
+let _reklamDonem='7gun';
+
+async function renderReklam(){
+  try{
+    const rows=await sbFetch('google_ads_metrics?order=tarih.asc')||[];
+    _reklamVeri=rows;
+  }catch(e){_reklamVeri=[];}
+  reklamGoster();
+}
+
+function reklamDonemSec(btn){
+  document.querySelectorAll('#reklam-donem-sec .pay-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _reklamDonem=btn.dataset.val;
+  reklamGoster();
+}
+
+function _reklamFiltreliVeri(){
+  if(!_reklamVeri.length)return[];
+  const bugun=new Date();bugun.setHours(0,0,0,0);
+  let gunSayisi=7;
+  if(_reklamDonem==='bugun')gunSayisi=1;
+  else if(_reklamDonem==='30gun')gunSayisi=30;
+  const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
+  return _reklamVeri.filter(r=>{
+    const d=new Date(r.tarih);
+    return d>=baslangic&&d<=bugun;
+  });
+}
+
+function reklamGoster(){
+  const veri=_reklamFiltreliVeri();
+  const grid=document.getElementById('reklam-kpi-grid');
+  const bos=document.getElementById('reklam-bos');
+  const guncelEl=document.getElementById('reklam-son-guncelleme');
+  if(!grid)return;
+
+  if(!_reklamVeri.length){
+    grid.innerHTML='';
+    document.getElementById('reklam-grafik').innerHTML='';
+    if(bos)bos.style.display='block';
+    if(guncelEl)guncelEl.textContent='';
+    return;
+  }
+  if(bos)bos.style.display='none';
+
+  // Son güncelleme zamanı
+  if(guncelEl){
+    const sonKayit=_reklamVeri[_reklamVeri.length-1];
+    if(sonKayit&&sonKayit.guncellenme_zamani){
+      const dt=new Date(sonKayit.guncellenme_zamani);
+      guncelEl.textContent='Son güncelleme: '+dt.toLocaleDateString('tr-TR')+' '+dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+    }
+  }
+
+  // Toplamlar
+  const top=veri.reduce((a,r)=>({
+    harcama:a.harcama+(parseFloat(r.harcama)||0),
+    tiklama:a.tiklama+(parseInt(r.tiklama)||0),
+    gosterim:a.gosterim+(parseInt(r.gosterim)||0),
+    donusum:a.donusum+(parseFloat(r.donusum)||0),
+  }),{harcama:0,tiklama:0,gosterim:0,donusum:0});
+  const donusumBasi=top.donusum>0?top.harcama/top.donusum:0;
+  const ctr=top.gosterim>0?(top.tiklama/top.gosterim*100):0;
+  const cpc=top.tiklama>0?(top.harcama/top.tiklama):0;
+
+  const kpiler=[
+    {lbl:'Toplam Harcama',val:fmt(top.harcama)+' ₺',renk:'blue',icon:'💰'},
+    {lbl:'Tıklama',val:top.tiklama.toLocaleString('tr-TR'),renk:'green',icon:'👆'},
+    {lbl:'Gösterim',val:top.gosterim.toLocaleString('tr-TR'),renk:'purple',icon:'👁️'},
+    {lbl:'Dönüşüm',val:top.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),renk:'teal',icon:'🎯'},
+    {lbl:'Dönüşüm Başı Maliyet',val:fmt(donusumBasi)+' ₺',renk:'amber',icon:'📌'},
+    {lbl:'Tıklama Oranı (CTR)',val:ctr.toFixed(2)+'%',renk:'blue',icon:'📊'},
+    {lbl:'Ort. Tıklama Maliyeti',val:fmt(cpc)+' ₺',renk:'red',icon:'💵'},
+  ];
+  grid.innerHTML=kpiler.map(k=>`
+    <div class="card" style="padding:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">${k.icon}</span>
+        <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${k.lbl}</span>
+      </div>
+      <div class="num" style="font-weight:700;font-size:17px;color:var(--${k.renk});">${k.val}</div>
+    </div>`).join('');
+
+  reklamGrafikCiz(veri);
+}
+
+function reklamGrafikCiz(veri){
+  const wrap=document.getElementById('reklam-grafik');
+  if(!wrap)return;
+  if(!veri.length){wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Bu dönem için veri yok</div>';return;}
+
+  const W=320,H=140,padL=36,padR=8,padT=10,padB=22;
+  const innerW=W-padL-padR,innerH=H-padT-padB;
+  const maxHarcama=Math.max(...veri.map(r=>parseFloat(r.harcama)||0),1);
+  const maxDonusum=Math.max(...veri.map(r=>parseFloat(r.donusum)||0),1);
+  const n=veri.length;
+  const stepX=n>1?innerW/(n-1):0;
+
+  const barW=Math.min(18,innerW/n*0.5);
+  let bars='';
+  veri.forEach((r,i)=>{
+    const x=padL+(n>1?i*stepX:innerW/2);
+    const h=(parseFloat(r.harcama)||0)/maxHarcama*innerH;
+    const y=padT+innerH-h;
+    bars+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" rx="2" fill="var(--blue)" opacity="0.55"></rect>`;
+  });
+
+  let points='';
+  veri.forEach((r,i)=>{
+    const x=padL+(n>1?i*stepX:innerW/2);
+    const v=(parseFloat(r.donusum)||0)/maxDonusum*innerH;
+    const y=padT+innerH-v;
+    points+=`${x.toFixed(1)},${y.toFixed(1)} `;
+  });
+
+  // X ekseni etiketleri (sadece ilk, orta, son)
+  const etiketIdx=n>1?[0,Math.floor((n-1)/2),n-1]:[0];
+  let labels='';
+  etiketIdx.forEach(i=>{
+    const r=veri[i];
+    const x=padL+(n>1?i*stepX:innerW/2);
+    const d=new Date(r.tarih);
+    const lbl=d.getDate()+'.'+(d.getMonth()+1);
+    labels+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="9" fill="var(--text3)" text-anchor="middle">${lbl}</text>`;
+  });
+
+  wrap.innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:160px;">
+      ${bars}
+      <polyline points="${points.trim()}" fill="none" stroke="var(--amber)" stroke-width="2"></polyline>
+      ${veri.map((r,i)=>{
+        const x=padL+(n>1?i*stepX:innerW/2);
+        const v=(parseFloat(r.donusum)||0)/maxDonusum*innerH;
+        const y=padT+innerH-v;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="var(--amber)"></circle>`;
+      }).join('')}
+      ${labels}
+    </svg>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:10px;color:var(--text3);">
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--blue);opacity:0.55;border-radius:2px;margin-right:4px;"></span>Harcama</span>
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--amber);border-radius:50%;margin-right:4px;"></span>Dönüşüm</span>
+    </div>`;
 }
 
 
