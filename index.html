@@ -761,7 +761,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div id="reklam-kpi-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;"></div>
 
       <div class="card" style="padding:16px;margin-bottom:16px;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Günlük Harcama / Dönüşüm</div>
+        <div id="reklam-metrik-sec" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
+        <div id="reklam-metrik-ozet" style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;"></div>
         <div id="reklam-grafik"></div>
       </div>
 
@@ -5642,6 +5643,14 @@ function raporTavsiyeler(){
 // ============================================================ REKLAM (Google Ads)
 let _reklamVeri=[];
 let _reklamDonem='7gun';
+let _reklamMetrik='harcama';
+const REKLAM_METRIK_TANIM={
+  harcama:{lbl:'Harcama',renk:'#7eb3f0',fmt:v=>fmt(v)+' ₺',agg:'sum'},
+  tiklama:{lbl:'Tıklama',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  gosterim:{lbl:'Gösterim',renk:'#b39ddb',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  donusum:{lbl:'Dönüşüm',renk:'#7ecec4',fmt:v=>v.toLocaleString('tr-TR',{maximumFractionDigits:1}),agg:'sum'},
+  ctr:{lbl:'TO (CTR)',renk:'#f0c472',fmt:v=>v.toFixed(2)+'%',agg:'avg'}
+};
 
 async function renderReklam(){
   try{
@@ -5681,13 +5690,14 @@ function reklamGoster(){
   if(!_reklamVeri.length){
     grid.innerHTML='';
     document.getElementById('reklam-grafik').innerHTML='';
+    document.getElementById('reklam-metrik-sec').innerHTML='';
+    document.getElementById('reklam-metrik-ozet').innerHTML='';
     if(bos)bos.style.display='block';
     if(guncelEl)guncelEl.textContent='';
     return;
   }
   if(bos)bos.style.display='none';
 
-  // Son güncelleme zamanı
   if(guncelEl){
     const sonKayit=_reklamVeri[_reklamVeri.length-1];
     if(sonKayit&&sonKayit.guncellenme_zamani){
@@ -5696,7 +5706,6 @@ function reklamGoster(){
     }
   }
 
-  // Toplamlar
   const top=veri.reduce((a,r)=>({
     harcama:a.harcama+(parseFloat(r.harcama)||0),
     tiklama:a.tiklama+(parseInt(r.tiklama)||0),
@@ -5725,68 +5734,138 @@ function reklamGoster(){
       <div class="num" style="font-weight:700;font-size:17px;color:var(--${k.renk});">${k.val}</div>
     </div>`).join('');
 
+  reklamMetrikSecCiz();
   reklamGrafikCiz(veri);
+}
+
+function reklamMetrikSecCiz(){
+  const wrap=document.getElementById('reklam-metrik-sec');
+  if(!wrap)return;
+  wrap.innerHTML=Object.keys(REKLAM_METRIK_TANIM).map(key=>{
+    const m=REKLAM_METRIK_TANIM[key];
+    const aktif=key===_reklamMetrik;
+    return `<button type="button" onclick="reklamMetrikSec('${key}')" style="flex-shrink:0;padding:7px 12px;border-radius:8px;border:1px solid ${aktif?m.renk+'55':'var(--border2)'};background:${aktif?m.renk+'22':'var(--bg2)'};color:${aktif?m.renk:'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">${m.lbl}</button>`;
+  }).join('');
+}
+
+function reklamMetrikSec(key){
+  _reklamMetrik=key;
+  reklamMetrikSecCiz();
+  reklamGrafikCiz(_reklamFiltreliVeri());
 }
 
 function reklamGrafikCiz(veri){
   const wrap=document.getElementById('reklam-grafik');
+  const ozetWrap=document.getElementById('reklam-metrik-ozet');
   if(!wrap)return;
-  if(!veri.length){wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Bu dönem için veri yok</div>';return;}
+  if(!veri.length){
+    wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Bu dönem için veri yok</div>';
+    if(ozetWrap)ozetWrap.innerHTML='';
+    return;
+  }
 
-  const W=320,H=140,padL=36,padR=8,padT=10,padB=22;
-  const innerW=W-padL-padR,innerH=H-padT-padB;
-  const maxHarcama=Math.max(...veri.map(r=>parseFloat(r.harcama)||0),1);
-  const maxDonusum=Math.max(...veri.map(r=>parseFloat(r.donusum)||0),1);
+  const m=REKLAM_METRIK_TANIM[_reklamMetrik];
+  const vals=veri.map(r=>parseFloat(r[_reklamMetrik])||0);
+  const toplam=vals.reduce((a,b)=>a+b,0);
+  const gosterilecekToplam=m.agg==='avg'?(toplam/vals.length):toplam;
+  const ortalama=toplam/vals.length;
+
+  if(ozetWrap){
+    ozetWrap.innerHTML=`<span style="font-size:22px;font-weight:700;color:${m.renk};">${m.fmt(gosterilecekToplam)}</span><span style="font-size:11px;color:var(--text3);">günlük ort. ${m.fmt(ortalama)}</span>`;
+  }
+
+  const W=340,H=170,padT=14,padB=4,innerH=110;
   const n=veri.length;
-  const stepX=n>1?innerW/(n-1):0;
+  const maxV=Math.max(...vals,0.0001)*1.15;
+  const step=W/n;
+  const barW=Math.min(step*0.55,28);
 
-  const barW=Math.min(18,innerW/n*0.5);
-  let bars='';
+  let barsHtml='';
   veri.forEach((r,i)=>{
-    const x=padL+(n>1?i*stepX:innerW/2);
-    const h=(parseFloat(r.harcama)||0)/maxHarcama*innerH;
+    const x=step*i+(step-barW)/2;
+    const v=parseFloat(r[_reklamMetrik])||0;
+    const h=(v/maxV)*innerH;
     const y=padT+innerH-h;
-    bars+=`<rect x="${(x-barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" rx="2" fill="var(--blue)" opacity="0.55"></rect>`;
+    barsHtml+=`<rect class="reklam-bar" data-idx="${i}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="3" fill="${m.renk}" opacity="0.8" style="cursor:pointer;transition:opacity 0.15s;"></rect>`;
   });
 
-  let points='';
-  veri.forEach((r,i)=>{
-    const x=padL+(n>1?i*stepX:innerW/2);
-    const v=(parseFloat(r.donusum)||0)/maxDonusum*innerH;
-    const y=padT+innerH-v;
-    points+=`${x.toFixed(1)},${y.toFixed(1)} `;
-  });
-
-  // X ekseni etiketleri (sadece ilk, orta, son)
-  const etiketIdx=n>1?[0,Math.floor((n-1)/2),n-1]:[0];
-  let labels='';
+  const etiketIdx=n>1?(n<=7?[...Array(n).keys()]:[0,Math.floor((n-1)/2),n-1]):[0];
+  let labelsHtml='';
   etiketIdx.forEach(i=>{
     const r=veri[i];
-    const x=padL+(n>1?i*stepX:innerW/2);
+    const x=step*i+step/2;
     const d=new Date(r.tarih);
-    const lbl=d.getDate()+'.'+(d.getMonth()+1);
-    labels+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="9" fill="var(--text3)" text-anchor="middle">${lbl}</text>`;
+    const lbl=d.getDate()+' '+['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][d.getMonth()];
+    labelsHtml+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--text3)" text-anchor="middle">${lbl}</text>`;
+  });
+
+  // Izgara çizgileri (3 yatay referans)
+  let gridHtml='';
+  [0.0,0.5,1.0].forEach(p=>{
+    const y=padT+innerH*(1-p);
+    gridHtml+=`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"></line>`;
   });
 
   wrap.innerHTML=`
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:160px;">
-      ${bars}
-      <polyline points="${points.trim()}" fill="none" stroke="var(--amber)" stroke-width="2"></polyline>
-      ${veri.map((r,i)=>{
-        const x=padL+(n>1?i*stepX:innerW/2);
-        const v=(parseFloat(r.donusum)||0)/maxDonusum*innerH;
-        const y=padT+innerH-v;
-        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="var(--amber)"></circle>`;
-      }).join('')}
-      ${labels}
-    </svg>
-    <div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:10px;color:var(--text3);">
-      <span><span style="display:inline-block;width:8px;height:8px;background:var(--blue);opacity:0.55;border-radius:2px;margin-right:4px;"></span>Harcama</span>
-      <span><span style="display:inline-block;width:8px;height:8px;background:var(--amber);border-radius:50%;margin-right:4px;"></span>Dönüşüm</span>
+    <div style="position:relative;">
+      <svg id="reklam-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible;">
+        ${gridHtml}
+        <line id="reklam-hover-line" x1="0" y1="${padT}" x2="0" y2="${padT+innerH}" stroke="${m.renk}" stroke-width="1" stroke-dasharray="3,3" opacity="0"></line>
+        ${barsHtml}
+        ${labelsHtml}
+      </svg>
+      <div id="reklam-tooltip" style="position:absolute;display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:11px;pointer-events:none;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,0.35);z-index:10;top:0;"></div>
     </div>`;
+
+  // Hem hover (masaüstü) hem touch/click (mobil) ile aynı davranış — seçili kalır
+  const svgEl=document.getElementById('reklam-svg');
+  const tip=document.getElementById('reklam-tooltip');
+  const hoverLine=document.getElementById('reklam-hover-line');
+  let seciliIdx=null;
+
+  function tooltipGoster(i){
+    seciliIdx=i;
+    const r=veri[i];
+    const x=step*i+step/2;
+    const d=new Date(r.tarih);
+    const tarihStr=d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+    tip.innerHTML=`<div style="color:var(--text2);font-weight:600;margin-bottom:3px;">${tarihStr}</div><div style="color:${m.renk};font-weight:700;">${m.lbl}: ${m.fmt(parseFloat(r[_reklamMetrik])||0)}</div>`;
+    const pct=(x/W)*100;
+    tip.style.left=pct+'%';
+    tip.style.transform=pct>65?'translateX(-100%)':(pct<10?'translateX(0)':'translateX(-50%)');
+    tip.style.display='block';
+    hoverLine.setAttribute('x1',x.toFixed(1));
+    hoverLine.setAttribute('x2',x.toFixed(1));
+    hoverLine.setAttribute('opacity','1');
+    document.querySelectorAll('.reklam-bar').forEach(b=>{
+      b.setAttribute('opacity',parseInt(b.dataset.idx)===i?'1':'0.45');
+    });
+  }
+  function tooltipGizle(){
+    seciliIdx=null;
+    tip.style.display='none';
+    hoverLine.setAttribute('opacity','0');
+    document.querySelectorAll('.reklam-bar').forEach(b=>b.setAttribute('opacity','0.8'));
+  }
+
+  document.querySelectorAll('.reklam-bar').forEach(bar=>{
+    const i=parseInt(bar.dataset.idx);
+    // Masaüstü: hover ile göster, fareyle ayrılınca kapan
+    bar.addEventListener('mouseenter',()=>tooltipGoster(i));
+    bar.addEventListener('mouseleave',()=>{if(seciliIdx===i)tooltipGizle();});
+    // Mobil: dokununca göster ve SABİT kal; tekrar dokununca veya başka çubuğa dokununca değişir
+    bar.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(seciliIdx===i)tooltipGizle();
+      else tooltipGoster(i);
+    });
+  });
+  // Boş bir yere dokununca/tıklayınca tooltip kapanır
+  svgEl.addEventListener('click',(e)=>{
+    if(e.target.classList.contains('reklam-bar'))return;
+    tooltipGizle();
+  });
 }
-
-
 // ============================================================ ŞABLONLAR
 
 
