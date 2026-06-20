@@ -1339,8 +1339,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <!-- Tahsilat bilgileri -->
       <div class="fi"><label>Gerçekleşen Tutar (₺) <span style="color:var(--red);">*</span></label>
-        <input type="number" id="ptm-tutar" inputmode="numeric" placeholder="Tahsil edilen tutar">
+        <input type="number" id="ptm-tutar" inputmode="numeric" placeholder="Tahsil edilen tutar" oninput="ptmNetKarOnizle()">
       </div>
+      <div id="ptm-netkar-onizleme" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px;font-size:12px;"></div>
       <div class="fi"><label>Ödeme Yöntemi</label>
         <select id="ptm-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Nakit">💵 Nakit</option>
@@ -3468,6 +3469,7 @@ function selectPayMethod(btn,hiddenId,modalId){
 // PROJEYİ TAMAMLA
 // ============================================================
 
+let _ptmCache=null;
 async function openProjeTamamlaModal(projeId){
   const p=DB.projeler.find(x=>x.id===projeId);if(!p)return;
 
@@ -3498,6 +3500,7 @@ async function openProjeTamamlaModal(projeId){
   document.getElementById('ptm-tarih').value=new Date().toISOString().split('T')[0];
   document.getElementById('ptm-not').value='';
   document.getElementById('ptm-fatura').checked=false;
+  _ptmCache={malzemeler,iscilikler:[],giderler:[],personeller};
 
   // Hizmet seçimi doldur
   const body=document.getElementById('ptm-ms-body');
@@ -3546,8 +3549,38 @@ async function openProjeTamamlaModal(projeId){
     ozetEl.style.display='block';
   }
 
+  _ptmCache={malzemeler,iscilikler,giderler,personeller};
+  ptmNetKarOnizle();
+
   closeModal('modal-proje-detay');
   openModal('modal-proje-tamamla');
+}
+
+function ptmNetKarOnizle(){
+  const el=document.getElementById('ptm-netkar-onizleme');
+  if(!el||!_ptmCache)return;
+  const tutar=parseFloat(document.getElementById('ptm-tutar')?.value)||0;
+  if(tutar<=0){el.style.display='none';return;}
+  const {giderler,personeller}=_ptmCache;
+  const giderToplam=giderler.reduce((a,g)=>a+(parseFloat(g.tutar)||0),0);
+  const netKarGercek=tutar-giderToplam;
+  const netKar=Math.max(0,netKarGercek);
+  const renk=netKarGercek>=0?'var(--green)':'var(--red)';
+  let html=`<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--text3);">Net Kâr (tahmini)</span><span style="font-weight:700;color:${renk};">${netKarGercek<0?'-':''}${fmt(Math.abs(netKarGercek))} ₺</span></div>`;
+  const oranliPersoneller=personeller.filter(pp=>pp.personel_id&&pp.oran>0);
+  if(oranliPersoneller.length){
+    if(netKarGercek<=0){
+      html+=`<div style="color:var(--red);font-size:11px;">⚠️ Net kâr sıfır/negatif — yüzdesel personel payı 0 ₺ olacak</div>`;
+    }else{
+      oranliPersoneller.forEach(pp=>{
+        const per=DB.personeller.find(x=>x.id===pp.personel_id);
+        const pay=Math.round(netKar*(pp.oran/100)*100)/100;
+        html+=`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);"><span>${per?.isim||'Personel'} (%${pp.oran})</span><span>${fmt(pay)} ₺</span></div>`;
+      });
+    }
+  }
+  el.innerHTML=html;
+  el.style.display='block';
 }
 
 function toggleHizmetSec(prefix){
@@ -3661,9 +3694,13 @@ async function projejiTamamla(btn){
       }
     }
 
-    // 5. Personel hak edişleri — NET KÂR üzerinden hesaplanır: Ciro - Malzeme - İşçilik - Gider (tahmini)
+    // 5. Personel hak edişleri — NET KÂR üzerinden hesaplanır: Gerçekleşen Tutar - Gider (tahmini)
+    // Not: Malzeme/İşçilik zaten "Gerçekleşen Tutar"ın içinde (müşteriden talep edilen tutarın bir parçası),
+    // bu yüzden tekrar düşülmez. Sadece Gider (iş yemeği, sarf malzeme vb. kendi masrafımız) kârdan düşülür.
     const giderToplam=giderler.reduce((a,g)=>a+(parseFloat(g.tutar)||0),0);
-    const netKar=Math.max(0,tutar-malzemeToplam-iscilikToplam-giderToplam);
+    const netKarGercek=tutar-giderToplam;
+    const netKar=Math.max(0,netKarGercek);
+    let hakEdisVerilemeyenler=[];
     for(const pp of personeller){
       if(!pp.personel_id)continue;
       const per=DB.personeller.find(x=>x.id===pp.personel_id);
@@ -3671,6 +3708,7 @@ async function projejiTamamla(btn){
       let pay=0;
       if(pp.oran>0){
         pay=Math.round(netKar*(pp.oran/100)*100)/100;
+        if(netKarGercek<=0)hakEdisVerilemeyenler.push(per.isim);
       }else if(pp.manuel_tutar>0){
         pay=pp.manuel_tutar;
       }
@@ -3691,7 +3729,11 @@ async function projejiTamamla(btn){
 
     await loadDB();
     closeModal('modal-proje-tamamla');
-    showToast('✅ Proje tamamlandı! İşlem, malzeme/işçilik, ekler, stok ve hak edişler aktarıldı.','green');
+    if(hakEdisVerilemeyenler.length){
+      showToast(`⚠️ Proje tamamlandı, ancak net kâr ${fmt(netKarGercek)} ₺ olduğu için şu personele hak ediş verilmedi: ${hakEdisVerilemeyenler.join(', ')}`,'amber');
+    }else{
+      showToast('✅ Proje tamamlandı! İşlem, malzeme/işçilik, ekler, stok ve hak edişler aktarıldı.','green');
+    }
   }catch(e){showToast('Hata: '+e.message,'red');console.error(e);}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -7055,30 +7097,23 @@ async function renderProjeler(){
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
   const projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
   if(!projeler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Proje yok</div><div class="empty-sub">+ Proje butonuna bas</div></div>';return;}
-  // Tüm projelerin tahmini gider/malzeme/işçilik toplamlarını tek seferde çek
+  // Tüm projelerin tahmini gider toplamlarını tek seferde çek
   const projeIdler=projeler.map(p=>p.id).join(',');
-  let tahminGiderMap={},tahminMalzemeMap={},tahminIscilikMap={};
+  let tahminGiderMap={};
   try{
-    const [gd,md,id_]=await Promise.all([
-      sbFetch('proje_giderler?proje_id=in.('+projeIdler+')').catch(()=>[]),
-      sbFetch('proje_malzemeler?proje_id=in.('+projeIdler+')').catch(()=>[]),
-      sbFetch('proje_iscilikler?proje_id=in.('+projeIdler+')').catch(()=>[])
-    ]);
+    const gd=await sbFetch('proje_giderler?proje_id=in.('+projeIdler+')').catch(()=>[]);
     (gd||[]).forEach(g=>{tahminGiderMap[g.proje_id]=(tahminGiderMap[g.proje_id]||0)+(parseFloat(g.tutar)||0);});
-    (md||[]).forEach(m=>{tahminMalzemeMap[m.proje_id]=(tahminMalzemeMap[m.proje_id]||0)+(parseFloat(m.toplam)||0);});
-    (id_||[]).forEach(i=>{tahminIscilikMap[i.proje_id]=(tahminIscilikMap[i.proje_id]||0)+(parseFloat(i.tutar)||0);});
   }catch(e){}
   list.innerHTML=projeler.map((p,i)=>{
     const k=getKisi(p.musteriId);
     const islemler=DB.islemler.filter(x=>x.projeId===p.id);
     const gercekCiro=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-    const gercekGider=islemler.filter(x=>x.tip==='Gider'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-    // Proje tamamlanmadıysa (henüz gerçekleşen işlem yoksa) tahmini değerleri göster
+    // Not: Malzeme/İşçilik müşteriden talep edilen tutarın (Ciro) içinde sayılır, ayrıca maliyet değildir.
+    // Sadece Gider (proje_giderler — kendi masrafımız) Ciro'dan düşülerek Kâr hesaplanır.
     const tamamlandi=p.durum==='Tamamlandı'&&gercekCiro>0;
     const ciro=tamamlandi?gercekCiro:0;
-    const tahminGider=(tahminGiderMap[p.id]||0)+(tahminMalzemeMap[p.id]||0)+(tahminIscilikMap[p.id]||0);
-    const gider=tamamlandi?gercekGider:tahminGider;
-    const kar=tamamlandi?(gercekCiro-gercekGider):(- tahminGider);
+    const gider=tahminGiderMap[p.id]||0;
+    const kar=ciro-gider;
     const renk=durumRenk[p.durum]||'var(--blue)';
     return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;border-left:3px solid ${renk};" onclick="showProjeDetay(${p.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
@@ -12090,7 +12125,9 @@ async function showProjeDetay(id){
   </div>`;
   // FİNANSAL
   const projeAraToplam=malzemeToplam+iscilikToplam;
-  const projeNetKar=ciro-malzemeToplam-iscilikToplam-giderToplam;
+  // Not: Malzeme/İşçilik müşteriden talep edilen tutarın içinde sayılır (Ciro'nun parçası).
+  // Net Kâr sadece Gerçekleşen (Ciro) - Gider (kendi masrafımız) olarak hesaplanır.
+  const projeNetKar=ciro-giderToplam;
   html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
     <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Teklif</div><div class="num" style="font-weight:700;font-size:13px;color:var(--blue);">${fmt(p.teklifFiyat||0)} ₺</div></div>
     <div class="card" style="text-align:center;padding:10px 4px;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Ara Toplam</div><div class="num" style="font-weight:700;font-size:13px;color:var(--amber);">${fmt(projeAraToplam)} ₺</div></div>
