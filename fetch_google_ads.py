@@ -34,7 +34,13 @@ def get_access_token():
         },
         timeout=30,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        print("Token yenileme hatası:", resp.status_code, resp.text, file=sys.stderr)
+        print("Kullanılan CLIENT_ID (ilk 20 karakter):", CLIENT_ID[:20], file=sys.stderr)
+        print("CLIENT_ID uzunluğu:", len(CLIENT_ID), file=sys.stderr)
+        print("CLIENT_SECRET uzunluğu:", len(CLIENT_SECRET), file=sys.stderr)
+        print("REFRESH_TOKEN uzunluğu:", len(REFRESH_TOKEN), file=sys.stderr)
+        resp.raise_for_status()
     return resp.json()["access_token"]
 
 
