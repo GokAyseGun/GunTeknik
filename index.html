@@ -753,7 +753,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
 
       <div class="pay-method-btns" id="reklam-donem-sec" style="margin-bottom:14px;">
-        <button type="button" class="pay-btn" data-val="bugun" onclick="reklamDonemSec(this)">Bugün</button>
+        <button type="button" class="pay-btn" data-val="dun" onclick="reklamDonemSec(this)">Dün</button>
         <button type="button" class="pay-btn active" data-val="7gun" onclick="reklamDonemSec(this)">Son 7 Gün</button>
         <button type="button" class="pay-btn" data-val="30gun" onclick="reklamDonemSec(this)">Son 30 Gün</button>
       </div>
@@ -764,6 +764,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div id="reklam-metrik-sec" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
         <div id="reklam-metrik-ozet" style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;"></div>
         <div id="reklam-grafik"></div>
+      </div>
+
+      <div class="card" style="padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">🔑 En İyi Anahtar Kelimeler</div>
+        <div id="reklam-kelimeler"></div>
       </div>
 
       <div id="reklam-bos" style="display:none;text-align:center;padding:40px 20px;color:var(--text3);">
@@ -5744,14 +5749,22 @@ const REKLAM_METRIK_TANIM={
   tiklama:{lbl:'Tıklama',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
   gosterim:{lbl:'Gösterim',renk:'#b39ddb',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
   donusum:{lbl:'Dönüşüm',renk:'#7ecec4',fmt:v=>v.toLocaleString('tr-TR',{maximumFractionDigits:1}),agg:'sum'},
-  ctr:{lbl:'TO (CTR)',renk:'#f0c472',fmt:v=>v.toFixed(2)+'%',agg:'avg'}
+  ctr:{lbl:'TO (CTR)',renk:'#f0c472',fmt:v=>v.toFixed(2)+'%',agg:'avg'},
+  telefon_aramasi:{lbl:'Telefon Araması',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  donusum_degeri:{lbl:'Dönüşüm Değeri',renk:'#b39ddb',fmt:v=>fmt(v)+' ₺',agg:'sum'}
 };
+
+let _reklamKelimeVeri=[];
 
 async function renderReklam(){
   try{
     const rows=await sbFetch('google_ads_metrics?order=tarih.asc')||[];
     _reklamVeri=rows;
   }catch(e){_reklamVeri=[];}
+  try{
+    const kRows=await sbFetch('google_ads_keywords?order=tarih.asc')||[];
+    _reklamKelimeVeri=kRows;
+  }catch(e){_reklamKelimeVeri=[];}
   reklamGoster();
 }
 
@@ -5765,9 +5778,15 @@ function reklamDonemSec(btn){
 function _reklamFiltreliVeri(){
   if(!_reklamVeri.length)return[];
   const bugun=new Date();bugun.setHours(0,0,0,0);
+  if(_reklamDonem==='dun'){
+    const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
+    return _reklamVeri.filter(r=>{
+      const d=new Date(r.tarih);
+      return d.getTime()===dun.getTime();
+    });
+  }
   let gunSayisi=7;
-  if(_reklamDonem==='bugun')gunSayisi=1;
-  else if(_reklamDonem==='30gun')gunSayisi=30;
+  if(_reklamDonem==='30gun')gunSayisi=30;
   const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
   return _reklamVeri.filter(r=>{
     const d=new Date(r.tarih);
@@ -5806,7 +5825,9 @@ function reklamGoster(){
     tiklama:a.tiklama+(parseInt(r.tiklama)||0),
     gosterim:a.gosterim+(parseInt(r.gosterim)||0),
     donusum:a.donusum+(parseFloat(r.donusum)||0),
-  }),{harcama:0,tiklama:0,gosterim:0,donusum:0});
+    telefonAramasi:a.telefonAramasi+(parseInt(r.telefon_aramasi)||0),
+    donusumDegeri:a.donusumDegeri+(parseFloat(r.donusum_degeri)||0),
+  }),{harcama:0,tiklama:0,gosterim:0,donusum:0,telefonAramasi:0,donusumDegeri:0});
   const donusumBasi=top.donusum>0?top.harcama/top.donusum:0;
   const ctr=top.gosterim>0?(top.tiklama/top.gosterim*100):0;
   const cpc=top.tiklama>0?(top.harcama/top.tiklama):0;
@@ -5819,6 +5840,8 @@ function reklamGoster(){
     {lbl:'Dönüşüm Başı Maliyet',val:fmt(donusumBasi)+' ₺',renk:'amber',icon:'📌'},
     {lbl:'Tıklama Oranı (CTR)',val:ctr.toFixed(2)+'%',renk:'blue',icon:'📊'},
     {lbl:'Ort. Tıklama Maliyeti',val:fmt(cpc)+' ₺',renk:'red',icon:'💵'},
+    {lbl:'Telefon Araması',val:top.telefonAramasi.toLocaleString('tr-TR'),renk:'green',icon:'📞'},
+    {lbl:'Dönüşüm Değeri',val:fmt(top.donusumDegeri)+' ₺',renk:'purple',icon:'💎'},
   ];
   grid.innerHTML=kpiler.map(k=>`
     <div class="card" style="padding:12px;">
@@ -5831,6 +5854,54 @@ function reklamGoster(){
 
   reklamMetrikSecCiz();
   reklamGrafikCiz(veri);
+  reklamKelimelerCiz();
+}
+
+function reklamKelimelerCiz(){
+  const wrap=document.getElementById('reklam-kelimeler');
+  if(!wrap)return;
+  if(!_reklamKelimeVeri.length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Henüz anahtar kelime verisi yok</div>';
+    return;
+  }
+  // Seçili döneme göre filtrele (aynı _reklamDonem mantığı)
+  const bugun=new Date();bugun.setHours(0,0,0,0);
+  let filtreliKelimeler;
+  if(_reklamDonem==='dun'){
+    const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
+    filtreliKelimeler=_reklamKelimeVeri.filter(r=>new Date(r.tarih).getTime()===dun.getTime());
+  }else{
+    const gunSayisi=_reklamDonem==='30gun'?30:7;
+    const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
+    filtreliKelimeler=_reklamKelimeVeri.filter(r=>{
+      const d=new Date(r.tarih);
+      return d>=baslangic&&d<=bugun;
+    });
+  }
+  // Kelimeye göre topla
+  const map={};
+  filtreliKelimeler.forEach(r=>{
+    const k=map[r.kelime]||(map[r.kelime]={kelime:r.kelime,gosterim:0,tiklama:0,harcama:0,donusum:0});
+    k.gosterim+=parseInt(r.gosterim)||0;
+    k.tiklama+=parseInt(r.tiklama)||0;
+    k.harcama+=parseFloat(r.harcama)||0;
+    k.donusum+=parseFloat(r.donusum)||0;
+  });
+  const liste=Object.values(map).sort((a,b)=>b.harcama-a.harcama).slice(0,10);
+  if(!liste.length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Bu dönem için anahtar kelime verisi yok</div>';
+    return;
+  }
+  wrap.innerHTML=liste.map(k=>{
+    const ctr=k.gosterim>0?(k.tiklama/k.gosterim*100):0;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.kelime}</div>
+        <div style="font-size:10px;color:var(--text3);">${k.tiklama} tıklama · ${k.gosterim} gösterim · CTR %${ctr.toFixed(1)}${k.donusum>0?' · '+k.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1})+' dönüşüm':''}</div>
+      </div>
+      <div class="num" style="font-weight:700;font-size:13px;color:var(--blue);flex-shrink:0;margin-left:10px;">${fmt(k.harcama)} ₺</div>
+    </div>`;
+  }).join('');
 }
 
 function reklamMetrikSecCiz(){
