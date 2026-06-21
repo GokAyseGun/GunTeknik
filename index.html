@@ -5775,23 +5775,25 @@ function reklamDonemSec(btn){
   reklamGoster();
 }
 
+function _reklamTarihStr(d){
+  // YYYY-MM-DD formatında, YEREL saat dilimine göre (UTC kaymasını önler)
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),g=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+g;
+}
 function _reklamFiltreliVeri(){
   if(!_reklamVeri.length)return[];
   const bugun=new Date();bugun.setHours(0,0,0,0);
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
-    return _reklamVeri.filter(r=>{
-      const d=new Date(r.tarih);
-      return d.getTime()===dun.getTime();
-    });
+    const dunStr=_reklamTarihStr(dun);
+    return _reklamVeri.filter(r=>r.tarih===dunStr);
   }
   let gunSayisi=7;
   if(_reklamDonem==='30gun')gunSayisi=30;
   const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-  return _reklamVeri.filter(r=>{
-    const d=new Date(r.tarih);
-    return d>=baslangic&&d<=bugun;
-  });
+  const baslangicStr=_reklamTarihStr(baslangic);
+  const bugunStr=_reklamTarihStr(bugun);
+  return _reklamVeri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
 }
 
 function reklamGoster(){
@@ -5857,6 +5859,7 @@ function reklamGoster(){
   reklamKelimelerCiz();
 }
 
+let _reklamKelimeTumGoster=false;
 function reklamKelimelerCiz(){
   const wrap=document.getElementById('reklam-kelimeler');
   if(!wrap)return;
@@ -5864,19 +5867,19 @@ function reklamKelimelerCiz(){
     wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Henüz anahtar kelime verisi yok</div>';
     return;
   }
-  // Seçili döneme göre filtrele (aynı _reklamDonem mantığı)
+  // Seçili döneme göre filtrele (aynı _reklamDonem mantığı, saat dilimi güvenli string karşılaştırma)
   const bugun=new Date();bugun.setHours(0,0,0,0);
   let filtreliKelimeler;
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
-    filtreliKelimeler=_reklamKelimeVeri.filter(r=>new Date(r.tarih).getTime()===dun.getTime());
+    const dunStr=_reklamTarihStr(dun);
+    filtreliKelimeler=_reklamKelimeVeri.filter(r=>r.tarih===dunStr);
   }else{
     const gunSayisi=_reklamDonem==='30gun'?30:7;
     const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-    filtreliKelimeler=_reklamKelimeVeri.filter(r=>{
-      const d=new Date(r.tarih);
-      return d>=baslangic&&d<=bugun;
-    });
+    const baslangicStr=_reklamTarihStr(baslangic);
+    const bugunStr=_reklamTarihStr(bugun);
+    filtreliKelimeler=_reklamKelimeVeri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
   }
   // Kelimeye göre topla
   const map={};
@@ -5887,12 +5890,13 @@ function reklamKelimelerCiz(){
     k.harcama+=parseFloat(r.harcama)||0;
     k.donusum+=parseFloat(r.donusum)||0;
   });
-  const liste=Object.values(map).sort((a,b)=>b.harcama-a.harcama).slice(0,10);
-  if(!liste.length){
+  const tumListe=Object.values(map).sort((a,b)=>b.harcama-a.harcama);
+  if(!tumListe.length){
     wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Bu dönem için anahtar kelime verisi yok</div>';
     return;
   }
-  wrap.innerHTML=liste.map(k=>{
+  const liste=_reklamKelimeTumGoster?tumListe:tumListe.slice(0,10);
+  let html=liste.map(k=>{
     const ctr=k.gosterim>0?(k.tiklama/k.gosterim*100):0;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
@@ -5902,6 +5906,10 @@ function reklamKelimelerCiz(){
       <div class="num" style="font-weight:700;font-size:13px;color:var(--blue);flex-shrink:0;margin-left:10px;">${fmt(k.harcama)} ₺</div>
     </div>`;
   }).join('');
+  if(tumListe.length>10){
+    html+=`<button type="button" onclick="_reklamKelimeTumGoster=!_reklamKelimeTumGoster;reklamKelimelerCiz();" class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px;font-size:12px;">${_reklamKelimeTumGoster?'Daha Az Göster ('+tumListe.length+' kelimeden 10\'u)':'Tümünü Göster ('+tumListe.length+' kelime)'}</button>`;
+  }
+  wrap.innerHTML=html;
 }
 
 function reklamMetrikSecCiz(){
