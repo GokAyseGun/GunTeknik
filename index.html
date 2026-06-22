@@ -747,9 +747,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
     <!-- REKLAM PERFORMANSI -->
     <div class="page" id="page-reklam">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div class="sec-title mt0" style="margin:0">📈 Google Ads Performansı</div>
-        <div id="reklam-son-guncelleme" style="font-size:11px;color:var(--text3);"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-title mt0" style="margin:0">📈 Google Ads</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <select id="reklam-kampanya-sec" onchange="reklamKampanyaSec(this.value)"
+            style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;font-family:inherit;max-width:180px;">
+            <option value="">Tüm Kampanyalar</option>
+          </select>
+          <div id="reklam-son-guncelleme" style="font-size:10px;color:var(--text3);"></div>
+        </div>
       </div>
 
       <div class="pay-method-btns" id="reklam-donem-sec" style="margin-bottom:14px;">
@@ -5744,6 +5750,7 @@ function raporTavsiyeler(){
 let _reklamVeri=[];
 let _reklamDonem='7gun';
 let _reklamMetrik='harcama';
+let _reklamSeciliKampanya='';
 const REKLAM_METRIK_TANIM={
   harcama:{lbl:'Harcama',renk:'#7eb3f0',fmt:v=>fmt(v)+' ₺',agg:'sum'},
   tiklama:{lbl:'Tıklama',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
@@ -5765,6 +5772,19 @@ async function renderReklam(){
     const kRows=await sbFetch('google_ads_keywords?order=tarih.asc')||[];
     _reklamKelimeVeri=kRows;
   }catch(e){_reklamKelimeVeri=[];}
+  // Kampanya listesini doldur
+  const select=document.getElementById('reklam-kampanya-sec');
+  if(select){
+    const kampanyalar=[...new Map(_reklamVeri.map(r=>[r.kampanya_id,r.kampanya_adi])).entries()]
+      .filter(([id])=>id);
+    select.innerHTML='<option value="">Tüm Kampanyalar</option>'+
+      kampanyalar.map(([id,adi])=>`<option value="${id}"${_reklamSeciliKampanya===id?' selected':''}>${adi||id}</option>`).join('');
+  }
+  reklamGoster();
+}
+
+function reklamKampanyaSec(kampanyaId){
+  _reklamSeciliKampanya=kampanyaId;
   reklamGoster();
 }
 
@@ -5782,18 +5802,22 @@ function _reklamTarihStr(d){
 }
 function _reklamFiltreliVeri(){
   if(!_reklamVeri.length)return[];
+  // Önce kampanya filtresi
+  const veri=_reklamSeciliKampanya
+    ?_reklamVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya)
+    :_reklamVeri;
   const bugun=new Date();bugun.setHours(0,0,0,0);
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
     const dunStr=_reklamTarihStr(dun);
-    return _reklamVeri.filter(r=>r.tarih===dunStr);
+    return veri.filter(r=>r.tarih===dunStr);
   }
   let gunSayisi=7;
   if(_reklamDonem==='30gun')gunSayisi=30;
   const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
   const baslangicStr=_reklamTarihStr(baslangic);
   const bugunStr=_reklamTarihStr(bugun);
-  return _reklamVeri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
+  return veri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
 }
 
 function reklamGoster(){
@@ -5867,19 +5891,22 @@ function reklamKelimelerCiz(){
     wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Henüz anahtar kelime verisi yok</div>';
     return;
   }
-  // Seçili döneme göre filtrele (aynı _reklamDonem mantığı, saat dilimi güvenli string karşılaştırma)
+  // Kampanya + dönem filtreleri (saat dilimi güvenli string karşılaştırma)
+  const kelimeBase=_reklamSeciliKampanya
+    ?_reklamKelimeVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya)
+    :_reklamKelimeVeri;
   const bugun=new Date();bugun.setHours(0,0,0,0);
   let filtreliKelimeler;
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
     const dunStr=_reklamTarihStr(dun);
-    filtreliKelimeler=_reklamKelimeVeri.filter(r=>r.tarih===dunStr);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih===dunStr);
   }else{
     const gunSayisi=_reklamDonem==='30gun'?30:7;
     const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
     const baslangicStr=_reklamTarihStr(baslangic);
     const bugunStr=_reklamTarihStr(bugun);
-    filtreliKelimeler=_reklamKelimeVeri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
   }
   // Kelimeye göre topla
   const map={};
