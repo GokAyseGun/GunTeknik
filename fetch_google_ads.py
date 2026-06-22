@@ -98,6 +98,25 @@ def fetch_keyword_metrics(access_token):
     return ads_search(access_token, query)
 
 
+def fetch_all_active_keywords(access_token):
+    """Tüm aktif anahtar kelimeleri (metriksiz) çeker — gösterimi sıfır olanlar dahil."""
+    query = """
+        SELECT
+          campaign.id,
+          campaign.name,
+          ad_group_criterion.keyword.text,
+          ad_group_criterion.keyword.match_type,
+          ad_group_criterion.status
+        FROM ad_group_criterion
+        WHERE ad_group_criterion.type = 'KEYWORD'
+          AND ad_group_criterion.status = 'ENABLED'
+          AND campaign.status = 'ENABLED'
+          AND ad_group.status = 'ENABLED'
+        ORDER BY campaign.id ASC
+    """
+    return ads_search(access_token, query)
+
+
 def aggregate_campaign_by_date(stream_chunks):
     """Her (kampanya_id, tarih) için metrikleri toplar."""
     by_key = {}
@@ -134,10 +153,8 @@ def aggregate_campaign_by_date(stream_chunks):
 def aggregate_keywords(stream_chunks):
     """Her (kampanya_id, tarih, kelime) üçlüsü için metrikleri toplar."""
     by_key = {}
-    toplam_ham_satir = 0
     for chunk in stream_chunks:
         for row in chunk.get("results", []):
-            toplam_ham_satir += 1
             seg = row.get("segments", {})
             metrics = row.get("metrics", {})
             camp = row.get("campaign", {})
@@ -158,9 +175,6 @@ def aggregate_keywords(stream_chunks):
             d["tiklama"] += int(metrics.get("clicks", 0))
             d["harcama_micros"] += int(metrics.get("costMicros", 0))
             d["donusum"] += float(metrics.get("conversions", 0))
-    print(f"[DEBUG] Ham API satır sayısı: {toplam_ham_satir}, Benzersiz (kampanya+tarih+kelime): {len(by_key)}", file=sys.stderr)
-    kelimeler = set(k[2] for k in by_key.keys())
-    print(f"[DEBUG] Benzersiz kelime sayısı: {len(kelimeler)}", file=sys.stderr)
     return by_key
 
 
@@ -218,8 +232,32 @@ def main():
         print("Aktarılacak kampanya verisi bulunamadı.")
 
     # --- Anahtar kelime metrikleri ---
+    # 1) Son 30 günde metriği olan kelimeler
     kw_data = fetch_keyword_metrics(access_token)
     by_kw = aggregate_keywords(kw_data)
+
+    # 2) Tüm aktif kelimeler (sıfır metrikli dahil) — by_kw'ye eksikleri ekle
+    all_kw_data = fetch_all_active_keywords(access_token)
+    bugun = __import__('datetime').date.today().isoformat()
+    for chunk in all_kw_data:
+        for row in chunk.get("results", []):
+            camp = row.get("campaign", {})
+            crit = row.get("adGroupCriterion", {})
+            kampanya_id = str(camp.get("id", ""))
+            kampanya_adi = camp.get("name", "")
+            kelime = crit.get("keyword", {}).get("text")
+            if not kelime or not kampanya_id:
+                continue
+            # Bu kelime bugünün tarihiyle zaten by_kw'de var mı?
+            key = (kampanya_id, bugun, kelime)
+            if key not in by_kw:
+                # Sıfır metrikli olarak ekle (son 30 günde görünmemiş)
+                by_kw[key] = {
+                    "kampanya_id": kampanya_id,
+                    "kampanya_adi": kampanya_adi,
+                    "gosterim": 0, "tiklama": 0, "harcama_micros": 0, "donusum": 0.0,
+                }
+
     kw_rows = []
     for (kamp_id, tarih, kelime), d in by_kw.items():
         kw_rows.append({
