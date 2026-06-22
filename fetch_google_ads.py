@@ -134,8 +134,10 @@ def aggregate_campaign_by_date(stream_chunks):
 def aggregate_keywords(stream_chunks):
     """Her (kampanya_id, tarih, kelime) üçlüsü için metrikleri toplar."""
     by_key = {}
+    toplam_ham_satir = 0
     for chunk in stream_chunks:
         for row in chunk.get("results", []):
+            toplam_ham_satir += 1
             seg = row.get("segments", {})
             metrics = row.get("metrics", {})
             camp = row.get("campaign", {})
@@ -156,6 +158,9 @@ def aggregate_keywords(stream_chunks):
             d["tiklama"] += int(metrics.get("clicks", 0))
             d["harcama_micros"] += int(metrics.get("costMicros", 0))
             d["donusum"] += float(metrics.get("conversions", 0))
+    print(f"[DEBUG] Ham API satır sayısı: {toplam_ham_satir}, Benzersiz (kampanya+tarih+kelime): {len(by_key)}", file=sys.stderr)
+    kelimeler = set(k[2] for k in by_key.keys())
+    print(f"[DEBUG] Benzersiz kelime sayısı: {len(kelimeler)}", file=sys.stderr)
     return by_key
 
 
