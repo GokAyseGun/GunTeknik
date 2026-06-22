@@ -570,6 +570,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Pz</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;" id="cal-days"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding:10px 4px 4px;font-size:10px;color:var(--text3);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;"></span>Gelir</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;"></span>Gider</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;"></span>Ajanda (İş/Alacak/Verecek)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;"></span>Not/Bilgi</span>
+      </div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;">
         <div class="sec-title mt0">Ajanda Ekle</div>
@@ -5244,21 +5250,19 @@ function renderCalendar(){
     const dayIs=DB.islemler.filter(i=>localDateStr(i.tarih)===ds);
     const dayTk=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
     const isToday=isCur&&d===now.getDate();
-    const hasGelir=dayIs.some(i=>i.tip==='Gelir'&&i.kat!=='İşletme Geliri');
-    const hasIs=dayIs.some(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri');
+    // Gelir: tüm gelir tipleri (İşletme Geliri dahil) → YEŞİL
+    const hasGelir=dayIs.some(i=>i.tip==='Gelir');
+    // Gider → KIRMIZI
     const hasGider=dayIs.some(i=>i.tip==='Gider');
+    // Ajanda: İş/Alacak/Verecek → SARI (hatırlatıcı)
+    const hasAjanda=dayTk.some(t=>t.tip==='İş'||t.tip==='Alacak'||t.tip==='Verecek');
+    // Ajanda: Bilgi notu → GRİ/MOR
     const hasNot=dayTk.some(t=>t.tip==='Bilgi');
-    const hasIsAjanda=dayTk.some(t=>t.tip==='İş');
-    const hasAlacak=dayTk.some(t=>t.tip==='Alacak');
-    const hasVerecek=dayTk.some(t=>t.tip==='Verecek');
     let dots='';
     if(hasGelir)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>`;
-    if(hasIs)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
     if(hasGider)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--red);"></div>`;
-    if(hasAlacak)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>`;
-    if(hasVerecek)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--red);"></div>`;
-    if(hasIsAjanda)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
-    if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:#555;"></div>`;
+    if(hasAjanda)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
+    if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--text3);"></div>`;
     grid.innerHTML+=`<div onclick="showDayDetails('${ds}')" style="text-align:center;padding:6px 2px;border-radius:var(--r-sm);cursor:pointer;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:${isToday?'var(--blue)':'var(--bg2)'};border:1px solid ${isToday?'var(--blue)':'var(--border)'};color:${isToday?'#fff':'var(--text)'};font-weight:${isToday?'700':'500'};font-size:13px;transition:all 0.3s var(--ease);">
       <span>${d}</span><div style="display:flex;gap:2px;margin-top:4px;justify-content:center;flex-wrap:wrap;">${dots}</div>
     </div>`;
@@ -5917,12 +5921,12 @@ function reklamKelimelerCiz(){
     k.harcama+=parseFloat(r.harcama)||0;
     k.donusum+=parseFloat(r.donusum)||0;
   });
-  const tumListe=Object.values(map).sort((a,b)=>b.harcama-a.harcama);
+  const tumListe=Object.values(map).sort((a,b)=>b.tiklama-a.tiklama);
   if(!tumListe.length){
     wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Bu dönem için anahtar kelime verisi yok</div>';
     return;
   }
-  const liste=_reklamKelimeTumGoster?tumListe:tumListe.slice(0,10);
+  const liste=_reklamKelimeTumGoster?tumListe:tumListe.slice(0,20);
   let html=liste.map(k=>{
     const ctr=k.gosterim>0?(k.tiklama/k.gosterim*100):0;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
