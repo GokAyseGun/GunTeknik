@@ -454,6 +454,37 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
+      <!-- FİNANSAL GRAFİK PANELİ -->
+      <div class="card" style="padding:14px;margin-bottom:14px;" id="dash-grafik-kart">
+        <!-- Üst satır: dönem seçici + tip butonları -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
+          <div id="dash-grafik-donem" style="display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;"></div>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            <button id="dash-tip-cizgi" onclick="dashGrafikTipSec('line')"
+              style="padding:4px 8px;border-radius:6px;border:1px solid var(--blue-md,#1d4ed8);background:var(--blue-lt,#dbeafe);color:var(--blue,#2563eb);font-size:10px;font-weight:600;cursor:pointer;">📈</button>
+            <button id="dash-tip-cubuk" onclick="dashGrafikTipSec('bar')"
+              style="padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">📊</button>
+          </div>
+        </div>
+        <!-- Grup seçici -->
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
+          <button onclick="dashGrupSec('tumü',this)" class="dash-grup-btn"
+            style="flex:1;padding:5px 4px;border-radius:6px;border:1px solid var(--blue-md,#1d4ed8);background:var(--blue-lt,#dbeafe);color:var(--blue,#2563eb);font-size:10px;font-weight:600;cursor:pointer;">Tümü</button>
+          <button onclick="dashGrupSec('isletme',this)" class="dash-grup-btn"
+            style="flex:1;padding:5px 4px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">İşletme</button>
+          <button onclick="dashGrupSec('sahsi',this)" class="dash-grup-btn"
+            style="flex:1;padding:5px 4px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">Şahsi</button>
+        </div>
+        <!-- Metrik seçici -->
+        <div id="dash-metrik-sec" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;"></div>
+        <!-- Canvas -->
+        <div style="position:relative;height:240px;">
+          <canvas id="dash-chart" role="img" aria-label="Finansal performans grafiği">Gelir, gider ve nakit akışı verileri</canvas>
+        </div>
+        <!-- Özet kartlar -->
+        <div id="dash-grafik-ozet" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px;"></div>
+      </div>
+
       <div id="vade-banner-wrap"></div>
 
       <div class="sec-title mt0">İşletme Özeti</div>
@@ -3064,7 +3095,7 @@ function renderAll(){
     if(e('d-personel'))animateCount(e('d-personel'),c.topPersonelBakiye);
     if(e('personel-bakiye-top'))animateCount(e('personel-bakiye-top'),c.topPersonelBakiye);
     if(e('kasa-dagitim'))e('kasa-dagitim').innerHTML=`<span class="badge bg-green">💵 ${fmt(c.kasaNakit)}</span><span class="badge bg-blue">💳 ${fmt(c.kasaKart)}</span><span class="badge bg-purple">🏦 ${fmt(c.kasaIBAN)}</span>`;
-    renderVadeUyari();renderDashVade();renderDashBugun();
+    renderVadeUyari();renderDashVade();renderDashBugun();renderDashGrafik();
     const active=document.querySelector('.page.active');if(!active)return;
     const pid=active.id.replace('page-','');
     if(pid==='islemler')renderIslemler();
@@ -3155,6 +3186,314 @@ function renderDashBugun(){
     return `<div class="stagger-item" style="animation-delay:${idx*0.06}s;" onclick="showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${k?.isim||i.kat||'—'}</div><div style="font-size:11px;color:var(--text2);">${i.tip} · ${i.odemeYontemi||'Nakit'}</div></div><div style="font-weight:700;font-size:14px;color:${renk};" class="num">${pos?'+':'-'}${fmt(i.tutar)}</div></div></div>`;
   }).join('');
   setStagger(el.querySelectorAll('.stagger-item'));
+}
+
+
+
+// ============================================================ DASHBOARD GRAFİK PANELİ
+let _dashDonem='buay';
+let _dashGrup='tumü';
+let _dashGrafikTip='line';
+let _dashSeciliMetrikler=['isGelir','isGider'];
+let _dashChart=null;
+
+const DASH_METRIK={
+  isGelir:  {lbl:'İşl.Gelir',   renk:'#7eb3f0',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+  isGider:  {lbl:'İşl.Gider',   renk:'#f08080',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+  isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+  shGelir:  {lbl:'Şahsi Gelir', renk:'#b3d4f0',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
+  shGider:  {lbl:'Şahsi Gider', renk:'#f0b39d',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
+  alacak:   {lbl:'Alacak',      renk:'#f0e472',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
+  verecek:  {lbl:'Verecek',     renk:'#c4a0f0',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
+  personel: {lbl:'Personel',    renk:'#f0a0c8',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+  vergi:    {lbl:'Vergi',       renk:'#a0b4b4',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+};
+
+const DASH_DONEMLER=[
+  {val:'bugun',  lbl:'Bugün'},
+  {val:'hafta',  lbl:'Bu Hafta'},
+  {val:'buay',   lbl:'Bu Ay'},
+  {val:'3ay',    lbl:'3 Ay'},
+  {val:'6ay',    lbl:'6 Ay'},
+  {val:'1yil',   lbl:'1 Yıl'},
+  {val:'gelecek',lbl:'Gelecek'},
+];
+
+function dashGrafikTipSec(tip){
+  _dashGrafikTip=tip;
+  const cb=document.getElementById('dash-tip-cizgi');
+  const bb=document.getElementById('dash-tip-cubuk');
+  if(cb){cb.style.background=tip==='line'?'var(--blue-lt,#dbeafe)':'var(--bg2)';cb.style.color=tip==='line'?'var(--blue,#2563eb)':'var(--text3)';cb.style.borderColor=tip==='line'?'var(--blue-md,#1d4ed8)':'var(--border2)';}
+  if(bb){bb.style.background=tip==='bar'?'var(--blue-lt,#dbeafe)':'var(--bg2)';bb.style.color=tip==='bar'?'var(--blue,#2563eb)':'var(--text3)';bb.style.borderColor=tip==='bar'?'var(--blue-md,#1d4ed8)':'var(--border2)';}
+  dashGrafikCiz();
+}
+
+function dashGrupSec(grup,btn){
+  _dashGrup=grup;
+  document.querySelectorAll('.dash-grup-btn').forEach(b=>{
+    const aktif=b===btn;
+    b.style.background=aktif?'var(--blue-lt,#dbeafe)':'var(--bg2)';
+    b.style.color=aktif?'var(--blue,#2563eb)':'var(--text3)';
+    b.style.borderColor=aktif?'var(--blue-md,#1d4ed8)':'var(--border2)';
+  });
+  // Gruba göre geçersiz metrikleri seçimden kaldır
+  _dashSeciliMetrikler=_dashSeciliMetrikler.filter(k=>DASH_METRIK[k]&&DASH_METRIK[k].grup.includes(grup));
+  if(!_dashSeciliMetrikler.length){
+    const ilk=Object.entries(DASH_METRIK).find(([k,m])=>m.grup.includes(grup));
+    if(ilk)_dashSeciliMetrikler=[ilk[0]];
+  }
+  dashMetrikSecCiz();
+  dashGrafikCiz();
+  dashGrafikOzetCiz();
+}
+
+function dashMetrikToggle(key){
+  const idx=_dashSeciliMetrikler.indexOf(key);
+  if(idx>=0){if(_dashSeciliMetrikler.length>1)_dashSeciliMetrikler.splice(idx,1);}
+  else{_dashSeciliMetrikler.push(key);}
+  dashMetrikSecCiz();
+  dashGrafikCiz();
+  dashGrafikOzetCiz();
+}
+
+function dashMetrikSecCiz(){
+  const wrap=document.getElementById('dash-metrik-sec');
+  if(!wrap)return;
+  wrap.innerHTML=Object.entries(DASH_METRIK)
+    .filter(([k,m])=>m.grup.includes(_dashGrup))
+    .map(([key,m])=>{
+      const aktif=_dashSeciliMetrikler.includes(key);
+      return `<button type="button" onclick="dashMetrikToggle('${key}')"
+        style="flex-shrink:0;padding:4px 9px;border-radius:6px;border:1.5px solid ${aktif?m.renk+'bb':'var(--border2)'};background:${aktif?m.renk+'22':'var(--bg2)'};color:${aktif?m.renk:'var(--text3)'};font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;">${m.lbl}</button>`;
+    }).join('');
+}
+
+function dashDonemSecCiz(){
+  const wrap=document.getElementById('dash-grafik-donem');
+  if(!wrap)return;
+  wrap.innerHTML=DASH_DONEMLER.map(d=>{
+    const aktif=d.val===_dashDonem;
+    return `<button type="button" onclick="dashDonemSec('${d.val}')"
+      style="flex-shrink:0;padding:4px 8px;border-radius:6px;border:1px solid ${aktif?'var(--blue-md,#1d4ed8)':'var(--border2)'};background:${aktif?'var(--blue-lt,#dbeafe)':'var(--bg2)'};color:${aktif?'var(--blue,#2563eb)':'var(--text3)'};font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;">${d.lbl}</button>`;
+  }).join('');
+}
+
+function dashDonemSec(val){
+  _dashDonem=val;
+  dashDonemSecCiz();
+  dashGrafikCiz();
+  dashGrafikOzetCiz();
+}
+
+// Dönem ve gruba göre veri hesapla
+function dashVeriHesapla(){
+  const simdi=new Date();
+  const bugun=new Date(simdi);bugun.setHours(0,0,0,0);
+
+  // Dönem sınırları ve granülarite belirle
+  let baslangic, bitis, granularite='gun';
+  if(_dashDonem==='bugun'){
+    baslangic=new Date(bugun);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+  }else if(_dashDonem==='hafta'){
+    baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-6);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+  }else if(_dashDonem==='buay'){
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth(),1);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+  }else if(_dashDonem==='3ay'){
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+  }else if(_dashDonem==='6ay'){
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-5,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+  }else if(_dashDonem==='1yil'){
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-11,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+  }else if(_dashDonem==='gelecek'){
+    baslangic=new Date(bugun);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+3,1);granularite='gun';
+  }
+
+  // Zaman dilimlerini oluştur
+  const dilimler=[];
+  if(granularite==='gun'){
+    const ptr=new Date(baslangic);
+    while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setDate(ptr.getDate()+1);}
+  }else{
+    const ptr=new Date(baslangic);
+    while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setMonth(ptr.getMonth()+1);}
+  }
+
+  // Her dilim için metrikleri hesapla
+  function dilimStr(d){
+    if(granularite==='ay')return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function tariheAit(tarihStr,dilimD){
+    const ds=dilimStr(dilimD);
+    return granularite==='ay'?tarihStr.startsWith(ds):tarihStr.slice(0,10)===ds;
+  }
+
+  // Gerçekleşmiş işlemler (Tamamlandı)
+  const tamamlananlar=_dashDonem!=='gelecek'
+    ?DB.islemler.filter(i=>i.statu==='Tamamlandı')
+    :[];
+
+  // Gelecek: Bekliyor işlemler + Takvim
+  const bekleyenler=_dashDonem==='gelecek'
+    ?DB.islemler.filter(i=>i.statu==='Bekliyor')
+    :[];
+  const takvimGelecek=_dashDonem==='gelecek'
+    ?DB.takvim.filter(t=>t.tip==='Alacak'||t.tip==='Verecek')
+    :[];
+
+  // Personel hak ediş birikimi (kümülatif)
+  const personelBakiye={};
+  DB.personeller.forEach(p=>{personelBakiye[p.id]=0;});
+  DB.yardimciIslemleri.forEach(y=>{
+    if(y.personelId&&personelBakiye[y.personelId]!==undefined){
+      if(y.tip==='Hak Edis')personelBakiye[y.personelId]+=y.tutar;
+      else personelBakiye[y.personelId]-=y.tutar;
+    }
+  });
+
+  const sonuclar=dilimler.map(dilimD=>{
+    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:0,vergi:0};
+
+    tamamlananlar.forEach(i=>{
+      const ts=localDateStr(i.tarih);
+      if(!tariheAit(ts,dilimD))return;
+      const t=parseFloat(i.tutar)||0;
+      if(i.tip==='Gelir'){
+        if(i.kat==='İşletme Geliri')r.isGelir+=t;
+        else if(i.kat==='Şahsi Gelir')r.shGelir+=t;
+        else if(i.kat==='Vergi')r.vergi+=t;
+      }
+      if(i.tip==='Gider'){
+        if(i.kat==='İşletme Gideri')r.isGider+=t;
+        else if(i.kat==='Şahsi Gider')r.shGider+=t;
+        else if(i.kat==='Vergi')r.vergi+=t;
+      }
+    });
+
+    // Takvim alacak/verecek (gelecek modu)
+    bekleyenler.forEach(i=>{
+      const ts=localDateStr(i.tarih);
+      if(!tariheAit(ts,dilimD))return;
+      const t=parseFloat(i.tutar)||0;
+      if(i.tip==='Gelir')r.alacak+=t;
+      else if(i.tip==='Gider')r.verecek+=t;
+    });
+    takvimGelecek.forEach(tk=>{
+      const ts=localDateStr(tk.tarih);
+      if(!tariheAit(ts,dilimD))return;
+      const t=parseFloat(tk.tutar)||0;
+      if(tk.tip==='Alacak')r.alacak+=t;
+      else if(tk.tip==='Verecek')r.verecek+=t;
+    });
+
+    // Personel birikimi (o dilimin sonu için toplam)
+    r.personel=Object.values(personelBakiye).reduce((a,b)=>a+Math.max(0,b),0);
+
+    // Net hesapla
+    r.isNet=r.isGelir-r.isGider;
+    return r;
+  });
+
+  // Etiketler
+  const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const labels=dilimler.map(d=>granularite==='ay'
+    ?AYLAR[d.getMonth()]+' '+d.getFullYear()
+    :(_dashDonem==='bugun'?'Bugün':(d.getDate()+' '+AYLAR[d.getMonth()])));
+
+  return{labels,sonuclar,dilimler};
+}
+
+function dashGrafikCiz(){
+  const canvas=document.getElementById('dash-chart');
+  if(!canvas)return;
+  if(_dashChart){_dashChart.destroy();_dashChart=null;}
+
+  const{labels,sonuclar}=dashVeriHesapla();
+  if(!sonuclar.length)return;
+
+  const datasets=_dashSeciliMetrikler.map(key=>{
+    const m=DASH_METRIK[key];
+    const data=sonuclar.map(r=>Math.round((r[key]||0)*100)/100);
+    return{
+      label:m.lbl,
+      data,
+      borderColor:m.renk,
+      backgroundColor:m.renk+'33',
+      yAxisID:'tl',
+      fill:_dashGrafikTip==='line'&&_dashSeciliMetrikler.length===1,
+      tension:0.4,
+      pointRadius:labels.length<=12?4:2,
+      pointHoverRadius:7,
+      borderWidth:2,
+      type:_dashGrafikTip,
+      borderDash:key.includes('Net')||key.includes('Gelecek')?[5,3]:[],
+      pointStyle:key==='isNet'?'triangle':'circle',
+    };
+  });
+
+  const scaleOpts={
+    grid:{color:'rgba(128,128,128,0.07)'},
+    ticks:{font:{size:10},color:'rgba(160,160,160,0.8)',callback:v=>{const n=Math.abs(v);return(v<0?'-':'')+(n>=1000?Math.round(n/100)/10+'k':''+Math.round(n))+'₺';}},
+    border:{color:'rgba(128,128,128,0.15)'}
+  };
+
+  _dashChart=new Chart(canvas,{
+    type:_dashGrafikTip,
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:700,easing:'easeInOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          mode:'index',intersect:false,
+          backgroundColor:'rgba(10,20,40,0.95)',
+          titleColor:'#e8f0fe',titleFont:{size:11,weight:'600'},
+          bodyColor:'#9ab0cc',bodyFont:{size:11},
+          borderColor:'rgba(30,50,80,0.8)',borderWidth:1,
+          padding:10,cornerRadius:8,
+          callbacks:{
+            label:ctx=>{
+              const m=DASH_METRIK[Object.keys(DASH_METRIK)[Object.values(DASH_METRIK).findIndex(x=>x.lbl===ctx.dataset.label)]];
+              const v=ctx.parsed.y;
+              const str=(v<0?'-':'')+(m?fmt(Math.abs(v)):Math.abs(v))+' ₺';
+              return ' '+ctx.dataset.label+': '+str;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{...scaleOpts,ticks:{...scaleOpts.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:10,callback:v=>labels[v]}},
+        tl:{...scaleOpts,position:'left'},
+      }
+    }
+  });
+}
+
+function dashGrafikOzetCiz(){
+  const wrap=document.getElementById('dash-grafik-ozet');
+  if(!wrap)return;
+  const{sonuclar}=dashVeriHesapla();
+  if(!sonuclar.length){wrap.innerHTML='';return;}
+  wrap.innerHTML=_dashSeciliMetrikler.map(key=>{
+    const m=DASH_METRIK[key];
+    const vals=sonuclar.map(r=>r[key]||0);
+    const toplam=vals.reduce((a,b)=>a+b,0);
+    const val=m.agg==='avg'&&vals.length?toplam/vals.length:toplam;
+    const pozitif=val>=0;
+    return `<div style="background:var(--surface);border-radius:var(--r-sm);padding:9px 11px;border-left:3px solid ${m.renk};">
+      <div style="font-size:9px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;">${m.lbl} ${m.agg==='avg'?'(ort.)':'(toplam)'}</div>
+      <div class="num" style="font-size:15px;font-weight:700;color:${pozitif?m.renk:'#f08080'}">${val<0?'-':''}${fmt(Math.abs(val))} ₺</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDashGrafik(){
+  dashDonemSecCiz();
+  dashMetrikSecCiz();
+  dashGrafikCiz();
+  dashGrafikOzetCiz();
 }
 
 // Dashboard detay modalı
