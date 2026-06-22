@@ -754,44 +754,57 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
     <!-- REKLAM PERFORMANSI -->
     <div class="page" id="page-reklam">
+      <!-- BAŞLIK SATIRI -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div class="sec-title mt0" style="margin:0">📈 Google Ads</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <select id="reklam-kampanya-sec" onchange="reklamKampanyaSec(this.value)"
-            style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;font-family:inherit;max-width:180px;">
+            style="padding:6px 8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:11px;outline:none;font-family:inherit;max-width:160px;">
             <option value="">Tüm Kampanyalar</option>
           </select>
-          <div id="reklam-son-guncelleme" style="font-size:10px;color:var(--text3);"></div>
+          <div id="reklam-son-guncelleme" style="font-size:9px;color:var(--text3);"></div>
         </div>
       </div>
 
-      <div class="pay-method-btns" id="reklam-donem-sec" style="margin-bottom:14px;">
+      <!-- DÖNEM SEÇİCİ -->
+      <div class="pay-method-btns" id="reklam-donem-sec" style="margin-bottom:12px;">
         <button type="button" class="pay-btn" data-val="dun" onclick="reklamDonemSec(this)">Dün</button>
         <button type="button" class="pay-btn active" data-val="7gun" onclick="reklamDonemSec(this)">Son 7 Gün</button>
         <button type="button" class="pay-btn" data-val="30gun" onclick="reklamDonemSec(this)">Son 30 Gün</button>
       </div>
 
-      <div id="reklam-kpi-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;"></div>
-
-      <div class="card" style="padding:16px;margin-bottom:16px;">
-        <div id="reklam-metrik-sec" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
-        <div id="reklam-metrik-ozet" style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;"></div>
-        <div id="reklam-grafik"></div>
+      <!-- GRAFİK KARTI (üstte) -->
+      <div class="card" style="padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div id="reklam-metrik-sec" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;"></div>
+          <div style="display:flex;gap:5px;flex-shrink:0;margin-left:8px;">
+            <button id="reklam-tip-cizgi" onclick="reklamGrafikTipSec('line')"
+              style="padding:4px 9px;border-radius:6px;border:1px solid var(--blue-md,#1d4ed8);background:var(--blue-lt,#dbeafe);color:var(--blue,#2563eb);font-size:10px;font-weight:600;cursor:pointer;">📈</button>
+            <button id="reklam-tip-cubuk" onclick="reklamGrafikTipSec('bar')"
+              style="padding:4px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">📊</button>
+          </div>
+        </div>
+        <div style="position:relative;height:200px;">
+          <canvas id="reklam-chart" role="img" aria-label="Google Ads performans grafiği">Google Ads kampanya performans verileri</canvas>
+        </div>
+        <div id="reklam-grafik-ozet" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px;"></div>
       </div>
 
+      <!-- KPI KARTLARI (altta, yeni estetik tasarım) -->
+      <div id="reklam-kpi-grid" style="margin-bottom:12px;"></div>
+
+      <!-- ANAHTAR KELİMELER -->
       <div class="card" style="padding:16px;margin-bottom:16px;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">🔑 En İyi Anahtar Kelimeler</div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">🔑 Anahtar Kelimeler</div>
         <div id="reklam-kelimeler"></div>
       </div>
 
+      <!-- BOŞ DURUM -->
       <div id="reklam-bos" style="display:none;text-align:center;padding:40px 20px;color:var(--text3);">
         <div style="font-size:32px;margin-bottom:10px;">📊</div>
         <div style="font-size:13px;">Henüz reklam verisi bulunmuyor.<br>Veriler saatlik olarak otomatik güncellenir.</div>
       </div>
-    </div>
-
-
-    <!-- VERGİ -->
+    </div><!-- VERGİ -->
     <div class="page" id="page-vergi">
 
       <!-- ÖZET KARTLAR -->
@@ -5841,8 +5854,8 @@ function reklamGoster(){
   if(!_reklamVeri.length){
     grid.innerHTML='';
     if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
-    document.getElementById('reklam-metrik-sec').innerHTML='';
-    document.getElementById('reklam-grafik-ozet').innerHTML='';
+    const _ms=document.getElementById('reklam-metrik-sec');if(_ms)_ms.innerHTML='';
+    const _go=document.getElementById('reklam-grafik-ozet');if(_go)_go.innerHTML='';
     if(bos)bos.style.display='block';
     if(guncelEl)guncelEl.textContent='';
     return;
@@ -5866,25 +5879,29 @@ function reklamGoster(){
   const donusumBasi=top.donusum>0?top.harcama/top.donusum:0;
   const ctr=top.gosterim>0?(top.tiklama/top.gosterim*100):0;
   const cpc=top.tiklama>0?(top.harcama/top.tiklama):0;
+  // KPI renk aksentleri (CSS var() yerine hex — güvenilir)
+  const KPI_RENKLER={blue:'#7eb3f0',green:'#6fcf97',purple:'#b39ddb',teal:'#7ecec4',amber:'#f0c472',red:'#f08080'};
   const kpiler=[
-    {lbl:'Toplam Harcama',val:fmt(top.harcama)+' ₺',renk:'blue',icon:'💰'},
-    {lbl:'Tıklama',val:top.tiklama.toLocaleString('tr-TR'),renk:'green',icon:'👆'},
-    {lbl:'Gösterim',val:top.gosterim.toLocaleString('tr-TR'),renk:'purple',icon:'👁️'},
-    {lbl:'Dönüşüm',val:top.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),renk:'teal',icon:'🎯'},
-    {lbl:'Dön.Başı Maliyet',val:fmt(donusumBasi)+' ₺',renk:'amber',icon:'📌'},
-    {lbl:'CTR',val:ctr.toFixed(2)+'%',renk:'blue',icon:'📊'},
-    {lbl:'Ort. CPC',val:fmt(cpc)+' ₺',renk:'red',icon:'💵'},
-    {lbl:'Telefon',val:top.telefonAramasi.toLocaleString('tr-TR'),renk:'green',icon:'📞'},
-    {lbl:'Dön. Değeri',val:fmt(top.donusumDegeri)+' ₺',renk:'purple',icon:'💎'},
+    {lbl:'Harcama',     alt:'Toplam',                        val:fmt(top.harcama)+' ₺',           r:'blue'},
+    {lbl:'Tıklama',     alt:'Toplam tıklama',                val:top.tiklama.toLocaleString('tr-TR'),r:'green'},
+    {lbl:'Gösterim',    alt:'Toplam gösterim',               val:top.gosterim.toLocaleString('tr-TR'),r:'purple'},
+    {lbl:'Dönüşüm',     alt:'Toplam dönüşüm',               val:top.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),r:'teal'},
+    {lbl:'Dön/Maliyet', alt:'Dönüşüm başına ₺',             val:fmt(donusumBasi)+' ₺',            r:'amber'},
+    {lbl:'CTR',         alt:'Tıklama oranı',                 val:ctr.toFixed(2)+'%',               r:'blue'},
+    {lbl:'Ort. CPC',    alt:'Tıklama başına maliyet',        val:fmt(cpc)+' ₺',                   r:'red'},
+    {lbl:'Telefon',     alt:'Reklam kaynaklı arama',         val:top.telefonAramasi.toLocaleString('tr-TR'),r:'green'},
+    {lbl:'Dön. Değeri', alt:'Toplam dönüşüm değeri',        val:fmt(top.donusumDegeri)+' ₺',     r:'purple'},
   ];
-  grid.innerHTML=kpiler.map(k=>`
-    <div class="card" style="padding:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-size:16px;">${k.icon}</span>
-        <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">${k.lbl}</span>
-      </div>
-      <div class="num" style="font-weight:700;font-size:17px;color:var(--${k.renk});">${k.val}</div>
-    </div>`).join('');
+  grid.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${
+    kpiler.map(k=>{
+      const hex=KPI_RENKLER[k.r]||'#7eb3f0';
+      return `<div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid ${hex};position:relative;overflow:hidden;">
+        <div style="font-size:15px;font-weight:700;color:${hex};margin-bottom:2px;line-height:1.2;">${k.val}</div>
+        <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">${k.lbl}</div>
+        <div style="font-size:9px;color:var(--text3);">${k.alt}</div>
+      </div>`;
+    }).join('')
+  }</div>`;
   reklamMetrikSecCiz();
   reklamGrafikCiz(veri);
   reklamGrafikOzetCiz(veri);
