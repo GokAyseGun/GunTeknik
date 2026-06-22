@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gün Teknik">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -5753,44 +5754,37 @@ function raporTavsiyeler(){
 // ============================================================ REKLAM (Google Ads)
 let _reklamVeri=[];
 let _reklamDonem='7gun';
-let _reklamMetrik='harcama';
 let _reklamSeciliKampanya='';
+let _reklamSeciliMetrikler=['harcama','tiklama'];
+let _reklamGrafikTip='line';
+let _reklamChart=null;
+let _reklamKelimeVeri=[];
+let _reklamKelimeTumGoster=false;
+
 const REKLAM_METRIK_TANIM={
-  harcama:{lbl:'Harcama',renk:'#7eb3f0',fmt:v=>fmt(v)+' ₺',agg:'sum'},
-  tiklama:{lbl:'Tıklama',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
-  gosterim:{lbl:'Gösterim',renk:'#b39ddb',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
-  donusum:{lbl:'Dönüşüm',renk:'#7ecec4',fmt:v=>v.toLocaleString('tr-TR',{maximumFractionDigits:1}),agg:'sum'},
-  ctr:{lbl:'TO (CTR)',renk:'#f0c472',fmt:v=>v.toFixed(2)+'%',agg:'avg'},
-  telefon_aramasi:{lbl:'Telefon Araması',renk:'#6fcf97',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
-  donusum_degeri:{lbl:'Dönüşüm Değeri',renk:'#b39ddb',fmt:v=>fmt(v)+' ₺',agg:'sum'}
+  harcama:   {lbl:'Harcama',      renk:'#7eb3f0',eksen:'tl',  fmt:v=>fmt(v)+' ₺',  agg:'sum'},
+  tiklama:   {lbl:'Tıklama',      renk:'#6fcf97',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  gosterim:  {lbl:'Gösterim',     renk:'#b39ddb',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  donusum:   {lbl:'Dönüşüm',      renk:'#7ecec4',eksen:'sayi',fmt:v=>v.toLocaleString('tr-TR',{maximumFractionDigits:1}),agg:'sum'},
+  ctr:       {lbl:'CTR',          renk:'#f0c472',eksen:'yuzde',fmt:v=>v.toFixed(2)+'%',agg:'avg'},
+  telefon_aramasi:{lbl:'Telefon', renk:'#e0a0f0',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  donusum_degeri: {lbl:'Dön.Değeri',renk:'#f0c472',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'sum'},
+  ortalama_tiklama_maliyeti:{lbl:'CPC',renk:'#f08080',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'avg'},
 };
 
-let _reklamKelimeVeri=[];
-
 async function renderReklam(){
-  try{
-    const rows=await sbFetch('google_ads_metrics?order=tarih.asc')||[];
-    _reklamVeri=rows;
-  }catch(e){_reklamVeri=[];}
-  try{
-    const kRows=await sbFetch('google_ads_keywords?order=tarih.asc')||[];
-    _reklamKelimeVeri=kRows;
-  }catch(e){_reklamKelimeVeri=[];}
-  // Kampanya listesini doldur
+  try{const rows=await sbFetch('google_ads_metrics?order=tarih.asc')||[];_reklamVeri=rows;}catch(e){_reklamVeri=[];}
+  try{const kRows=await sbFetch('google_ads_keywords?order=tarih.asc')||[];_reklamKelimeVeri=kRows;}catch(e){_reklamKelimeVeri=[];}
   const select=document.getElementById('reklam-kampanya-sec');
   if(select){
-    const kampanyalar=[...new Map(_reklamVeri.map(r=>[r.kampanya_id,r.kampanya_adi])).entries()]
-      .filter(([id,adi])=>id&&adi);
+    const kampanyalar=[...new Map(_reklamVeri.map(r=>[r.kampanya_id,r.kampanya_adi])).entries()].filter(([id,adi])=>id&&adi);
     select.innerHTML='<option value="">Tüm Kampanyalar</option>'+
       kampanyalar.map(([id,adi])=>`<option value="${id}"${_reklamSeciliKampanya===id?' selected':''}>${adi||id}</option>`).join('');
   }
   reklamGoster();
 }
 
-function reklamKampanyaSec(kampanyaId){
-  _reklamSeciliKampanya=kampanyaId;
-  reklamGoster();
-}
+function reklamKampanyaSec(kampanyaId){_reklamSeciliKampanya=kampanyaId;reklamGoster();}
 
 function reklamDonemSec(btn){
   document.querySelectorAll('#reklam-donem-sec .pay-btn').forEach(b=>b.classList.remove('active'));
@@ -5799,29 +5793,43 @@ function reklamDonemSec(btn){
   reklamGoster();
 }
 
+function reklamGrafikTipSec(tip){
+  _reklamGrafikTip=tip;
+  const cizgiBtn=document.getElementById('reklam-tip-cizgi');
+  const cubukBtn=document.getElementById('reklam-tip-cubuk');
+  if(cizgiBtn){cizgiBtn.style.background=tip==='line'?'var(--blue-lt)':'var(--bg2)';cizgiBtn.style.color=tip==='line'?'var(--blue)':'var(--text3)';cizgiBtn.style.borderColor=tip==='line'?'var(--blue-md)':'var(--border2)';}
+  if(cubukBtn){cubukBtn.style.background=tip==='bar'?'var(--blue-lt)':'var(--bg2)';cubukBtn.style.color=tip==='bar'?'var(--blue)':'var(--text3)';cubukBtn.style.borderColor=tip==='bar'?'var(--blue-md)':'var(--border2)';}
+  reklamGrafikCiz(_reklamFiltreliVeri());
+}
+
+function reklamMetrikToggle(key){
+  const idx=_reklamSeciliMetrikler.indexOf(key);
+  if(idx>=0){
+    if(_reklamSeciliMetrikler.length>1)_reklamSeciliMetrikler.splice(idx,1);
+  }else{
+    _reklamSeciliMetrikler.push(key);
+  }
+  reklamMetrikSecCiz();
+  reklamGrafikCiz(_reklamFiltreliVeri());
+  reklamGrafikOzetCiz(_reklamFiltreliVeri());
+}
+
 function _reklamTarihStr(d){
-  // YYYY-MM-DD formatında, YEREL saat dilimine göre (UTC kaymasını önler)
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),g=String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+g;
 }
+
 function _reklamFiltreliVeri(){
   if(!_reklamVeri.length)return[];
-  // Önce kampanya filtresi
-  const veri=_reklamSeciliKampanya
-    ?_reklamVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya)
-    :_reklamVeri;
+  const veri=_reklamSeciliKampanya?_reklamVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya):_reklamVeri;
   const bugun=new Date();bugun.setHours(0,0,0,0);
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
-    const dunStr=_reklamTarihStr(dun);
-    return veri.filter(r=>r.tarih===dunStr);
+    return veri.filter(r=>r.tarih===_reklamTarihStr(dun));
   }
-  let gunSayisi=7;
-  if(_reklamDonem==='30gun')gunSayisi=30;
+  const gunSayisi=_reklamDonem==='30gun'?30:7;
   const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-  const baslangicStr=_reklamTarihStr(baslangic);
-  const bugunStr=_reklamTarihStr(bugun);
-  return veri.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
+  return veri.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=_reklamTarihStr(bugun));
 }
 
 function reklamGoster(){
@@ -5830,18 +5838,16 @@ function reklamGoster(){
   const bos=document.getElementById('reklam-bos');
   const guncelEl=document.getElementById('reklam-son-guncelleme');
   if(!grid)return;
-
   if(!_reklamVeri.length){
     grid.innerHTML='';
-    document.getElementById('reklam-grafik').innerHTML='';
+    if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
     document.getElementById('reklam-metrik-sec').innerHTML='';
-    document.getElementById('reklam-metrik-ozet').innerHTML='';
+    document.getElementById('reklam-grafik-ozet').innerHTML='';
     if(bos)bos.style.display='block';
     if(guncelEl)guncelEl.textContent='';
     return;
   }
   if(bos)bos.style.display='none';
-
   if(guncelEl){
     const sonKayit=_reklamVeri[_reklamVeri.length-1];
     if(sonKayit&&sonKayit.guncellenme_zamani){
@@ -5849,7 +5855,6 @@ function reklamGoster(){
       guncelEl.textContent='Son güncelleme: '+dt.toLocaleDateString('tr-TR')+' '+dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
     }
   }
-
   const top=veri.reduce((a,r)=>({
     harcama:a.harcama+(parseFloat(r.harcama)||0),
     tiklama:a.tiklama+(parseInt(r.tiklama)||0),
@@ -5861,17 +5866,16 @@ function reklamGoster(){
   const donusumBasi=top.donusum>0?top.harcama/top.donusum:0;
   const ctr=top.gosterim>0?(top.tiklama/top.gosterim*100):0;
   const cpc=top.tiklama>0?(top.harcama/top.tiklama):0;
-
   const kpiler=[
     {lbl:'Toplam Harcama',val:fmt(top.harcama)+' ₺',renk:'blue',icon:'💰'},
     {lbl:'Tıklama',val:top.tiklama.toLocaleString('tr-TR'),renk:'green',icon:'👆'},
     {lbl:'Gösterim',val:top.gosterim.toLocaleString('tr-TR'),renk:'purple',icon:'👁️'},
     {lbl:'Dönüşüm',val:top.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),renk:'teal',icon:'🎯'},
-    {lbl:'Dönüşüm Başı Maliyet',val:fmt(donusumBasi)+' ₺',renk:'amber',icon:'📌'},
-    {lbl:'Tıklama Oranı (CTR)',val:ctr.toFixed(2)+'%',renk:'blue',icon:'📊'},
-    {lbl:'Ort. Tıklama Maliyeti',val:fmt(cpc)+' ₺',renk:'red',icon:'💵'},
-    {lbl:'Telefon Araması',val:top.telefonAramasi.toLocaleString('tr-TR'),renk:'green',icon:'📞'},
-    {lbl:'Dönüşüm Değeri',val:fmt(top.donusumDegeri)+' ₺',renk:'purple',icon:'💎'},
+    {lbl:'Dön.Başı Maliyet',val:fmt(donusumBasi)+' ₺',renk:'amber',icon:'📌'},
+    {lbl:'CTR',val:ctr.toFixed(2)+'%',renk:'blue',icon:'📊'},
+    {lbl:'Ort. CPC',val:fmt(cpc)+' ₺',renk:'red',icon:'💵'},
+    {lbl:'Telefon',val:top.telefonAramasi.toLocaleString('tr-TR'),renk:'green',icon:'📞'},
+    {lbl:'Dön. Değeri',val:fmt(top.donusumDegeri)+' ₺',renk:'purple',icon:'💎'},
   ];
   grid.innerHTML=kpiler.map(k=>`
     <div class="card" style="padding:12px;">
@@ -5881,51 +5885,145 @@ function reklamGoster(){
       </div>
       <div class="num" style="font-weight:700;font-size:17px;color:var(--${k.renk});">${k.val}</div>
     </div>`).join('');
-
   reklamMetrikSecCiz();
   reklamGrafikCiz(veri);
+  reklamGrafikOzetCiz(veri);
   reklamKelimelerCiz();
 }
 
-let _reklamKelimeTumGoster=false;
+function reklamMetrikSecCiz(){
+  const wrap=document.getElementById('reklam-metrik-sec');
+  if(!wrap)return;
+  wrap.innerHTML=Object.entries(REKLAM_METRIK_TANIM).map(([key,m])=>{
+    const aktif=_reklamSeciliMetrikler.includes(key);
+    return `<button type="button" onclick="reklamMetrikToggle('${key}')" style="flex-shrink:0;padding:5px 10px;border-radius:6px;border:1.5px solid ${aktif?m.renk+'aa':'var(--border2)'};background:${aktif?m.renk+'22':'var(--bg2)'};color:${aktif?m.renk:'var(--text3)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;">${m.lbl}</button>`;
+  }).join('');
+}
+
+function reklamGrafikCiz(veri){
+  const canvas=document.getElementById('reklam-chart');
+  if(!canvas)return;
+  if(!veri.length){
+    if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
+    return;
+  }
+  // Tarihleri sırala ve grupla (aynı gün birden fazla kampanya satırı varsa topla)
+  const byDate={};
+  veri.forEach(r=>{
+    if(!byDate[r.tarih])byDate[r.tarih]={tarih:r.tarih};
+    const d=byDate[r.tarih];
+    Object.keys(REKLAM_METRIK_TANIM).forEach(k=>{
+      const v=parseFloat(r[k])||0;
+      d[k]=(d[k]||0)+v;
+    });
+  });
+  const gunler=Object.keys(byDate).sort();
+  const labels=gunler.map(t=>{
+    const d=new Date(t+'T12:00:00');
+    return d.getDate()+' '+['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][d.getMonth()];
+  });
+  // Dataset oluştur — her seçili metrik için
+  const datasets=_reklamSeciliMetrikler.map(key=>{
+    const m=REKLAM_METRIK_TANIM[key];
+    const data=gunler.map(t=>Math.round((byDate[t][key]||0)*100)/100);
+    const isTl=m.eksen==='tl';
+    const isYuzde=m.eksen==='yuzde';
+    return {
+      label:m.lbl,
+      data,
+      borderColor:m.renk,
+      backgroundColor:m.renk+'33',
+      yAxisID:isTl?'tl':(isYuzde?'yuzde':'sayi'),
+      fill:_reklamGrafikTip==='line'&&_reklamSeciliMetrikler.length===1,
+      tension:0.4,
+      pointRadius:gunler.length<=10?4:2,
+      pointHoverRadius:7,
+      borderWidth:2,
+      type:_reklamGrafikTip,
+      borderDash:isYuzde?[5,3]:[],
+    };
+  });
+  const commonScaleOpts={grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},color:'rgba(180,180,180,0.8)'},border:{color:'rgba(128,128,128,0.2)'}};
+  const scales={
+    x:{...commonScaleOpts,ticks:{...commonScaleOpts.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:8}},
+    tl:{...commonScaleOpts,position:'left',display:_reklamSeciliMetrikler.some(k=>REKLAM_METRIK_TANIM[k].eksen==='tl'),ticks:{...commonScaleOpts.ticks,callback:v=>{const n=Math.abs(v);return n>=1000?Math.round(n/100)/10+'k₺':Math.round(n)+'₺';}}},
+    sayi:{...commonScaleOpts,position:'right',display:_reklamSeciliMetrikler.some(k=>REKLAM_METRIK_TANIM[k].eksen==='sayi'),grid:{drawOnChartArea:false},ticks:{...commonScaleOpts.ticks,callback:v=>Math.round(v)}},
+    yuzde:{...commonScaleOpts,position:'right',display:_reklamSeciliMetrikler.some(k=>REKLAM_METRIK_TANIM[k].eksen==='yuzde'),grid:{drawOnChartArea:false},ticks:{...commonScaleOpts.ticks,callback:v=>v.toFixed(1)+'%'}},
+  };
+  const tooltipPlugin={
+    mode:'index',intersect:false,
+    backgroundColor:'rgba(13,26,46,0.95)',
+    titleColor:'#e8f0fe',titleFont:{size:11,weight:'600'},
+    bodyColor:'#8ba4c8',bodyFont:{size:11},
+    borderColor:'rgba(30,48,80,1)',borderWidth:1,
+    padding:10,cornerRadius:8,
+    callbacks:{
+      label:ctx=>{
+        const m=REKLAM_METRIK_TANIM[Object.keys(REKLAM_METRIK_TANIM)[Object.values(REKLAM_METRIK_TANIM).findIndex(x=>x.lbl===ctx.dataset.label)]];
+        const fmt2=m?m.fmt:v=>v;
+        return ' '+ctx.dataset.label+': '+fmt2(ctx.parsed.y);
+      }
+    }
+  };
+  if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
+  _reklamChart=new Chart(canvas,{
+    type:_reklamGrafikTip,
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:600,easing:'easeInOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:tooltipPlugin},
+      scales,
+    }
+  });
+}
+
+function reklamGrafikOzetCiz(veri){
+  const wrap=document.getElementById('reklam-grafik-ozet');
+  if(!wrap||!veri.length){if(wrap)wrap.innerHTML='';return;}
+  // Tarihleri topla
+  const byDate={};
+  veri.forEach(r=>{
+    if(!byDate[r.tarih])byDate[r.tarih]={};
+    Object.keys(REKLAM_METRIK_TANIM).forEach(k=>{byDate[r.tarih][k]=(byDate[r.tarih][k]||0)+(parseFloat(r[k])||0);});
+  });
+  const gunler=Object.keys(byDate);
+  wrap.innerHTML=_reklamSeciliMetrikler.map(key=>{
+    const m=REKLAM_METRIK_TANIM[key];
+    const vals=gunler.map(t=>byDate[t][key]||0);
+    const toplam=vals.reduce((a,b)=>a+b,0);
+    const val=m.agg==='avg'?(gunler.length?toplam/gunler.length:0):toplam;
+    return `<div style="background:var(--surface);border:1px solid ${m.renk}44;border-radius:var(--r-sm);padding:10px 12px;border-left:3px solid ${m.renk};">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">${m.lbl} ${m.agg==='avg'?'(ort.)':'(toplam)'}</div>
+      <div class="num" style="font-size:16px;font-weight:700;color:${m.renk};">${m.fmt(val)}</div>
+    </div>`;
+  }).join('');
+}
+
 function reklamKelimelerCiz(){
   const wrap=document.getElementById('reklam-kelimeler');
   if(!wrap)return;
-  if(!_reklamKelimeVeri.length){
-    wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Henüz anahtar kelime verisi yok</div>';
-    return;
-  }
-  // Kampanya + dönem filtreleri (saat dilimi güvenli string karşılaştırma)
-  const kelimeBase=_reklamSeciliKampanya
-    ?_reklamKelimeVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya)
-    :_reklamKelimeVeri;
+  if(!_reklamKelimeVeri.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Henüz anahtar kelime verisi yok</div>';return;}
+  const kelimeBase=_reklamSeciliKampanya?_reklamKelimeVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya):_reklamKelimeVeri;
   const bugun=new Date();bugun.setHours(0,0,0,0);
   let filtreliKelimeler;
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
-    const dunStr=_reklamTarihStr(dun);
-    filtreliKelimeler=kelimeBase.filter(r=>r.tarih===dunStr);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih===_reklamTarihStr(dun));
   }else{
     const gunSayisi=_reklamDonem==='30gun'?30:7;
     const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-    const baslangicStr=_reklamTarihStr(baslangic);
-    const bugunStr=_reklamTarihStr(bugun);
-    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=baslangicStr&&r.tarih<=bugunStr);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=_reklamTarihStr(bugun));
   }
-  // Kelimeye göre topla
   const map={};
   filtreliKelimeler.forEach(r=>{
     const k=map[r.kelime]||(map[r.kelime]={kelime:r.kelime,gosterim:0,tiklama:0,harcama:0,donusum:0});
-    k.gosterim+=parseInt(r.gosterim)||0;
-    k.tiklama+=parseInt(r.tiklama)||0;
-    k.harcama+=parseFloat(r.harcama)||0;
-    k.donusum+=parseFloat(r.donusum)||0;
+    k.gosterim+=parseInt(r.gosterim)||0;k.tiklama+=parseInt(r.tiklama)||0;
+    k.harcama+=parseFloat(r.harcama)||0;k.donusum+=parseFloat(r.donusum)||0;
   });
   const tumListe=Object.values(map).sort((a,b)=>b.tiklama-a.tiklama);
-  if(!tumListe.length){
-    wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Bu dönem için anahtar kelime verisi yok</div>';
-    return;
-  }
+  if(!tumListe.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Bu dönem için anahtar kelime verisi yok</div>';return;}
   const liste=_reklamKelimeTumGoster?tumListe:tumListe.slice(0,20);
   let html=liste.map(k=>{
     const ctr=k.gosterim>0?(k.tiklama/k.gosterim*100):0;
@@ -5937,140 +6035,12 @@ function reklamKelimelerCiz(){
       <div class="num" style="font-weight:700;font-size:13px;color:var(--blue);flex-shrink:0;margin-left:10px;">${fmt(k.harcama)} ₺</div>
     </div>`;
   }).join('');
-  if(tumListe.length>10){
-    html+=`<button type="button" onclick="_reklamKelimeTumGoster=!_reklamKelimeTumGoster;reklamKelimelerCiz();" class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px;font-size:12px;">${_reklamKelimeTumGoster?'Daha Az Göster ('+tumListe.length+' kelimeden 10\'u)':'Tümünü Göster ('+tumListe.length+' kelime)'}</button>`;
+  if(tumListe.length>20){
+    html+=`<button type="button" onclick="_reklamKelimeTumGoster=!_reklamKelimeTumGoster;reklamKelimelerCiz();" class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px;font-size:12px;">${_reklamKelimeTumGoster?'Daha Az Göster ('+tumListe.length+' kelimeden 20\'u)':'Tümünü Göster ('+tumListe.length+' kelime)'}</button>`;
   }
   wrap.innerHTML=html;
 }
 
-function reklamMetrikSecCiz(){
-  const wrap=document.getElementById('reklam-metrik-sec');
-  if(!wrap)return;
-  wrap.innerHTML=Object.keys(REKLAM_METRIK_TANIM).map(key=>{
-    const m=REKLAM_METRIK_TANIM[key];
-    const aktif=key===_reklamMetrik;
-    return `<button type="button" onclick="reklamMetrikSec('${key}')" style="flex-shrink:0;padding:7px 12px;border-radius:8px;border:1px solid ${aktif?m.renk+'55':'var(--border2)'};background:${aktif?m.renk+'22':'var(--bg2)'};color:${aktif?m.renk:'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">${m.lbl}</button>`;
-  }).join('');
-}
-
-function reklamMetrikSec(key){
-  _reklamMetrik=key;
-  reklamMetrikSecCiz();
-  reklamGrafikCiz(_reklamFiltreliVeri());
-}
-
-function reklamGrafikCiz(veri){
-  const wrap=document.getElementById('reklam-grafik');
-  const ozetWrap=document.getElementById('reklam-metrik-ozet');
-  if(!wrap)return;
-  if(!veri.length){
-    wrap.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Bu dönem için veri yok</div>';
-    if(ozetWrap)ozetWrap.innerHTML='';
-    return;
-  }
-
-  const m=REKLAM_METRIK_TANIM[_reklamMetrik];
-  const vals=veri.map(r=>parseFloat(r[_reklamMetrik])||0);
-  const toplam=vals.reduce((a,b)=>a+b,0);
-  const gosterilecekToplam=m.agg==='avg'?(toplam/vals.length):toplam;
-  const ortalama=toplam/vals.length;
-
-  if(ozetWrap){
-    ozetWrap.innerHTML=`<span style="font-size:22px;font-weight:700;color:${m.renk};">${m.fmt(gosterilecekToplam)}</span><span style="font-size:11px;color:var(--text3);">günlük ort. ${m.fmt(ortalama)}</span>`;
-  }
-
-  const W=340,H=170,padT=14,padB=4,innerH=110;
-  const n=veri.length;
-  const maxV=Math.max(...vals,0.0001)*1.15;
-  const step=W/n;
-  const barW=Math.min(step*0.55,28);
-
-  let barsHtml='';
-  veri.forEach((r,i)=>{
-    const x=step*i+(step-barW)/2;
-    const v=parseFloat(r[_reklamMetrik])||0;
-    const h=(v/maxV)*innerH;
-    const y=padT+innerH-h;
-    barsHtml+=`<rect class="reklam-bar" data-idx="${i}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="3" fill="${m.renk}" opacity="0.8" style="cursor:pointer;transition:opacity 0.15s;"></rect>`;
-  });
-
-  const etiketIdx=n>1?(n<=7?[...Array(n).keys()]:[0,Math.floor((n-1)/2),n-1]):[0];
-  let labelsHtml='';
-  etiketIdx.forEach(i=>{
-    const r=veri[i];
-    const x=step*i+step/2;
-    const d=new Date(r.tarih);
-    const lbl=d.getDate()+' '+['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][d.getMonth()];
-    labelsHtml+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--text3)" text-anchor="middle">${lbl}</text>`;
-  });
-
-  // Izgara çizgileri (3 yatay referans)
-  let gridHtml='';
-  [0.0,0.5,1.0].forEach(p=>{
-    const y=padT+innerH*(1-p);
-    gridHtml+=`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"></line>`;
-  });
-
-  wrap.innerHTML=`
-    <div style="position:relative;">
-      <svg id="reklam-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible;">
-        ${gridHtml}
-        <line id="reklam-hover-line" x1="0" y1="${padT}" x2="0" y2="${padT+innerH}" stroke="${m.renk}" stroke-width="1" stroke-dasharray="3,3" opacity="0"></line>
-        ${barsHtml}
-        ${labelsHtml}
-      </svg>
-      <div id="reklam-tooltip" style="position:absolute;display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:11px;pointer-events:none;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,0.35);z-index:10;top:0;"></div>
-    </div>`;
-
-  // Hem hover (masaüstü) hem touch/click (mobil) ile aynı davranış — seçili kalır
-  const svgEl=document.getElementById('reklam-svg');
-  const tip=document.getElementById('reklam-tooltip');
-  const hoverLine=document.getElementById('reklam-hover-line');
-  let seciliIdx=null;
-
-  function tooltipGoster(i){
-    seciliIdx=i;
-    const r=veri[i];
-    const x=step*i+step/2;
-    const d=new Date(r.tarih);
-    const tarihStr=d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
-    tip.innerHTML=`<div style="color:var(--text2);font-weight:600;margin-bottom:3px;">${tarihStr}</div><div style="color:${m.renk};font-weight:700;">${m.lbl}: ${m.fmt(parseFloat(r[_reklamMetrik])||0)}</div>`;
-    const pct=(x/W)*100;
-    tip.style.left=pct+'%';
-    tip.style.transform=pct>65?'translateX(-100%)':(pct<10?'translateX(0)':'translateX(-50%)');
-    tip.style.display='block';
-    hoverLine.setAttribute('x1',x.toFixed(1));
-    hoverLine.setAttribute('x2',x.toFixed(1));
-    hoverLine.setAttribute('opacity','1');
-    document.querySelectorAll('.reklam-bar').forEach(b=>{
-      b.setAttribute('opacity',parseInt(b.dataset.idx)===i?'1':'0.45');
-    });
-  }
-  function tooltipGizle(){
-    seciliIdx=null;
-    tip.style.display='none';
-    hoverLine.setAttribute('opacity','0');
-    document.querySelectorAll('.reklam-bar').forEach(b=>b.setAttribute('opacity','0.8'));
-  }
-
-  document.querySelectorAll('.reklam-bar').forEach(bar=>{
-    const i=parseInt(bar.dataset.idx);
-    // Masaüstü: hover ile göster, fareyle ayrılınca kapan
-    bar.addEventListener('mouseenter',()=>tooltipGoster(i));
-    bar.addEventListener('mouseleave',()=>{if(seciliIdx===i)tooltipGizle();});
-    // Mobil: dokununca göster ve SABİT kal; tekrar dokununca veya başka çubuğa dokununca değişir
-    bar.addEventListener('click',(e)=>{
-      e.stopPropagation();
-      if(seciliIdx===i)tooltipGizle();
-      else tooltipGoster(i);
-    });
-  });
-  // Boş bir yere dokununca/tıklayınca tooltip kapanır
-  svgEl.addEventListener('click',(e)=>{
-    if(e.target.classList.contains('reklam-bar'))return;
-    tooltipGizle();
-  });
-}
 // ============================================================ ŞABLONLAR
 
 
