@@ -5776,7 +5776,7 @@ async function renderReklam(){
   const select=document.getElementById('reklam-kampanya-sec');
   if(select){
     const kampanyalar=[...new Map(_reklamVeri.map(r=>[r.kampanya_id,r.kampanya_adi])).entries()]
-      .filter(([id])=>id);
+      .filter(([id,adi])=>id&&adi);
     select.innerHTML='<option value="">Tüm Kampanyalar</option>'+
       kampanyalar.map(([id,adi])=>`<option value="${id}"${_reklamSeciliKampanya===id?' selected':''}>${adi||id}</option>`).join('');
   }
