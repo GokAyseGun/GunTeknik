@@ -3194,10 +3194,11 @@ function renderDashBugun(){
 let _dashDonem='buay';
 let _dashGrup='tumü';
 let _dashGrafikTip='line';
-let _dashSeciliMetrikler=['isGelir','isGider'];
+let _dashSeciliMetrikler=['kasa','isGelir','isGider'];
 let _dashChart=null;
 
 const DASH_METRIK={
+  kasa:     {lbl:'Kasa (Kümülatif)',renk:'#50e3c2',eksen:'kumulatif',agg:'son', grup:['tumü','isletme','sahsi']},
   isGelir:  {lbl:'İşl.Gelir',   renk:'#7eb3f0',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
   isGider:  {lbl:'İşl.Gider',   renk:'#f08080',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
   isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
@@ -3328,20 +3329,53 @@ function dashVeriHesapla(){
     return granularite==='ay'?tarihStr.startsWith(ds):tarihStr.slice(0,10)===ds;
   }
 
-  // Gerçekleşmiş işlemler (Tamamlandı)
-  const tamamlananlar=_dashDonem!=='gelecek'
-    ?DB.islemler.filter(i=>i.statu==='Tamamlandı')
-    :[];
+  // --- KASA KÜMÜLATİF HESABI ---
+  // Tüm geçmiş işlemlerin (başlangıçtan bugüne) net toplamı = gerçek kasa
+  // Dönem başından önceki bakiyeyi hesapla
+  function kasaHareketi(islem){
+    const t=parseFloat(islem.tutar)||0;
+    const tip=islem.tip||'';
+    const altTip=islem.altTip||'';
+    if(islem.statu!=='Tamamlandı')return 0;
+    if(tip==='Gelir')return t;
+    if(tip==='Gider')return -t;
+    if(tip==='Kasa Hareketi'){
+      if(altTip.includes('Alınan')||altTip.includes('alinan'))return t;
+      if(altTip.includes('Verilen')||altTip.includes('verilen'))return -t;
+    }
+    if(tip==='Tahsil Edilecek Alacak')return t;
+    if(tip==='Ödenecek Borç')return -t;
+    return 0;
+  }
+  function odemeHareketi(odeme){
+    const t=parseFloat(odeme.tutar)||0;
+    if(odeme.islemTipi==='Tahsilat')return t;
+    return -t;
+  }
 
-  // Gelecek: Bekliyor işlemler + Takvim
-  const bekleyenler=_dashDonem==='gelecek'
-    ?DB.islemler.filter(i=>i.statu==='Bekliyor')
-    :[];
-  const takvimGelecek=_dashDonem==='gelecek'
-    ?DB.takvim.filter(t=>t.tip==='Alacak'||t.tip==='Verecek')
-    :[];
+  // Dönem başı bakiyesi (dönemden önceki tüm işlemlerin toplamı)
+  const baslangicStr=dilimStr(baslangic);
+  let donemOncesiBakiye=0;
+  DB.islemler.forEach(i=>{
+    const ts=localDateStr(i.tarih);
+    if(ts<baslangicStr)donemOncesiBakiye+=kasaHareketi(i);
+  });
+  (DB.odemeler||[]).forEach(o=>{
+    const ts=localDateStr(o.tarih);
+    if(ts<baslangicStr)donemOncesiBakiye+=odemeHareketi(o);
+  });
 
-  // Personel hak ediş birikimi (kümülatif)
+  // Gelecek mod için bugünkü gerçek kasa
+  let bugunkuKasa=0;
+  DB.islemler.forEach(i=>{bugunkuKasa+=kasaHareketi(i);});
+  (DB.odemeler||[]).forEach(o=>{bugunkuKasa+=odemeHareketi(o);});
+
+  // Her dilim için günlük hareket topla, sonra kümülatif yap
+  const tamamlananlar=DB.islemler.filter(i=>i.statu==='Tamamlandı');
+  const bekleyenler=_dashDonem==='gelecek'?DB.islemler.filter(i=>i.statu==='Bekliyor'):[];
+  const takvimGelecek=_dashDonem==='gelecek'?DB.takvim.filter(t=>t.tip==='Alacak'||t.tip==='Verecek'):[];
+
+  // Personel birikimi
   const personelBakiye={};
   DB.personeller.forEach(p=>{personelBakiye[p.id]=0;});
   DB.yardimciIslemleri.forEach(y=>{
@@ -3350,9 +3384,12 @@ function dashVeriHesapla(){
       else personelBakiye[y.personelId]-=y.tutar;
     }
   });
+  const topPersonel=Object.values(personelBakiye).reduce((a,b)=>a+Math.max(0,b),0);
+
+  let kasaKumulatif=_dashDonem==='gelecek'?bugunkuKasa:donemOncesiBakiye;
 
   const sonuclar=dilimler.map(dilimD=>{
-    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:0,vergi:0};
+    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:topPersonel,vergi:0,kasaDelta:0};
 
     tamamlananlar.forEach(i=>{
       const ts=localDateStr(i.tarih);
@@ -3368,15 +3405,22 @@ function dashVeriHesapla(){
         else if(i.kat==='Şahsi Gider')r.shGider+=t;
         else if(i.kat==='Vergi')r.vergi+=t;
       }
+      r.kasaDelta+=kasaHareketi(i);
+    });
+    // DB.odemeler de kasa hareketine dahil
+    (DB.odemeler||[]).forEach(o=>{
+      const ts=localDateStr(o.tarih);
+      if(!tariheAit(ts,dilimD))return;
+      r.kasaDelta+=odemeHareketi(o);
     });
 
-    // Takvim alacak/verecek (gelecek modu)
+    // Gelecek modu: bekleyen + takvim
     bekleyenler.forEach(i=>{
       const ts=localDateStr(i.tarih);
       if(!tariheAit(ts,dilimD))return;
       const t=parseFloat(i.tutar)||0;
-      if(i.tip==='Gelir')r.alacak+=t;
-      else if(i.tip==='Gider')r.verecek+=t;
+      if(i.tip==='Gelir'){r.alacak+=t;r.kasaDelta+=t;}
+      else if(i.tip==='Gider'){r.verecek+=t;r.kasaDelta-=t;}
     });
     takvimGelecek.forEach(tk=>{
       const ts=localDateStr(tk.tarih);
@@ -3386,10 +3430,8 @@ function dashVeriHesapla(){
       else if(tk.tip==='Verecek')r.verecek+=t;
     });
 
-    // Personel birikimi (o dilimin sonu için toplam)
-    r.personel=Object.values(personelBakiye).reduce((a,b)=>a+Math.max(0,b),0);
-
-    // Net hesapla
+    kasaKumulatif+=r.kasaDelta;
+    r.kasa=kasaKumulatif;
     r.isNet=r.isGelir-r.isGider;
     return r;
   });
@@ -3411,31 +3453,52 @@ function dashGrafikCiz(){
   const{labels,sonuclar}=dashVeriHesapla();
   if(!sonuclar.length)return;
 
-  const datasets=_dashSeciliMetrikler.map(key=>{
+  const kasaSecili=_dashSeciliMetrikler.includes('kasa');
+  const digerMetrikler=_dashSeciliMetrikler.filter(k=>k!=='kasa');
+  const tlGoster=digerMetrikler.some(k=>DASH_METRIK[k]&&DASH_METRIK[k].eksen==='tl');
+
+  const datasets=[];
+
+  // Diğer metrikler — sağ eksen, dönemsel
+  digerMetrikler.forEach(key=>{
     const m=DASH_METRIK[key];
-    const data=sonuclar.map(r=>Math.round((r[key]||0)*100)/100);
-    return{
+    datasets.push({
       label:m.lbl,
-      data,
+      data:sonuclar.map(r=>Math.round((r[key]||0)*100)/100),
       borderColor:m.renk,
-      backgroundColor:m.renk+'33',
+      backgroundColor:m.renk+'44',
       yAxisID:'tl',
-      fill:_dashGrafikTip==='line'&&_dashSeciliMetrikler.length===1,
+      fill:false,
       tension:0.4,
-      pointRadius:labels.length<=12?4:2,
-      pointHoverRadius:7,
+      pointRadius:labels.length<=12?3:1,
+      pointHoverRadius:6,
       borderWidth:2,
       type:_dashGrafikTip,
-      borderDash:key.includes('Net')||key.includes('Gelecek')?[5,3]:[],
-      pointStyle:key==='isNet'?'triangle':'circle',
-    };
+    });
   });
 
-  const scaleOpts={
-    grid:{color:'rgba(128,128,128,0.07)'},
-    ticks:{font:{size:10},color:'rgba(160,160,160,0.8)',callback:v=>{const n=Math.abs(v);return(v<0?'-':'')+(n>=1000?Math.round(n/100)/10+'k':''+Math.round(n))+'₺';}},
-    border:{color:'rgba(128,128,128,0.15)'}
-  };
+  // Kasa — sol eksen, her zaman çizgi, kümülatif step
+  if(kasaSecili){
+    const m=DASH_METRIK['kasa'];
+    datasets.unshift({
+      label:m.lbl,
+      data:sonuclar.map(r=>Math.round((r.kasa||0)*100)/100),
+      borderColor:m.renk,
+      backgroundColor:m.renk+'18',
+      yAxisID:'kumulatif',
+      fill:true,
+      tension:0.3,
+      stepped:labels.length>20?'before':false,
+      pointRadius:labels.length<=12?4:2,
+      pointHoverRadius:7,
+      borderWidth:2.5,
+      type:'line',
+      pointStyle:'circle',
+    });
+  }
+
+  const tlCallback=v=>{const n=Math.abs(v);return(v<0?'-':'')+(n>=1000000?Math.round(n/100000)/10+'M₺':n>=1000?Math.round(n/100)/10+'k₺':Math.round(n)+'₺');};
+  const scaleBase={grid:{color:'rgba(128,128,128,0.07)'},ticks:{font:{size:10},color:'rgba(155,175,200,0.9)'},border:{color:'rgba(128,128,128,0.15)'}};
 
   _dashChart=new Chart(canvas,{
     type:_dashGrafikTip,
@@ -3448,24 +3511,38 @@ function dashGrafikCiz(){
         legend:{display:false},
         tooltip:{
           mode:'index',intersect:false,
-          backgroundColor:'rgba(10,20,40,0.95)',
-          titleColor:'#e8f0fe',titleFont:{size:11,weight:'600'},
-          bodyColor:'#9ab0cc',bodyFont:{size:11},
-          borderColor:'rgba(30,50,80,0.8)',borderWidth:1,
+          backgroundColor:'rgba(8,16,32,0.96)',
+          titleColor:'#ddeeff',titleFont:{size:11,weight:'600'},
+          bodyColor:'#8aaccc',bodyFont:{size:11},
+          borderColor:'rgba(40,70,110,0.8)',borderWidth:1,
           padding:10,cornerRadius:8,
           callbacks:{
             label:ctx=>{
-              const m=DASH_METRIK[Object.keys(DASH_METRIK)[Object.values(DASH_METRIK).findIndex(x=>x.lbl===ctx.dataset.label)]];
               const v=ctx.parsed.y;
-              const str=(v<0?'-':'')+(m?fmt(Math.abs(v)):Math.abs(v))+' ₺';
-              return ' '+ctx.dataset.label+': '+str;
+              const pos=v>=0;
+              const str=(pos?'':'−')+fmt(Math.abs(v))+' ₺';
+              return '  '+ctx.dataset.label+': '+str;
             }
           }
         }
       },
       scales:{
-        x:{...scaleOpts,ticks:{...scaleOpts.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:10,callback:v=>labels[v]}},
-        tl:{...scaleOpts,position:'left'},
+        x:{...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:12}},
+        kumulatif:{
+          ...scaleBase,
+          position:'left',
+          display:kasaSecili,
+          ticks:{...scaleBase.ticks,callback:tlCallback},
+          title:{display:kasaSecili,text:'Kasa ₺',color:'#50e3c2',font:{size:9}},
+        },
+        tl:{
+          ...scaleBase,
+          position:'right',
+          display:tlGoster,
+          grid:{drawOnChartArea:false},
+          ticks:{...scaleBase.ticks,callback:tlCallback},
+          title:{display:tlGoster,text:'Dönemsel ₺',color:'rgba(155,175,200,0.8)',font:{size:9}},
+        },
       }
     }
   });
@@ -3479,12 +3556,22 @@ function dashGrafikOzetCiz(){
   wrap.innerHTML=_dashSeciliMetrikler.map(key=>{
     const m=DASH_METRIK[key];
     const vals=sonuclar.map(r=>r[key]||0);
-    const toplam=vals.reduce((a,b)=>a+b,0);
-    const val=m.agg==='avg'&&vals.length?toplam/vals.length:toplam;
+    let val,etiket;
+    if(m.agg==='son'){
+      // Kümülatif: son dönemin değeri (anlık bakiye)
+      val=vals[vals.length-1]||0;
+      etiket='anlık bakiye';
+    }else if(m.agg==='avg'){
+      val=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+      etiket='dönem ortalaması';
+    }else{
+      val=vals.reduce((a,b)=>a+b,0);
+      etiket='dönem toplamı';
+    }
     const pozitif=val>=0;
     return `<div style="background:var(--surface);border-radius:var(--r-sm);padding:9px 11px;border-left:3px solid ${m.renk};">
-      <div style="font-size:9px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;">${m.lbl} ${m.agg==='avg'?'(ort.)':'(toplam)'}</div>
-      <div class="num" style="font-size:15px;font-weight:700;color:${pozitif?m.renk:'#f08080'}">${val<0?'-':''}${fmt(Math.abs(val))} ₺</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;">${m.lbl} — ${etiket}</div>
+      <div class="num" style="font-size:15px;font-weight:700;color:${pozitif?m.renk:'#f08080'}">${val<0?'−':''}${fmt(Math.abs(val))} ₺</div>
     </div>`;
   }).join('');
 }
