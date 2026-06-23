@@ -10,6 +10,9 @@
 <meta name="apple-mobile-web-app-title" content="Gün Teknik">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -461,9 +464,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div id="dash-grafik-donem" style="display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;"></div>
           <div style="display:flex;gap:4px;flex-shrink:0;">
             <button id="dash-tip-cizgi" onclick="dashGrafikTipSec('line')"
-              style="padding:4px 8px;border-radius:6px;border:1px solid var(--blue-md,#1d4ed8);background:var(--blue-lt,#dbeafe);color:var(--blue,#2563eb);font-size:10px;font-weight:600;cursor:pointer;">📈</button>
-            <button id="dash-tip-cubuk" onclick="dashGrafikTipSec('bar')"
-              style="padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">📊</button>
+              style="padding:4px 8px;border-radius:6px;border:1px solid var(--blue-md,#1d4ed8);background:var(--blue-lt,#dbeafe);color:var(--blue,#2563eb);font-size:10px;font-weight:600;cursor:pointer;">📈 Çizgi</button>
+            <button id="dash-tip-mum" onclick="dashGrafikTipSec('candlestick')"
+              style="padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">🕯 Mum</button>
           </div>
         </div>
         <!-- Grup seçici -->
@@ -477,6 +480,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </div>
         <!-- Metrik seçici -->
         <div id="dash-metrik-sec" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;"></div>
+        <div id="dash-mum-not" style="display:none;font-size:10px;color:var(--amber,#f0c472);margin-bottom:8px;padding:5px 8px;background:rgba(240,196,114,0.08);border-radius:6px;border:1px solid rgba(240,196,114,0.2);">🕯 Mum grafik modunda tek parametre gösterilir. Diğer parametreler çizgi modunda karşılaştırılabilir.</div>
         <!-- Canvas -->
         <div style="position:relative;height:240px;">
           <canvas id="dash-chart" role="img" aria-label="Finansal performans grafiği">Gelir, gider ve nakit akışı verileri</canvas>
@@ -3198,18 +3202,18 @@ let _dashSeciliMetrikler=['kasa'];
 let _dashChart=null;
 
 const DASH_METRIK={
-  // Tüm metrikler kümülatif — bir önceki günün değerinden devam eder
-  kasa:     {lbl:'Kasa',         renk:'#50e3c2',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
-  isGelir:  {lbl:'İşl.Gelir',   renk:'#7eb3f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
-  isGider:  {lbl:'İşl.Gider',   renk:'#f08080',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
-  isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
-  shGelir:  {lbl:'Şahsi Gelir', renk:'#b3d4f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
-  shGider:  {lbl:'Şahsi Gider', renk:'#f0b39d',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
-  shNet:    {lbl:'Şahsi Net',   renk:'#90e0c0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
-  alacak:   {lbl:'Alacak',      renk:'#f0e472',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
-  verecek:  {lbl:'Verecek',     renk:'#c4a0f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
-  personel: {lbl:'Personel',    renk:'#f0a0c8',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
-  vergi:    {lbl:'Vergi',       renk:'#a0b4b4',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
+  // Kontrast palet — 11 metrik, birbirinden net ayrışıyor
+  kasa:     {lbl:'Kasa',         renk:'#00e5ff',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme','sahsi']},
+  isGelir:  {lbl:'İşl.Gelir',   renk:'#4488ff',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme']},
+  isGider:  {lbl:'İşl.Gider',   renk:'#ff4455',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme']},
+  isNet:    {lbl:'İşl.Net',      renk:'#00ff88',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme']},
+  shGelir:  {lbl:'Şahsi Gelir', renk:'#ff9900',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','sahsi']},
+  shGider:  {lbl:'Şahsi Gider', renk:'#ff5500',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','sahsi']},
+  shNet:    {lbl:'Şahsi Net',   renk:'#ffdd00',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','sahsi']},
+  alacak:   {lbl:'Alacak',      renk:'#aa44ff',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme','sahsi']},
+  verecek:  {lbl:'Verecek',     renk:'#ff44aa',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme','sahsi']},
+  personel: {lbl:'Personel',    renk:'#44ffcc',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme']},
+  vergi:    {lbl:'Vergi',       renk:'#8899aa',eksen:'kumulatif',agg:'son',kumul:true, grup:['tumü','isletme']},
 };
 
 const DASH_DONEMLER=[
@@ -3224,11 +3228,39 @@ const DASH_DONEMLER=[
 
 function dashGrafikTipSec(tip){
   _dashGrafikTip=tip;
-  const cb=document.getElementById('dash-tip-cizgi');
-  const bb=document.getElementById('dash-tip-cubuk');
-  if(cb){cb.style.background=tip==='line'?'var(--blue-lt,#dbeafe)':'var(--bg2)';cb.style.color=tip==='line'?'var(--blue,#2563eb)':'var(--text3)';cb.style.borderColor=tip==='line'?'var(--blue-md,#1d4ed8)':'var(--border2)';}
-  if(bb){bb.style.background=tip==='bar'?'var(--blue-lt,#dbeafe)':'var(--bg2)';bb.style.color=tip==='bar'?'var(--blue,#2563eb)':'var(--text3)';bb.style.borderColor=tip==='bar'?'var(--blue-md,#1d4ed8)':'var(--border2)';}
+  const mumMod=tip==='candlestick';
+  // Buton görünümleri
+  ['dash-tip-cizgi','dash-tip-mum'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn)return;
+    const aktif=(id==='dash-tip-cizgi'&&tip==='line')||(id==='dash-tip-mum'&&tip==='candlestick');
+    btn.style.background=aktif?'var(--blue-lt,#dbeafe)':'var(--bg2)';
+    btn.style.color=aktif?'var(--blue,#2563eb)':'var(--text3)';
+    btn.style.borderColor=aktif?'var(--blue-md,#1d4ed8)':'var(--border2)';
+  });
+  // Mum modunda uyarı notu göster, tek parametre zorla
+  const not=document.getElementById('dash-mum-not');
+  if(not)not.style.display=mumMod?'block':'none';
+  if(mumMod&&_dashSeciliMetrikler.length>1){
+    _dashSeciliMetrikler=[_dashSeciliMetrikler[0]];
+    dashMetrikSecCiz();
+  }
   dashGrafikCiz();
+  dashGrafikOzetCiz();
+}
+
+function dashMetrikToggle(key){
+  if(_dashGrafikTip==='candlestick'){
+    // Mum modunda: sadece seçilen parametreyi göster
+    _dashSeciliMetrikler=[key];
+  }else{
+    const idx=_dashSeciliMetrikler.indexOf(key);
+    if(idx>=0){if(_dashSeciliMetrikler.length>1)_dashSeciliMetrikler.splice(idx,1);}
+    else{_dashSeciliMetrikler.push(key);}
+  }
+  dashMetrikSecCiz();
+  dashGrafikCiz();
+  dashGrafikOzetCiz();
 }
 
 function dashGrupSec(grup,btn){
@@ -3250,14 +3282,7 @@ function dashGrupSec(grup,btn){
   dashGrafikOzetCiz();
 }
 
-function dashMetrikToggle(key){
-  const idx=_dashSeciliMetrikler.indexOf(key);
-  if(idx>=0){if(_dashSeciliMetrikler.length>1)_dashSeciliMetrikler.splice(idx,1);}
-  else{_dashSeciliMetrikler.push(key);}
-  dashMetrikSecCiz();
-  dashGrafikCiz();
-  dashGrafikOzetCiz();
-}
+
 
 function dashMetrikSecCiz(){
   const wrap=document.getElementById('dash-metrik-sec');
@@ -3293,29 +3318,42 @@ function dashVeriHesapla(){
   const simdi=new Date();
   const bugun=new Date(simdi);bugun.setHours(0,0,0,0);
 
-  // Dönem sınırları ve granülarite belirle
+  // Granülarite: çizgi modunda ay/gün, mum modunda saat/gün/hafta/ay
+  const mumMod=_dashGrafikTip==='candlestick';
   let baslangic, bitis, granularite='gun';
   if(_dashDonem==='bugun'){
-    baslangic=new Date(bugun);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+    baslangic=new Date(bugun);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);
+    granularite=mumMod?'saat':'gun';
   }else if(_dashDonem==='hafta'){
     baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-6);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='buay'){
     baslangic=new Date(simdi.getFullYear(),simdi.getMonth(),1);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='3ay'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
+    granularite=mumMod?'hafta':'ay';
   }else if(_dashDonem==='6ay'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-5,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-5,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
+    granularite=mumMod?'hafta':'ay';
   }else if(_dashDonem==='1yil'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-11,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-11,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
+    granularite=mumMod?'ay':'ay';
   }else if(_dashDonem==='gelecek'){
     baslangic=new Date(bugun);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+3,1);granularite='gun';
   }
 
   // Zaman dilimlerini oluştur
   const dilimler=[];
-  if(granularite==='gun'){
+  if(granularite==='saat'){
+    const ptr=new Date(bugun);
+    while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setHours(ptr.getHours()+1);}
+  }else if(granularite==='gun'){
     const ptr=new Date(baslangic);
     while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setDate(ptr.getDate()+1);}
+  }else if(granularite==='hafta'){
+    // Haftanın pazartesisine hizala
+    const ptr=new Date(baslangic);
+    const gun=ptr.getDay();const fark=(gun===0?-6:1-gun);ptr.setDate(ptr.getDate()+fark);
+    while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setDate(ptr.getDate()+7);}
   }else{
     const ptr=new Date(baslangic);
     while(ptr<bitis){dilimler.push(new Date(ptr));ptr.setMonth(ptr.getMonth()+1);}
@@ -3324,11 +3362,39 @@ function dashVeriHesapla(){
   // Her dilim için metrikleri hesapla
   function dilimStr(d){
     if(granularite==='ay')return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(granularite==='hafta'){
+      // Haftanın başlangıç tarihi (YYYY-MM-DD)
+      const ptr=new Date(d);const g=ptr.getDay();const f=(g===0?-6:1-g);ptr.setDate(ptr.getDate()+f);
+      return ptr.getFullYear()+'-'+String(ptr.getMonth()+1).padStart(2,'0')+'-'+String(ptr.getDate()).padStart(2,'0');
+    }
+    if(granularite==='saat'){
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0');
+    }
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
   function tariheAit(tarihStr,dilimD){
     const ds=dilimStr(dilimD);
-    return granularite==='ay'?tarihStr.startsWith(ds):tarihStr.slice(0,10)===ds;
+    if(granularite==='ay')return tarihStr.startsWith(ds);
+    if(granularite==='hafta'){
+      // Tarih o haftanın aralığında mı?
+      const ptr=new Date(dilimD);const g=ptr.getDay();const f=(g===0?-6:1-g);ptr.setDate(ptr.getDate()+f);
+      const son=new Date(ptr);son.setDate(son.getDate()+7);
+      const t=new Date(tarihStr.slice(0,10)+'T12:00:00');
+      return t>=ptr&&t<son;
+    }
+    if(granularite==='saat'){
+      // tarihStr ISO formatında saat içeriyor mu?
+      const ts=typeof tarihStr==='string'?tarihStr:'';
+      const gunSaat=ts.slice(0,13).replace('T',' ');
+      const dilimGunSaat=ds.replace('T',' ');
+      // Saat bazlı karşılaştırma
+      const tsDate=new Date(ts);
+      return tsDate.getFullYear()===dilimD.getFullYear()&&
+             tsDate.getMonth()===dilimD.getMonth()&&
+             tsDate.getDate()===dilimD.getDate()&&
+             tsDate.getHours()===dilimD.getHours();
+    }
+    return tarihStr.slice(0,10)===ds;
   }
 
   // --- KASA KÜMÜLATİF HESABI ---
@@ -3495,9 +3561,16 @@ function dashVeriHesapla(){
 
   // Etiketler
   const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
-  const labels=dilimler.map(d=>granularite==='ay'
-    ?AYLAR[d.getMonth()]+' '+d.getFullYear()
-    :(_dashDonem==='bugun'?'Bugün':(d.getDate()+' '+AYLAR[d.getMonth()])));
+  const labels=dilimler.map(d=>{
+    if(granularite==='saat')return String(d.getHours()).padStart(2,'0')+':00';
+    if(granularite==='hafta'){
+      const ptr=new Date(d);const g=ptr.getDay();const f=(g===0?-6:1-g);ptr.setDate(ptr.getDate()+f);
+      const son=new Date(ptr);son.setDate(son.getDate()+6);
+      return ptr.getDate()+' '+AYLAR[ptr.getMonth()]+' – '+son.getDate()+' '+AYLAR[son.getMonth()];
+    }
+    if(granularite==='ay')return AYLAR[d.getMonth()]+' '+d.getFullYear();
+    return d.getDate()+' '+AYLAR[d.getMonth()];
+  });
 
   return{labels,sonuclar,dilimler};
 }
@@ -3510,46 +3583,79 @@ function dashGrafikCiz(){
   const{labels,sonuclar}=dashVeriHesapla();
   if(!sonuclar.length)return;
 
-  // Tüm metrikler kümülatif — tek eksen, hepsi line
-  // Sıfır hizalama: tüm seçili metriklerin değerlerini al
-  const tumVals=_dashSeciliMetrikler.flatMap(k=>sonuclar.map(r=>r[k]||0));
-  const vMax=Math.max(...tumVals,0);
-  const vMin=Math.min(...tumVals,0);
-  const aralik=(vMax-vMin)||1;
-  const padding=aralik*0.1;
-  const eksenMin=vMin-padding;
-  const eksenMax=vMax+padding;
-
-  const nokta=labels.length<=14?3:(labels.length<=31?2:1);
-  const gerilim=0.35;
-
-  const datasets=_dashSeciliMetrikler.map((key,idx)=>{
-    const m=DASH_METRIK[key];
-    const data=sonuclar.map(r=>Math.round((r[key]||0)*100)/100);
-    const ilkMi=idx===0;
-    return{
-      label:m.lbl,
-      data,
-      borderColor:m.renk,
-      backgroundColor:ilkMi?m.renk+'20':'transparent',
-      yAxisID:'kumulatif',
-      fill:ilkMi,
-      tension:gerilim,
-      pointRadius:nokta,
-      pointHoverRadius:nokta+3,
-      borderWidth:key==='kasa'?2.5:2,
-      type:'line',
-      borderDash:key==='isNet'||key==='shNet'?[6,3]:[],
-      pointStyle:'circle',
-    };
-  });
-
+  const mumMod=_dashGrafikTip==='candlestick';
+  const FOSFOR_P='#00ff88';
+  const FOSFOR_N='#ff3355';
   const tlCallback=v=>{const n=Math.abs(v);return(v<0?'-':'')+(n>=1000000?Math.round(n/100000)/10+'M₺':n>=1000?Math.round(n/100)/10+'k₺':Math.round(n)+'₺');};
   const scaleBase={grid:{color:'rgba(128,128,128,0.07)'},ticks:{font:{size:10},color:'rgba(155,175,200,0.9)'},border:{color:'rgba(128,128,128,0.15)'}};
 
+  // Eksen sınırları
+  let tumVals;
+  if(mumMod){
+    const key=_dashSeciliMetrikler[0]||'kasa';
+    tumVals=sonuclar.map(r=>r[key]||0);
+  }else{
+    tumVals=_dashSeciliMetrikler.flatMap(k=>sonuclar.map(r=>r[k]||0));
+  }
+  const vMax=Math.max(...tumVals,0);
+  const vMin=Math.min(...tumVals,0);
+  const aralik=(vMax-vMin)||1;
+  const eksenMin=vMin-aralik*0.12;
+  const eksenMax=vMax+aralik*0.12;
+  const nokta=labels.length<=14?3:(labels.length<=31?2:1);
+
+  let datasets;
+  if(mumMod){
+    const key=_dashSeciliMetrikler[0]||'kasa';
+    const vals=sonuclar.map(r=>r[key]||0);
+    const mumData=sonuclar.map((r,i)=>{
+      const open=i===0?vals[0]:vals[i-1];
+      const close=vals[i];
+      const delta=Math.abs(close-open);
+      return{x:labels[i],o:open,h:Math.max(open,close)+delta*0.15,l:Math.min(open,close)-delta*0.15,c:close};
+    });
+    datasets=[{
+      label:DASH_METRIK[key]?.lbl||key,
+      data:mumData,
+      color:{up:'#00ff88',down:'#ff3355',unchanged:'#888899'},
+      borderColor:{up:'#00ff88',down:'#ff3355',unchanged:'#888899'},
+    }];
+  }else{
+    datasets=_dashSeciliMetrikler.map((key,idx)=>{
+      const m=DASH_METRIK[key];
+      const data=sonuclar.map(r=>Math.round((r[key]||0)*100)/100);
+      const ptBg=data.map(v=>v>=0?FOSFOR_P:FOSFOR_N);
+      return{
+        label:m.lbl,data,
+        borderColor:m.renk,
+        backgroundColor:idx===0?m.renk+'18':'transparent',
+        yAxisID:'kumulatif',fill:idx===0,tension:0.35,
+        pointRadius:nokta,pointHoverRadius:nokta+4,
+        pointBackgroundColor:ptBg,pointBorderColor:ptBg,pointBorderWidth:1.5,
+        borderWidth:key==='kasa'?2.5:1.8,type:'line',
+        borderDash:key==='isNet'||key==='shNet'?[6,3]:[],
+      };
+    });
+  }
+
+  const sifirCizgisi={
+    id:'sifirCizgisi',
+    afterDraw(chart){
+      const{ctx,chartArea,scales}=chart;
+      const yScale=scales.kumulatif||scales.y;
+      if(!yScale)return;
+      const y=yScale.getPixelForValue(0);
+      if(y<chartArea.top||y>chartArea.bottom)return;
+      ctx.save();ctx.beginPath();
+      ctx.moveTo(chartArea.left,y);ctx.lineTo(chartArea.right,y);
+      ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+      ctx.stroke();ctx.restore();
+    }
+  };
+
   _dashChart=new Chart(canvas,{
-    type:_dashGrafikTip,
-    data:{labels,datasets},
+    type:mumMod?'candlestick':'line',
+    data:mumMod?{datasets}:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
       animation:{duration:700,easing:'easeInOutQuart'},
@@ -3561,29 +3667,29 @@ function dashGrafikCiz(){
           backgroundColor:'rgba(8,16,32,0.96)',
           titleColor:'#ddeeff',titleFont:{size:11,weight:'600'},
           bodyColor:'#8aaccc',bodyFont:{size:11},
-          borderColor:'rgba(40,70,110,0.8)',borderWidth:1,
-          padding:10,cornerRadius:8,
+          borderColor:'rgba(40,70,110,0.8)',borderWidth:1,padding:10,cornerRadius:8,
           callbacks:{
             label:ctx=>{
+              if(mumMod){
+                const d=ctx.raw;if(!d)return '';
+                const ok=d.c>=d.o;
+                return(ok?'🟢':'🔴')+' A:'+fmt(d.o)+'₺ K:'+fmt(d.c)+'₺ Y:'+fmt(d.h)+'₺ D:'+fmt(d.l)+'₺';
+              }
               const v=ctx.parsed.y;
-              const pos=v>=0;
-              const str=(pos?'':'−')+fmt(Math.abs(v))+' ₺';
-              return '  '+ctx.dataset.label+': '+str;
+              return '  '+ctx.dataset.label+': '+(v>=0?'':'-')+fmt(Math.abs(v))+' ₺';
             }
           }
         }
       },
-      scales:{
+      scales:mumMod?{
+        x:{type:'category',...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:14}},
+        y:{...scaleBase,position:'left',min:eksenMin,max:eksenMax,ticks:{...scaleBase.ticks,callback:tlCallback}},
+      }:{
         x:{...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:12}},
-        kumulatif:{
-          ...scaleBase,
-          position:'left',
-          min:eksenMin,
-          max:eksenMax,
-          ticks:{...scaleBase.ticks,callback:tlCallback},
-        },
+        kumulatif:{...scaleBase,position:'left',min:eksenMin,max:eksenMax,ticks:{...scaleBase.ticks,callback:tlCallback}},
       }
-    }
+    },
+    plugins:[sifirCizgisi],
   });
 }
 
