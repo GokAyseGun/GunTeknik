@@ -3198,17 +3198,18 @@ let _dashSeciliMetrikler=['kasa'];
 let _dashChart=null;
 
 const DASH_METRIK={
-  kasa:     {lbl:'Kasa (Kümülatif)',renk:'#50e3c2',eksen:'kumulatif',agg:'son', grup:['tumü','isletme','sahsi']},
-  isGelir:  {lbl:'İşl.Gelir',   renk:'#7eb3f0',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
-  isGider:  {lbl:'İşl.Gider',   renk:'#f08080',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
-  isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
-  shGelir:  {lbl:'Şahsi Gelir', renk:'#b3d4f0',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
-  shGider:  {lbl:'Şahsi Gider', renk:'#f0b39d',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
-  shNet:    {lbl:'Şahsi Net',   renk:'#90e0c0',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
-  alacak:   {lbl:'Alacak',      renk:'#f0e472',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
-  verecek:  {lbl:'Verecek',     renk:'#c4a0f0',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
-  personel: {lbl:'Personel',    renk:'#f0a0c8',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
-  vergi:    {lbl:'Vergi',       renk:'#a0b4b4',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
+  // Tüm metrikler kümülatif — bir önceki günün değerinden devam eder
+  kasa:     {lbl:'Kasa',         renk:'#50e3c2',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
+  isGelir:  {lbl:'İşl.Gelir',   renk:'#7eb3f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
+  isGider:  {lbl:'İşl.Gider',   renk:'#f08080',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
+  isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
+  shGelir:  {lbl:'Şahsi Gelir', renk:'#b3d4f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
+  shGider:  {lbl:'Şahsi Gider', renk:'#f0b39d',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
+  shNet:    {lbl:'Şahsi Net',   renk:'#90e0c0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','sahsi']},
+  alacak:   {lbl:'Alacak',      renk:'#f0e472',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
+  verecek:  {lbl:'Verecek',     renk:'#c4a0f0',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme','sahsi']},
+  personel: {lbl:'Personel',    renk:'#f0a0c8',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
+  vergi:    {lbl:'Vergi',       renk:'#a0b4b4',eksen:'kumulatif',agg:'son',kumul:true,  grup:['tumü','isletme']},
 };
 
 const DASH_DONEMLER=[
@@ -3388,61 +3389,108 @@ function dashVeriHesapla(){
   personelHareketler.forEach(h=>{if(h.tarih<baslangicStr)personelKumulatif+=h.delta;});
   personelKumulatif=Math.max(0,personelKumulatif);
 
-  let kasaKumulatif=_dashDonem==='gelecek'?bugunkuKasa:donemOncesiBakiye;
+  // Kümülatif sayaçlar — her metrik için dönem başı değeri (önceki birikimden)
+  const kumulatif={
+    kasa:_dashDonem==='gelecek'?bugunkuKasa:donemOncesiBakiye,
+    isGelir:0,isGider:0,isNet:0,
+    shGelir:0,shGider:0,shNet:0,
+    alacak:0,verecek:0,vergi:0,
+  };
+  // Dönem öncesi birikim (kasa hariç, diğerleri için)
+  tamamlananlar.forEach(i=>{
+    const ts=localDateStr(i.tarih);
+    if(ts>=baslangicStr)return;
+    const t=parseFloat(i.tutar)||0;
+    if(i.tip==='Gelir'){
+      if(i.kat==='İşletme Geliri'){kumulatif.isGelir+=t;kumulatif.isNet+=t;}
+      else if(i.kat==='Şahsi Gelir'){kumulatif.shGelir+=t;kumulatif.shNet+=t;}
+      else if(i.kat==='Vergi')kumulatif.vergi+=t;
+    }
+    if(i.tip==='Gider'){
+      if(i.kat==='İşletme Gideri'){kumulatif.isGider+=t;kumulatif.isNet-=t;}
+      else if(i.kat==='Şahsi Gider'){kumulatif.shGider+=t;kumulatif.shNet-=t;}
+      else if(i.kat==='Vergi')kumulatif.vergi+=t;
+    }
+  });
+  // Alacak/Verecek dönem öncesi (takvim)
+  DB.takvim.forEach(tk=>{
+    const ts=localDateStr(tk.tarih);
+    if(ts>=baslangicStr)return;
+    const t=parseFloat(tk.tutar)||0;
+    if(tk.tip==='Alacak')kumulatif.alacak+=t;
+    else if(tk.tip==='Verecek')kumulatif.verecek+=t;
+  });
 
   const sonuclar=dilimler.map(dilimD=>{
-    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:0,vergi:0,kasaDelta:0,shNet:0};
+    // Bu dilimde gerçekleşen hareketler
+    const delta={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,vergi:0,kasa:0};
 
     tamamlananlar.forEach(i=>{
       const ts=localDateStr(i.tarih);
       if(!tariheAit(ts,dilimD))return;
       const t=parseFloat(i.tutar)||0;
       if(i.tip==='Gelir'){
-        if(i.kat==='İşletme Geliri')r.isGelir+=t;
-        else if(i.kat==='Şahsi Gelir')r.shGelir+=t;
-        else if(i.kat==='Vergi')r.vergi+=t;
+        if(i.kat==='İşletme Geliri')delta.isGelir+=t;
+        else if(i.kat==='Şahsi Gelir')delta.shGelir+=t;
+        else if(i.kat==='Vergi')delta.vergi+=t;
       }
       if(i.tip==='Gider'){
-        if(i.kat==='İşletme Gideri')r.isGider+=t;
-        else if(i.kat==='Şahsi Gider')r.shGider+=t;
-        else if(i.kat==='Vergi')r.vergi+=t;
+        if(i.kat==='İşletme Gideri')delta.isGider+=t;
+        else if(i.kat==='Şahsi Gider')delta.shGider+=t;
+        else if(i.kat==='Vergi')delta.vergi+=t;
       }
-      r.kasaDelta+=kasaHareketi(i);
+      delta.kasa+=kasaHareketi(i);
     });
-    // DB.odemeler de kasa hareketine dahil
     (DB.odemeler||[]).forEach(o=>{
       const ts=localDateStr(o.tarih);
       if(!tariheAit(ts,dilimD))return;
-      r.kasaDelta+=odemeHareketi(o);
+      delta.kasa+=odemeHareketi(o);
     });
-
-    // Gelecek modu: bekleyen + takvim
     bekleyenler.forEach(i=>{
       const ts=localDateStr(i.tarih);
       if(!tariheAit(ts,dilimD))return;
       const t=parseFloat(i.tutar)||0;
-      if(i.tip==='Gelir'){r.alacak+=t;r.kasaDelta+=t;}
-      else if(i.tip==='Gider'){r.verecek+=t;r.kasaDelta-=t;}
+      if(i.tip==='Gelir'){delta.alacak+=t;delta.kasa+=t;}
+      else if(i.tip==='Gider'){delta.verecek+=t;delta.kasa-=t;}
     });
-    takvimGelecek.forEach(tk=>{
+    DB.takvim.filter(tk=>tk.tip==='Alacak'||tk.tip==='Verecek').forEach(tk=>{
       const ts=localDateStr(tk.tarih);
       if(!tariheAit(ts,dilimD))return;
       const t=parseFloat(tk.tutar)||0;
-      if(tk.tip==='Alacak')r.alacak+=t;
-      else if(tk.tip==='Verecek')r.verecek+=t;
+      if(tk.tip==='Alacak')delta.alacak+=t;
+      else if(tk.tip==='Verecek')delta.verecek+=t;
     });
-
-    // Personel bu dilimde eklenen hak edişler
     personelHareketler.forEach(h=>{
       if(tariheAit(h.tarih,dilimD))personelKumulatif+=h.delta;
     });
     personelKumulatif=Math.max(0,personelKumulatif);
-    r.personel=personelKumulatif;
-    kasaKumulatif+=r.kasaDelta;
-    r.kasa=kasaKumulatif;
-    r.isNet=r.isGelir-r.isGider;
-    r.shNet=r.shGelir-r.shGider;
-    return r;
+
+    // Kümülatif değerleri güncelle
+    kumulatif.kasa+=delta.kasa;
+    kumulatif.isGelir+=delta.isGelir;
+    kumulatif.isGider+=delta.isGider;
+    kumulatif.isNet+=delta.isGelir-delta.isGider;
+    kumulatif.shGelir+=delta.shGelir;
+    kumulatif.shGider+=delta.shGider;
+    kumulatif.shNet+=delta.shGelir-delta.shGider;
+    kumulatif.alacak+=delta.alacak;
+    kumulatif.verecek+=delta.verecek;
+    kumulatif.vergi+=delta.vergi;
+
+    // Bu dilim için snapshot (kümülatif)
+    return{
+      kasa:kumulatif.kasa,
+      isGelir:kumulatif.isGelir,
+      isGider:kumulatif.isGider,
+      isNet:kumulatif.isNet,
+      shGelir:kumulatif.shGelir,
+      shGider:kumulatif.shGider,
+      shNet:kumulatif.shNet,
+      alacak:kumulatif.alacak,
+      verecek:kumulatif.verecek,
+      personel:personelKumulatif,
+      vergi:kumulatif.vergi,
+    };
   });
 
   // Etiketler
@@ -3462,78 +3510,39 @@ function dashGrafikCiz(){
   const{labels,sonuclar}=dashVeriHesapla();
   if(!sonuclar.length)return;
 
-  const kasaSecili=_dashSeciliMetrikler.includes('kasa');
-  const digerMetrikler=_dashSeciliMetrikler.filter(k=>k!=='kasa');
-  const tlGoster=digerMetrikler.some(k=>DASH_METRIK[k]&&DASH_METRIK[k].eksen==='tl');
+  // Tüm metrikler kümülatif — tek eksen, hepsi line
+  // Sıfır hizalama: tüm seçili metriklerin değerlerini al
+  const tumVals=_dashSeciliMetrikler.flatMap(k=>sonuclar.map(r=>r[k]||0));
+  const vMax=Math.max(...tumVals,0);
+  const vMin=Math.min(...tumVals,0);
+  const aralik=(vMax-vMin)||1;
+  const padding=aralik*0.1;
+  const eksenMin=vMin-padding;
+  const eksenMax=vMax+padding;
 
-  // --- SIFIR HİZALAMA: her iki eksenin 0 noktası aynı piksel yüksekliğinde olsun ---
-  function sifirHizaliAralik(degerler){
-    if(!degerler.length)return{min:-1,max:1};
-    const maks=Math.max(...degerler,0);
-    const min=Math.min(...degerler,0);
-    const aralik=maks-min||1;
-    return{min:min-aralik*0.08,max:maks+aralik*0.08};
-  }
-  function hizalanmisEksenler(solDegerler,sagDegerler){
-    const sol=sifirHizaliAralik(solDegerler);
-    const sag=sifirHizaliAralik(sagDegerler);
-    // Negatif oran: her iki eksende negatif bölge / toplam aralık aynı olmalı
-    const solNegOran=sol.min<0?Math.abs(sol.min)/(sol.max-sol.min):0;
-    const sagNegOran=sag.min<0?Math.abs(sag.min)/(sag.max-sag.min):0;
-    const ortakNegOran=Math.max(solNegOran,sagNegOran);
-    // Yeni min/max: oran korunarak 0 aynı hizada
-    const solAralik=sol.max-sol.min;
-    const sagAralik=sag.max-sag.min;
-    const solMaks=solAralik*(1-ortakNegOran);
-    const solMin=-solAralik*ortakNegOran;
-    const sagMaks=sagAralik*(1-ortakNegOran);
-    const sagMin=-sagAralik*ortakNegOran;
-    return{sol:{min:solMin,max:solMaks},sag:{min:sagMin,max:sagMaks}};
-  }
-  // Kasa ve sağ eksen verilerini topla
-  const kasaVals=kasaSecili?sonuclar.map(r=>r.kasa||0):[];
-  const tlVals=digerMetrikler.length?digerMetrikler.flatMap(k=>sonuclar.map(r=>r[k]||0)):[];
-  const hizali=(kasaSecili&&tlGoster)?hizalanmisEksenler(kasaVals,tlVals):{sol:sifirHizaliAralik(kasaVals),sag:sifirHizaliAralik(tlVals)};
+  const nokta=labels.length<=14?3:(labels.length<=31?2:1);
+  const gerilim=0.35;
 
-  const datasets=[];
-
-  // Diğer metrikler — sağ eksen, dönemsel
-  digerMetrikler.forEach(key=>{
+  const datasets=_dashSeciliMetrikler.map((key,idx)=>{
     const m=DASH_METRIK[key];
-    datasets.push({
+    const data=sonuclar.map(r=>Math.round((r[key]||0)*100)/100);
+    const ilkMi=idx===0;
+    return{
       label:m.lbl,
-      data:sonuclar.map(r=>Math.round((r[key]||0)*100)/100),
+      data,
       borderColor:m.renk,
-      backgroundColor:m.renk+'44',
-      yAxisID:'tl',
-      fill:false,
-      tension:0.4,
-      pointRadius:labels.length<=12?3:1,
-      pointHoverRadius:6,
-      borderWidth:2,
-      type:_dashGrafikTip,
-    });
-  });
-
-  // Kasa — sol eksen, her zaman çizgi, kümülatif step
-  if(kasaSecili){
-    const m=DASH_METRIK['kasa'];
-    datasets.unshift({
-      label:m.lbl,
-      data:sonuclar.map(r=>Math.round((r.kasa||0)*100)/100),
-      borderColor:m.renk,
-      backgroundColor:m.renk+'18',
+      backgroundColor:ilkMi?m.renk+'20':'transparent',
       yAxisID:'kumulatif',
-      fill:true,
-      tension:0.3,
-      stepped:labels.length>20?'before':false,
-      pointRadius:labels.length<=12?4:2,
-      pointHoverRadius:7,
-      borderWidth:2.5,
+      fill:ilkMi,
+      tension:gerilim,
+      pointRadius:nokta,
+      pointHoverRadius:nokta+3,
+      borderWidth:key==='kasa'?2.5:2,
       type:'line',
+      borderDash:key==='isNet'||key==='shNet'?[6,3]:[],
       pointStyle:'circle',
-    });
-  }
+    };
+  });
 
   const tlCallback=v=>{const n=Math.abs(v);return(v<0?'-':'')+(n>=1000000?Math.round(n/100000)/10+'M₺':n>=1000?Math.round(n/100)/10+'k₺':Math.round(n)+'₺');};
   const scaleBase={grid:{color:'rgba(128,128,128,0.07)'},ticks:{font:{size:10},color:'rgba(155,175,200,0.9)'},border:{color:'rgba(128,128,128,0.15)'}};
@@ -3569,21 +3578,9 @@ function dashGrafikCiz(){
         kumulatif:{
           ...scaleBase,
           position:'left',
-          display:kasaSecili,
-          min:hizali.sol.min,
-          max:hizali.sol.max,
+          min:eksenMin,
+          max:eksenMax,
           ticks:{...scaleBase.ticks,callback:tlCallback},
-          title:{display:kasaSecili,text:'Kasa ₺',color:'#50e3c2',font:{size:9}},
-        },
-        tl:{
-          ...scaleBase,
-          position:'right',
-          display:tlGoster,
-          min:hizali.sag.min,
-          max:hizali.sag.max,
-          grid:{drawOnChartArea:false},
-          ticks:{...scaleBase.ticks,callback:tlCallback},
-          title:{display:tlGoster,text:'Dönemsel ₺',color:'rgba(155,175,200,0.8)',font:{size:9}},
         },
       }
     }
