@@ -3194,7 +3194,7 @@ function renderDashBugun(){
 let _dashDonem='buay';
 let _dashGrup='tumü';
 let _dashGrafikTip='line';
-let _dashSeciliMetrikler=['kasa','isGelir','isGider'];
+let _dashSeciliMetrikler=['kasa'];
 let _dashChart=null;
 
 const DASH_METRIK={
@@ -3204,6 +3204,7 @@ const DASH_METRIK={
   isNet:    {lbl:'İşl.Net',      renk:'#6fcf97',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
   shGelir:  {lbl:'Şahsi Gelir', renk:'#b3d4f0',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
   shGider:  {lbl:'Şahsi Gider', renk:'#f0b39d',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
+  shNet:    {lbl:'Şahsi Net',   renk:'#90e0c0',eksen:'tl', agg:'sum', grup:['tumü','sahsi']},
   alacak:   {lbl:'Alacak',      renk:'#f0e472',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
   verecek:  {lbl:'Verecek',     renk:'#c4a0f0',eksen:'tl', agg:'sum', grup:['tumü','isletme','sahsi']},
   personel: {lbl:'Personel',    renk:'#f0a0c8',eksen:'tl', agg:'sum', grup:['tumü','isletme']},
@@ -3375,21 +3376,22 @@ function dashVeriHesapla(){
   const bekleyenler=_dashDonem==='gelecek'?DB.islemler.filter(i=>i.statu==='Bekliyor'):[];
   const takvimGelecek=_dashDonem==='gelecek'?DB.takvim.filter(t=>t.tip==='Alacak'||t.tip==='Verecek'):[];
 
-  // Personel birikimi
-  const personelBakiye={};
-  DB.personeller.forEach(p=>{personelBakiye[p.id]=0;});
-  DB.yardimciIslemleri.forEach(y=>{
-    if(y.personelId&&personelBakiye[y.personelId]!==undefined){
-      if(y.tip==='Hak Edis')personelBakiye[y.personelId]+=y.tutar;
-      else personelBakiye[y.personelId]-=y.tutar;
-    }
-  });
-  const topPersonel=Object.values(personelBakiye).reduce((a,b)=>a+Math.max(0,b),0);
+  // Personel: her yardimci işlemi tarih+tip ile kaydet, dilim bazında kümülatif hesapla
+  const personelHareketler=DB.yardimciIslemleri.map(y=>({
+    tarih:localDateStr(y.tarih),
+    delta:y.tip==='Hak Edis'?(y.tutar||0):-(y.tutar||0)
+  }));
+
+  // Personel: dilim bazında kümülatif (her dilim sonu itibarıyla borç)
+  // Dönem başından önceki birikmiş personel borcu
+  let personelKumulatif=0;
+  personelHareketler.forEach(h=>{if(h.tarih<baslangicStr)personelKumulatif+=h.delta;});
+  personelKumulatif=Math.max(0,personelKumulatif);
 
   let kasaKumulatif=_dashDonem==='gelecek'?bugunkuKasa:donemOncesiBakiye;
 
   const sonuclar=dilimler.map(dilimD=>{
-    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:topPersonel,vergi:0,kasaDelta:0};
+    const r={isGelir:0,isGider:0,shGelir:0,shGider:0,alacak:0,verecek:0,personel:0,vergi:0,kasaDelta:0,shNet:0};
 
     tamamlananlar.forEach(i=>{
       const ts=localDateStr(i.tarih);
@@ -3430,9 +3432,16 @@ function dashVeriHesapla(){
       else if(tk.tip==='Verecek')r.verecek+=t;
     });
 
+    // Personel bu dilimde eklenen hak edişler
+    personelHareketler.forEach(h=>{
+      if(tariheAit(h.tarih,dilimD))personelKumulatif+=h.delta;
+    });
+    personelKumulatif=Math.max(0,personelKumulatif);
+    r.personel=personelKumulatif;
     kasaKumulatif+=r.kasaDelta;
     r.kasa=kasaKumulatif;
     r.isNet=r.isGelir-r.isGider;
+    r.shNet=r.shGelir-r.shGider;
     return r;
   });
 
@@ -3456,6 +3465,35 @@ function dashGrafikCiz(){
   const kasaSecili=_dashSeciliMetrikler.includes('kasa');
   const digerMetrikler=_dashSeciliMetrikler.filter(k=>k!=='kasa');
   const tlGoster=digerMetrikler.some(k=>DASH_METRIK[k]&&DASH_METRIK[k].eksen==='tl');
+
+  // --- SIFIR HİZALAMA: her iki eksenin 0 noktası aynı piksel yüksekliğinde olsun ---
+  function sifirHizaliAralik(degerler){
+    if(!degerler.length)return{min:-1,max:1};
+    const maks=Math.max(...degerler,0);
+    const min=Math.min(...degerler,0);
+    const aralik=maks-min||1;
+    return{min:min-aralik*0.08,max:maks+aralik*0.08};
+  }
+  function hizalanmisEksenler(solDegerler,sagDegerler){
+    const sol=sifirHizaliAralik(solDegerler);
+    const sag=sifirHizaliAralik(sagDegerler);
+    // Negatif oran: her iki eksende negatif bölge / toplam aralık aynı olmalı
+    const solNegOran=sol.min<0?Math.abs(sol.min)/(sol.max-sol.min):0;
+    const sagNegOran=sag.min<0?Math.abs(sag.min)/(sag.max-sag.min):0;
+    const ortakNegOran=Math.max(solNegOran,sagNegOran);
+    // Yeni min/max: oran korunarak 0 aynı hizada
+    const solAralik=sol.max-sol.min;
+    const sagAralik=sag.max-sag.min;
+    const solMaks=solAralik*(1-ortakNegOran);
+    const solMin=-solAralik*ortakNegOran;
+    const sagMaks=sagAralik*(1-ortakNegOran);
+    const sagMin=-sagAralik*ortakNegOran;
+    return{sol:{min:solMin,max:solMaks},sag:{min:sagMin,max:sagMaks}};
+  }
+  // Kasa ve sağ eksen verilerini topla
+  const kasaVals=kasaSecili?sonuclar.map(r=>r.kasa||0):[];
+  const tlVals=digerMetrikler.length?digerMetrikler.flatMap(k=>sonuclar.map(r=>r[k]||0)):[];
+  const hizali=(kasaSecili&&tlGoster)?hizalanmisEksenler(kasaVals,tlVals):{sol:sifirHizaliAralik(kasaVals),sag:sifirHizaliAralik(tlVals)};
 
   const datasets=[];
 
@@ -3532,6 +3570,8 @@ function dashGrafikCiz(){
           ...scaleBase,
           position:'left',
           display:kasaSecili,
+          min:hizali.sol.min,
+          max:hizali.sol.max,
           ticks:{...scaleBase.ticks,callback:tlCallback},
           title:{display:kasaSecili,text:'Kasa ₺',color:'#50e3c2',font:{size:9}},
         },
@@ -3539,6 +3579,8 @@ function dashGrafikCiz(){
           ...scaleBase,
           position:'right',
           display:tlGoster,
+          min:hizali.sag.min,
+          max:hizali.sag.max,
           grid:{drawOnChartArea:false},
           ticks:{...scaleBase.ticks,callback:tlCallback},
           title:{display:tlGoster,text:'Dönemsel ₺',color:'rgba(155,175,200,0.8)',font:{size:9}},
