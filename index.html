@@ -3316,25 +3316,21 @@ function dashVeriHesapla(){
   const simdi=new Date();
   const bugun=new Date(simdi);bugun.setHours(0,0,0,0);
 
-  // Granülarite: çizgi modunda ay/gün, mum modunda saat/gün/hafta/ay
+  // Granülarite: her iki mod için aynı (mum/çizgi fark yok)
   const mumMod=_dashGrafikTip==='candlestick';
   let baslangic, bitis, granularite='gun';
   if(_dashDonem==='bugun'){
-    baslangic=new Date(bugun);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);
-    granularite=mumMod?'saat':'gun';
+    baslangic=new Date(bugun);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='saat';
   }else if(_dashDonem==='hafta'){
     baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-6);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='buay'){
     baslangic=new Date(simdi.getFullYear(),simdi.getMonth(),1);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='3ay'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
-    granularite=mumMod?'hafta':'ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='hafta';
   }else if(_dashDonem==='6ay'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-5,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
-    granularite=mumMod?'hafta':'ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-5,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='hafta';
   }else if(_dashDonem==='1yil'){
-    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-11,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);
-    granularite=mumMod?'ay':'ay';
+    baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-11,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='ay';
   }else if(_dashDonem==='gelecek'){
     baslangic=new Date(bugun);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+3,1);granularite='gun';
   }
@@ -3559,12 +3555,22 @@ function dashVeriHesapla(){
 
   // Etiketler
   const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+
+  // ISO hafta numarası hesaplama
+  function isoHaftaNo(d){
+    const ptr=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const gun=ptr.getUTCDay()||7;
+    ptr.setUTCDate(ptr.getUTCDate()+4-gun);
+    const yilBasi=new Date(Date.UTC(ptr.getUTCFullYear(),0,1));
+    return Math.ceil((((ptr-yilBasi)/86400000)+1)/7);
+  }
+
   const labels=dilimler.map(d=>{
     if(granularite==='saat')return String(d.getHours()).padStart(2,'0')+':00';
     if(granularite==='hafta'){
+      // Haftanın pazartesisini bul
       const ptr=new Date(d);const g=ptr.getDay();const f=(g===0?-6:1-g);ptr.setDate(ptr.getDate()+f);
-      const son=new Date(ptr);son.setDate(son.getDate()+6);
-      return ptr.getDate()+' '+AYLAR[ptr.getMonth()]+' – '+son.getDate()+' '+AYLAR[son.getMonth()];
+      return 'Hf '+isoHaftaNo(ptr);
     }
     if(granularite==='ay')return AYLAR[d.getMonth()]+' '+d.getFullYear();
     return d.getDate()+' '+AYLAR[d.getMonth()];
@@ -3683,7 +3689,7 @@ function dashGrafikCiz(){
         x:{type:'category',...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:14}},
         y:{...scaleBase,position:'left',min:eksenMin,max:eksenMax,ticks:{...scaleBase.ticks,callback:tlCallback}},
       }:{
-        x:{...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:12}},
+        x:{...scaleBase,ticks:{...scaleBase.ticks,maxRotation:45,autoSkip:true,maxTicksLimit:granularite==='saat'?8:12}},
         kumulatif:{...scaleBase,position:'left',min:eksenMin,max:eksenMax,ticks:{...scaleBase.ticks,callback:tlCallback}},
       }
     },
