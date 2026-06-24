@@ -3576,7 +3576,7 @@ function dashVeriHesapla(){
     return d.getDate()+' '+AYLAR[d.getMonth()];
   });
 
-  return{labels,sonuclar,dilimler};
+  return{labels,sonuclar,dilimler,granularite};
 }
 
 function dashGrafikCiz(){
@@ -3591,7 +3591,7 @@ function dashGrafikCiz(){
   if(mumCanvasEl)mumCanvasEl.style.display=mumMod?'block':'none';
   if(chartCanvas)chartCanvas.style.display=mumMod?'none':'block';
 
-  const{labels,sonuclar}=dashVeriHesapla();
+  const{labels,sonuclar,granularite}=dashVeriHesapla();
   if(!sonuclar.length)return;
   const FOSFOR_P='#00ff88';
   const FOSFOR_N='#ff3355';
@@ -6635,10 +6635,17 @@ function reklamGoster(){
       </div>`;
     }).join('')
   }</div>`;
-  reklamMetrikSecCiz();
-  reklamGrafikCiz(veri);
-  reklamGrafikOzetCiz(veri);
-  reklamKelimelerCiz();
+  try{
+    reklamMetrikSecCiz();
+    if(veri.length>0){
+      reklamGrafikCiz(veri);
+      reklamGrafikOzetCiz(veri);
+    }else{
+      const gc=document.getElementById('reklam-grafik');if(gc)gc.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Bu dönem için veri yok</div>';
+      const go=document.getElementById('reklam-grafik-ozet');if(go)go.innerHTML='';
+    }
+    reklamKelimelerCiz();
+  }catch(err){console.error('reklamGoster hatası:',err);}
 }
 
 function reklamMetrikSecCiz(){
@@ -6653,6 +6660,7 @@ function reklamMetrikSecCiz(){
 function reklamGrafikCiz(veri){
   const canvas=document.getElementById('reklam-chart');
   if(!canvas)return;
+  canvas.style.display='block';
   if(!veri.length){
     if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
     return;
