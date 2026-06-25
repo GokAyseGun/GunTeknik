@@ -5264,6 +5264,7 @@ async function saveIslem(btn){
     const seciliPersoneller=getSeciliPersoneller();
     const yardimciChk=document.getElementById('mi-yardimci-chk')?.checked;
     const personelIds=yardimciChk?seciliPersoneller.map(p=>p.id):[];
+    const islemKaynagi=document.getElementById('mi-islem-kaynagi')?.value||null;
     if(eId){
       await sbFetch('islemler?id=eq.'+eId,{method:'PATCH',body:JSON.stringify({tarih:localISOString(tarih),tip,statu,kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:malz,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId,islem_kaynagi:islemKaynagi})});
       // Kalemleri güncelle: önce mevcutları sil, sonra yeniden yaz
