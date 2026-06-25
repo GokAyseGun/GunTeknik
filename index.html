@@ -6709,6 +6709,34 @@ function reklamGoster(){
   const donusumBasi=top.donusum>0?top.harcama/top.donusum:0;
   const ctr=top.gosterim>0?(top.tiklama/top.gosterim*100):0;
   const cpc=top.tiklama>0?(top.harcama/top.tiklama):0;
+
+  // Tarih aralığı (4 yeni KPI için)
+  const bugunKpi=new Date();bugunKpi.setHours(0,0,0,0);
+  let baslangicKpiStr,bitisKpiStr;
+  if(_reklamDonem==='dun'){
+    const dun=new Date(bugunKpi);dun.setDate(dun.getDate()-1);
+    baslangicKpiStr=bitisKpiStr=_reklamTarihStr(dun);
+  }else{
+    const gunSayisiKpi=_reklamDonem==='30gun'?30:7;
+    const bas=new Date(bugunKpi);bas.setDate(bas.getDate()-(gunSayisiKpi-1));
+    baslangicKpiStr=_reklamTarihStr(bas);
+    bitisKpiStr=_reklamTarihStr(bugunKpi);
+  }
+  const adsIsGelir=(DB.islemler||[]).filter(i=>{
+    const ts=localDateStr(i.tarih).slice(0,10);
+    return i.islemKaynagi==='Google Ads'&&i.tip==='Gelir'&&i.statu==='Tamamlandı'&&ts>=baslangicKpiStr&&ts<=bitisKpiStr;
+  }).reduce((a,i)=>a+i.tutar,0);
+  const armutIsGelir=(DB.islemler||[]).filter(i=>{
+    const ts=localDateStr(i.tarih).slice(0,10);
+    return i.islemKaynagi==='Armut'&&i.tip==='Gelir'&&i.statu==='Tamamlandı'&&ts>=baslangicKpiStr&&ts<=bitisKpiStr;
+  }).reduce((a,i)=>a+i.tutar,0);
+  const manuelFiltreli=(_reklamManuelVeri||[]).filter(r=>r.tarih>=baslangicKpiStr&&r.tarih<=bitisKpiStr);
+  const adsAramaTop=manuelFiltreli.filter(r=>r.tip==='ads_arama').reduce((a,r)=>a+(parseInt(r.deger)||0),0);
+  const armutHarcamaTop=manuelFiltreli.filter(r=>r.tip==='armut_harcama').reduce((a,r)=>a+(parseFloat(r.deger)||0),0);
+  const bugunStr2=_reklamTarihStr(new Date());
+  const bugunArama=(_reklamManuelVeri||[]).find(r=>r.tip==='ads_arama'&&r.tarih===bugunStr2);
+  const bugunAramaVal=bugunArama?parseInt(bugunArama.deger)||0:0;
+
   // KPI renk aksentleri (CSS var() yerine hex — güvenilir)
   const KPI_RENKLER={blue:'#7eb3f0',green:'#6fcf97',purple:'#b39ddb',teal:'#7ecec4',amber:'#f0c472',red:'#f08080'};
   const kpiler=[
@@ -6722,14 +6750,6 @@ function reklamGoster(){
     {lbl:'Telefon',     alt:'Reklam kaynaklı arama',         val:top.telefonAramasi.toLocaleString('tr-TR'),r:'green'},
     {lbl:'Dön. Değeri', alt:'Toplam dönüşüm değeri',        val:fmt(top.donusumDegeri)+' ₺',     r:'purple'},
   ];
-  // Bugünün Ads Arama sayısı (sayaç kutusu için)
-  const bugunStr=_reklamTarihStr(new Date());
-  const bugunArama=_reklamManuelVeri.find(r=>r.tip==='ads_arama'&&r.tarih===bugunStr);
-  const bugunAramaVal=bugunArama?parseInt(bugunArama.deger)||0:0;
-  // Armut harcama toplam
-  const armutHarcamaTop=_reklamManuelVeri.filter(r=>r.tip==='armut_harcama'&&r.tarih>=baslangicKpiStr&&r.tarih<=bitisKpiStr).reduce((a,r)=>a+(parseFloat(r.deger)||0),0);
-  const adsAramaTop=_reklamManuelVeri.filter(r=>r.tip==='ads_arama'&&r.tarih>=baslangicKpiStr&&r.tarih<=bitisKpiStr).reduce((a,r)=>a+(parseInt(r.deger)||0),0);
-
   grid.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${
     kpiler.map(k=>{
       const hex=KPI_RENKLER[k.r]||'#7eb3f0';
