@@ -6611,6 +6611,10 @@ const REKLAM_METRIK_TANIM={
   ads_gelen_arama:{lbl:'Ads Arama',renk:'#00e5ff',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
   armut_is_geliri:{lbl:'Armut İş Geliri',renk:'#ff9900',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'sum'},
   armut_harcama:{lbl:'Armut Harcama',renk:'#ff44aa',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'sum'},
+  disaridan_tutar:{lbl:'Dışarıdan Tutar',renk:'#7b61ff',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'sum'},
+  disaridan_adet:{lbl:'Dışarıdan Adet',renk:'#a78bfa',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
+  eskimust_tutar:{lbl:'Eski Müşteri Tutar',renk:'#10b981',eksen:'tl',fmt:v=>fmt(v)+' ₺',agg:'sum'},
+  eskimust_adet:{lbl:'Eski Müşteri Adet',renk:'#6ee7b7',eksen:'sayi',fmt:v=>Math.round(v).toLocaleString('tr-TR'),agg:'sum'},
 };
 
 let _reklamManuelVeri=[];
@@ -6722,14 +6726,21 @@ function reklamGoster(){
     baslangicKpiStr=_reklamTarihStr(bas);
     bitisKpiStr=_reklamTarihStr(bugunKpi);
   }
-  const adsIsGelir=(DB.islemler||[]).filter(i=>{
+  // Kaynak bazlı işlem filtresi (tamamlanmış, dönem içi)
+  const kaynakIslemleri=(kaynak)=>(DB.islemler||[]).filter(i=>{
     const ts=localDateStr(i.tarih).slice(0,10);
-    return i.islemKaynagi==='Google Ads'&&i.tip==='Gelir'&&i.statu==='Tamamlandı'&&ts>=baslangicKpiStr&&ts<=bitisKpiStr;
-  }).reduce((a,i)=>a+i.tutar,0);
-  const armutIsGelir=(DB.islemler||[]).filter(i=>{
-    const ts=localDateStr(i.tarih).slice(0,10);
-    return i.islemKaynagi==='Armut'&&i.tip==='Gelir'&&i.statu==='Tamamlandı'&&ts>=baslangicKpiStr&&ts<=bitisKpiStr;
-  }).reduce((a,i)=>a+i.tutar,0);
+    return i.islemKaynagi===kaynak&&i.tip==='Gelir'&&i.statu==='Tamamlandı'&&ts>=baslangicKpiStr&&ts<=bitisKpiStr;
+  });
+  const adsIsGelirArr=kaynakIslemleri('Google Ads');
+  const adsIsGelir=adsIsGelirArr.reduce((a,i)=>a+i.tutar,0);
+  const armutIsGelirArr=kaynakIslemleri('Armut');
+  const armutIsGelir=armutIsGelirArr.reduce((a,i)=>a+i.tutar,0);
+  const disaridanArr=kaynakIslemleri('Dışarıdan');
+  const disaridanTutar=disaridanArr.reduce((a,i)=>a+i.tutar,0);
+  const disaridanAdet=disaridanArr.length;
+  const eskiMustArr=kaynakIslemleri('Eski Müşteri');
+  const eskiMustTutar=eskiMustArr.reduce((a,i)=>a+i.tutar,0);
+  const eskiMustAdet=eskiMustArr.length;
   const manuelFiltreli=(_reklamManuelVeri||[]).filter(r=>r.tarih>=baslangicKpiStr&&r.tarih<=bitisKpiStr);
   const adsAramaTop=manuelFiltreli.filter(r=>r.tip==='ads_arama').reduce((a,r)=>a+(parseInt(r.deger)||0),0);
   const armutHarcamaTop=manuelFiltreli.filter(r=>r.tip==='armut_harcama').reduce((a,r)=>a+(parseFloat(r.deger)||0),0);
@@ -6750,17 +6761,56 @@ function reklamGoster(){
     {lbl:'Telefon',     alt:'Reklam kaynaklı arama',         val:top.telefonAramasi.toLocaleString('tr-TR'),r:'green'},
     {lbl:'Dön. Değeri', alt:'Toplam dönüşüm değeri',        val:fmt(top.donusumDegeri)+' ₺',     r:'purple'},
   ];
-  grid.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${
-    kpiler.map(k=>{
+  grid.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+    ${kpiler.map(k=>{
       const hex=KPI_RENKLER[k.r]||'#7eb3f0';
-      return `<div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid ${hex};position:relative;overflow:hidden;">
+      return `<div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid ${hex};">
         <div style="font-size:15px;font-weight:700;color:${hex};margin-bottom:2px;line-height:1.2;">${k.val}</div>
         <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">${k.lbl}</div>
         <div style="font-size:9px;color:var(--text3);">${k.alt}</div>
       </div>`;
-    }).join('')
-  }
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:6px;"><div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #4488ff;"><div style="font-size:15px;font-weight:700;color:#4488ff;margin-bottom:2px;">${fmt(adsIsGelir)} ₺</div><div style="font-size:10px;font-weight:600;color:var(--text2);">Ads İş Geliri</div><div style="font-size:9px;color:var(--text3);">Google Ads kaynaklı işletme geliri</div></div><div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #ff9900;"><div style="font-size:15px;font-weight:700;color:#ff9900;margin-bottom:2px;">${fmt(armutIsGelir)} ₺</div><div style="font-size:10px;font-weight:600;color:var(--text2);">Armut İş Geliri</div><div style="font-size:9px;color:var(--text3);">Armut kaynaklı işletme geliri</div></div><div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #00e5ff;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;"><div style="font-size:15px;font-weight:700;color:#00e5ff;">${adsAramaTop}</div><div style="display:flex;flex-direction:column;gap:1px;margin-left:auto;"><button onclick="adsAramaDegistir(1)" style="width:22px;height:14px;border:1px solid #00e5ff44;border-radius:3px;background:transparent;color:#00e5ff;font-size:11px;cursor:pointer;">▲</button><button onclick="adsAramaDegistir(-1)" style="width:22px;height:14px;border:1px solid #00e5ff44;border-radius:3px;background:transparent;color:#00e5ff;font-size:11px;cursor:pointer;">▼</button></div></div><div style="font-size:10px;font-weight:600;color:var(--text2);">Ads Gelen Arama</div><div style="font-size:9px;color:var(--text3);">Bugün: ${bugunAramaVal} · Dönem: ${adsAramaTop}</div></div><div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #ff44aa;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><div style="font-size:15px;font-weight:700;color:#ff44aa;">${fmt(armutHarcamaTop)} ₺</div><button onclick="armutHarcamaModalAc()" style="padding:3px 8px;border:1px solid #ff44aa44;border-radius:5px;background:transparent;color:#ff44aa;font-size:11px;font-weight:600;cursor:pointer;">+ Ekle</button></div><div style="font-size:10px;font-weight:600;color:var(--text2);">Armut Harcama</div><div style="font-size:9px;color:var(--text3);">Dönem içi Armut komisyonu / harcama</div></div></div>`;
+    }).join('')}
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #4488ff;">
+      <div style="font-size:15px;font-weight:700;color:#4488ff;margin-bottom:2px;">${fmt(adsIsGelir)} ₺</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Ads İş Geliri</div>
+      <div style="font-size:9px;color:var(--text3);">Google Ads kaynaklı gelir</div>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #ff9900;">
+      <div style="font-size:15px;font-weight:700;color:#ff9900;margin-bottom:2px;">${fmt(armutIsGelir)} ₺</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Armut İş Geliri</div>
+      <div style="font-size:9px;color:var(--text3);">Armut kaynaklı gelir</div>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #7b61ff;">
+      <div style="font-size:15px;font-weight:700;color:#7b61ff;margin-bottom:2px;">${disaridanAdet} iş · ${fmt(disaridanTutar)} ₺</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Dışarıdan Gelen</div>
+      <div style="font-size:9px;color:var(--text3);">Dışarıdan kaynaklı iş ve gelir</div>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #10b981;">
+      <div style="font-size:15px;font-weight:700;color:#10b981;margin-bottom:2px;">${eskiMustAdet} iş · ${fmt(eskiMustTutar)} ₺</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Eski Müşteri</div>
+      <div style="font-size:9px;color:var(--text3);">Eski müşteri kaynaklı iş ve gelir</div>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #00e5ff;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+        <div style="font-size:15px;font-weight:700;color:#00e5ff;">${adsAramaTop}</div>
+        <div style="display:flex;flex-direction:column;gap:1px;margin-left:auto;">
+          <button onclick="adsAramaDegistir(1)" style="width:22px;height:14px;border:1px solid #00e5ff44;border-radius:3px;background:transparent;color:#00e5ff;font-size:11px;line-height:1;cursor:pointer;">▲</button>
+          <button onclick="adsAramaDegistir(-1)" style="width:22px;height:14px;border:1px solid #00e5ff44;border-radius:3px;background:transparent;color:#00e5ff;font-size:11px;line-height:1;cursor:pointer;">▼</button>
+        </div>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Ads Gelen Arama</div>
+      <div style="font-size:9px;color:var(--text3);">Bugün: ${bugunAramaVal} · Dönem: ${adsAramaTop}</div>
+    </div>
+    <div style="background:var(--surface);border-radius:var(--r-md);padding:10px 10px 8px;border-top:3px solid #ff44aa;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+        <div style="font-size:15px;font-weight:700;color:#ff44aa;">${fmt(armutHarcamaTop)} ₺</div>
+        <button onclick="armutHarcamaModalAc()" style="padding:3px 8px;border:1px solid #ff44aa44;border-radius:5px;background:transparent;color:#ff44aa;font-size:11px;font-weight:600;cursor:pointer;">+ Ekle</button>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:1px;">Armut Harcama</div>
+      <div style="font-size:9px;color:var(--text3);">Dönem içi Armut komisyonu</div>
+    </div>
+  </div>`;
   try{
     reklamMetrikSecCiz();
     if(veri.length>0){
@@ -6777,6 +6827,7 @@ function reklamGoster(){
 function reklamMetrikSecCiz(){
   const wrap=document.getElementById('reklam-metrik-sec');
   if(!wrap)return;
+  wrap.style.cssText='display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:4px;scrollbar-width:none;';
   wrap.innerHTML=Object.entries(REKLAM_METRIK_TANIM).map(([key,m])=>{
     const aktif=_reklamSeciliMetrikler.includes(key);
     return `<button type="button" onclick="reklamMetrikToggle('${key}')" style="flex-shrink:0;padding:5px 10px;border-radius:6px;border:1.5px solid ${aktif?m.renk+'aa':'var(--border2)'};background:${aktif?m.renk+'22':'var(--bg2)'};color:${aktif?m.renk:'var(--text3)'};font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;">${m.lbl}</button>`;
@@ -6808,6 +6859,14 @@ function reklamGrafikCiz(veri){
     if(!byDate[ts])byDate[ts]={tarih:ts};
     if(i.islemKaynagi==='Google Ads')byDate[ts].ads_is_geliri=(byDate[ts].ads_is_geliri||0)+i.tutar;
     if(i.islemKaynagi==='Armut')byDate[ts].armut_is_geliri=(byDate[ts].armut_is_geliri||0)+i.tutar;
+    if(i.islemKaynagi==='Dışarıdan'){
+      byDate[ts].disaridan_tutar=(byDate[ts].disaridan_tutar||0)+i.tutar;
+      byDate[ts].disaridan_adet=(byDate[ts].disaridan_adet||0)+1;
+    }
+    if(i.islemKaynagi==='Eski Müşteri'){
+      byDate[ts].eskimust_tutar=(byDate[ts].eskimust_tutar||0)+i.tutar;
+      byDate[ts].eskimust_adet=(byDate[ts].eskimust_adet||0)+1;
+    }
   });
   (_reklamManuelVeri||[]).forEach(r=>{
     if(!byDate[r.tarih])byDate[r.tarih]={tarih:r.tarih};
