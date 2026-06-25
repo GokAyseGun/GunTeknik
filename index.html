@@ -804,6 +804,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <button type="button" class="pay-btn" data-val="dun" onclick="reklamDonemSec(this)">Dün</button>
         <button type="button" class="pay-btn active" data-val="7gun" onclick="reklamDonemSec(this)">Son 7 Gün</button>
         <button type="button" class="pay-btn" data-val="30gun" onclick="reklamDonemSec(this)">Son 30 Gün</button>
+        <button type="button" class="pay-btn" data-val="1yil" onclick="reklamDonemSec(this)">Son 1 Yıl</button>
       </div>
 
       <!-- GRAFİK KARTI (üstte) -->
@@ -6721,6 +6722,10 @@ function reklamGoster(){
   if(_reklamDonem==='dun'){
     const dun=new Date(bugunKpi);dun.setDate(dun.getDate()-1);
     baslangicKpiStr=bitisKpiStr=_reklamTarihStr(dun);
+  }else if(_reklamDonem==='1yil'){
+    const bas1y=new Date(bugunKpi);bas1y.setFullYear(bas1y.getFullYear()-1);
+    baslangicKpiStr=_reklamTarihStr(bas1y);
+    bitisKpiStr=_reklamTarihStr(bugunKpi);
   }else{
     const gunSayisiKpi=_reklamDonem==='30gun'?30:7;
     const bas=new Date(bugunKpi);bas.setDate(bas.getDate()-(gunSayisiKpi-1));
@@ -7051,6 +7056,9 @@ function reklamKelimelerCiz(){
   if(_reklamDonem==='dun'){
     const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
     filtreliKelimeler=kelimeBase.filter(r=>r.tarih===_reklamTarihStr(dun));
+  }else if(_reklamDonem==='1yil'){
+    const bas1yk=new Date(bugun);bas1yk.setFullYear(bas1yk.getFullYear()-1);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=_reklamTarihStr(bas1yk)&&r.tarih<=_reklamTarihStr(bugun));
   }else{
     const gunSayisi=_reklamDonem==='30gun'?30:7;
     const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
