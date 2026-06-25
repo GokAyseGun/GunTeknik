@@ -75,7 +75,19 @@ def fetch_campaign_metrics(access_token):
           AND campaign.status != 'REMOVED'
         ORDER BY campaign.id ASC, segments.date ASC
     """
-    return ads_search(access_token, query)
+    data = ads_search(access_token, query)
+    # DEBUG: kaç satır geldiğini ve kampanya ID'lerini göster
+    toplam = 0
+    kampanya_ids = set()
+    for chunk in data:
+        for row in chunk.get("results", []):
+            toplam += 1
+            camp = row.get("campaign", {})
+            cid = camp.get("id", "YOK")
+            cname = camp.get("name", "YOK")
+            kampanya_ids.add(f"{cid}:{cname}")
+    print(f"[DEBUG] Kampanya sorgusu: {toplam} satır, kampanyalar: {kampanya_ids}", file=sys.stderr)
+    return data
 
 
 def fetch_keyword_metrics(access_token):
