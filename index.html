@@ -6672,13 +6672,19 @@ function _reklamFiltreliVeri(){
   if(!_reklamVeri.length)return[];
   const veri=_reklamSeciliKampanya?_reklamVeri.filter(r=>r.kampanya_id===_reklamSeciliKampanya):_reklamVeri;
   const bugun=new Date();bugun.setHours(0,0,0,0);
+  // Bitiş her zaman dün — bugünün API verisi henüz tam gelmiyor
+  const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
+  const dunStr=_reklamTarihStr(dun);
   if(_reklamDonem==='dun'){
-    const dun=new Date(bugun);dun.setDate(dun.getDate()-1);
-    return veri.filter(r=>r.tarih===_reklamTarihStr(dun));
+    return veri.filter(r=>r.tarih===dunStr);
+  }
+  if(_reklamDonem==='1yil'){
+    const bas=new Date(bugun);bas.setFullYear(bas.getFullYear()-1);
+    return veri.filter(r=>r.tarih>=_reklamTarihStr(bas)&&r.tarih<=dunStr);
   }
   const gunSayisi=_reklamDonem==='30gun'?30:7;
-  const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-  return veri.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=_reklamTarihStr(bugun));
+  const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-gunSayisi);
+  return veri.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=dunStr);
 }
 
 function reklamGoster(){
@@ -6718,19 +6724,19 @@ function reklamGoster(){
 
   // Tarih aralığı (4 yeni KPI için)
   const bugunKpi=new Date();bugunKpi.setHours(0,0,0,0);
+  // Bitiş her zaman dün — bugünün API verisi henüz tam gelmiyor
+  const dunKpi=new Date(bugunKpi);dunKpi.setDate(dunKpi.getDate()-1);
   let baslangicKpiStr,bitisKpiStr;
+  bitisKpiStr=_reklamTarihStr(dunKpi);
   if(_reklamDonem==='dun'){
-    const dun=new Date(bugunKpi);dun.setDate(dun.getDate()-1);
-    baslangicKpiStr=bitisKpiStr=_reklamTarihStr(dun);
+    baslangicKpiStr=bitisKpiStr;
   }else if(_reklamDonem==='1yil'){
     const bas1y=new Date(bugunKpi);bas1y.setFullYear(bas1y.getFullYear()-1);
     baslangicKpiStr=_reklamTarihStr(bas1y);
-    bitisKpiStr=_reklamTarihStr(bugunKpi);
   }else{
     const gunSayisiKpi=_reklamDonem==='30gun'?30:7;
-    const bas=new Date(bugunKpi);bas.setDate(bas.getDate()-(gunSayisiKpi-1));
+    const bas=new Date(bugunKpi);bas.setDate(bas.getDate()-gunSayisiKpi);
     baslangicKpiStr=_reklamTarihStr(bas);
-    bitisKpiStr=_reklamTarihStr(bugunKpi);
   }
   // Kaynak bazlı işlem filtresi (tamamlanmış, dönem içi)
   const kaynakIslemleri=(kaynak)=>(DB.islemler||[]).filter(i=>{
