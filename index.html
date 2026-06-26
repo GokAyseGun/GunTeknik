@@ -6882,13 +6882,15 @@ function reklamGrafikCiz(veri){
   });
   // Seçili dönemdeki tüm günleri oluştur (veri olmayan günler dahil)
   const bugunGraf=new Date();bugunGraf.setHours(0,0,0,0);
+  // Bitiş her zaman dün — bugünün API verisi henüz tam gelmiyor
+  const dunGraf=new Date(bugunGraf);dunGraf.setDate(dunGraf.getDate()-1);
   let donemBaslangic=new Date(bugunGraf);
   if(_reklamDonem==='dun'){donemBaslangic.setDate(donemBaslangic.getDate()-1);}
   else if(_reklamDonem==='1yil'){donemBaslangic.setFullYear(donemBaslangic.getFullYear()-1);}
-  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-(gs-1));}
-  // Dönem içindeki tüm günleri doldur
+  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-gs);}
+  // Dönem içindeki tüm günleri doldur (bugün hariç — API verisi yok)
   const ptr=new Date(donemBaslangic);
-  while(ptr<=bugunGraf){
+  while(ptr<=dunGraf){
     const ts=_reklamTarihStr(ptr);
     if(!byDate[ts])byDate[ts]={tarih:ts};
     ptr.setDate(ptr.getDate()+1);
