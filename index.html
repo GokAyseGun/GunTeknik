@@ -7130,9 +7130,11 @@ function reklamKelimelerCiz(){
     const bas1yk=new Date(bugun);bas1yk.setFullYear(bas1yk.getFullYear()-1);
     filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=_reklamTarihStr(bas1yk)&&r.tarih<=_reklamTarihStr(bugun));
   }else{
+    const dunKel=new Date(bugun);dunKel.setDate(dunKel.getDate()-1);
+    const dunStrKel=_reklamTarihStr(dunKel);
     const gunSayisi=_reklamDonem==='30gun'?30:7;
-    const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-(gunSayisi-1));
-    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=_reklamTarihStr(bugun));
+    const baslangic=new Date(bugun);baslangic.setDate(baslangic.getDate()-gunSayisi);
+    filtreliKelimeler=kelimeBase.filter(r=>r.tarih>=_reklamTarihStr(baslangic)&&r.tarih<=dunStrKel);
   }
   const map={};
   filtreliKelimeler.forEach(r=>{
