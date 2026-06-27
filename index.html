@@ -6860,8 +6860,21 @@ function reklamGrafikCiz(veri){
       d[k]=(d[k]||0)+v;
     });
   });
-  // Yeni parametreler: DB.islemler + reklam_manuel
-  (DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&i.tip==='Gelir').forEach(i=>{
+  // Dönem sınırlarını önce hesapla
+  const bugunGraf=new Date();bugunGraf.setHours(0,0,0,0);
+  const dunGraf=new Date(bugunGraf);dunGraf.setDate(dunGraf.getDate()-1);
+  const dunGrafStr=_reklamTarihStr(dunGraf);
+  let donemBaslangic=new Date(bugunGraf);
+  if(_reklamDonem==='dun'){donemBaslangic=new Date(dunGraf);}
+  else if(_reklamDonem==='1yil'){donemBaslangic.setFullYear(donemBaslangic.getFullYear()-1);}
+  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-gs);}
+  const donemBasStr=_reklamTarihStr(donemBaslangic);
+
+  // Yeni parametreler: DB.islemler + reklam_manuel (dönem filtreli)
+  (DB.islemler||[]).filter(i=>{
+    const ts=localDateStr(i.tarih).slice(0,10);
+    return i.statu==='Tamamlandı'&&i.tip==='Gelir'&&ts>=donemBasStr&&ts<=dunGrafStr;
+  }).forEach(i=>{
     const ts=localDateStr(i.tarih).slice(0,10);
     if(!byDate[ts])byDate[ts]={tarih:ts};
     if(i.islemKaynagi==='Google Ads')byDate[ts].ads_is_geliri=(byDate[ts].ads_is_geliri||0)+i.tutar;
@@ -6875,20 +6888,13 @@ function reklamGrafikCiz(veri){
       byDate[ts].eskimust_adet=(byDate[ts].eskimust_adet||0)+1;
     }
   });
-  (_reklamManuelVeri||[]).forEach(r=>{
+  (_reklamManuelVeri||[]).filter(r=>r.tarih>=donemBasStr&&r.tarih<=dunGrafStr).forEach(r=>{
     if(!byDate[r.tarih])byDate[r.tarih]={tarih:r.tarih};
     if(r.tip==='ads_arama')byDate[r.tarih].ads_gelen_arama=(byDate[r.tarih].ads_gelen_arama||0)+(parseInt(r.deger)||0);
     if(r.tip==='armut_harcama')byDate[r.tarih].armut_harcama=(byDate[r.tarih].armut_harcama||0)+(parseFloat(r.deger)||0);
   });
-  // Seçili dönemdeki tüm günleri oluştur (veri olmayan günler dahil)
-  const bugunGraf=new Date();bugunGraf.setHours(0,0,0,0);
-  // Bitiş her zaman dün — bugünün API verisi henüz tam gelmiyor
-  const dunGraf=new Date(bugunGraf);dunGraf.setDate(dunGraf.getDate()-1);
-  let donemBaslangic=new Date(bugunGraf);
-  if(_reklamDonem==='dun'){donemBaslangic.setDate(donemBaslangic.getDate()-1);}
-  else if(_reklamDonem==='1yil'){donemBaslangic.setFullYear(donemBaslangic.getFullYear()-1);}
-  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-gs);}
-  // Dönem içindeki tüm günleri doldur (bugün hariç — API verisi yok)
+
+  // Dönem içindeki tüm günleri doldur (bugün hariç)
   const ptr=new Date(donemBaslangic);
   while(ptr<=dunGraf){
     const ts=_reklamTarihStr(ptr);
