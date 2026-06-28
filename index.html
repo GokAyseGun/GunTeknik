@@ -33,9 +33,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 :root{
   /* ── AIROFIT / GÜN TEKNİK DARK PALETTE ── */
-  --bg:#060606;--bg2:#0d0d0d;--surface:#111111;--surface2:#181818;
-  --border:#1e1e1e;--border2:#2a2a2a;
-  --text:#f0f0f0;--text2:#888888;--text3:#444444;
+  --bg:#060606;--bg2:#0d0d0d;--surface:#141414;--surface2:#1c1c1c;
+  --border:#252525;--border2:#333333;
+  --text:#f0f0f0;--text2:#b0b0b0;--text3:#707070;
 
   /* Ana aksan: Magenta */
   --mg:#E8197A;--mg-lt:rgba(232,25,122,0.10);--mg-md:rgba(232,25,122,0.22);
@@ -51,7 +51,7 @@
   --teal:#00E5FF;--teal-lt:rgba(0,229,255,0.08);
 
   /* Eski --blue referansları için alias (geriye dönük uyum) */
-  --blue:var(--cy);--blue-lt:var(--cy-lt);--blue-md:var(--cy-md);
+  --blue:#00E5FF;--blue-lt:rgba(0,229,255,0.08);--blue-md:rgba(0,229,255,0.20);
 
   /* Gradients */
   --gmg:linear-gradient(135deg,#FF2D8A,#9B10A0);
@@ -90,7 +90,7 @@
   --text:#080812;--text2:#505070;--text3:#9090aa;
   --mg:#C4006A;--mg-lt:rgba(196,0,106,0.08);--mg-md:rgba(196,0,106,0.18);
   --cy:#0090B0;--cy-lt:rgba(0,144,176,0.08);--cy-md:rgba(0,144,176,0.18);
-  --blue:var(--cy);--blue-lt:var(--cy-lt);--blue-md:var(--cy-md);
+  --blue:#0090B0;--blue-lt:rgba(0,144,176,0.08);--blue-md:rgba(0,144,176,0.18);
   --green:#00875A;--green-lt:rgba(0,135,90,0.08);
   --red:#D50032;--red-lt:rgba(213,0,50,0.08);
   --amber:#B06000;--amber-lt:rgba(176,96,0,0.08);
@@ -407,55 +407,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-/* ── SAYFA GEÇİŞİ ── */
-@keyframes pageIn{from{opacity:0;transform:translateY(20px) scale(0.99);}to{opacity:1;transform:translateY(0) scale(1);}}
-.page{display:none;padding:20px 16px;animation:pageIn 0.5s var(--ease) both;}
-
-/* ── BÜYÜK SAYILAR mono font ── */
-.val,.num,.dash-big{font-family:var(--fm);}
-.c-blue{color:var(--cy);}
-.c-green{color:var(--green);}
-.c-red{color:var(--red);}
-.c-amber{color:var(--amber);}
-.c-purple{color:var(--purple);}
-.c-teal{color:var(--cy);}
-.c-muted{color:var(--text2);}
-
-/* ── INPUT FOCUS GLOW ── */
-.fi input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),.fi select,.fi textarea{
-  padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);
-  background:var(--bg2);color:var(--text);font-size:14px;outline:none;width:100%;
-  transition:all 0.25s var(--ease);appearance:none;
-}
-
-/* ── PULSE / GLOW ANIMASYONLARI ── */
-@keyframes mgGlow{0%,100%{box-shadow:0 0 0 0 rgba(232,25,122,0);} 50%{box-shadow:0 0 20px 4px rgba(232,25,122,0.25);}}
-@keyframes cyGlow{0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,0);} 50%{box-shadow:0 0 20px 4px rgba(0,229,255,0.2);}}
+/* ── EK STILLER ── */
+@keyframes mgGlow{0%,100%{box-shadow:0 0 0 0 rgba(232,25,122,0);}50%{box-shadow:0 0 20px 4px rgba(232,25,122,0.25);}}
+@keyframes cyGlow{0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,0);}50%{box-shadow:0 0 20px 4px rgba(0,229,255,0.2);}}
 .pulse-mg{animation:mgGlow 2s ease-in-out infinite;}
 .pulse-cy{animation:cyGlow 2.5s ease-in-out infinite;}
-
-/* ── KPI PROGRESS BAR ── */
 .kpi-progress{margin-top:10px;height:3px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;}
 .kpi-progress-fill{height:100%;border-radius:2px;width:0%;transition:width 1.6s var(--ease);}
 .kpi-mg .kpi-progress-fill{background:var(--gmg);}
 .kpi-cy .kpi-progress-fill{background:var(--gcy);}
-
-/* ── ACCENT TEXT ── */
-.amg{background:var(--grad-text-mg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.acy{background:var(--grad-text-cy);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-
-/* ── NAV ACTIVE GLOW ── */
-.nav-item.active{color:var(--mg);}
-.nav-item.active .nav-icon{filter:drop-shadow(0 0 6px var(--mg));}
-
-/* ── STAGGER ── */
-.stagger-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;opacity:0;animation:staggerIn 0.55s var(--ease) forwards;transition:transform 0.25s var(--ease),box-shadow 0.25s var(--ease),border-color 0.25s var(--ease);cursor:pointer;position:relative;overflow:hidden;}
-.stagger-item:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm);border-color:var(--border2);}
-
-/* ── TEMA TOGGLE ── */
 #tema-toggle-btn:hover{border-color:var(--mg-md);color:var(--mg);box-shadow:0 0 12px rgba(232,25,122,0.2);}
-
-/* ── BADGE RENK GÜNCELLEME ── */
 .bg-blue{background:var(--cy-lt);color:var(--cy);}
 .bg-teal{background:var(--cy-lt);color:var(--cy);}
 </style>
