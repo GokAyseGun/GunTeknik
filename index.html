@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gün Teknik">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -28,9 +31,9 @@
 <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <title>Gün Teknik · ERP</title>
 <style>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+
+
 :root{
   /* ── AIROFIT / GÜN TEKNİK DARK PALETTE ── */
   --bg:#060606;--bg2:#0d0d0d;--surface:#141414;--surface2:#1c1c1c;
@@ -6465,7 +6468,7 @@ function raporSayfaAc(baslik,periyotLabel,bodyHtml){
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @page{size:A4;margin:18mm 15mm;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',sans-serif;font-size:11px;color:#1a202c;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
 .page{max-width:170mm;margin:0 auto;}
 .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #2d5be3;margin-bottom:22px;}
 .logo{font-size:22px;font-weight:700;color:#2d5be3;letter-spacing:-0.5px;}
@@ -8752,7 +8755,7 @@ function teklifPdfIndir(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;
   const k=getKisi(t.kisiId);
   const kalemlerHtml=(t.kalemler||[]).map(km=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${km.aciklama}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${km.miktar}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${fmt(km.birimFiyat)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(km.toplam)} ₺</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Teklif</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;max-width:700px;margin:0 auto;}h1{color:#1a73e8;font-size:22px;margin-bottom:4px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}td{font-size:13px;}.total{font-size:16px;font-weight:700;color:#1a73e8;}.footer{margin-top:40px;font-size:11px;color:#888;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Teklif</title><style>table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}td{font-size:13px;}.total{font-size:16px;font-weight:700;color:#1a73e8;}.footer{margin-top:40px;font-size:11px;color:#888;}</style></head><body>
   <h1>GÜN TEKNİK</h1><div style="font-size:13px;color:#666;margin-bottom:30px;">Teklif #${fmtId(t.id)} · ${dtS(t.tarih)}</div>
   <div style="margin-bottom:20px;"><strong>Müşteri:</strong> ${k?k.isim:'—'}${k?.tel?'<br><strong>Tel:</strong> '+k.tel:''}</div>
   ${t.gecerlilikTarihi?`<div style="margin-bottom:20px;color:#e53;font-size:13px;">⏰ Teklif geçerlilik tarihi: ${t.gecerlilikTarihi}</div>`:''}
@@ -9194,7 +9197,7 @@ function bordroPdfIndir(personelId){
   const kalan=topHak-topOde;
   const ayAdi=now.toLocaleString('tr-TR',{month:'long',year:'numeric'});
   const satirlar=hakEdisler.map(h=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${h.not||h.tip}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${dtS(h.tarih)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${fmt(h.tutar)} ₺</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bordro</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;max-width:600px;margin:0 auto;}h1{color:#1a73e8;font-size:20px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e8f5e9;}.footer{margin-top:40px;font-size:11px;color:#888;text-align:center;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bordro</title><style>table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e8f5e9;}.footer{margin-top:40px;font-size:11px;color:#888;text-align:center;}</style></head><body>
   <h1>GÜN TEKNİK — BORDRO</h1>
   <p><strong>Personel:</strong> ${p.isim}<br><strong>Dönem:</strong> ${ayAdi}<br><strong>Pozisyon:</strong> ${p.pozisyon||'—'}</p>
   <table><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right;">Tutar</th></tr></thead><tbody>${satirlar}</tbody></table>
@@ -9234,7 +9237,7 @@ function generateProjeRapor(){
   }).join('');
   const topCiro=DB.projeler.reduce((a,p)=>{const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı'&&i.tip==='Gelir');return a+is.reduce((b,i)=>b+i.tutar,0);},0);
   const topGider=DB.projeler.reduce((a,p)=>{const is=DB.islemler.filter(i=>i.projeId===p.id&&i.statu==='Tamamlandı'&&i.tip==='Gider');return a+is.reduce((b,i)=>b+i.tutar,0);},0);
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Proje Raporu</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#222;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e3f2fd;font-weight:700;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Proje Raporu</title><style>table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#f5f5f5;padding:10px 12px;text-align:left;font-size:13px;}.total{background:#e3f2fd;font-weight:700;}</style></head><body>
   <h1>GÜN TEKNİK — PROJE KÂR/ZARAR RAPORU</h1><p>Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}</p>
   <table><thead><tr><th>Proje</th><th>Müşteri</th><th>Durum</th><th style="text-align:right;">Ciro</th><th style="text-align:right;">Gider</th><th style="text-align:right;">Net Kâr</th></tr></thead><tbody>${satirlar}<tr class="total"><td colspan="3">TOPLAM</td><td style="text-align:right;padding:10px 12px;color:#2e7d32;">${fmt(topCiro)} ₺</td><td style="text-align:right;padding:10px 12px;color:#c62828;">${fmt(topGider)} ₺</td><td style="text-align:right;padding:10px 12px;color:${topCiro-topGider>=0?'#2e7d32':'#c62828'};">${fmt(topCiro-topGider)} ₺</td></tr></tbody></table></body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
@@ -9350,9 +9353,9 @@ Gün Teknik`;
 function onayHtmlIndir(){
   const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teklif Onayı</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;background:#f5f7fa;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+    
     .card{background:white;border-radius:16px;padding:32px;max-width:480px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,0.1);text-align:center;}
-    h1{color:#1a73e8;font-size:22px;margin-bottom:8px;}
+    
     input{width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px;margin:12px 0;outline:none;}
     input:focus{border-color:#1a73e8;}
     button{width:100%;padding:14px;background:#1a73e8;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;}
@@ -10668,8 +10671,8 @@ async function teklifOnizlemeGoster(id, secilenFotolar){
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teklif #${fmtId(t.id)} — Gün Teknik</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;}
+  
+  
   .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
   /* HEADER */
   .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%);padding:36px 44px 32px;color:#fff;position:relative;overflow:hidden;}
@@ -10692,7 +10695,7 @@ async function teklifOnizlemeGoster(id, secilenFotolar){
   .info-sub{font-size:11px;color:#64748b;margin-top:3px;}
   .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.5px;}
   /* BODY */
-  .body{flex:1;padding:28px 44px;}
+  .
   .section-title{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #f1f5f9;}
   table{width:100%;border-collapse:collapse;}
   thead tr{background:#f8fafc;}
@@ -10729,7 +10732,7 @@ async function teklifOnizlemeGoster(id, secilenFotolar){
   @media print{
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
     @page{size:A4;margin:0;}
-    body{background:#fff;}
+    
     .page{box-shadow:none;margin:0;width:100%;min-height:100vh;}
     .no-print{display:none!important;}
   }
@@ -11291,7 +11294,7 @@ function generateNakitAkisRaporu(){
     haftalik.push({tarih:hBaslangic.toLocaleDateString('tr-TR'),gelir:hGelir,gider:hGider,net:hGelir-hGider});
   }
   const satirlar=haftalik.map(h=>`<tr><td style="padding:7px 12px;border-bottom:1px solid #eee;font-size:12px;">${h.tarih}</td><td style="padding:7px 12px;border-bottom:1px solid #eee;text-align:right;color:#2e7d32;font-size:12px;">${fmt(h.gelir)} ₺</td><td style="padding:7px 12px;border-bottom:1px solid #eee;text-align:right;color:#c62828;font-size:12px;">${fmt(h.gider)} ₺</td><td style="padding:7px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;font-size:12px;color:${h.net>=0?'#2e7d32':'#c62828'};">${fmt(h.net)} ₺</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nakit Akış</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:750px;margin:0 auto;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nakit Akış</title><style>table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
   <h1>GÜN TEKNİK — NAKİT AKIŞ RAPORU</h1><p>Son 6 ay · ${new Date().toLocaleDateString('tr-TR')}</p>
   <table><thead><tr><th>Hafta Başlangıç</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right">Net</th></tr></thead><tbody>${satirlar}</tbody></table>
   </body></html>`;
@@ -11313,7 +11316,7 @@ function generateMusteriRaporu(){
     const k=getKisi(parseInt(id));
     return `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${k?k.isim:'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#2e7d32;">${fmt(v.gelir)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#c62828;">${fmt(v.gider)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(v.gelir-v.gider)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${v.sayi}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:${v.gecikme>0?'#c62828':'#2e7d32'};">${v.gecikme>0?fmt(v.gecikme)+' ₺':'—'}</td></tr>`;
   }).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Müşteri Raporu</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:900px;margin:0 auto;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Müşteri Raporu</title><style>table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
   <h1>GÜN TEKNİK — MÜŞTERİ KÂRLILIK RAPORU</h1><p>${new Date().toLocaleDateString('tr-TR')}</p>
   <table><thead><tr><th>Müşteri</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right">Net Kâr</th><th style="text-align:center">İşlem</th><th style="text-align:right">Gecikme</th></tr></thead><tbody>${satirlar}</tbody></table>
   </body></html>`;
@@ -11326,7 +11329,7 @@ function generatePersonelRaporu(){
     const ode=DB.yardimciIslemleri.filter(y=>y.personelId===p.id&&y.tip==='Avans Ödemesi').reduce((a,y)=>a+y.tutar,0);
     return `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${p.isim}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${p.pozisyon||'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${p.maasTutar?fmt(p.maasTutar)+' ₺':'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#2e7d32;">${fmt(hak)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#c62828;">${fmt(ode)} ₺</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(hak-ode)} ₺</td></tr>`;
   }).join('');
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Personel Raporu</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:800px;margin:0 auto;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Personel Raporu</title><style>table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
   <h1>GÜN TEKNİK — PERSONEL MALİYET RAPORU</h1><p>${new Date().toLocaleDateString('tr-TR')}</p>
   <table><thead><tr><th>Personel</th><th>Pozisyon</th><th style="text-align:right">Maaş</th><th style="text-align:right">Toplam Hak</th><th style="text-align:right">Ödenen</th><th style="text-align:right">Bakiye</th></tr></thead><tbody>${satirlar}</tbody></table>
   </body></html>`;
@@ -11425,8 +11428,8 @@ function generateKrediRaporu(){
 <html lang="tr">
 <head><meta charset="UTF-8"><title>Banka Kredileri Raporu — Gün Teknik</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1e293b;}
+  
+  
   .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);}
   .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#1e40af 100%);padding:36px 44px 28px;color:#fff;position:relative;overflow:hidden;}
   .hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:rgba(255,255,255,0.03);border-radius:50%;}
@@ -11439,12 +11442,12 @@ function generateKrediRaporu(){
   .kpi:last-child{border-right:none;}
   .kl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
   .kv{font-size:16px;font-weight:800;}
-  .body{padding:24px 44px 32px;}
+  .
   .sec-ttl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;padding-bottom:5px;border-bottom:2px solid #f1f5f9;}
   .pbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;position:sticky;top:0;z-index:100;}
   .ftr{padding:10px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;}
   .ft{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:0.5px;}
-  @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:0;}body{background:#fff;}.page{box-shadow:none;margin:0;width:100%;}.pbar{display:none;}}
+  @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:0;}.page{box-shadow:none;margin:0;width:100%;}.pbar{display:none;}}
 </style></head>
 <body>
 <div class="pbar">
@@ -11505,7 +11508,7 @@ function generateStokDegerRaporu(){
     return `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">${s.ad}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${s.kategori||'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${s.miktar} ${s.birim||''}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${s.kritikSeviye}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">${deger>0?fmt(deger)+' ₺':'—'}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${durum}</td></tr>`;
   }).join('');
   const topDeger=DB.stok.reduce((a,s)=>a+(s.satisFiyati||0)*s.miktar,0);
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Stok Raporu</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:800px;margin:0 auto;}h1{color:#1a73e8;}table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Stok Raporu</title><style>table{width:100%;border-collapse:collapse;}th{background:#f5f5f5;padding:8px 12px;text-align:left;font-size:12px;}</style></head><body>
   <h1>GÜN TEKNİK — STOK DEĞER RAPORU</h1><p>${new Date().toLocaleDateString('tr-TR')} · Toplam stok değeri: ${fmt(topDeger)} ₺</p>
   <table><thead><tr><th>Ürün</th><th>Kategori</th><th style="text-align:center">Miktar</th><th style="text-align:center">Kritik</th><th style="text-align:right">Değer</th><th>Durum</th></tr></thead><tbody>${satirlar}</tbody></table>
   </body></html>`;
@@ -13320,8 +13323,8 @@ async function isRaporuYazdirAc(projeId, secilenFotolar){
 <html lang="tr">
 <head><meta charset="UTF-8"><title>İş Raporu — ${p.isim}</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1e293b;}
+
+
 .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
 .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#064e3b 100%);padding:36px 44px 28px;color:#fff;position:relative;overflow:hidden;}
 .hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:250px;height:250px;background:rgba(255,255,255,0.03);border-radius:50%;}
@@ -13342,7 +13345,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1e293
 .kpi:last-child{border-right:none;}
 .kl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
 .kv{font-size:17px;font-weight:800;}
-.body{flex:1;padding:22px 44px;}
+.
 .sec{margin-bottom:18px;}
 .sec-ttl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #f1f5f9;}
 table{width:100%;border-collapse:collapse;}
@@ -13370,7 +13373,7 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
 .ftr{padding:10px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;}
 .ft{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:0.5px;}
 .pbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;position:sticky;top:0;z-index:100;}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:0;}body{background:#fff;}.page{box-shadow:none;margin:0;width:100%;min-height:100vh;}.pbar{display:none;}}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:0;}.page{box-shadow:none;margin:0;width:100%;min-height:100vh;}.pbar{display:none;}}
 </style></head>
 <body>
 <div class="pbar">
@@ -15074,8 +15077,8 @@ async function tavsiyeYazdirAc(){
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${t.baslik} — Gün Teknik</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;}
+  
+  
   .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;}
   .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%);padding:36px 44px 32px;color:#fff;position:relative;overflow:hidden;}
   .header::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%;}
@@ -15090,7 +15093,7 @@ async function tavsiyeYazdirAc(){
   .title-band{padding:24px 44px;border-bottom:1px solid #e2e8f0;}
   .title-band .baslik{font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.3px;margin-bottom:8px;}
   .title-band .ozet{font-size:13px;color:#64748b;line-height:1.6;}
-  .body{flex:1;padding:32px 44px;}
+  .
   .section-title{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;}
   .aciklama-text{font-size:13px;color:#334155;line-height:1.9;white-space:pre-wrap;}
   .footer{padding:12px 44px;background:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
@@ -15098,7 +15101,7 @@ async function tavsiyeYazdirAc(){
   @media print{
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
     @page{size:A4;margin:0;}
-    body{background:#fff;}
+    
     .page{box-shadow:none;margin:0;width:100%;min-height:100vh;}
     .no-print{display:none!important;}
   }
