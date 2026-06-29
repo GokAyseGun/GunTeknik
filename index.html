@@ -1195,7 +1195,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 <!-- İŞLEM EKLE YÜZEN BUTON -->
 <div id="fab-container" style="position:fixed;bottom:calc(var(--nav-h) + 14px);right:16px;z-index:950;display:none;">
-  <button onclick="openIslemModal()" style="width:52px;height:52px;border-radius:50%;background:var(--gmg);border:none;color:white;font-size:24px;font-weight:300;cursor:pointer;box-shadow:0 4px 20px rgba(232,25,122,0.45),0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.25s var(--ease),box-shadow 0.25s var(--ease);" onmouseenter="this.style.transform='scale(1.08)';this.style.boxShadow='0 8px 32px rgba(232,25,122,0.6),0 4px 12px rgba(0,0,0,0.4)'" onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(232,25,122,0.45),0 2px 8px rgba(0,0,0,0.4)'" title="İşlem Ekle">+</button>
+  <button onclick="openIslemModal()" style="width:52px;height:52px;border-radius:50%;background:var(--gmg);border:none;color:white;font-size:26px;font-weight:300;cursor:pointer;box-shadow:0 4px 20px rgba(232,25,122,0.45),0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.25s,box-shadow 0.25s;" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'" title="İşlem Ekle">+</button>
 </div>
 
 <!-- YAZDIR FOTOĞRAF SEÇİM MODALı -->
@@ -3185,8 +3185,7 @@ async function startApp(){
   document.getElementById('app').classList.add('active');
   const fabEl=document.getElementById('fab-container');
   if(fabEl){
-    fabEl.classList.add('visible');
-    if(USER_ROL==='goruntule')fabEl.classList.remove('visible');
+    fabEl.style.display=USER_ROL==='goruntule'?'none':'block';
   }
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
