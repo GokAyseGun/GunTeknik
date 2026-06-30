@@ -102,8 +102,8 @@
   --shadow-mg:0 0 30px rgba(196,0,106,0.10);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html{height:100%;-webkit-font-smoothing:antialiased;}
-body{overscroll-behavior-y:none;background:var(--bg);color:var(--text);font-family:var(--fu);font-size:14px;line-height:1.6;overflow-x:hidden;height:100%;transition:background 0.3s,color 0.3s;}
+html{height:100%;-webkit-font-smoothing:antialiased;background:var(--bg);}
+body{overscroll-behavior-y:none;background:transparent;color:var(--text);font-family:var(--fu);font-size:14px;line-height:1.6;overflow-x:hidden;height:100%;transition:background 0.3s,color 0.3s;}
 button{border:none;cursor:pointer;font-family:inherit;background:transparent;}
 input,select,textarea{font-family:inherit;}
 a{text-decoration:none;color:inherit;}
@@ -257,7 +257,7 @@ input[type="month"].month-input:focus{border-color:var(--blue);}
 
 /* STAGGER LİSTE */
 .stagger-wrap{display:flex;flex-direction:column;gap:8px;}
-.stagger-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;opacity:0;animation:staggerIn 0.65s var(--ease) forwards;transition:transform 0.3s var(--ease),box-shadow 0.3s var(--ease),border-color 0.3s var(--ease);cursor:pointer;position:relative;overflow:hidden;}
+.stagger-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;opacity:0;animation:staggerIn 0.32s var(--ease) forwards;transition:transform 0.3s var(--ease),box-shadow 0.3s var(--ease),border-color 0.3s var(--ease);cursor:pointer;position:relative;overflow:hidden;}
 .stagger-item:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm);border-color:var(--border2);}
 
 /* STOK SATIRI — ince */
@@ -449,6 +449,21 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 .kpi-mg .kpi-progress-fill{background:var(--gmg);}
 .kpi-cy .kpi-progress-fill{background:var(--gcy);}
 
+
+/* ── ARKA PLAN DEVRE ANİMASYONU ── */
+#bg-circuit-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0.5;}
+#bg-circuit-fx svg{position:absolute;inset:0;width:100%;height:100%;}
+#bg-circuit-fx .bg-line{stroke:var(--mg);stroke-width:1;fill:none;stroke-dasharray:6 420;opacity:0.35;animation:bgLineDraw 9s linear infinite;}
+#bg-circuit-fx .bg-line:nth-child(2n){stroke:var(--cy);animation-duration:12s;animation-delay:-3s;}
+#bg-circuit-fx .bg-line:nth-child(3n){animation-duration:15s;animation-delay:-7s;}
+#bg-circuit-fx .bg-line:nth-child(4n){stroke:var(--cy);animation-duration:10.5s;animation-delay:-1.5s;}
+@keyframes bgLineDraw{from{stroke-dashoffset:0;}to{stroke-dashoffset:-840;}}
+#bg-circuit-fx .bg-dot{fill:var(--mg);opacity:0;animation:bgDotPulse 4s ease-in-out infinite;}
+#bg-circuit-fx .bg-dot:nth-child(odd){fill:var(--cy);}
+@keyframes bgDotPulse{0%,100%{opacity:0;transform:scale(0.3);}50%{opacity:0.6;transform:scale(1);}}
+#app{position:relative;z-index:1;}
+[data-tema="acik"] #bg-circuit-fx{opacity:0.22;}
+
 </style>
 </head>
 <body>
@@ -530,6 +545,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <!-- ANA UYGULAMA -->
+<div id="bg-circuit-fx" aria-hidden="true"></div>
 <div id="app">
   <div class="topbar">
     <div class="topbar-title" id="page-title">Genel Özet</div>
@@ -2752,6 +2768,35 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
+<!-- Ajanda/Takvim Detay-Düzenle Modal -->
+<div class="modal-ov" id="modal-tak-detay">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>Ajanda Detayı</h3>
+      <button class="modal-close" onclick="closeModal('modal-tak-detay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="takd-id">
+      <div class="fg">
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="takd-tarih"></div>
+          <div class="fi" style="flex:1"><label>Tür</label>
+            <select id="takd-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+              <option value="Bilgi">Not</option><option value="İş">İş</option><option value="Alacak">Alacak</option><option value="Verecek">Verecek</option>
+            </select>
+          </div>
+        </div>
+        <div class="fi"><label>Başlık</label><input type="text" id="takd-baslik" placeholder="Örn: Ahmet Bey Montaj"></div>
+        <div class="fi"><label>Detay</label><textarea id="takd-not" rows="3" placeholder="Saat, notlar..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-danger" onclick="takvimDetayModalSil()" style="flex:0 0 auto;">🗑 Sil</button>
+        <button class="btn btn-primary" onclick="takvimDetayModalKaydet(this)" style="flex:1;">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Gün Detay -->
 <div class="modal-ov" id="modal-gun-detay">
   <div class="modal"><div class="modal-handle"></div>
@@ -2974,18 +3019,51 @@ function applyStagger(root){
 }
 
 /* ── SAYFA GEÇİŞ ANİMASYONU ── */
-function animatePage(page){
+function animatePage(page,navEl){
   if(!page)return;
+  // Apple App Store tarzı: alt bardaki ikondan süzülerek büyüme efekti
+  if(navEl){
+    const navRect=navEl.getBoundingClientRect();
+    const pageRect=page.getBoundingClientRect();
+    // Nav butonunun merkez X/Y'sini page'in yüzde konumuna çevir
+    const originX=((navRect.left+navRect.width/2-pageRect.left)/pageRect.width*100);
+    const originY=100; // Alt bardan geldiği için her zaman sayfanın altından başlar
+    page.style.transformOrigin=`${Math.max(0,Math.min(100,originX))}% ${originY}%`;
+  }else{
+    page.style.transformOrigin='50% 100%';
+  }
   page.style.opacity='0';
-  page.style.transform='translateY(16px)';
+  page.style.transform='scale(0.92) translateY(24px)';
+  page.style.filter='blur(2px)';
   page.style.transition='none';
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      page.style.transition='opacity 0.35s cubic-bezier(0.16,1,0.3,1),transform 0.35s cubic-bezier(0.16,1,0.3,1)';
+      page.style.transition='opacity 0.38s cubic-bezier(0.22,1,0.36,1),transform 0.38s cubic-bezier(0.22,1,0.36,1),filter 0.3s ease-out';
       page.style.opacity='1';
-      page.style.transform='translateY(0)';
+      page.style.transform='scale(1) translateY(0)';
+      page.style.filter='blur(0px)';
     });
   });
+}
+
+/* Sayfa kapanış (yaprak gibi içeri çekilme) — geri tıklamada veya bir önceki sayfaya dönüşte kullanılabilir */
+function animatePageOut(page,navEl,callback){
+  if(!page){callback&&callback();return;}
+  if(navEl){
+    const navRect=navEl.getBoundingClientRect();
+    const pageRect=page.getBoundingClientRect();
+    const originX=((navRect.left+navRect.width/2-pageRect.left)/pageRect.width*100);
+    page.style.transformOrigin=`${Math.max(0,Math.min(100,originX))}% 100%`;
+  }
+  page.style.transition='opacity 0.22s ease-in,transform 0.22s ease-in,filter 0.2s ease-in';
+  page.style.opacity='0';
+  page.style.transform='scale(0.94) translateY(10px)';
+  page.style.filter='blur(1px)';
+  setTimeout(()=>{
+    page.style.transition='none';
+    page.style.opacity='';page.style.transform='';page.style.filter='';
+    callback&&callback();
+  },220);
 }
 
 
@@ -3367,8 +3445,8 @@ function animateCount(el,target){
 
 function setStagger(items){items.forEach((el,i)=>{el.style.animationDelay=(i*0.04)+'s';});}
 
-const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.style.animationPlayState='running';});},{threshold:0.05});
-function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},50);}
+const revObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.style.animationPlayState='running';});},{threshold:0.01,rootMargin:'200px 0px 200px 0px'});
+function observeStagger(){setTimeout(()=>{document.querySelectorAll('.stagger-item,.stok-row').forEach(el=>{el.style.animationPlayState='paused';revObserver.observe(el);});},20);}
 
 // ============================================================ SAYFA
 const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı'};
@@ -3379,9 +3457,14 @@ function goPage(id,navEl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const page=document.getElementById('page-'+id);
+  // navEl yoksa, id'ye göre nav-item'ı bul (programatik çağrılarda)
+  let _navForAnim=navEl;
+  if(!_navForAnim){
+    document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+id+"'"))_navForAnim=n;});
+  }
   if(page){
     page.classList.add('active');
-    animatePage(page);
+    animatePage(page,_navForAnim);
     const mc=page.querySelector('.main-content')||page;
     setTimeout(()=>{
       initRipple();
@@ -3551,7 +3634,8 @@ function renderAll(){
     if(e('d-personel'))animateCount(e('d-personel'),c.topPersonelBakiye);
     if(e('personel-bakiye-top'))animateCount(e('personel-bakiye-top'),c.topPersonelBakiye);
     if(e('kasa-dagitim'))e('kasa-dagitim').innerHTML=`<span class="badge bg-green">💵 ${fmt(c.kasaNakit)}</span><span class="badge bg-blue">💳 ${fmt(c.kasaKart)}</span><span class="badge bg-purple">🏦 ${fmt(c.kasaIBAN)}</span>`;
-    renderVadeUyari();renderDashVade();renderDashBugun();renderDashGrafik();
+    const _activePageId=document.querySelector('.page.active')?.id;
+    if(_activePageId==='page-dashboard'){renderVadeUyari();renderDashVade();renderDashBugun();renderDashGrafik();}
   setTimeout(()=>{
     initRipple();
     const activePage=document.querySelector('.page.active');
@@ -6554,7 +6638,51 @@ async function saveTakvim(btn){
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
-async function deleteTakvim(id){
+async function openTakModal(id){
+  const t=(DB.takvim||[]).find(x=>x.id===id);
+  if(!t){showToast('Kayıt bulunamadı','red');return;}
+  document.getElementById('takd-id').value=t.id;
+  document.getElementById('takd-tarih').value=localDateStr(t.tarih).slice(0,10);
+  document.getElementById('takd-tip').value=t.tip||'Bilgi';
+  // baslik ve not birlikte saklanıyor ("baslik - not" formatında), ayır
+  let bas=t.baslik||'';let notT='';
+  if(t.not&&t.not.startsWith(bas+' - ')){notT=t.not.slice((bas+' - ').length);}
+  else if(t.not&&t.not!==bas){notT=t.not;}
+  document.getElementById('takd-baslik').value=bas;
+  document.getElementById('takd-not').value=notT;
+  openModal('modal-tak-detay');
+}
+
+async function takvimDetayModalKaydet(btn){
+  if(USER_ROL==='goruntule')return;
+  const id=document.getElementById('takd-id').value;
+  const tarih=document.getElementById('takd-tarih').value;
+  if(!tarih){showToast('Tarih seçin','red');return;}
+  const tip=document.getElementById('takd-tip').value;
+  const bas=document.getElementById('takd-baslik').value;
+  const notT=document.getElementById('takd-not').value;
+  if(btn)btn.disabled=true;
+  try{
+    await sbFetch('takvim?id=eq.'+id,{method:'PATCH',body:JSON.stringify({
+      tarih,tip,baslik:bas,not:bas+(notT?' - '+notT:'')
+    })});
+    await loadDB();
+    closeModal('modal-tak-detay');
+    showToast('Güncellendi','green');
+    renderCalendar();renderDashVade();
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,800);}
+}
+
+function takvimDetayModalSil(){
+  if(USER_ROL==='goruntule')return;
+  const id=document.getElementById('takd-id').value;
+  if(!id)return;
+  closeModal('modal-tak-detay');
+  deleteTakvim(parseInt(id));
+}
+
+function deleteTakvim(id){
   showConfirm('Ajanda Sil','Bu kayıt silinecek.',async()=>{
     try{await sbFetch('takvim?id=eq.'+id,{method:'DELETE'});await loadDB();renderCalendar();showToast('Silindi','amber');}
     catch(e){showToast('Hata!','red');}
@@ -7039,9 +7167,14 @@ const REKLAM_METRIK_TANIM={
 
 let _reklamManuelVeri=[];
 async function renderReklam(){
-  try{const rows=await sbFetch('google_ads_metrics?order=tarih.asc')||[];_reklamVeri=rows;}catch(e){_reklamVeri=[];}
-  try{const kRows=await sbFetch('google_ads_keywords?order=tarih.asc')||[];_reklamKelimeVeri=kRows;}catch(e){_reklamKelimeVeri=[];}
-  try{const mRows=await sbFetch('reklam_manuel?order=tarih.asc')||[];_reklamManuelVeri=mRows;}catch(e){_reklamManuelVeri=[];}
+  const [rows,kRows,mRows]=await Promise.all([
+    sbFetch('google_ads_metrics?order=tarih.asc').catch(()=>[]),
+    sbFetch('google_ads_keywords?order=tarih.asc').catch(()=>[]),
+    sbFetch('reklam_manuel?order=tarih.asc').catch(()=>[]),
+  ]);
+  _reklamVeri=rows||[];
+  _reklamKelimeVeri=kRows||[];
+  _reklamManuelVeri=mRows||[];
   const select=document.getElementById('reklam-kampanya-sec');
   if(select){
     const kampanyalar=[...new Map(_reklamVeri.map(r=>[r.kampanya_id,r.kampanya_adi])).entries()].filter(([id,adi])=>id&&adi);
@@ -8739,7 +8872,12 @@ async function renderProjeler(){
   list.innerHTML=projeler.map((p,i)=>{
     const k=getKisi(p.musteriId);
     const islemler=DB.islemler.filter(x=>x.projeId===p.id);
-    const gercekCiro=p.gerceklesenTutar||islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+    // Tek yönlü akış: proje TAMAMLANDIYSA gerceklesenTutar SABİT kalır, işlemler sayfasındaki
+    // sonraki değişiklikler/silmeler bu rakamı asla etkilemez (arşiv mantığı).
+    // Sadece tamamlanmamış/devam eden projeler için işlemlerden canlı hesap yapılır.
+    const gercekCiro=(p.durum==='Tamamlandı')
+      ? (p.gerceklesenTutar||0)
+      : islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
     // Not: Malzeme/İşçilik müşteriden talep edilen tutarın (Ciro) içinde sayılır, ayrıca maliyet değildir.
     // Sadece Gider (proje_giderler — kendi masrafımız) Ciro'dan düşülerek Kâr hesaplanır.
     const tamamlandi=p.durum==='Tamamlandı'&&gercekCiro>0;
@@ -15421,8 +15559,39 @@ async function tavsiyeYazdirAc(){
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
+// ── ARKA PLAN DEVRE ANİMASYONU OLUŞTUR ──
+function initBgCircuit(){
+  const host=document.getElementById('bg-circuit-fx');
+  if(!host)return;
+  const W=1200,H=2400; // viewBox - dikey ekranlar için uzun
+  let paths='';
+  const lineCount=9;
+  for(let i=0;i<lineCount;i++){
+    const x1=Math.random()*W,y1=Math.random()*H;
+    const segs=3+Math.floor(Math.random()*3);
+    let d=`M${x1.toFixed(0)},${y1.toFixed(0)}`;
+    let cx=x1,cy=y1;
+    for(let s=0;s<segs;s++){
+      // Devre kartı tarzı: dikey/yatay segmentler (90 derece kırılımlar)
+      if(s%2===0){cx+=(Math.random()-0.5)*260;}
+      else{cy+=(Math.random()-0.5)*260;}
+      d+=` L${cx.toFixed(0)},${cy.toFixed(0)}`;
+    }
+    paths+=`<path class="bg-line" d="${d}"/>`;
+  }
+  let dots='';
+  const dotCount=14;
+  for(let i=0;i<dotCount;i++){
+    const cx=Math.random()*W,cy=Math.random()*H,r=1.4+Math.random()*1.6;
+    const delay=(Math.random()*4).toFixed(2);
+    dots+=`<circle class="bg-dot" cx="${cx.toFixed(0)}" cy="${cy.toFixed(0)}" r="${r.toFixed(1)}" style="animation-delay:${delay}s"/>`;
+  }
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${paths}${dots}</svg>`;
+}
+
 // Tema başlangıç
 initTema();
+initBgCircuit();
 </script>
 </body>
 </html>
