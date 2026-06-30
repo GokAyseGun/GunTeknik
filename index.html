@@ -208,7 +208,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 input[type="month"].month-input{padding:7px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;width:130px;outline:none;font-family:inherit;transition:all 0.3s var(--ease);}
 input[type="month"].month-input:focus{border-color:var(--blue);}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;padding-bottom:calc(var(--nav-h) + 80px);}
-.page{display:none;padding:20px 16px;animation:pageIn 0.6s var(--ease) both;}
+.page{display:none;padding:20px 16px;}
 .page.active{display:block;}
 #page-rehber{padding:0;}
 #page-rehber.active{
@@ -453,11 +453,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 /* ── ARKA PLAN DEVRE ANİMASYONU ── */
 #bg-circuit-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0.5;}
 #bg-circuit-fx svg{position:absolute;inset:0;width:100%;height:100%;}
-#bg-circuit-fx .bg-line{stroke:var(--mg);stroke-width:1;fill:none;stroke-dasharray:6 420;opacity:0.35;animation:bgLineDraw 9s linear infinite;}
+#bg-circuit-fx .bg-line{stroke:var(--mg);stroke-width:1.5;fill:none;stroke-dasharray:80 200;opacity:0.45;animation:bgLineDraw 9s linear infinite;}
 #bg-circuit-fx .bg-line:nth-child(2n){stroke:var(--cy);animation-duration:12s;animation-delay:-3s;}
 #bg-circuit-fx .bg-line:nth-child(3n){animation-duration:15s;animation-delay:-7s;}
 #bg-circuit-fx .bg-line:nth-child(4n){stroke:var(--cy);animation-duration:10.5s;animation-delay:-1.5s;}
-@keyframes bgLineDraw{from{stroke-dashoffset:0;}to{stroke-dashoffset:-840;}}
+@keyframes bgLineDraw{from{stroke-dashoffset:0;}to{stroke-dashoffset:-560;}}
 #bg-circuit-fx .bg-dot{fill:var(--mg);opacity:0;animation:bgDotPulse 4s ease-in-out infinite;}
 #bg-circuit-fx .bg-dot:nth-child(odd){fill:var(--cy);}
 @keyframes bgDotPulse{0%,100%{opacity:0;transform:scale(0.3);}50%{opacity:0.6;transform:scale(1);}}
@@ -3464,7 +3464,7 @@ function goPage(id,navEl){
   }
   if(page){
     page.classList.add('active');
-    animatePage(page,_navForAnim);
+    try{animatePage(page,_navForAnim);}catch(e){console.error('animatePage hatası:',e);}
     const mc=page.querySelector('.main-content')||page;
     setTimeout(()=>{
       initRipple();
@@ -7167,6 +7167,11 @@ const REKLAM_METRIK_TANIM={
 
 let _reklamManuelVeri=[];
 async function renderReklam(){
+  // Anlık skeleton göster - veri gelene kadar
+  const grid=document.getElementById('reklam-kpi-grid');
+  if(grid&&!_reklamVeri.length){
+    grid.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">'+Array(9).fill('<div class="skeleton" style="height:78px;border-radius:var(--r-lg);background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;"></div>').join('')+'</div>';
+  }
   const [rows,kRows,mRows]=await Promise.all([
     sbFetch('google_ads_metrics?order=tarih.asc').catch(()=>[]),
     sbFetch('google_ads_keywords?order=tarih.asc').catch(()=>[]),
@@ -15590,8 +15595,12 @@ function initBgCircuit(){
 }
 
 // Tema başlangıç
-initTema();
-initBgCircuit();
+try{initTema();}catch(e){console.error('initTema hatası:',e);}
+try{initBgCircuit();}catch(e){console.error('initBgCircuit hatası:',e);}
+// Garanti: DOM tam yüklendiğinde de tekrar dene (script sırası garantisi için)
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
+}
 </script>
 </body>
 </html>
