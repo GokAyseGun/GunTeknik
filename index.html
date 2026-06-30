@@ -3825,6 +3825,8 @@ const DASH_DONEMLER=[
   {val:'bugun',  lbl:'Bugün'},
   {val:'hafta',  lbl:'Bu Hafta'},
   {val:'buay',   lbl:'Bu Ay'},
+  {val:'son30',  lbl:'Son 30 Gün'},
+  {val:'son60',  lbl:'Son 60 Gün'},
   {val:'3ay',    lbl:'3 Ay'},
   {val:'6ay',    lbl:'6 Ay'},
   {val:'1yil',   lbl:'1 Yıl'},
@@ -3932,6 +3934,10 @@ function dashVeriHesapla(){
     baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-6);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='buay'){
     baslangic=new Date(simdi.getFullYear(),simdi.getMonth(),1);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+  }else if(_dashDonem==='son30'){
+    baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-29);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
+  }else if(_dashDonem==='son60'){
+    baslangic=new Date(bugun);baslangic.setDate(bugun.getDate()-59);bitis=new Date(bugun);bitis.setDate(bitis.getDate()+1);granularite='gun';
   }else if(_dashDonem==='3ay'){
     baslangic=new Date(simdi.getFullYear(),simdi.getMonth()-2,1);bitis=new Date(simdi.getFullYear(),simdi.getMonth()+1,1);granularite='hafta';
   }else if(_dashDonem==='6ay'){
