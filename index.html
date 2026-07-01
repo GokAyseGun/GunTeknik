@@ -598,9 +598,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <div id="dash-grafik-wrap" style="position:relative;height:240px;overflow:hidden;">
           <canvas id="dash-chart" role="img" aria-label="Finansal performans grafiği" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
           <canvas id="dash-mum-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;display:none;"></canvas>
-          <!-- Çizim overlay canvas -->
-          <canvas id="dash-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;display:none;z-index:10;"></canvas>
+
         </div>
+        <!-- Çizim overlay - wrapper dışında, JS ile konumlandırılır -->
+        <canvas id="dash-overlay" style="position:fixed;cursor:crosshair;display:none;z-index:500;pointer-events:all;"></canvas>
         <!-- Grafik Araç Toolbar -->
         <div id="dash-arac-toolbar" style="display:flex;gap:4px;padding:8px 0 4px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;align-items:center;border-bottom:1px solid var(--border);margin-bottom:8px;">
           <span style="font-size:10px;color:var(--text3);flex-shrink:0;padding-right:4px;">ARAÇLAR</span>
@@ -15964,19 +15965,14 @@ function dashAracSec(arac,btn){
   const overlay=document.getElementById('dash-overlay');
   if(!overlay)return;
   if(_dashAracSecili){
-    // Meta güncelle, sonra overlay göster
     dashGrafikMetaGuncelle();
-    if(!_dashGrafikMeta){
-      // Chart henüz hazır değil, kısa bekle
-      setTimeout(()=>{
-        dashGrafikMetaGuncelle();
-        overlay.style.display='block';
-        dashOverlayYenidenCiz();
-      },300);
-    }else{
+    const doGoster=()=>{
+      if(!_dashGrafikMeta){return;}
       overlay.style.display='block';
       dashOverlayYenidenCiz();
-    }
+    };
+    if(!_dashGrafikMeta){setTimeout(()=>{dashGrafikMetaGuncelle();doGoster();},400);}
+    else{doGoster();}
   }else{
     overlay.style.display='none';
   }
@@ -15984,61 +15980,70 @@ function dashAracSec(arac,btn){
 
 // Grafik koordinatlarını güncelle (Chart.js scales'den)
 function dashGrafikMetaGuncelle(){
-  if(!_dashChart||!_dashChart.scales||!_dashChart.chartArea)return;
-  const xScale=_dashChart.scales.x;
-  const yScale=_dashChart.scales.y||_dashChart.scales.y1||Object.values(_dashChart.scales).find(s=>s.axis==='y');
-  if(!xScale||!yScale)return;
+  if(!_dashChart||!_dashChart.chartArea)return;
+  // Scales null olabilir - güvenli al
+  const scales=_dashChart.scales||{};
+  const xScale=scales.x;
+  const yScale=scales.y||scales.y1||Object.values(scales).find(s=>s&&s.axis==='y');
   const ca=_dashChart.chartArea;
-  // devicePixelRatio düzeltmesi
+  if(!ca)return;
+  const gc=_dashChart.canvas;
+  if(!gc)return;
   const dpr=window.devicePixelRatio||1;
+  // Canvas'ın ekran koordinatları (fixed overlay için)
+  const gcRect=gc.getBoundingClientRect();
   _dashGrafikMeta={
-    xMin:xScale.min,xMax:xScale.max,
-    yMin:yScale.min,yMax:yScale.max,
+    xMin:xScale?xScale.min:0,
+    xMax:xScale?xScale.max:1,
+    yMin:yScale?yScale.min:0,
+    yMax:yScale?yScale.max:1,
+    // chartArea canvas piksel cinsinden - CSS'e çevir
     chartArea:{
-      left:ca.left,right:ca.right,
-      top:ca.top,bottom:ca.bottom,
-      width:ca.width,height:ca.height
+      left:ca.left/dpr,right:ca.right/dpr,
+      top:ca.top/dpr,bottom:ca.bottom/dpr,
     },
     labelCount:(_dashChart.data?.labels?.length)||1,
     labels:_dashChart.data?.labels||[],
-    canvas:_dashChart.canvas,
-    dpr
+    canvas:gc,
+    dpr,
+    gcRect  // ekran koordinatları
   };
-  // Overlay canvas'ını grafik canvas ile tam eşitle
+  // Fixed overlay'i canvas ile hizala
   const ov=document.getElementById('dash-overlay');
-  const gc=_dashChart.canvas;
-  if(ov&&gc){
-    ov.width=gc.width;
-    ov.height=gc.height;
-    ov.style.width=gc.clientWidth+'px';
-    ov.style.height=gc.clientHeight+'px';
+  if(ov&&gcRect){
+    ov.style.left=gcRect.left+'px';
+    ov.style.top=gcRect.top+'px';
+    ov.style.width=gcRect.width+'px';
+    ov.style.height=gcRect.height+'px';
+    ov.width=Math.round(gcRect.width*dpr);
+    ov.height=Math.round(gcRect.height*dpr);
+    // DPR scale
+    const ctx=ov.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
   }
 }
 
 // Canvas px → grafik değer dönüşümü
 function pxToGrafik(px,py){
   if(!_dashGrafikMeta)return null;
-  const{chartArea,xMin,xMax,yMin,yMax,dpr}=_dashGrafikMeta;
-  // CSS piksel → canvas piksel (DPR düzeltmesi)
-  const cpx=px*(dpr||1), cpy=py*(dpr||1);
-  const xRatio=(cpx-chartArea.left)/(chartArea.right-chartArea.left);
-  const yRatio=1-(cpy-chartArea.top)/(chartArea.bottom-chartArea.top);
+  const{chartArea,yMin,yMax}=_dashGrafikMeta;
+  // px,py: overlay canvas CSS koordinatı (ctx.setTransform ile DPR zaten uygulandı)
+  const xRatio=(px-chartArea.left)/(chartArea.right-chartArea.left);
+  const yRatio=1-(py-chartArea.top)/(chartArea.bottom-chartArea.top);
   return{
     xRatio:Math.max(0,Math.min(1,xRatio)),
-    yVal:yMin+(yMax-yMin)*yRatio,
-    labelIdx:Math.round(xRatio*(_dashGrafikMeta.labelCount-1))
+    yVal:yMin+(yMax-yMin)*Math.max(0,Math.min(1,yRatio)),
+    labelIdx:Math.round(Math.max(0,Math.min(1,xRatio))*(_dashGrafikMeta.labelCount-1))
   };
 }
 
 // Grafik değer → px dönüşümü
 function grafikToPx(xRatio,yVal){
   if(!_dashGrafikMeta)return null;
-  const{chartArea,yMin,yMax,dpr}=_dashGrafikMeta;
-  const d=dpr||1;
-  // Chart koordinatları zaten canvas pikselinde, CSS'e çevir
-  const px=(chartArea.left+xRatio*(chartArea.right-chartArea.left))/d;
+  const{chartArea,yMin,yMax}=_dashGrafikMeta;
+  const px=chartArea.left+xRatio*(chartArea.right-chartArea.left);
   const yRange=yMax-yMin||1;
-  const py=(chartArea.bottom-(yVal-yMin)/yRange*(chartArea.bottom-chartArea.top))/d;
+  const py=chartArea.bottom-(yVal-yMin)/yRange*(chartArea.bottom-chartArea.top);
   return{px,py};
 }
 
@@ -16046,16 +16051,13 @@ function grafikToPx(xRatio,yVal){
 function dashOverlayYenidenCiz(){
   const overlay=document.getElementById('dash-overlay');
   if(!overlay||!_dashGrafikMeta)return;
+  // Meta ile overlay hizalandı mı kontrol et
   const gc=_dashGrafikMeta.canvas;
   if(!gc)return;
-  if(overlay.width!==gc.width||overlay.height!==gc.height){
-    overlay.width=gc.width;
-    overlay.height=gc.height;
-  }
-  overlay.style.width=gc.clientWidth+'px';
-  overlay.style.height=gc.clientHeight+'px';
+  const dpr=_dashGrafikMeta.dpr||1;
   const ctx=overlay.getContext('2d');
-  ctx.clearRect(0,0,overlay.width,overlay.height);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,overlay.width/dpr,overlay.height/dpr);
   ctx.clearRect(0,0,overlay.width,overlay.height);
 
   _dashCizimler.forEach(cizim=>{
@@ -16306,10 +16308,9 @@ function dashAracProjeksiyonEkle(){
 
 function dashOverlayMouseDown(e){
   if(!_dashAracSecili)return;
-  dashGrafikMetaGuncelle();
+  if(!_dashGrafikMeta)dashGrafikMetaGuncelle();
   if(!_dashGrafikMeta)return;
   const r=e.target.getBoundingClientRect();
-  // CSS piksel (dpr düzeltmesi pxToGrafik içinde yapılıyor)
   const px=e.clientX-r.left,py=e.clientY-r.top;
   const g=pxToGrafik(px,py);
   if(!g)return;
@@ -16460,6 +16461,9 @@ function dashOverlayBagla(){
   const ov=document.getElementById('dash-overlay');
   if(!ov||ov._bound)return;
   ov._bound=true;
+  // Scroll/resize olunca overlay'i yeniden hizala
+  window.addEventListener('scroll',()=>{if(_dashGrafikMeta)dashGrafikMetaGuncelle();},{passive:true});
+  window.addEventListener('resize',()=>{if(_dashGrafikMeta){dashGrafikMetaGuncelle();dashOverlayYenidenCiz();}},{passive:true});
   ov.addEventListener('mousedown',dashOverlayMouseDown);
   ov.addEventListener('mousemove',dashOverlayMouseMove);
   ov.addEventListener('mouseup',dashOverlayMouseUp);
