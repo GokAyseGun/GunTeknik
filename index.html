@@ -1874,6 +1874,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fi"><label>Ana Kategori</label>
         <select id="mi-kat" onchange="onKatChange()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
       </div>
+      <div class="fi" id="div-mi-pers-hakdis" style="display:none;">
+        <label>Personel Hak Ediş — Personel Seç</label>
+        <div id="pers-hakdis-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <input type="hidden" id="mi-hakdis-personel-id">
+      </div>
       <div class="fi" id="div-mi-kaynak" style="display:none;">
         <label>İşin Kaynağı</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1896,7 +1901,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </div>
       </div>
       <div class="fi" id="div-mi-altkat" style="display:none;"><label>Alt Kategori</label>
-        <select id="mi-altkat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
+        <select id="mi-altkat" onchange="onAltKatChange()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
       </div>
 
       <!-- İŞÇİLİK — hizmet seçiminin hemen altında, sadece İşletme Geliri'nde görünür -->
@@ -2792,6 +2797,41 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button class="btn btn-danger" onclick="takvimDetayModalSil()" style="flex:0 0 auto;">🗑 Sil</button>
         <button class="btn btn-primary" onclick="takvimDetayModalKaydet(this)" style="flex:1;">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Personel Hak Ediş Ödeme Modalı -->
+<div class="modal-ov" id="modal-avans-ode">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3 id="avans-modal-baslik">Hak Ediş Ödemesi</h3>
+      <button class="modal-close" onclick="closeModal('modal-avans-ode')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="avans-personel-id">
+      <div style="background:var(--surface2);border-radius:var(--r-md);padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">MEVCUT BAKİYE</div>
+        <div id="avans-mevcut-bakiye" style="font-size:28px;font-weight:700;font-family:var(--fm);" class="num">0 ₺</div>
+        <div id="avans-bakiye-aciklama" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
+      </div>
+      <div class="fi">
+        <label>Ödeme Tarihi</label>
+        <input type="date" id="avans-tarih">
+      </div>
+      <div class="fi">
+        <label>Ödenecek Tutar (₺)</label>
+        <input type="number" id="avans-tutar" inputmode="numeric" placeholder="0.00">
+      </div>
+      <div class="fi">
+        <label>Not (isteğe bağlı)</label>
+        <input type="text" id="avans-not" placeholder="Örn: Haziran hak edişi">
+      </div>
+      <div id="avans-sonuc-onizleme" style="display:none;background:var(--surface2);border-radius:var(--r-md);padding:12px;margin-top:8px;font-size:12px;color:var(--text2);"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-avans-ode')" style="flex:1;">Vazgeç</button>
+        <button class="btn btn-primary" onclick="avansOdemeYap(this)" style="flex:2;">💸 Öde</button>
       </div>
     </div>
   </div>
@@ -3800,7 +3840,7 @@ function renderDashBugun(){
 
 
 // ============================================================ DASHBOARD GRAFİK PANELİ
-let _dashDonem='buay';
+let _dashDonem='son30';
 let _dashGrup='tumü';
 let _dashGrafikTip='line';
 let _dashSeciliMetrikler=['kasa'];
@@ -4503,6 +4543,39 @@ function renderDashGrafik(){
   dashGrafikOzetCiz();
 }
 
+function onAltKatChange(){
+  const altkat=document.getElementById('mi-altkat')?.value;
+  const persDiv=document.getElementById('div-mi-pers-hakdis');
+  if(!persDiv)return;
+  if(altkat==='Personel Hak Ediş'){
+    persDiv.style.display='block';
+    // Personel listesini doldur
+    const list=document.getElementById('pers-hakdis-list');
+    if(!list)return;
+    const secili=document.getElementById('mi-hakdis-personel-id')?.value;
+    list.innerHTML=(DB.personeller||[]).map(p=>{
+      const aktif=secili==p.id;
+      return `<div onclick="persHakdisListSec(${p.id})" data-pid="${p.id}" class="pers-hd-btn" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--r-sm);border:1.5px solid ${aktif?'var(--mg-md)':'var(--border2)'};background:${aktif?'var(--mg-lt)':'var(--bg2)'};cursor:pointer;transition:all 0.2s;">
+        <span style="font-weight:600;font-size:13px;color:${aktif?'var(--mg)':'var(--text)'};">${p.isim}</span>
+        <span style="font-size:11px;color:var(--text3);">${p.pozisyon||'Personel'}</span>
+      </div>`;
+    }).join('');
+  }else{
+    persDiv.style.display='none';
+    const inp=document.getElementById('mi-hakdis-personel-id');
+    if(inp)inp.value='';
+  }
+}
+
+function persHakdisListSec(pid){
+  const inp=document.getElementById('mi-hakdis-personel-id');
+  if(!inp)return;
+  // Toggle
+  if(inp.value==pid){inp.value='';}
+  else{inp.value=pid;}
+  onAltKatChange(); // listeyi yeniden render et (seçim vurgusu)
+}
+
 function teklifKaynakSec(btn){
   document.querySelectorAll('.teklif-kaynak-btn').forEach(b=>{
     b.style.background='var(--bg2)';b.style.color='var(--text3)';b.style.borderColor='var(--border2)';
@@ -4869,7 +4942,7 @@ async function deleteIslem(id,event){
 
 // ============================================================ İŞLEM FORMU
 const ISLETME_HİZ={"Elektrik":["Tamirat","Tadilat","Montaj","TV Montaj","Kablo ve Hat Çekme","Tavan Led Döşeme","Avize Montaj / Tamir","Dekoratif Aydınlatma","Klima Elektrik Bağlantısı","Tesisat Yenileme","Priz / Anahtar Tamiri","Priz / Anahtar Montajı","Sigorta Arızası / Değişimi","Pano Montajı","Genel Bakım & Kontrol","Arıza Tespit"],"Klima":["Kart Arıza","Motor Arıza","Gaz Dolumu","Elektrik Arıza","Montaj","İç Ünite Temizliği","Dış Ünite Temizliği","Su Tahliye Sorunu","Yer Değiştirme Sök/Tak","Tesisat Döşeme","Genel Bakım & Kontrol","Arıza Tespit"],"TV, Uydu, Çanak":["Çanak Montaj (Yeni)","Çanak Montaj (Eski)","Çanak Kablolama","Çanak Sinyal Ayar","Çanak Arıza","Lnb Değişimi","F Konnektör Tamir/Değişim","Genel Bakım & Kontrol","Arıza Tespit"],"İnternet":["İnternet Arıza","İnternet Kablo Çekme","Telefon Hat Arıza/Değişim","Ethernet Hat Arıza/Değişim","Telefon Hat Döşeme","Ethernet Hat Döşeme","RJ11/RJ45 Jak Arıza/Değişim","Modem Montaj","Genel Bakım & Kontrol","Arıza Tespit"],"Sıhhi Tesisat":["Döşeme","Arıza","Montaj","Tamir","Şofben Montaj","Tıkanıklık Açma","Su Kaçağı Tespiti","Su Kaçağı Tamiratı","Genel Bakım & Kontrol","Arıza Tespit"],"Metal":["Kaynak İşçilik","Ferforje","Korkuluk","Küpeşte","Panel Çit","Demir Kapı/Pencere","Bahçe Kapısı","Teras Kapama","Çatı Kapama","Garaj Yapımı","Genel Bakım & Kontrol","Arıza Tespit"],"Ahşap":["İşçilik","Tamir","Dekoratif Ürün","Lambri","Zımpara","Cila","Genel Bakım & Kontrol","Arıza Tespit"]};;
-const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım","Kredi Taksiti","Banka Kredisi / Finansman"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
+const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım","Kredi Taksiti","Banka Kredisi / Finansman","Personel Hak Ediş"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
 
 function selectPayMethod(btn,hiddenId,modalId){
   const container=document.getElementById(modalId)||document;
@@ -5254,6 +5327,8 @@ async function editIslem(id,event){
   document.getElementById('mi-tutar').value=i.tutar;
   document.getElementById('mi-statu').value=i.statu;onStatuChange();
   document.getElementById('mi-not').value=i.not||'';
+  // Alt kategori yüklendiyse Personel Hak Ediş panelini tetikle
+  setTimeout(()=>{onAltKatChange();},50);
   // islem_kaynagi yükle
   const kaynakInp=document.getElementById('mi-islem-kaynagi');
   if(kaynakInp){kaynakInp.value=i.islemKaynagi||'';}
@@ -5329,8 +5404,13 @@ function onKatChange(){
     const iscilikDiv=document.getElementById('div-mi-iscilik');if(iscilikDiv)iscilikDiv.style.display='block';
   }else{
     if(kaynakDiv)kaynakDiv.style.display='none';document.getElementById('mi-islem-kaynagi')&&(document.getElementById('mi-islem-kaynagi').value='');document.querySelectorAll('.kaynak-btn').forEach(b=>{b.style.background='var(--bg2)';b.style.color='var(--text3)';b.style.borderColor='var(--border2)';});
+    const _phDivR=document.getElementById('div-mi-pers-hakdis');if(_phDivR)_phDivR.style.display='none';
+    const _phInpR=document.getElementById('mi-hakdis-personel-id');if(_phInpR)_phInpR.value='';
     if(checkDiv)checkDiv.style.display='none';if(selectDiv)selectDiv.style.display='block';
     const sel=document.getElementById('mi-altkat');if(sel){sel.innerHTML='';const sec=(KATEGORILER[tip]&&KATEGORILER[tip][kat])||[];if(!sec.length)sel.innerHTML='<option value="-">Detay Yok</option>';else sec.forEach(o=>sel.add(new Option(o,o)));}
+    // Personel hak ediş paneli gizle (kat değişince sıfırla)
+    const phDiv=document.getElementById('div-mi-pers-hakdis');if(phDiv)phDiv.style.display='none';
+    const phInp=document.getElementById('mi-hakdis-personel-id');if(phInp)phInp.value='';
     // Personel payı SADECE İşletme Geliri'nde — diğer tüm kategorilerde gizle
     if(yDiv)yDiv.style.display='none';
     const iscilikDiv2=document.getElementById('div-mi-iscilik');if(iscilikDiv2)iscilikDiv2.style.display='none';
@@ -5920,6 +6000,17 @@ async function saveIslem(btn){
         }
       }
       showToast('İşlem kaydedildi','green');
+    }
+    // Personel Hak Ediş ise yardimci_islemler'e de yaz (bakiyeyi düşür)
+    const _hdPid=document.getElementById('mi-hakdis-personel-id')?.value;
+    if(_hdPid&&document.getElementById('mi-altkat')?.value==='Personel Hak Ediş'){
+      try{
+        const _hdTarih=dtVal||(new Date().toISOString().split('T')[0]);
+        await sbFetch('yardimci_islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+          personel_id:parseInt(_hdPid),tip:'Avans/Ödeme',tutar:tutar,
+          tarih:_hdTarih,not:'İşlem girişi: Personel Hak Ediş ödemesi'
+        })});
+      }catch(e){console.error('Personel hak ediş yardımcı islem:',e);}
     }
     await loadDB();closeModal('modal-islem');
     // Animasyon — gelir veya gider
@@ -6742,6 +6833,98 @@ async function takvimDetayModalKaydet(btn){
     renderCalendar();renderDashVade();
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,800);}
+}
+
+// ============================================================
+// PERSONEL HAK EDİŞ ÖDEME
+// ============================================================
+
+function openAvansModal(personelId){
+  const p=DB.personeller.find(x=>x.id===personelId);
+  if(!p){showToast('Personel bulunamadı','red');return;}
+
+  // Mevcut bakiyeyi hesapla
+  const c=calcFinans();
+  const bakiye=c.personelBakiye?.[personelId]||0;
+
+  document.getElementById('avans-personel-id').value=personelId;
+  document.getElementById('avans-modal-baslik').textContent=p.isim+' — Hak Ediş Ödemesi';
+  document.getElementById('avans-mevcut-bakiye').textContent=fmt(Math.abs(bakiye))+' ₺';
+  document.getElementById('avans-mevcut-bakiye').style.color=bakiye>=0?'var(--green)':'var(--red)';
+  document.getElementById('avans-bakiye-aciklama').textContent=
+    bakiye>0?'Personelin alacağı var (henüz ödenmemiş)':
+    bakiye<0?'Fazla ödeme yapılmış (avans borcu var)':
+    'Bakiye sıfır';
+  // Tarih bugün
+  document.getElementById('avans-tarih').value=new Date().toISOString().split('T')[0];
+  // Öneri: mevcut bakiye kadar (pozitifse)
+  document.getElementById('avans-tutar').value=bakiye>0?bakiye.toFixed(2):'';
+  document.getElementById('avans-not').value='';
+  document.getElementById('avans-sonuc-onizleme').style.display='none';
+
+  // Tutar değişince önizleme göster
+  const tutarEl=document.getElementById('avans-tutar');
+  tutarEl.oninput=()=>{
+    const t=parseFloat(tutarEl.value)||0;
+    const yeniBakiye=bakiye-t;
+    const oniz=document.getElementById('avans-sonuc-onizleme');
+    if(t>0){
+      oniz.style.display='block';
+      oniz.innerHTML=`Ödeme sonrası bakiye: <strong style="color:${yeniBakiye>=0?'var(--green)':'var(--red)'}">${fmt(Math.abs(yeniBakiye))} ₺ ${yeniBakiye>=0?'alacak':'fazla ödeme'}</strong>`;
+    }else{
+      oniz.style.display='none';
+    }
+  };
+  openModal('modal-avans-ode');
+  setTimeout(()=>document.getElementById('avans-tutar')?.focus(),150);
+}
+
+async function avansOdemeYap(btn){
+  const personelId=parseInt(document.getElementById('avans-personel-id').value);
+  const tutar=parseFloat(document.getElementById('avans-tutar').value)||0;
+  const tarih=document.getElementById('avans-tarih').value;
+  const notMetni=document.getElementById('avans-not').value||'Hak ediş ödemesi';
+
+  if(!personelId||tutar<=0){showToast('Geçerli bir tutar girin','red');return;}
+  if(!tarih){showToast('Tarih seçin','red');return;}
+
+  const p=DB.personeller.find(x=>x.id===personelId);
+  if(btn)btn.disabled=true;
+  try{
+    // 1) islemler tablosuna gider kaydı (kasaya yansısın)
+    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      tarih:tarih+'T12:00:00',
+      tip:'Gider',
+      statu:'Tamamlandı',
+      kat:'İşletme Gideri',
+      alt_kat:'Personel Hak Ediş',
+      tutar:tutar,
+      malzeme_tutar:0,
+      not:notMetni+' — '+(p?.isim||'Personel #'+personelId),
+      odeme_yontemi:'Nakit',
+      personel_ids:[personelId]
+    })});
+
+    // 2) yardimci_islemler tablosuna ödeme kaydı (personel bakiyesi düşsün)
+    await sbFetch('yardimci_islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      personel_id:personelId,
+      tip:'Avans/Ödeme',
+      tutar:tutar,
+      tarih:tarih,
+      not:notMetni
+    })});
+
+    await loadDB();
+    closeModal('modal-avans-ode');
+    showToast(`${p?.isim||'Personel'} için ${fmt(tutar)} ₺ ödeme yapıldı`,'green');
+    // Personel detay penceresini de güncelle
+    setTimeout(()=>showPersonelDetay(personelId),300);
+  }catch(e){
+    console.error('Avans ödeme hatası:',e);
+    showToast('Ödeme sırasında hata oluştu','red');
+  }finally{
+    if(btn)setTimeout(()=>btn.disabled=false,1000);
+  }
 }
 
 function takvimDetayModalSil(){
