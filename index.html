@@ -4336,39 +4336,50 @@ function dashGrafikCiz(){
     }
   };
 
-  // Scroll için: gün sayısına göre canvas genişliği ayarla
+  // Scroll: uzun dönemler için Chart.js'in kendi scroll desteğini kullan
+  // canvas her zaman responsive kalır, scroll wrapper üstünde olur
+  const _wrapper=document.getElementById('dash-grafik-wrap');
   const _gunSayisi=labels.length;
-  const _minPxPerGun=(_dashDonem==='3ay'||_dashDonem==='6ay'||_dashDonem==='1yil')?14:0;
-  const _wrapper=canvas.parentElement;
-  if(_minPxPerGun>0&&_wrapper){
-    const _gerekliGenis=_gunSayisi*_minPxPerGun;
-    const _wrapperGenis=_wrapper.offsetWidth||320;
-    if(_gerekliGenis>_wrapperGenis){
-      // Wrapper'ı scroll yap, canvas'ı geniş tut
+  const _uzunDonem=(_dashDonem==='3ay'||_dashDonem==='6ay'||_dashDonem==='1yil');
+  if(_wrapper){
+    if(_uzunDonem&&_gunSayisi>60){
+      const _pxPerGun=Math.max(10,Math.min(16,(_wrapper.offsetWidth||360)/_gunSayisi*2));
+      const _gerekli=Math.round(_gunSayisi*_pxPerGun);
       _wrapper.style.overflowX='auto';
       _wrapper.style.overflowY='hidden';
-      _wrapper.style.WebkitOverflowScrolling='touch';
-      canvas.style.width=_gerekliGenis+'px';
-      canvas.style.minWidth=_gerekliGenis+'px';
-      canvas.style.position='relative';
+      _wrapper.style.webkitOverflowScrolling='touch';
+      // Bir iç wrapper ile canvas genişliğini sabitle
+      let _innerWrap=_wrapper.querySelector('.dash-inner-wrap');
+      if(!_innerWrap){
+        _innerWrap=document.createElement('div');
+        _innerWrap.className='dash-inner-wrap';
+        _innerWrap.style.cssText='position:relative;height:100%;';
+        // Mevcut canvasları taşı
+        [..._wrapper.children].forEach(el=>{
+          if(el.tagName==='CANVAS')_innerWrap.appendChild(el);
+        });
+        _wrapper.insertBefore(_innerWrap,_wrapper.firstChild);
+      }
+      _innerWrap.style.width=_gerekli+'px';
+      // overlay da aynı genişlikte
+      const _ov=document.getElementById('dash-overlay');
+      if(_ov){_ov.style.width=_gerekli+'px';}
     }else{
-      _wrapper.style.overflowX='';
-      canvas.style.width='';
-      canvas.style.minWidth='';
-      canvas.style.position='absolute';
+      _wrapper.style.overflowX='hidden';
+      const _innerWrap=_wrapper.querySelector('.dash-inner-wrap');
+      if(_innerWrap){
+        _innerWrap.style.width='100%';
+        const _ov=document.getElementById('dash-overlay');
+        if(_ov){_ov.style.width='100%';}
+      }
     }
-  }else if(_wrapper){
-    _wrapper.style.overflowX='';
-    canvas.style.width='';
-    canvas.style.minWidth='';
-    canvas.style.position='absolute';
   }
 
   _dashChart=new Chart(canvas,{
     type:mumMod?'candlestick':'line',
     data:mumMod?{datasets}:{labels,datasets},
     options:{
-      responsive:false,maintainAspectRatio:false,
+      responsive:true,maintainAspectRatio:false,
       animation:{duration:700,easing:'easeInOutQuart'},
       interaction:{mode:'index',intersect:false},
       plugins:{
@@ -15951,31 +15962,67 @@ function dashAracSec(arac,btn){
   document.querySelectorAll('.dash-arac-btn').forEach(b=>b.classList.remove('aktif'));
   if(_dashAracSecili&&btn)btn.classList.add('aktif');
   const overlay=document.getElementById('dash-overlay');
-  if(overlay)overlay.style.display=_dashAracSecili?'block':'none';
+  if(!overlay)return;
+  if(_dashAracSecili){
+    // Meta güncelle, sonra overlay göster
+    dashGrafikMetaGuncelle();
+    if(!_dashGrafikMeta){
+      // Chart henüz hazır değil, kısa bekle
+      setTimeout(()=>{
+        dashGrafikMetaGuncelle();
+        overlay.style.display='block';
+        dashOverlayYenidenCiz();
+      },300);
+    }else{
+      overlay.style.display='block';
+      dashOverlayYenidenCiz();
+    }
+  }else{
+    overlay.style.display='none';
+  }
 }
 
 // Grafik koordinatlarını güncelle (Chart.js scales'den)
 function dashGrafikMetaGuncelle(){
-  if(!_dashChart||!_dashChart.scales)return;
+  if(!_dashChart||!_dashChart.scales||!_dashChart.chartArea)return;
   const xScale=_dashChart.scales.x;
-  const yScale=_dashChart.scales.y||_dashChart.scales.y1;
+  const yScale=_dashChart.scales.y||_dashChart.scales.y1||Object.values(_dashChart.scales).find(s=>s.axis==='y');
   if(!xScale||!yScale)return;
+  const ca=_dashChart.chartArea;
+  // devicePixelRatio düzeltmesi
+  const dpr=window.devicePixelRatio||1;
   _dashGrafikMeta={
     xMin:xScale.min,xMax:xScale.max,
     yMin:yScale.min,yMax:yScale.max,
-    chartArea:_dashChart.chartArea,
+    chartArea:{
+      left:ca.left,right:ca.right,
+      top:ca.top,bottom:ca.bottom,
+      width:ca.width,height:ca.height
+    },
     labelCount:(_dashChart.data?.labels?.length)||1,
     labels:_dashChart.data?.labels||[],
-    canvas:_dashChart.canvas
+    canvas:_dashChart.canvas,
+    dpr
   };
+  // Overlay canvas'ını grafik canvas ile tam eşitle
+  const ov=document.getElementById('dash-overlay');
+  const gc=_dashChart.canvas;
+  if(ov&&gc){
+    ov.width=gc.width;
+    ov.height=gc.height;
+    ov.style.width=gc.clientWidth+'px';
+    ov.style.height=gc.clientHeight+'px';
+  }
 }
 
 // Canvas px → grafik değer dönüşümü
 function pxToGrafik(px,py){
   if(!_dashGrafikMeta)return null;
-  const{chartArea,xMin,xMax,yMin,yMax}=_dashGrafikMeta;
-  const xRatio=(px-chartArea.left)/(chartArea.right-chartArea.left);
-  const yRatio=1-(py-chartArea.top)/(chartArea.bottom-chartArea.top);
+  const{chartArea,xMin,xMax,yMin,yMax,dpr}=_dashGrafikMeta;
+  // CSS piksel → canvas piksel (DPR düzeltmesi)
+  const cpx=px*(dpr||1), cpy=py*(dpr||1);
+  const xRatio=(cpx-chartArea.left)/(chartArea.right-chartArea.left);
+  const yRatio=1-(cpy-chartArea.top)/(chartArea.bottom-chartArea.top);
   return{
     xRatio:Math.max(0,Math.min(1,xRatio)),
     yVal:yMin+(yMax-yMin)*yRatio,
@@ -15986,9 +16033,12 @@ function pxToGrafik(px,py){
 // Grafik değer → px dönüşümü
 function grafikToPx(xRatio,yVal){
   if(!_dashGrafikMeta)return null;
-  const{chartArea,yMin,yMax}=_dashGrafikMeta;
-  const px=chartArea.left+xRatio*(chartArea.right-chartArea.left);
-  const py=chartArea.bottom-(yVal-yMin)/(yMax-yMin)*(chartArea.bottom-chartArea.top);
+  const{chartArea,yMin,yMax,dpr}=_dashGrafikMeta;
+  const d=dpr||1;
+  // Chart koordinatları zaten canvas pikselinde, CSS'e çevir
+  const px=(chartArea.left+xRatio*(chartArea.right-chartArea.left))/d;
+  const yRange=yMax-yMin||1;
+  const py=(chartArea.bottom-(yVal-yMin)/yRange*(chartArea.bottom-chartArea.top))/d;
   return{px,py};
 }
 
@@ -15996,12 +16046,16 @@ function grafikToPx(xRatio,yVal){
 function dashOverlayYenidenCiz(){
   const overlay=document.getElementById('dash-overlay');
   if(!overlay||!_dashGrafikMeta)return;
-  const ctx=overlay.getContext('2d');
-  // Canvas boyutunu grafik canvas'a eşitle
   const gc=_dashGrafikMeta.canvas;
-  overlay.width=gc.width;overlay.height=gc.height;
-  overlay.style.width=gc.style.width||gc.width+'px';
-  overlay.style.height=gc.style.height||gc.height+'px';
+  if(!gc)return;
+  if(overlay.width!==gc.width||overlay.height!==gc.height){
+    overlay.width=gc.width;
+    overlay.height=gc.height;
+  }
+  overlay.style.width=gc.clientWidth+'px';
+  overlay.style.height=gc.clientHeight+'px';
+  const ctx=overlay.getContext('2d');
+  ctx.clearRect(0,0,overlay.width,overlay.height);
   ctx.clearRect(0,0,overlay.width,overlay.height);
 
   _dashCizimler.forEach(cizim=>{
@@ -16251,9 +16305,11 @@ function dashAracProjeksiyonEkle(){
 // ── El ile çizim (fare olayları) ──
 
 function dashOverlayMouseDown(e){
-  if(!_dashAracSecili||!_dashGrafikMeta)return;
+  if(!_dashAracSecili)return;
   dashGrafikMetaGuncelle();
+  if(!_dashGrafikMeta)return;
   const r=e.target.getBoundingClientRect();
+  // CSS piksel (dpr düzeltmesi pxToGrafik içinde yapılıyor)
   const px=e.clientX-r.left,py=e.clientY-r.top;
   const g=pxToGrafik(px,py);
   if(!g)return;
