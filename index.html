@@ -800,7 +800,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="stagger-wrap" id="list-personel-kisi"></div>
 
-      <div class="sec-title">Hak Ediş & Avans Hareketleri</div>
+      <div class="sec-title">Hak Ediş Hareketleri</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
         <button class="btn btn-secondary btn-sm" onclick="avansModal()">💸 Ödeme Ekle</button>
       </div>
@@ -2270,7 +2270,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <!-- Avans/Ödeme -->
 <div class="modal-ov" id="modal-avans">
   <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>Personel Ödeme / Avans</h3><button class="modal-close" onclick="closeModal('modal-avans')">✕</button></div>
+    <div class="modal-head"><h3>Personel Hak Ediş Ödemesi</h3><button class="modal-close" onclick="closeModal('modal-avans')">✕</button></div>
     <div class="modal-body fg">
       <input type="hidden" id="ma-personel-id">
       <div class="fi"><label>Personel</label>
@@ -2278,11 +2278,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
       <div class="fi"><label>İşlem Türü</label>
         <select id="ma-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="Avans/Ödeme">Avans / Ödeme</option><option value="Hak Edis">Hak Ediş Ekle</option>
+          <option value="Avans/Ödeme">Hak Ediş Ödemesi</option><option value="Hak Edis">Hak Ediş Ekle</option>
         </select>
       </div>
       <div class="fi"><label>Tutar (₺)</label><input type="number" id="ma-tutar" inputmode="numeric" placeholder="0.00"></div>
-      <div class="fi"><label>Açıklama</label><input type="text" id="ma-not" placeholder="Maaş, avans, bonus..."></div>
+      <div class="fi"><label>Açıklama</label><input type="text" id="ma-not" placeholder="Maaş, hak ediş, bonus..."></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-avans')">İptal</button>
@@ -2806,7 +2806,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <div class="modal-ov" id="modal-avans-ode">
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
-      <h3 id="avans-modal-baslik">Hak Ediş Ödemesi</h3>
+      <h3 id="avans-modal-baslik">Ödeme Yap</h3>
       <button class="modal-close" onclick="closeModal('modal-avans-ode')">✕</button>
     </div>
     <div class="modal-body">
@@ -6853,7 +6853,7 @@ function openAvansModal(personelId){
   document.getElementById('avans-mevcut-bakiye').style.color=bakiye>=0?'var(--green)':'var(--red)';
   document.getElementById('avans-bakiye-aciklama').textContent=
     bakiye>0?'Personelin alacağı var (henüz ödenmemiş)':
-    bakiye<0?'Fazla ödeme yapılmış (avans borcu var)':
+    bakiye<0?'Fazla ödeme yapılmış':
     'Bakiye sıfır';
   // Tarih bugün
   document.getElementById('avans-tarih').value=new Date().toISOString().split('T')[0];
@@ -6920,7 +6920,7 @@ async function avansOdemeYap(btn){
     // Personel detay penceresini de güncelle
     setTimeout(()=>showPersonelDetay(personelId),300);
   }catch(e){
-    console.error('Avans ödeme hatası:',e);
+    console.error('Hak ediş ödeme hatası:',e);
     showToast('Ödeme sırasında hata oluştu','red');
   }finally{
     if(btn)setTimeout(()=>btn.disabled=false,1000);
@@ -9811,7 +9811,7 @@ function renderMaasModal(personelId){
   // Bordro PDF
   html+=`<div style="display:flex;gap:8px;margin-top:12px;">`;
   html+=`<button class="btn btn-primary btn-full" onclick="bordroPdfIndir(${personelId})">📄 Bordro PDF</button>`;
-  html+=`<button class="btn btn-secondary btn-full" onclick="openAvansModal(${personelId})">💸 Avans Ver</button>`;
+  html+=`<button class="btn btn-secondary btn-full" onclick="openAvansModal(${personelId})">💸 Ödeme Yap</button>`;
   html+=`</div>`;
   // Önceki ayların özeti
   html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Son 3 Ay</div>`;
@@ -9857,7 +9857,7 @@ function bordroPdfIndir(personelId){
   <h1>GÜN TEKNİK — BORDRO</h1>
   <p><strong>Personel:</strong> ${p.isim}<br><strong>Dönem:</strong> ${ayAdi}<br><strong>Pozisyon:</strong> ${p.pozisyon||'—'}</p>
   <table><thead><tr><th>Açıklama</th><th>Tarih</th><th style="text-align:right;">Tutar</th></tr></thead><tbody>${satirlar}</tbody></table>
-  <table><tbody><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:600;">Toplam Hak Ediş</td><td style="padding:10px 12px;text-align:right;font-weight:600;">${fmt(topHak)} ₺</td></tr><tr><td colspan="2" style="padding:8px 12px;color:#666;">Ödenen Avans</td><td style="padding:8px 12px;text-align:right;color:#666;">${fmt(topOde)} ₺</td></tr><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:700;color:#1a73e8;">Ödenecek Net</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#1a73e8;">${fmt(kalan)} ₺</td></tr></tbody></table>
+  <table><tbody><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:600;">Toplam Hak Ediş</td><td style="padding:10px 12px;text-align:right;font-weight:600;">${fmt(topHak)} ₺</td></tr><tr><td colspan="2" style="padding:8px 12px;color:#666;">Ödenen Hak Ediş</td><td style="padding:8px 12px;text-align:right;color:#666;">${fmt(topOde)} ₺</td></tr><tr class="total"><td colspan="2" style="padding:10px 12px;font-weight:700;color:#1a73e8;">Ödenecek Net</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#1a73e8;">${fmt(kalan)} ₺</td></tr></tbody></table>
   <div class="footer">Gün Teknik ERP · ${now.toLocaleDateString('tr-TR')}</div></body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`bordro-${p.isim.replace(/\s/g,'-')}-${ayAdi}.html`;
@@ -11559,7 +11559,7 @@ function showPersonelDetay(id){
   // Butonlar
   html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
     <button class="btn btn-primary btn-full" onclick="renderMaasModal(${id})">💼 Maaş Detayı</button>
-    <button class="btn btn-secondary btn-full" onclick="openAvansModal(${id})">💸 Avans Ver</button>
+    <button class="btn btn-secondary btn-full" onclick="openAvansModal(${id})">💸 Ödeme Yap</button>
     <button class="btn btn-secondary btn-full" onclick="openSGKModal(${id})">🏛️ SGK Ödemesi</button>
     <button class="btn btn-secondary btn-full" onclick="bordroPdfIndir(${id})">📄 Bordro</button>
   </div>`;
