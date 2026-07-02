@@ -553,6 +553,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="topbar-actions">
       <input type="month" class="month-input" id="global-month" onchange="onMonthChange()" title="Dönem filtresi">
       <button class="icon-btn" onclick="clearMonth()" title="Temizle">✕</button>
+      <button class="icon-btn" id="bildirim-btn" onclick="openModal('modal-bildirimler')" title="Bildirimler" style="position:relative;display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="bildirim-badge" style="position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--red);display:none;"></span>
+      </button>
       <button class="icon-btn" onclick="openModal('modal-ayarlar')">⚙️</button>
       <button class="icon-btn" onclick="openBildirimMerkezi()" style="position:relative;" title="Bildirimler">
         🔔
@@ -1733,6 +1737,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <p id="confirm-msg" style="font-size:13px;color:var(--text2);line-height:1.6;"></p>
     </div>
     <div class="modal-foot"><button class="btn btn-secondary btn-full" onclick="closeConfirm(false)">Vazgeç</button><button class="btn btn-danger btn-full" onclick="closeConfirm(true)">Onayla</button></div>
+  </div>
+</div>
+
+<!-- Bildirimler Modalı -->
+<div class="modal-ov" id="modal-bildirimler">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>🔔 Sistem Bildirimleri</h3>
+      <button class="modal-close" onclick="closeModal('modal-bildirimler')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="bildirim-liste" style="display:flex;flex-direction:column;gap:8px;min-height:60px;"></div>
+      <button onclick="bildirimHepsiniOku()" class="btn btn-secondary btn-full" style="margin-top:12px;font-size:13px;">✓ Tümünü Okundu İşaretle</button>
+    </div>
   </div>
 </div>
 
@@ -3367,6 +3385,9 @@ async function startApp(){
   teklifPollBaslat();
   // Yaklaşan ödeme + bütçe kontrolü
   setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},800);
+  // Sistem bildirim kontrolü
+  setTimeout(bildirimKontrol,3000);
+  setInterval(bildirimKontrol,15*60*1000);
 }
 
 // ============================================================ VERİTABANI
@@ -3490,6 +3511,7 @@ function showToast(msg,type='blue'){
 let zIdx=1000;
 let _touchStartY=0;
 function openModal(id){
+  if(id==='modal-bildirimler')setTimeout(bildirimListeGoster,50);
   const el=document.getElementById(id);if(!el)return;
   zIdx+=10;el.style.zIndex=zIdx;el.classList.add('open');
   // Overlay tıklamasında kapat — zaten listener yoksa ekle
@@ -5002,7 +5024,7 @@ async function deleteIslem(id,event){
 
 // ============================================================ İŞLEM FORMU
 const ISLETME_HİZ={"Elektrik":["Tamirat","Tadilat","Montaj","TV Montaj","Kablo ve Hat Çekme","Tavan Led Döşeme","Avize Montaj / Tamir","Dekoratif Aydınlatma","Klima Elektrik Bağlantısı","Tesisat Yenileme","Priz / Anahtar Tamiri","Priz / Anahtar Montajı","Sigorta Arızası / Değişimi","Pano Montajı","Genel Bakım & Kontrol","Arıza Tespit"],"Klima":["Kart Arıza","Motor Arıza","Gaz Dolumu","Elektrik Arıza","Montaj","İç Ünite Temizliği","Dış Ünite Temizliği","Su Tahliye Sorunu","Yer Değiştirme Sök/Tak","Tesisat Döşeme","Genel Bakım & Kontrol","Arıza Tespit"],"TV, Uydu, Çanak":["Çanak Montaj (Yeni)","Çanak Montaj (Eski)","Çanak Kablolama","Çanak Sinyal Ayar","Çanak Arıza","Lnb Değişimi","F Konnektör Tamir/Değişim","Genel Bakım & Kontrol","Arıza Tespit"],"İnternet":["İnternet Arıza","İnternet Kablo Çekme","Telefon Hat Arıza/Değişim","Ethernet Hat Arıza/Değişim","Telefon Hat Döşeme","Ethernet Hat Döşeme","RJ11/RJ45 Jak Arıza/Değişim","Modem Montaj","Genel Bakım & Kontrol","Arıza Tespit"],"Sıhhi Tesisat":["Döşeme","Arıza","Montaj","Tamir","Şofben Montaj","Tıkanıklık Açma","Su Kaçağı Tespiti","Su Kaçağı Tamiratı","Genel Bakım & Kontrol","Arıza Tespit"],"Metal":["Kaynak İşçilik","Ferforje","Korkuluk","Küpeşte","Panel Çit","Demir Kapı/Pencere","Bahçe Kapısı","Teras Kapama","Çatı Kapama","Garaj Yapımı","Genel Bakım & Kontrol","Arıza Tespit"],"Ahşap":["İşçilik","Tamir","Dekoratif Ürün","Lambri","Zımpara","Cila","Genel Bakım & Kontrol","Arıza Tespit"]};;
-const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Malzeme Alımı","Araç Yakıt","Dükkan Kira","Yemek","Hırdavat/Takım","Kredi Taksiti","Banka Kredisi / Finansman","Personel Hak Ediş"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
+const KATEGORILER={"Gelir":{"İşletme Geliri":[],"Şahsi Gelir":["Kira Geliri","Maaş","Diğer"],"Finansman":["Banka Kredisi","Borç Alındı"]},"Gider":{"İşletme Gideri":["Yemek","Araç Yakıt","Araç Masraf","Malzeme Alımı","Hırdavat/Takım","Muhasebe Gideri","Vergi ve Harç Ödemeleri","Dükkan Fatura","Dükkan Kira","Banka Kredisi / Finansman","Personel Hak Ediş"],"Şahsi Gider":["Market","Fatura","Şahsi Harcama","Kredi Taksiti"]}};
 
 function selectPayMethod(btn,hiddenId,modalId){
   const container=document.getElementById(modalId)||document;
@@ -15908,6 +15930,72 @@ function initBgCircuit(){
   }
   host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${paths}${dots}</svg>`;
 }
+
+// ═══════════════════════════════════════════════════════
+// BİLDİRİM SİSTEMİ
+// ═══════════════════════════════════════════════════════
+
+let _bildirimler=[];
+
+async function bildirimKontrol(){
+  try{
+    const rows=await sbFetch('sistem_bildirimleri?okundu=eq.false&order=created_at.desc&limit=20')||[];
+    _bildirimler=rows;
+    const btn=document.getElementById('bildirim-btn');
+    const badge=document.getElementById('bildirim-badge');
+    if(!btn||!badge)return;
+    if(rows.length>0){
+      btn.style.display='flex';
+      badge.style.display='block';
+    }else{
+      btn.style.display='none';
+      badge.style.display='none';
+    }
+  }catch(e){console.warn('Bildirim kontrolü:',e);}
+}
+
+function bildirimListeGoster(){
+  const el=document.getElementById('bildirim-liste');
+  if(!el)return;
+  if(!_bildirimler.length){
+    el.innerHTML='<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px;">Bildirim yok ✓</div>';
+    return;
+  }
+  el.innerHTML=_bildirimler.map(b=>{
+    const d=new Date(b.created_at);
+    const tarih=d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+    const renk=b.tip==='hata'?'var(--red)':b.tip==='uyari'?'var(--amber)':'var(--cy)';
+    return `<div style="padding:12px;border-left:3px solid ${renk};background:var(--surface2);border-radius:var(--r-sm);">
+      <div style="font-weight:600;font-size:13px;color:${renk};margin-bottom:4px;">${b.baslik}</div>
+      ${b.mesaj?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;word-break:break-all;">${b.mesaj}</div>`:''}
+      <div style="font-size:10px;color:var(--text3);">${tarih}</div>
+    </div>`;
+  }).join('');
+}
+
+async function bildirimHepsiniOku(){
+  try{
+    await sbFetch('sistem_bildirimleri?okundu=eq.false',{method:'PATCH',body:JSON.stringify({okundu:true})});
+    _bildirimler=[];
+    bildirimListeGoster();
+    const btn=document.getElementById('bildirim-btn');
+    const badge=document.getElementById('bildirim-badge');
+    if(btn)btn.style.display='none';
+    if(badge)badge.style.display='none';
+    closeModal('modal-bildirimler');
+    showToast('Tüm bildirimler okundu','green');
+  }catch(e){showToast('Hata','red');}
+}
+
+// Modal açılınca listeyi göster
+document.addEventListener('DOMContentLoaded',()=>{
+  const ovEl=document.getElementById('modal-bildirimler');
+  if(ovEl)ovEl.addEventListener('click',e=>{
+    if(e.target===ovEl)closeModal('modal-bildirimler');
+  });
+});
+
+const _origOpenModal=typeof openModal==='function'?openModal:null;
 
 // Tema başlangıç
 try{initTema();}catch(e){console.error('initTema hatası:',e);}
