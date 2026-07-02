@@ -1,0 +1,44 @@
+name: Google Ads Token Kontrol
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Her gün 01:00 UTC - veri çekmeden önce token test et
+  workflow_dispatch: {}
+
+jobs:
+  token-kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Token geçerliliğini kontrol et
+        env:
+          GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
+          GOOGLE_ADS_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_CLIENT_SECRET }}
+          GOOGLE_ADS_REFRESH_TOKEN: ${{ secrets.GOOGLE_ADS_REFRESH_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, sys, requests, json
+
+          resp = requests.post('https://oauth2.googleapis.com/token', data={
+            'client_id':     os.environ['GOOGLE_ADS_CLIENT_ID'],
+            'client_secret': os.environ['GOOGLE_ADS_CLIENT_SECRET'],
+            'refresh_token': os.environ['GOOGLE_ADS_REFRESH_TOKEN'],
+            'grant_type':    'refresh_token',
+          }, timeout=30)
+
+          if resp.ok:
+            print('✓ Token geçerli.')
+            sys.exit(0)
+
+          # Token bozuk - ERP'ye bildirim gönder
+          print(f'✗ Token geçersiz: {resp.status_code}')
+          sb_url = os.environ.get('SUPABASE_URL','')
+          sb_key = os.environ.get('SUPABASE_KEY','')
+          if sb_url and sb_key:
+            requests.post(f'{sb_url}/rest/v1/sistem_bildirimleri',
+              headers={'apikey':sb_key,'Authorization':f'Bearer {sb_key}','Content-Type':'application/json'},
+              json={'tip':'hata','baslik':'Google Ads token yenilenmeli','mesaj':'Refresh token geçersiz oldu. Yönetici yeni token oluşturmalı.','okundu':False},
+              timeout=10)
+            print('ERP bildirimi gönderildi.')
+          sys.exit(1)
+          PYEOF
