@@ -6,6 +6,7 @@ Tüm kampanyaların son 30 günlük performansını kampanya bazında ayrı ayr�
 import os
 import sys
 import requests
+import datetime
 
 # --- Ortam değişkenleri (GitHub Secrets'tan gelir) ---
 DEVELOPER_TOKEN = os.environ["GOOGLE_ADS_DEVELOPER_TOKEN"]
@@ -54,8 +55,8 @@ def ads_search(access_token, query):
     return resp.json()
 
 
-def fetch_campaign_metrics(access_token):
-    """Son 30 günün kampanya metriklerini kampanya + gün bazında çeker."""
+def fetch_campaign_metrics(access_token, bas_str, bitis_str):
+    """Belirtilen tarih aralığının kampanya metriklerini kampanya + gün bazında çeker."""
     query = """
         SELECT
           campaign.id,
@@ -71,14 +72,14 @@ def fetch_campaign_metrics(access_token):
           metrics.average_cpc,
           metrics.phone_calls
         FROM campaign
-        WHERE segments.date DURING LAST_60_DAYS
+        WHERE segments.date BETWEEN '{bas_str}' AND '{bitis_str}'
           AND campaign.status != 'REMOVED'
         ORDER BY campaign.id ASC, segments.date ASC
     """
     return ads_search(access_token, query)
 
 
-def fetch_keyword_metrics(access_token):
+def fetch_keyword_metrics(access_token, bas_str, bitis_str):
     """Son 30 günün anahtar kelime performansını kampanya + gün + kelime bazında çeker."""
     query = """
         SELECT
@@ -91,7 +92,7 @@ def fetch_keyword_metrics(access_token):
           metrics.cost_micros,
           metrics.conversions
         FROM keyword_view
-        WHERE segments.date DURING LAST_60_DAYS
+        WHERE segments.date BETWEEN '{bas_str}' AND '{bitis_str}'
           AND ad_group_criterion.status != 'REMOVED'
         ORDER BY campaign.id ASC, segments.date ASC
     """
@@ -202,7 +203,14 @@ def main():
     access_token = get_access_token()
 
     # --- Kampanya metrikleri ---
-    data = fetch_campaign_metrics(access_token)
+    # Tarih aralığı: 60 gün önce - dün
+    bugun = datetime.date.today()
+    bitis = bugun - datetime.timedelta(days=1)  # dün
+    bas   = bugun - datetime.timedelta(days=60)
+    bas_str   = bas.strftime('%Y-%m-%d')
+    bitis_str = bitis.strftime('%Y-%m-%d')
+    print(f"Çekilen dönem: {bas_str} → {bitis_str}")
+    data = fetch_campaign_metrics(access_token, bas_str, bitis_str)
     by_camp = aggregate_campaign_by_date(data)
     camp_rows = []
     for (kamp_id, tarih), d in by_camp.items():
@@ -233,7 +241,7 @@ def main():
 
     # --- Anahtar kelime metrikleri ---
     # 1) Son 30 günde metriği olan kelimeler
-    kw_data = fetch_keyword_metrics(access_token)
+    kw_data = fetch_keyword_metrics(access_token, bas_str, bitis_str)
     by_kw = aggregate_keywords(kw_data)
 
     # 2) Tüm aktif kelimeler (sıfır metrikli dahil) — by_kw'ye eksikleri ekle
