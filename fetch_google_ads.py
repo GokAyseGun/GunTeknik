@@ -57,7 +57,7 @@ def ads_search(access_token, query):
 
 def fetch_campaign_metrics(access_token, bas_str, bitis_str):
     """Belirtilen tarih aralığının kampanya metriklerini kampanya + gün bazında çeker."""
-    query = """
+    query = f"""
         SELECT
           campaign.id,
           campaign.name,
@@ -81,7 +81,7 @@ def fetch_campaign_metrics(access_token, bas_str, bitis_str):
 
 def fetch_keyword_metrics(access_token, bas_str, bitis_str):
     """Son 30 günün anahtar kelime performansını kampanya + gün + kelime bazında çeker."""
-    query = """
+    query = f"""
         SELECT
           campaign.id,
           campaign.name,
