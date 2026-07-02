@@ -593,6 +593,13 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <!-- Metrik seçici -->
         <div id="dash-metrik-sec" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;"></div>
         <div id="dash-mum-not" style="display:none;font-size:10px;color:var(--amber,#f0c472);margin-bottom:8px;padding:5px 8px;background:rgba(240,196,114,0.08);border-radius:6px;border:1px solid rgba(240,196,114,0.2);">🕯 Mum grafik modunda tek parametre gösterilir. Diğer parametreler çizgi modunda karşılaştırılabilir.</div>
+        <!-- Özet Grafik Zoom Kontrol -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;justify-content:flex-end;">
+          <span style="font-size:10px;color:var(--text3);">Yakınlaştır</span>
+          <button onclick="dashGrafikZoom(-1)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <span id="dash-zoom-label" style="font-size:11px;color:var(--text2);min-width:40px;text-align:center;">1×</span>
+          <button onclick="dashGrafikZoom(1)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
         <!-- Canvas (çizgi için Chart.js, mum için saf Canvas) -->
         <div id="dash-grafik-wrap" style="position:relative;height:240px;overflow:hidden;">
           <canvas id="dash-chart" role="img" aria-label="Finansal performans grafiği" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
@@ -921,6 +928,9 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <button type="button" class="pay-btn" data-val="dun" onclick="reklamDonemSec(this)">Dün</button>
         <button type="button" class="pay-btn active" data-val="7gun" onclick="reklamDonemSec(this)">Son 7 Gün</button>
         <button type="button" class="pay-btn" data-val="30gun" onclick="reklamDonemSec(this)">Son 30 Gün</button>
+        <button type="button" class="pay-btn" data-val="60gun" onclick="reklamDonemSec(this)">Son 60 Gün</button>
+        <button type="button" class="pay-btn" data-val="90gun" onclick="reklamDonemSec(this)">Son 90 Gün</button>
+        <button type="button" class="pay-btn" data-val="6ay" onclick="reklamDonemSec(this)">6 Ay</button>
         <button type="button" class="pay-btn" data-val="1yil" onclick="reklamDonemSec(this)">Son 1 Yıl</button>
       </div>
 
@@ -935,8 +945,17 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
               style="padding:4px 9px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;">📊</button>
           </div>
         </div>
-        <div style="position:relative;height:200px;">
-          <canvas id="reklam-chart" role="img" aria-label="Google Ads performans grafiği">Google Ads kampanya performans verileri</canvas>
+        <!-- Reklam Grafik Zoom Kontrol -->
+        <div id="reklam-zoom-kontrol" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;justify-content:flex-end;">
+          <span style="font-size:10px;color:var(--text3);">Yakınlaştır</span>
+          <button onclick="reklamGrafikZoom(-1)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <span id="reklam-zoom-label" style="font-size:11px;color:var(--text2);min-width:40px;text-align:center;">1×</span>
+          <button onclick="reklamGrafikZoom(1)" style="width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+        <div id="reklam-grafik-scroll" style="overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;">
+          <div id="reklam-grafik-inner" style="position:relative;height:200px;min-width:100%;">
+            <canvas id="reklam-chart" role="img" aria-label="Google Ads performans grafiği" style="position:absolute;top:0;left:0;width:100%;height:100%;">Google Ads kampanya performans verileri</canvas>
+          </div>
         </div>
         <div id="reklam-grafik-ozet" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px;"></div>
       </div>
@@ -3985,6 +4004,7 @@ function dashDonemSecCiz(){
 
 function dashDonemSec(val){
   _dashDonem=val;
+  _dashZoom=1;  // dönem değişince zoom sıfırla
   dashDonemSecCiz();
   dashGrafikCiz();
   dashGrafikOzetCiz();
@@ -4340,43 +4360,19 @@ function dashGrafikCiz(){
     }
   };
 
-  // Scroll: uzun dönemler için Chart.js'in kendi scroll desteğini kullan
-  // canvas her zaman responsive kalır, scroll wrapper üstünde olur
+  // Scroll + Zoom sistemi
   const _wrapper=document.getElementById('dash-grafik-wrap');
   const _gunSayisi=labels.length;
-  const _uzunDonem=(_dashDonem==='3ay'||_dashDonem==='6ay'||_dashDonem==='1yil');
-  if(_wrapper){
-    if(_uzunDonem&&_gunSayisi>60){
-      const _pxPerGun=Math.max(10,Math.min(16,(_wrapper.offsetWidth||360)/_gunSayisi*2));
-      const _gerekli=Math.round(_gunSayisi*_pxPerGun);
-      _wrapper.style.overflowX='auto';
-      _wrapper.style.overflowY='hidden';
-      _wrapper.style.webkitOverflowScrolling='touch';
-      // Bir iç wrapper ile canvas genişliğini sabitle
-      let _innerWrap=_wrapper.querySelector('.dash-inner-wrap');
-      if(!_innerWrap){
-        _innerWrap=document.createElement('div');
-        _innerWrap.className='dash-inner-wrap';
-        _innerWrap.style.cssText='position:relative;height:100%;';
-        // Mevcut canvasları taşı
-        [..._wrapper.children].forEach(el=>{
-          if(el.tagName==='CANVAS')_innerWrap.appendChild(el);
-        });
-        _wrapper.insertBefore(_innerWrap,_wrapper.firstChild);
-      }
-      _innerWrap.style.width=_gerekli+'px';
-      // overlay da aynı genişlikte
-      const _ov=document.getElementById('dash-overlay');
-      if(_ov){_ov.style.width=_gerekli+'px';}
-    }else{
-      _wrapper.style.overflowX='hidden';
-      const _innerWrap=_wrapper.querySelector('.dash-inner-wrap');
-      if(_innerWrap){
-        _innerWrap.style.width='100%';
-        const _ov=document.getElementById('dash-overlay');
-        if(_ov){_ov.style.width='100%';}
-      }
+  if(_wrapper&&_gunSayisi>0){
+    let _innerWrap=_wrapper.querySelector('.dash-inner-wrap');
+    if(!_innerWrap){
+      _innerWrap=document.createElement('div');
+      _innerWrap.className='dash-inner-wrap';
+      _innerWrap.style.cssText='position:relative;height:100%;';
+      [..._wrapper.children].forEach(el=>{if(el.tagName==='CANVAS')_innerWrap.appendChild(el);});
+      _wrapper.insertBefore(_innerWrap,_wrapper.firstChild);
     }
+    _grafikZoomUygula(_wrapper,_innerWrap,canvas,_gunSayisi,_dashZoom,'dash-zoom-label');
   }
 
   _dashChart=new Chart(canvas,{
@@ -7532,6 +7528,7 @@ function reklamDonemSec(btn){
   document.querySelectorAll('#reklam-donem-sec .pay-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   _reklamDonem=btn.dataset.val;
+  _reklamZoom=1;  // dönem değişince zoom sıfırla
   reklamGoster();
 }
 
@@ -7626,8 +7623,11 @@ function reklamGoster(){
   }else if(_reklamDonem==='1yil'){
     const bas1y=new Date(bugunKpi);bas1y.setFullYear(bas1y.getFullYear()-1);
     baslangicKpiStr=_reklamTarihStr(bas1y);
+  }else if(_reklamDonem==='6ay'){
+    const bas6ay=new Date(bugunKpi);bas6ay.setMonth(bas6ay.getMonth()-6);
+    baslangicKpiStr=_reklamTarihStr(bas6ay);
   }else{
-    const gunSayisiKpi=_reklamDonem==='30gun'?30:7;
+    const gunSayisiKpi=_reklamDonem==='90gun'?90:_reklamDonem==='60gun'?60:_reklamDonem==='30gun'?30:7;
     const bas=new Date(bugunKpi);bas.setDate(bas.getDate()-gunSayisiKpi);
     baslangicKpiStr=_reklamTarihStr(bas);
   }
@@ -7737,6 +7737,15 @@ function reklamMetrikSecCiz(){
 function reklamGrafikCiz(veri){
   const canvas=document.getElementById('reklam-chart');
   if(!canvas)return;
+  // Zoom uygula
+  const _rWrap=document.getElementById('reklam-grafik-scroll');
+  const _rInner=document.getElementById('reklam-grafik-inner');
+  if(_rWrap&&_rInner&&canvas){
+    setTimeout(()=>{
+      const _rGunSayisi=grafikVerileri?.length||30;
+      _grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label');
+    },100);
+  }
   canvas.style.display='block';
   if(!veri.length){
     if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
@@ -15996,6 +16005,55 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 const _origOpenModal=typeof openModal==='function'?openModal:null;
+
+// ═══════════════════════════════════════════════════════
+// GRAFİK ZOOM SİSTEMİ
+// ═══════════════════════════════════════════════════════
+
+let _dashZoom=1;    // 1x, 2x, 3x, 4x, 5x
+let _reklamZoom=1;
+
+const ZOOM_ADIMLAR=[1,1.5,2,3,4,6];
+const ZOOM_MIN_PX=8;   // gün başına minimum px
+const ZOOM_MAX_PX=40;  // gün başına maksimum px
+
+function _grafikZoomUygula(wrap,innerWrap,canvas,gunSayisi,zoom,labelId){
+  if(!wrap||!innerWrap||!canvas||!gunSayisi)return;
+  const wrapW=wrap.offsetWidth||360;
+  // Doğal px/gün (zoom=1 → tüm grafik wrapper'a sığsın)
+  const dogalPx=wrapW/gunSayisi;
+  const hedefPx=Math.max(ZOOM_MIN_PX,Math.min(ZOOM_MAX_PX,dogalPx*zoom));
+  const gerekliGenis=Math.round(gunSayisi*hedefPx);
+
+  if(gerekliGenis>wrapW){
+    wrap.style.overflowX='auto';
+    wrap.style.webkitOverflowScrolling='touch';
+    innerWrap.style.width=gerekliGenis+'px';
+    canvas.style.width=gerekliGenis+'px';
+  }else{
+    wrap.style.overflowX='hidden';
+    innerWrap.style.width='100%';
+    canvas.style.width='100%';
+  }
+
+  const zoomEl=document.getElementById(labelId);
+  if(zoomEl)zoomEl.textContent=zoom+'×';
+}
+
+function dashGrafikZoom(yon){
+  const idx=ZOOM_ADIMLAR.indexOf(_dashZoom);
+  const yeniIdx=Math.max(0,Math.min(ZOOM_ADIMLAR.length-1,idx+yon));
+  _dashZoom=ZOOM_ADIMLAR[yeniIdx];
+  // Grafik yeniden çiz (zoom değişince)
+  dashGrafikCiz();
+}
+
+function reklamGrafikZoom(yon){
+  const idx=ZOOM_ADIMLAR.indexOf(_reklamZoom);
+  const yeniIdx=Math.max(0,Math.min(ZOOM_ADIMLAR.length-1,idx+yon));
+  _reklamZoom=ZOOM_ADIMLAR[yeniIdx];
+  reklamGoster();
+}
 
 // Tema başlangıç
 try{initTema();}catch(e){console.error('initTema hatası:',e);}
