@@ -4607,6 +4607,9 @@ function renderDashGrafik(){
   dashMetrikSecCiz();
   dashGrafikCiz();
   dashGrafikOzetCiz();
+  // Grafik render olunca meta güncelle, overlay'i hazırla
+  setTimeout(()=>{dashGrafikMetaGuncelle();dashOverlayBagla();if(_dashAracSecili)dashOverlayYenidenCiz();},200);
+  setTimeout(()=>{dashGrafikMetaGuncelle();if(_dashAracSecili)dashOverlayYenidenCiz();},800);
   if(!_dashCizimler.length)dashCizimleriYukle();
 }
 
@@ -4724,6 +4727,11 @@ function showDashDetay(tip){
     });
     // Personel bakiyeleri (ödenmesi gereken hak edişler)
     const topPersonelBakiye=Object.values(c.personelBakiye||{}).reduce((a,b)=>a+(b>0?b:0),0);
+    const persDetaylar=[];
+    (DB.personeller||[]).forEach(p=>{
+      const bak=(c.personelBakiye||{})[p.id]||0;
+      if(bak>0)persDetaylar.push(`${p.isim}: ${fmt(bak)} ₺ hak ediş borcu`);
+    });
     const netAkis=donemGelirToplam-donemGiderToplam-krediYuk-topPersonelBakiye;
     const sonucKasa=c.kasa+netAkis;
     const renk=sonucKasa>=0?'var(--green)':'var(--red)';
@@ -15975,14 +15983,14 @@ function dashAracSec(arac,btn){
   const overlay=document.getElementById('dash-overlay');
   if(!overlay)return;
   if(_dashAracSecili){
-    dashGrafikMetaGuncelle();
-    const doGoster=()=>{
-      if(!_dashGrafikMeta){return;}
-      overlay.style.display='block';
-      dashOverlayYenidenCiz();
+    overlay.style.display='block';
+    let _at=0;
+    const _try=()=>{
+      dashGrafikMetaGuncelle();
+      if(_dashGrafikMeta){dashOverlayYenidenCiz();return;}
+      if(++_at<6)setTimeout(_try,200);
     };
-    if(!_dashGrafikMeta){setTimeout(()=>{dashGrafikMetaGuncelle();doGoster();},400);}
-    else{doGoster();}
+    _try();
   }else{
     overlay.style.display='none';
   }
@@ -16058,8 +16066,8 @@ function dashOverlayYenidenCiz(){
   const gcRect=gc.getBoundingClientRect();
   if(gcRect.width===0){console.warn('[Overlay] grafik görünmüyor');return;}
   // Fixed overlay'i canvas üzerine tam hizala
-  overlay.style.left=gcRect.left+window.scrollX+'px';
-  overlay.style.top=gcRect.top+window.scrollY+'px';
+  overlay.style.left=gcRect.left+'px';
+  overlay.style.top=gcRect.top+'px';
   overlay.style.width=gcRect.width+'px';
   overlay.style.height=gcRect.height+'px';
   if(overlay.width!==Math.round(gcRect.width*dpr)||overlay.height!==Math.round(gcRect.height*dpr)){
