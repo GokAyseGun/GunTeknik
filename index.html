@@ -3722,6 +3722,10 @@ function calcFinans(){
       while(gc<bitis&&sayi<k.kalanTaksit){if(gc>=baslangic)sayi++;gc.setMonth(gc.getMonth()+1);}
       net-=sayi*k.taksitTutari;
     });
+    // Personel hak ediş borçları — gelecek tahmininden düş
+    const c2=calcFinans();
+    const topPers=Object.values(c2.personelBakiye||{}).reduce((a,b)=>a+(b>0?b:0),0);
+    net-=topPers;
     return net;
   }
 
@@ -16011,22 +16015,23 @@ function dashGrafikMetaGuncelle(){
   // Canvas CSS boyutu (clientWidth/Height = CSS piksel)
   const cssW=gc.clientWidth||gc.offsetWidth||400;
   const cssH=gc.clientHeight||gc.offsetHeight||240;
-  // chartArea Chart.js'de canvas piksel cinsinden — CSS'e çevirmek için dpr'a böl
+  // Chart.js chartArea değerleri CSS piksel cinsinden — DPR bölme YAPMA
   _dashGrafikMeta={
     xMin:xScale?xScale.min:0,
     xMax:xScale?xScale.max:1,
     yMin:yScale?yScale.min:0,
     yMax:yScale?yScale.max:1,
     chartArea:{
-      left:ca.left/dpr,
-      right:ca.right/dpr,
-      top:ca.top/dpr,
-      bottom:ca.bottom/dpr,
+      left:ca.left,
+      right:ca.right,
+      top:ca.top,
+      bottom:ca.bottom,
     },
     labelCount:(_dashChart.data?.labels?.length)||1,
     labels:_dashChart.data?.labels||[],
     canvas:gc,
-    dpr,cssW,cssH
+    dpr:1,  // overlay ctx.setTransform(1,1) ile - koordinatlar CSS piksel
+    cssW,cssH
   };
 }
 
@@ -16075,7 +16080,7 @@ function dashOverlayYenidenCiz(){
     overlay.height=Math.round(gcRect.height*dpr);
   }
   const ctx=overlay.getContext('2d');
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.setTransform(1,0,0,1,0,0);  // CSS piksel koordinat sistemi
   ctx.clearRect(0,0,gcRect.width,gcRect.height);
   console.log('[Overlay] çiziliyor, cizim sayısı:',_dashCizimler.length,'chartArea:',_dashGrafikMeta.chartArea);
 
@@ -16105,46 +16110,79 @@ function dashOverlayYenidenCiz(){
 }
 
 function _cizgiCiz(ctx,c){
-  const p1=grafikToPx(c.x1Ratio,c.y1Val);
-  let p2;
+  const ca=_dashGrafikMeta.chartArea;
+  let ax,ay,bx,by;  // başlangıç ve bitiş (her tip için ayrı hesap, mutasyon yok)
+
   if(c.tip==='yatay'){
-    p2={px:_dashGrafikMeta.chartArea.right,py:grafikToPx(0,c.y1Val)?.py};
-    const p1b={px:_dashGrafikMeta.chartArea.left,py:p2.py};
-    Object.assign(p1,p1b);
+    const py=grafikToPx(0,c.y1Val)?.py;
+    if(py==null)return;
+    ax=ca.left; ay=py;
+    bx=ca.right; by=py;
   }else if(c.tip==='dikey'){
-    const xa=grafikToPx(c.x1Ratio,0);
-    p2={px:xa?.px,py:_dashGrafikMeta.chartArea.bottom};
-    Object.assign(p1,{px:xa?.px,py:_dashGrafikMeta.chartArea.top});
+    const qx=grafikToPx(c.x1Ratio,0)?.px;
+    if(qx==null)return;
+    ax=qx; ay=ca.top;
+    bx=qx; by=ca.bottom;
   }else{
-    p2=grafikToPx(c.x2Ratio,c.y2Val);
+    const p1=grafikToPx(c.x1Ratio,c.y1Val);
+    const p2=grafikToPx(c.x2Ratio,c.y2Val);
+    if(!p1||!p2)return;
+    ax=p1.px; ay=p1.py;
+    bx=p2.px; by=p2.py;
   }
-  if(!p1||!p2)return;
+
   ctx.beginPath();
-  ctx.moveTo(p1.px,p1.py);
-  // Trend: ileri uzat
-  if(c.tip==='trend'&&c.uzat){
-    const dx=p2.px-p1.px,dy=p2.py-p1.py;
-    const uzatPx={px:_dashGrafikMeta.chartArea.right,py:p2.py+((_dashGrafikMeta.chartArea.right-p2.px)/dx)*dy};
-    ctx.lineTo(uzatPx.px,uzatPx.py);
-    ctx.setLineDash([6,4]);
-  }else{
-    ctx.lineTo(p2.px,p2.py);
-  }
   ctx.strokeStyle=c.renk||'#E8197A';
-  ctx.lineWidth=c.tip==='yatay'?1.5:2;
-  if(c.tip==='yatay')ctx.setLineDash([8,4]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  // Etiket
-  if(c.etiket){
-    ctx.font='bold 11px Inter,sans-serif';
-    ctx.fillStyle=c.renk||'#E8197A';
-    ctx.fillText(c.etiket,p1.px+4,p1.py-5);
+
+  if(c.tip==='yatay'){
+    ctx.setLineDash([8,4]);
+    ctx.lineWidth=1.5;
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(bx,by);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }else if(c.tip==='dikey'){
+    ctx.setLineDash([5,3]);
+    ctx.lineWidth=1.5;
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(bx,by);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }else if(c.tip==='trend'&&c.uzat){
+    // Uzatılmış trend: orijinal iki nokta + sağa uzatma
+    ctx.lineWidth=2;
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(bx,by);
+    ctx.stroke();
+    // Kesikli uzatma
+    const dx=bx-ax, dy2=by-ay;
+    if(Math.abs(dx)>0.1){
+      const uzBx=ca.right;
+      const uzBy=by+((ca.right-bx)/dx)*dy2;
+      ctx.beginPath();
+      ctx.setLineDash([6,4]);
+      ctx.lineWidth=1.5;
+      ctx.moveTo(bx,by);
+      ctx.lineTo(uzBx,uzBy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }else{
+    ctx.lineWidth=2;
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(bx,by);
+    ctx.stroke();
   }
-  if(c.tip==='dikey'&&c.etiket){
-    ctx.font='bold 10px Inter,sans-serif';
-    ctx.fillStyle=c.renk||'#00E5FF';
-    ctx.fillText(c.etiket,p1.px+4,_dashGrafikMeta.chartArea.top+14);
+
+  // Etiketler
+  ctx.font='bold 11px Inter,sans-serif';
+  ctx.fillStyle=c.renk||'#E8197A';
+  if(c.etiket){
+    if(c.tip==='dikey'){
+      ctx.fillText(c.etiket,ax+4,ca.top+14);
+    }else{
+      ctx.fillText(c.etiket,ax+4,ay-5);
+    }
   }
 }
 
