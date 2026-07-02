@@ -3722,10 +3722,6 @@ function calcFinans(){
       while(gc<bitis&&sayi<k.kalanTaksit){if(gc>=baslangic)sayi++;gc.setMonth(gc.getMonth()+1);}
       net-=sayi*k.taksitTutari;
     });
-    // Personel hak ediş borçları — gelecek tahmininden düş
-    const c2=calcFinans();
-    const topPers=Object.values(c2.personelBakiye||{}).reduce((a,b)=>a+(b>0?b:0),0);
-    net-=topPers;
     return net;
   }
 
@@ -3735,11 +3731,13 @@ function calcFinans(){
   const bitis1Yil=new Date(simdi.getFullYear(),simdi.getMonth()+12,1);
   const bitis10Yil=new Date(simdi.getFullYear(),simdi.getMonth()+120,1);
 
-  const bekBuAy=kasaTop+netAkisHesapla(simdi,buAyBitis);
-  const bek3Ay=kasaTop+netAkisHesapla(simdi,bitis3Ay);
-  const bek6Ay=kasaTop+netAkisHesapla(simdi,bitis6Ay);
-  const bek1Yil=kasaTop+netAkisHesapla(simdi,bitis1Yil);
-  const bek10Yil=kasaTop+netAkisHesapla(simdi,bitis10Yil);
+  // Personel hak ediş borçları (calcFinans içinde zaten hesaplandı)
+  const _topPers=Object.values(personelBakiye).reduce((a,b)=>a+(b>0?b:0),0);
+  const bekBuAy=kasaTop+netAkisHesapla(simdi,buAyBitis)-_topPers;
+  const bek3Ay=kasaTop+netAkisHesapla(simdi,bitis3Ay)-_topPers;
+  const bek6Ay=kasaTop+netAkisHesapla(simdi,bitis6Ay)-_topPers;
+  const bek1Yil=kasaTop+netAkisHesapla(simdi,bitis1Yil)-_topPers;
+  const bek10Yil=kasaTop+netAkisHesapla(simdi,bitis10Yil)-_topPers;
 
   return{kasa:kasaTop,kasaNakit,kasaKart,kasaIBAN,
     bekBuAy,bek3Ay,bek6Ay,bek1Yil,bek10Yil,
