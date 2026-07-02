@@ -71,23 +71,11 @@ def fetch_campaign_metrics(access_token):
           metrics.average_cpc,
           metrics.phone_calls
         FROM campaign
-        WHERE segments.date DURING LAST_30_DAYS
+        WHERE segments.date DURING LAST_60_DAYS
           AND campaign.status != 'REMOVED'
         ORDER BY campaign.id ASC, segments.date ASC
     """
-    data = ads_search(access_token, query)
-    # DEBUG: kaç satır geldiğini ve kampanya ID'lerini göster
-    toplam = 0
-    kampanya_ids = set()
-    for chunk in data:
-        for row in chunk.get("results", []):
-            toplam += 1
-            camp = row.get("campaign", {})
-            cid = camp.get("id", "YOK")
-            cname = camp.get("name", "YOK")
-            kampanya_ids.add(f"{cid}:{cname}")
-    print(f"[DEBUG] Kampanya sorgusu: {toplam} satır, kampanyalar: {kampanya_ids}", file=sys.stderr)
-    return data
+    return ads_search(access_token, query)
 
 
 def fetch_keyword_metrics(access_token):
@@ -103,7 +91,7 @@ def fetch_keyword_metrics(access_token):
           metrics.cost_micros,
           metrics.conversions
         FROM keyword_view
-        WHERE segments.date DURING LAST_30_DAYS
+        WHERE segments.date DURING LAST_60_DAYS
           AND ad_group_criterion.status != 'REMOVED'
         ORDER BY campaign.id ASC, segments.date ASC
     """
