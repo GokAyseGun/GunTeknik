@@ -4722,7 +4722,9 @@ function showDashDetay(tip){
       while(gc<bitisTarih&&sayi<k.kalanTaksit){if(gc>=now2)sayi++;gc.setMonth(gc.getMonth()+1);}
       if(sayi>0){krediYuk+=sayi*k.taksitTutari;krediSatirlar.push(`${k.bankaAdi}: ${sayi} taksit × ${fmt(k.taksitTutari)} ₺ = ${fmt(sayi*k.taksitTutari)} ₺`);}
     });
-    const netAkis=donemGelirToplam-donemGiderToplam-krediYuk;
+    // Personel bakiyeleri (ödenmesi gereken hak edişler)
+    const topPersonelBakiye=Object.values(c.personelBakiye||{}).reduce((a,b)=>a+(b>0?b:0),0);
+    const netAkis=donemGelirToplam-donemGiderToplam-krediYuk-topPersonelBakiye;
     const sonucKasa=c.kasa+netAkis;
     const renk=sonucKasa>=0?'var(--green)':'var(--red)';
     let html=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;">
@@ -4750,6 +4752,10 @@ function showDashDetay(tip){
     if(krediSatirlar.length){
       html+=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Kredi Detayı</div>`;
       html+=krediSatirlar.map(s=>`<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:var(--surface);border-radius:var(--r-sm);margin-bottom:4px;">${s}</div>`).join('');
+    }
+    if(persDetaylar.length){
+      html+=`<div style="font-size:11px;color:var(--mg);margin-top:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">👷 Personel Hak Ediş Borçları — ${fmt(topPersonelBakiye)} ₺</div>`;
+      html+=persDetaylar.map(s=>`<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(232,25,122,0.06);border-left:2px solid var(--mg);border-radius:var(--r-sm);margin-bottom:4px;">${s}</div>`).join('');
     }
     if(donemGelirler.length){
       html+=`<div style="font-size:11px;color:var(--text3);margin-top:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Bekleyen Alacaklar (${donemGelirler.length})</div>`;
@@ -15935,6 +15941,10 @@ async function dashCizimleriYukle(){
 
 // Çizimi Supabase'e kaydet
 async function dashCizimKaydet(cizim){
+  // Önce yerel ekle — Supabase bağımsız anında görünsün
+  _dashCizimler.push(cizim);
+  dashOverlayYenidenCiz();
+  // Arka planda Supabase'e kaydet
   try{
     const row=await sbFetch('grafik_cizimleri',{method:'POST',prefer:'return=representation',body:JSON.stringify({
       grafik_id:'dashboard',
@@ -15943,9 +15953,9 @@ async function dashCizimKaydet(cizim){
       created_at:new Date().toISOString()
     })})||[];
     if(row[0])cizim.db_id=row[0].id;
-    _dashCizimler.push(cizim);
-    dashOverlayYenidenCiz();
-  }catch(e){console.error('Çizim kayıt:',e);}
+  }catch(e){
+    console.warn('Çizim Supabase kaydı başarısız (yerel kaldı):',e);
+  }
 }
 
 // Çizimi Supabase'den sil
@@ -15990,37 +16000,26 @@ function dashGrafikMetaGuncelle(){
   const gc=_dashChart.canvas;
   if(!gc)return;
   const dpr=window.devicePixelRatio||1;
-  // Canvas'ın ekran koordinatları (fixed overlay için)
-  const gcRect=gc.getBoundingClientRect();
+  // Canvas CSS boyutu (clientWidth/Height = CSS piksel)
+  const cssW=gc.clientWidth||gc.offsetWidth||400;
+  const cssH=gc.clientHeight||gc.offsetHeight||240;
+  // chartArea Chart.js'de canvas piksel cinsinden — CSS'e çevirmek için dpr'a böl
   _dashGrafikMeta={
     xMin:xScale?xScale.min:0,
     xMax:xScale?xScale.max:1,
     yMin:yScale?yScale.min:0,
     yMax:yScale?yScale.max:1,
-    // chartArea canvas piksel cinsinden - CSS'e çevir
     chartArea:{
-      left:ca.left/dpr,right:ca.right/dpr,
-      top:ca.top/dpr,bottom:ca.bottom/dpr,
+      left:ca.left/dpr,
+      right:ca.right/dpr,
+      top:ca.top/dpr,
+      bottom:ca.bottom/dpr,
     },
     labelCount:(_dashChart.data?.labels?.length)||1,
     labels:_dashChart.data?.labels||[],
     canvas:gc,
-    dpr,
-    gcRect  // ekran koordinatları
+    dpr,cssW,cssH
   };
-  // Fixed overlay'i canvas ile hizala
-  const ov=document.getElementById('dash-overlay');
-  if(ov&&gcRect){
-    ov.style.left=gcRect.left+'px';
-    ov.style.top=gcRect.top+'px';
-    ov.style.width=gcRect.width+'px';
-    ov.style.height=gcRect.height+'px';
-    ov.width=Math.round(gcRect.width*dpr);
-    ov.height=Math.round(gcRect.height*dpr);
-    // DPR scale
-    const ctx=ov.getContext('2d');
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
 }
 
 // Canvas px → grafik değer dönüşümü
@@ -16050,15 +16049,27 @@ function grafikToPx(xRatio,yVal){
 // Overlay canvas üzerine tüm çizimleri çiz
 function dashOverlayYenidenCiz(){
   const overlay=document.getElementById('dash-overlay');
-  if(!overlay||!_dashGrafikMeta)return;
-  // Meta ile overlay hizalandı mı kontrol et
+  if(!overlay)return;
+  if(!_dashGrafikMeta){console.warn('[Overlay] _dashGrafikMeta null');return;}
   const gc=_dashGrafikMeta.canvas;
-  if(!gc)return;
+  if(!gc){console.warn('[Overlay] canvas null');return;}
   const dpr=_dashGrafikMeta.dpr||1;
+  // Overlay boyutu kontrol
+  const gcRect=gc.getBoundingClientRect();
+  if(gcRect.width===0){console.warn('[Overlay] grafik görünmüyor');return;}
+  // Fixed overlay'i canvas üzerine tam hizala
+  overlay.style.left=gcRect.left+window.scrollX+'px';
+  overlay.style.top=gcRect.top+window.scrollY+'px';
+  overlay.style.width=gcRect.width+'px';
+  overlay.style.height=gcRect.height+'px';
+  if(overlay.width!==Math.round(gcRect.width*dpr)||overlay.height!==Math.round(gcRect.height*dpr)){
+    overlay.width=Math.round(gcRect.width*dpr);
+    overlay.height=Math.round(gcRect.height*dpr);
+  }
   const ctx=overlay.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,overlay.width/dpr,overlay.height/dpr);
-  ctx.clearRect(0,0,overlay.width,overlay.height);
+  ctx.clearRect(0,0,gcRect.width,gcRect.height);
+  console.log('[Overlay] çiziliyor, cizim sayısı:',_dashCizimler.length,'chartArea:',_dashGrafikMeta.chartArea);
 
   _dashCizimler.forEach(cizim=>{
     ctx.save();
