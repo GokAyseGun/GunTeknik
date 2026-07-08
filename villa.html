@@ -506,15 +506,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="modal-head"><h3>📆 Hizmet Günleri</h3><button class="modal-close" onclick="closeModal('modal-gunler')">✕</button></div>
     <div class="modal-body">
       <div class="fg">
-        <div class="fi"><label>Hizmet Günleri / Tarihleri</label><input type="text" id="gunler-input" placeholder="Pazartesi - Perşembe veya Her Ayın 1'i, 15'i..."></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Pt')">Pt</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Sa')">Sa</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Ça')">Ça</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Pe')">Pe</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Cu')">Cu</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Ct')">Ct</button>
-          <button class="badge badge-mg" style="cursor:pointer;" onclick="toggleGun('Pz')">Pz</button>
+        <div class="fi"><label>Hizmet Günleri</label><input type="text" id="gunler-input" placeholder="Pazartesi - Perşembe veya Her Ayın 1'i, 15'i..."></div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">Gün Seç (tıklayarak ekle/çıkar)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Pt')">Pazartesi</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Sa')">Salı</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Ça')">Çarşamba</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Pe')">Perşembe</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Cu')">Cuma</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Ct')">Cumartesi</button>
+            <button class="badge badge-mg" style="cursor:pointer;padding:7px 12px;" onclick="toggleGun('Pz')">Pazar</button>
+          </div>
+        </div>
+        <div class="fi"><label>Hizmet Saati (opsiyonel)</label>
+          <input type="time" id="gunler-saat" placeholder="09:00" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-gunler')" style="flex:1;">Vazgeç</button>
@@ -566,11 +572,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="fg">
         <div class="fi"><label>Ödeme Türü</label>
           <select id="odeme-tur-input">
+            <option value="Günlük">Günlük</option>
+            <option value="Haftalık">Haftalık</option>
             <option value="Aylık">Aylık</option>
             <option value="Sezonluk">Sezonluk</option>
             <option value="Yıllık">Yıllık</option>
-            <option value="Ziyaret Başı">Ziyaret Başı</option>
-            <option value="Götürü">Götürü</option>
           </select>
         </div>
         <div class="row2">
@@ -608,7 +614,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <div class="fi"><label>Para Birimi</label><select id="yeni-odeme-pb"><option value="EUR">EUR €</option><option value="TRY">TRY ₺</option><option value="USD">USD $</option></select></div>
           <div class="fi"><label>Açıklama</label><input type="text" id="yeni-odeme-aciklama" placeholder="Mart ödemesi..."></div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="odemeEkle(this)">+ Ödeme Kaydet</button>
+        <button class="btn btn-primary btn-full" id="odeme-kaydet-btn" onclick="odemeEkle(this)">+ Ödeme Kaydet</button>
       </div>
     </div>
   </div>
@@ -621,10 +627,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="modal-body">
       <div class="fg">
         <div class="fi"><label>Tarih</label><input type="date" id="hiz-tarih"></div>
-        <div class="fi"><label>Yapılan İşler</label><textarea id="hiz-yapilan" placeholder="Klima bakımı, filtre temizliği..."></textarea></div>
+        <div class="fi"><label>Hizmet Seçimi (çoklu)</label>
+          <div id="hiz-secim-liste" style="max-height:220px;overflow-y:auto;"></div>
+        </div>
+        <div class="fi"><label>Not / Açıklama</label><textarea id="hiz-yapilan" placeholder="Genel not, gözlem..." rows="2"></textarea></div>
         <div class="row2">
-          <div class="fi"><label>Personel</label><input type="text" id="hiz-personel" placeholder="Ahmet, Mehmet..."></div>
-          <div class="fi"><label>Süre (dk)</label><input type="number" id="hiz-sure" inputmode="numeric" placeholder="60"></div>
+          <div class="fi"><label>Personel</label>
+            <select id="hiz-personel" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;">
+              <option value="">Personel Seç</option>
+            </select>
+          </div>
+          <div class="fi"><label>Toplam Süre (dk)</label><input type="number" id="hiz-sure" inputmode="numeric" placeholder="60"></div>
         </div>
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-yeni-hizmet')" style="flex:1;">Vazgeç</button>
@@ -638,8 +651,62 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <!-- Hizmetler Listesi -->
 <div class="modal-ov" id="modal-hizmetler">
   <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>🔧 Verilen Hizmetler</h3><button class="modal-close" onclick="closeModal('modal-hizmetler')">✕</button></div>
+    <div class="modal-head">
+      <h3>🔧 Verilen Hizmetler</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="closeModal('modal-hizmetler');setTimeout(()=>openModal('modal-hizmet-tanimla'),150)" style="padding:6px 12px;border-radius:var(--r-sm);border:1px solid var(--mg-md);background:var(--mg-lt);color:var(--mg);font-size:12px;font-weight:700;cursor:pointer;">+ Ekle</button>
+        <button class="modal-close" onclick="closeModal('modal-hizmetler')">✕</button>
+      </div>
+    </div>
     <div class="modal-body"><div id="hizmetler-liste"></div></div>
+  </div>
+</div>
+
+<!-- Hizmet Tanımla (yeni hizmet başlığı + not) -->
+<div class="modal-ov" id="modal-hizmet-tanimla">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>🔧 Hizmet Tanımla</h3><button class="modal-close" onclick="closeModal('modal-hizmet-tanimla')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="fi"><label>Hizmet Başlığı</label>
+          <select id="hizmet-tanimla-baslik" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;">
+            <option value="">Seçin veya yazın...</option>
+            <option>Havuz Bakımı</option><option>Bahçe Bakımı</option>
+            <option>Teknik Bakım & Genel Tamirat</option>
+            <option>Elektrik Tesisatı Kontrol & Onarımı</option>
+            <option>Klima Temizlik & Teknik Kontrol</option>
+            <option>Dış Cephe Ahşap Bakım & Onarımı</option>
+            <option>Boya & Badana İşleri</option>
+            <option>Su Tesisatı Kontrol & Onarımı</option>
+            <option>Isıtma Sistemi Bakımı</option>
+            <option>Güvenlik Sistemi Kontrolü</option>
+            <option>Sezon Açılış Hizmeti</option>
+            <option>Sezon Kapanış Hizmeti</option>
+            <option>Genel Temizlik</option>
+            <option>Çatı Kontrolü</option>
+            <option>Jeneratör Bakımı</option>
+          </select>
+        </div>
+        <div class="fi"><label>Özel Başlık (farklıysa)</label><input type="text" id="hizmet-tanimla-ozel" placeholder="Ör: Yüzme Havuzu Özel Bakım"></div>
+        <div class="fi"><label>Notlar / Kapsam</label><textarea id="hizmet-tanimla-not" placeholder="Bu hizmetin kapsamı, özel şartlar..." rows="3"></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn btn-secondary" onclick="closeModal('modal-hizmet-tanimla')" style="flex:1;">Vazgeç</button>
+          <button class="btn btn-primary" onclick="hizmetTanimlaKaydet(this)" style="flex:2;">Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hizmet Detay -->
+<div class="modal-ov" id="modal-hizmet-detay">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>🔧 Hizmet Detayı</h3><button class="modal-close" onclick="closeModal('modal-hizmet-detay')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="hdet-id">
+      <div style="font-size:18px;font-weight:700;margin-bottom:12px;" id="hdet-baslik"></div>
+      <div style="padding:12px;background:var(--surface2);border-radius:var(--r-sm);font-size:13px;line-height:1.6;" id="hdet-notlar"></div>
+    </div>
   </div>
 </div>
 
@@ -716,7 +783,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="modal-body">
       <div id="notlar-liste" style="margin-bottom:14px;"></div>
       <div class="fg">
-        <div class="fi"><label>Yeni Not</label><textarea id="yeni-not-input" placeholder="Not içeriği..."></textarea></div>
+        <div class="fi"><label>Not Tarihi</label><input type="date" id="yeni-not-tarih"></div>
+        <div class="fi"><label>Not İçeriği</label><textarea id="yeni-not-input" placeholder="Not içeriği..."></textarea></div>
         <button class="btn btn-primary btn-full" onclick="notEkle(this)">+ Not Kaydet</button>
       </div>
     </div>
@@ -763,9 +831,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
         <div class="row2">
           <div class="fi"><label>Para Birimi</label><select id="harcama-pb-input"><option value="TRY">TRY ₺</option><option value="EUR">EUR €</option><option value="USD">USD $</option></select></div>
-          <div class="fi"><label>Açıklama</label><input type="text" id="harcama-aciklama-input" placeholder="Malzeme, nakliye..."></div>
+          <div class="fi"><label>Açıklama / Not</label><input type="text" id="harcama-aciklama-input" placeholder="Malzeme, nakliye..."></div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="harcamaEkle(this)">+ Harcama Kaydet</button>
+        <div class="fi"><label>İlgili Hizmet</label><input type="text" id="harcama-hizmet-input" placeholder="Havuz bakımı, klima servisi..."></div>
+        <button class="btn btn-primary btn-full" id="harcama-kaydet-btn" onclick="harcamaEkle(this)">+ Harcama Kaydet</button>
       </div>
     </div>
   </div>
@@ -811,6 +880,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- Evrak Detay -->
+<div class="modal-ov" id="modal-evrak-detay">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>📄 Evrak Detayı</h3><button class="modal-close" onclick="closeModal('modal-evrak-detay')">✕</button></div>
+    <div class="modal-body"><div id="evrak-detay-icerik"></div></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -830,6 +907,8 @@ let DB = {
   acilCagri: [],
   notlar: [],
   takvim: [],
+  gorevler: [],
+  personeller: [],
 };
 let seciliVilla = null;
 let turFiltre = 'hepsi';
@@ -855,14 +934,16 @@ async function sbFetch(path, opts={}) {
 // ══════════════ VERİ YÜKLE ══════════════
 async function loadAll() {
   try {
-    const [villalar, kisiler, takvim] = await Promise.all([
+    const [villalar, kisiler, takvim, personeller] = await Promise.all([
       sbFetch('villa_oteller?order=created_at.desc'),
-      sbFetch('kisiler?order=firma_adi.asc'),
-      sbFetch('takvim?order=tarih.asc'),  // ERP ile aynı tablo — paylaşımlı
+      sbFetch('kisiler?order=isim.asc'),
+      sbFetch('takvim?order=tarih.asc'),
+      sbFetch('personeller?order=isim.asc').catch(()=>[]),
     ]);
     DB.villalar = villalar || [];
-    DB.kisiler = (kisiler || []);
+    DB.kisiler = kisiler || [];
     DB.takvim = takvim || [];
+    DB.personeller = personeller || [];
     renderVillaListe();
     renderCalendar();
   } catch(e) { console.error('loadAll:', e); showToast('Veri yüklenemedi', 'red'); }
@@ -870,13 +951,14 @@ async function loadAll() {
 
 async function loadVillaDetay(villaId) {
   try {
-    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar] = await Promise.all([
+    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar, gorevler] = await Promise.all([
       sbFetch(`villa_hizmetler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_odemeler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_evraklar?villa_id=eq.${villaId}&order=created_at.desc`),
       sbFetch(`villa_harcamalar?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_acil_cagri?villa_id=eq.${villaId}&order=yil.desc,ay.desc`),
       sbFetch(`villa_notlar?villa_id=eq.${villaId}&order=tarih.desc`),
+      sbFetch(`villa_gorevler?villa_id=eq.${villaId}&order=created_at.asc`).catch(()=>[]),
     ]);
     DB.hizmetler = hizmetler || [];
     DB.odemeler = odemeler || [];
@@ -884,6 +966,7 @@ async function loadVillaDetay(villaId) {
     DB.harcamalar = harcamalar || [];
     DB.acilCagri = acil || [];
     DB.notlar = notlar || [];
+    DB.gorevler = gorevler || [];
     renderDetay();
   } catch(e) { console.error('loadVillaDetay:', e); }
 }
@@ -934,6 +1017,7 @@ function openModal(id) {
   el.classList.add('open');
   // Modallar açılınca içerik render et
   if (id === 'modal-hizmetler') renderHizmetlerModal();
+  if (id === 'modal-yeni-hizmet') { document.getElementById('hiz-tarih').value=todayStr(); renderHizmetSecimListesi(); }
   if (id === 'modal-odenenler') renderOdenenlerModal();
   if (id === 'modal-hafta-yapilan') renderDonemHizmetler('hafta', 'yapilan');
   if (id === 'modal-hafta-yapilacak') renderDonemHizmetler('hafta', 'yapilacak');
@@ -941,7 +1025,7 @@ function openModal(id) {
   if (id === 'modal-ay-yapilacak') renderDonemHizmetler('ay', 'yapilacak');
   if (id === 'modal-yil-yapilan') renderDonemHizmetler('yil', 'yapilan');
   if (id === 'modal-yil-yapilacak') renderDonemHizmetler('yil', 'yapilacak');
-  if (id === 'modal-notlar') renderNotlarModal();
+  if (id === 'modal-notlar') { renderNotlarModal(); const el=document.getElementById('yeni-not-tarih'); if(el)el.value=todayStr(); }
   if (id === 'modal-evraklar') renderEvraklarModal();
   if (id === 'modal-harcamalar') renderHarcamalarModal();
   if (id === 'modal-acil-kullanim') renderAcilKullanimModal();
@@ -1013,18 +1097,38 @@ function renderCalendar(){
   const first=new Date(calYear,calMonth,1).getDay();const offset=first===0?6:first-1;const days=new Date(calYear,calMonth+1,0).getDate();
   const now=new Date();const isCur=calMonth===now.getMonth()&&calYear===now.getFullYear();
   for(let i=0;i<offset;i++)grid.innerHTML+=`<div></div>`;
+  // Hizmet günlerini hesapla
+  const hizmetGunleri=new Set();
+  const GUN_MAP={'pazartesi':1,'salı':2,'çarşamba':3,'perşembe':4,'cuma':5,'cumartesi':6,'pazar':0,
+    'pt':1,'sa':2,'ça':3,'pe':4,'cu':5,'ct':6,'pz':0};
+  DB.villalar.forEach(vil=>{
+    if(!vil.hizmet_gunleri)return;
+    const gunler=vil.hizmet_gunleri.split(/\s*-\s*|,/).map(g=>g.trim().split(' ')[0].toLowerCase());
+    for(let d2=1;d2<=new Date(calYear,calMonth+1,0).getDate();d2++){
+      const dt=new Date(calYear,calMonth,d2);
+      const dayOfWeek=dt.getDay();
+      gunler.forEach(g=>{
+        if(GUN_MAP[g]!==undefined&&GUN_MAP[g]===dayOfWeek){
+          hizmetGunleri.add(calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d2).padStart(2,'0'));
+        }
+      });
+    }
+  });
+
   for(let d=1;d<=days;d++){
     const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const dayTk=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
     const dayHz=DB.hizmetler.filter(h=>localDateStr(h.tarih)===ds);
     const isToday=isCur&&d===now.getDate();
     const hasAjanda=dayTk.some(t=>t.tip==='İş'||t.tip==='Alacak'||t.tip==='Verecek');
-    const hasNot=dayTk.some(t=>t.tip==='Bilgi');
-    const hasHizmet=dayHz.length>0;
+    const hasNot=dayTk.some(t=>t.tip==='Bilgi')||DB.notlar.some(n=>localDateStr(n.tarih)===ds);
+    const hasHizmet=dayHz.length>0||hizmetGunleri.has(ds);
+    const hasEvrak=DB.evraklar.some(e=>localDateStr(e.bitis_tarihi)===ds);
     let dots='';
     if(hasAjanda)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
-    if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--text3);"></div>`;
+    if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:#fff;border:1px solid var(--border2);"></div>`;
     if(hasHizmet)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--cy);"></div>`;
+    if(hasEvrak)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--red);"></div>`;
     grid.innerHTML+=`<div onclick="showDayDetails('${ds}')" style="text-align:center;padding:6px 2px;border-radius:var(--r-sm);cursor:pointer;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:${isToday?'var(--blue)':'var(--bg2)'};border:1px solid ${isToday?'var(--blue)':'var(--border)'};color:${isToday?'#fff':'var(--text)'};font-weight:${isToday?'700':'500'};font-size:13px;transition:all 0.3s;">
       <span>${d}</span><div style="display:flex;gap:2px;margin-top:4px;justify-content:center;flex-wrap:wrap;">${dots}</div>
     </div>`;
@@ -1036,15 +1140,31 @@ function showDayDetails(ds){
   const takvim=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
   const dayHz=DB.hizmetler.filter(h=>localDateStr(h.tarih)===ds);
   let html='';
-  // Villa hizmetleri
-  if(dayHz.length){
-    html+='<div style="font-size:11px;color:var(--cy);font-weight:700;margin-bottom:8px;text-transform:uppercase;">🔧 Hizmetler</div>';
+  // Hizmet günü villaları (döngü bazlı)
+  const hizmetVillaIds=new Set();
+  const GUN_MAP2={'pazartesi':1,'salı':2,'çarşamba':3,'perşembe':4,'cuma':5,'cumartesi':6,'pazar':0,'pt':1,'sa':2,'ça':3,'pe':4,'cu':5,'ct':6,'pz':0};
+  DB.villalar.forEach(vil=>{
+    if(!vil.hizmet_gunleri)return;
+    const gunler=vil.hizmet_gunleri.split(/\s*-\s*|,/).map(g=>g.trim().split(' ')[0].toLowerCase());
+    const dt=new Date(ds+'T12:00:00'); const dayOfWeek=dt.getDay();
+    gunler.forEach(g=>{if(GUN_MAP2[g]!==undefined&&GUN_MAP2[g]===dayOfWeek)hizmetVillaIds.add(vil.id);});
+  });
+  const hizmetVillalar=[...hizmetVillaIds].map(id=>DB.villalar.find(v=>v.id===id)).filter(Boolean);
+  if(hizmetVillalar.length||dayHz.length){
+    html+='<div style="font-size:11px;color:var(--cy);font-weight:700;margin-bottom:8px;text-transform:uppercase;">🔧 Hizmet Günü</div>';
+    hizmetVillalar.forEach(vil=>{
+      const k=DB.kisiler.find(k=>k.id===vil.kisi_id);
+      const isim=k?.isim||k?.firma_unvan||'—';
+      html+=`<div style="padding:10px 12px;background:var(--cy-lt);border-left:3px solid var(--cy);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;" onclick="closeModal('modal-gun-detay');setTimeout(()=>selectVillaDetay(${vil.id}),150)">
+        <div style="font-weight:600;font-size:13px;">${isim} <span style="font-size:10px;color:var(--cy);">→ Detay</span></div>
+        <div style="font-size:11px;color:var(--text3);">${vil.hizmet_dongusu||vil.hizmet_gunleri||''}</div>
+      </div>`;
+    });
     dayHz.forEach(h=>{
-      const v=DB.villalar.find(v=>v.id===h.villa_id);
-      const k=DB.kisiler.find(k=>k.id===v?.kisi_id);
-      html+=`<div style="padding:10px 12px;background:var(--cy-lt);border-left:3px solid var(--cy);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;">
-        <div style="font-weight:600;font-size:13px;">${k?.firma_adi||k?.isim||'—'}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:3px;">${h.yapilan||'—'}</div>
+      const vil=DB.villalar.find(v=>v.id===h.villa_id);
+      const k=DB.kisiler.find(k=>k.id===vil?.kisi_id);
+      if(k)html+=`<div style="padding:8px 12px;background:var(--surface2);border-left:3px solid var(--cy);border-radius:var(--r-sm);margin-bottom:4px;">
+        <div style="font-weight:600;font-size:12px;">${h.baslik||h.yapilan||'—'}</div>
         ${h.personel?`<div style="font-size:11px;color:var(--text3);">👤 ${h.personel}</div>`:''}
       </div>`;
     });
@@ -1160,7 +1280,7 @@ function renderVillaListe() {
   let liste = DB.villalar;
   if(turFiltre !== 'hepsi') liste = liste.filter(v=>v.tur===turFiltre);
   // kisi bilgisini ekle
-  liste = liste.map(v=>({...v, _kisi: DB.kisiler.find(k=>k.id===v.kisi_id)||{}}));
+  liste = liste.map(v=>({...v, _kisi: DB.kisiler.find(k=>String(k.id)===String(v.kisi_id))||{}}));
   if(!liste.length){
     el.innerHTML='<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Kayıt yok</div><div class="empty-sub">Sağ üstten ekleyin</div></div>';
     return;
@@ -1168,11 +1288,21 @@ function renderVillaListe() {
   el.innerHTML = liste.map(v=>{
     const icon = v.tur==='Villa'?'🏡':'🏨';
     const cls = v.tur==='Villa'?'villa':'otel';
+    const k = v._kisi;
+    const isim = k.isim||k.firma_unvan||'—';
+    const muhatap = k.kapsam||'';
+    const tel = k.tel||k.telefon||'';
+    const adres = k.adres||'';
+    const notParts=(k.not||'').split(' · ');
+    const email = notParts.find(p=>p.includes('@'))||'';
     return `<div class="villa-item${seciliVilla?.id===v.id?' selected':''}" onclick="selectVilla(${v.id})">
       <div class="villa-item-tur ${cls}">${icon}</div>
-      <div class="villa-item-info">
-        <div class="villa-item-firma">${v._kisi.firma_adi||'—'}</div>
-        <div class="villa-item-muhatap">${v._kisi.muhatap_adi||''} ${v._kisi.telefon?'· '+v._kisi.telefon:''}</div>
+      <div class="villa-item-info" style="flex:1;min-width:0;">
+        <div class="villa-item-firma">${isim}</div>
+        ${muhatap?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">👤 ${muhatap}</div>`:''}
+        ${tel?`<div style="font-size:11px;color:var(--text3);">📞 ${tel}</div>`:''}
+        ${adres?`<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${adres}</div>`:''}
+        ${email?`<div style="font-size:11px;color:var(--text3);">✉️ ${email}</div>`:''}
       </div>
       <div style="color:var(--text3);font-size:18px;">›</div>
     </div>`;
@@ -1180,7 +1310,7 @@ function renderVillaListe() {
 }
 
 async function selectVilla(id) {
-  seciliVilla = DB.villalar.find(v=>v.id===id);
+  seciliVilla = DB.villalar.find(v=>String(v.id)===String(id));
   if(!seciliVilla) return;
   const tabSecili = document.getElementById('tab-secili');
   tabSecili.style.display = 'block';
@@ -1193,9 +1323,12 @@ async function selectVilla(id) {
 // ══════════════ DETAY RENDER ══════════════
 function renderDetay() {
   if(!seciliVilla) return;
-  const k = DB.kisiler.find(k=>k.id===seciliVilla.kisi_id)||{};
-  document.getElementById('det-firma').textContent = k.firma_adi||'—';
-  document.getElementById('det-muhatap').textContent = [k.muhatap_adi, k.telefon].filter(Boolean).join(' · ') || '—';
+  const k = DB.kisiler.find(k=>String(k.id)===String(seciliVilla.kisi_id))||{};
+  document.getElementById('det-firma').textContent = k.isim||k.firma_unvan||'—';
+  // not alanında "muhatap · email · tur" formatında tutuluyor
+  const notParts=(k.not||'').split(' · ');
+  const emailVal=notParts.find(p=>p.includes('@'))||'';
+  document.getElementById('det-muhatap').textContent = [k.kapsam, k.tel].filter(Boolean).join(' · ') || '—';
   document.getElementById('det-tur-icon').textContent = seciliVilla.tur==='Villa'?'🏡':'🏨';
   document.getElementById('det-hizmet-sayi').textContent = DB.hizmetler.length;
   document.getElementById('det-dongu').textContent = seciliVilla.hizmet_dongusu||'—';
@@ -1243,14 +1376,15 @@ async function villaEkle(btn) {
   try{
     // Önce kişi ekle - ERP'deki kisiler tablosu kolonlarını kullan
     const kisi=await sbFetch('kisiler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
-      isim: firma,          // Ana isim = firma adı
-      tip: tur==='Villa'?'Müşteri':'Firma',
-      kapsam: muhatap,      // Muhatap adı kapsam alanına
+      isim: firma,
+      tip: 'Müşteri',
+      kapsam: muhatap,
       firma_unvan: firma,
-      tel, adres,
-      'not': muhatap+(email?' · '+email:'')
+      tel,
+      adres,
+      'not': [muhatap, email, tur].filter(Boolean).join(' · ')
     })});
-    const kisiId=Array.isArray(kisi)?kisi[0]?.id:kisi?.id;
+    const kisiId=Number(Array.isArray(kisi)?kisi[0]?.id:kisi?.id);
     // Sonra villa ekle
     await sbFetch('villa_oteller',{method:'POST',body:JSON.stringify({kisi_id:kisiId,tur})});
     closeModal('modal-villa-ekle');
@@ -1275,7 +1409,7 @@ async function villaGuncelle(btn) {
     const k=DB.kisiler.find(k=>k.id===seciliVilla?.kisi_id);
     if(k){await sbFetch(`kisiler?id=eq.${k.id}`,{method:'PATCH',body:JSON.stringify({
       isim:firma,firma_unvan:firma,kapsam:muhatap,tel,adres,
-      'not':muhatap+(email?' · '+email:'')
+      'not':[muhatap,email,tur].filter(Boolean).join(' · ')
     })});}
     await sbFetch(`villa_oteller?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({tur})});
     closeModal('modal-villa-duzenle');
@@ -1304,35 +1438,84 @@ async function villaSil() {
 async function hizmetEkle(btn) {
   if(!seciliVilla){showToast('Villa seçin','red');return;}
   const tarih=document.getElementById('hiz-tarih').value;
-  const yapilan=document.getElementById('hiz-yapilan').value.trim();
-  if(!tarih||!yapilan){showToast('Tarih ve yapılan işleri girin','red');return;}
+  if(!tarih){showToast('Tarih girin','red');return;}
+  // Seçili hizmetleri al
+  const seciliHizmetler=[...document.querySelectorAll('#hiz-secim-liste input[type=checkbox]:checked')]
+    .map(cb=>cb.value);
+  if(!seciliHizmetler.length){showToast('En az bir hizmet seçin','red');return;}
+  const personel=document.getElementById('hiz-personel').value;
+  const sure=parseInt(document.getElementById('hiz-sure').value)||0;
+  const notlar=document.getElementById('hiz-yapilan').value.trim();
   if(btn)btn.disabled=true;
   try{
-    await sbFetch('villa_hizmetler',{method:'POST',body:JSON.stringify({
-      villa_id:seciliVilla.id,tarih,yapilan,
-      personel:document.getElementById('hiz-personel').value.trim(),
-      sure_dk:parseInt(document.getElementById('hiz-sure').value)||0
-    })});
+    // Her seçili hizmet için ayrı kayıt
+    await Promise.all(seciliHizmetler.map(baslik=>
+      sbFetch('villa_hizmetler',{method:'POST',body:JSON.stringify({
+        villa_id:seciliVilla.id,tarih,baslik,yapilan:baslik,notlar,personel,
+        sure_dk:Math.round(sure/seciliHizmetler.length)||0
+      })})
+    ));
     closeModal('modal-yeni-hizmet');
-    ['hiz-yapilan','hiz-personel','hiz-sure'].forEach(id=>document.getElementById(id).value='');
-    showToast('Hizmet kaydedildi','green');
+    // Seçimleri sıfırla
+    document.querySelectorAll('#hiz-secim-liste input[type=checkbox]').forEach(cb=>cb.checked=false);
+    ['hiz-yapilan','hiz-sure'].forEach(id=>document.getElementById(id).value='');
+    showToast(`${seciliHizmetler.length} hizmet kaydedildi`,'green');
     await loadVillaDetay(seciliVilla.id);
   }catch(e){showToast('Hata','red');}
   finally{if(btn)btn.disabled=false;}
 }
 
+function renderHizmetSecimListesi() {
+  // Bu villaya özel kayıtlı hizmet başlıkları
+  const kayitliBasliklar=new Set(DB.hizmetler.map(h=>h.baslik||h.yapilan).filter(Boolean));
+  const hizmetListesi=['Havuz Bakımı','Bahçe Bakımı','Teknik Bakım & Genel Tamirat',
+    'Elektrik Tesisatı Kontrol & Onarımı','Klima Temizlik & Teknik Kontrol',
+    'Dış Cephe Ahşap Bakım & Onarımı','Boya & Badana İşleri',
+    'Su Tesisatı Kontrol & Onarımı','Isıtma Sistemi Bakımı',
+    'Güvenlik Sistemi Kontrolü','Sezon Açılış Hizmeti','Sezon Kapanış Hizmeti',
+    'Genel Temizlik','Çatı Kontrolü','Jeneratör Bakımı'];
+  // Villaya kayıtlı olanları üste al
+  const oncelikli=[...kayitliBasliklar].filter(b=>hizmetListesi.includes(b));
+  const diger=hizmetListesi.filter(h=>!kayitliBasliklar.has(h));
+  const liste=[...oncelikli,...diger];
+  const el=document.getElementById('hiz-secim-liste');
+  if(!el)return;
+  el.innerHTML=liste.map(h=>`<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);cursor:pointer;background:var(--surface2);margin-bottom:4px;">
+    <input type="checkbox" value="${h}" style="width:16px;height:16px;accent-color:var(--mg);">
+    <span style="font-size:13px;">${h}</span>
+    ${kayitliBasliklar.has(h)?'<span style="margin-left:auto;font-size:10px;color:var(--mg);">● Kayıtlı</span>':''}
+  </label>`).join('');
+  // Personel dropdown
+  const pEl=document.getElementById('hiz-personel');
+  if(pEl&&DB.personeller.length){
+    pEl.innerHTML='<option value="">Personel Seç</option>'+
+      DB.personeller.map(p=>`<option value="${p.isim}">${p.isim}</option>`).join('');
+  }
+}
+
 function renderHizmetlerModal() {
   const el=document.getElementById('hizmetler-liste');
-  if(!DB.hizmetler.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔧</div><div class="empty-title">Henüz hizmet yok</div></div>';return;}
+  if(!DB.hizmetler.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔧</div><div class="empty-title">Henüz verilen hizmet yok</div><div class="empty-sub">Ekle butonuyla hizmet tanımlayın</div></div>';
+    return;
+  }
   el.innerHTML=DB.hizmetler.map(h=>`
-    <div class="card-sm" style="margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="font-weight:600;font-size:13px;">${dtStr(h.tarih)}</div>
-        ${h.sure_dk?`<span class="badge badge-cy">${h.sure_dk} dk</span>`:''}
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);" onclick="hizmetDetayAc(${h.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:600;font-size:14px;">${h.baslik||h.yapilan||'—'}</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text3);"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px;">${h.yapilan||'—'}</div>
-      ${h.personel?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">👤 ${h.personel}</div>`:''}
+      ${h.notlar?`<div style="font-size:12px;color:var(--text3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.notlar}</div>`:''}
     </div>`).join('');
+}
+
+function hizmetDetayAc(id) {
+  const h=DB.hizmetler.find(x=>x.id===id);
+  if(!h)return;
+  document.getElementById('hdet-id').value=id;
+  document.getElementById('hdet-baslik').textContent=h.baslik||h.yapilan||'—';
+  document.getElementById('hdet-notlar').textContent=h.notlar||'Not yok';
+  openModal('modal-hizmet-detay');
 }
 
 function renderDonemHizmetler(donem, tip) {
@@ -1340,33 +1523,63 @@ function renderDonemHizmetler(donem, tip) {
   if(donem==='hafta'){const r=thisWeekRange();d1=r[0];d2=r[1];}
   else if(donem==='ay'){const r=thisMonthRange();d1=r[0];d2=r[1];}
   else {const r=thisYearRange();d1=r[0];d2=r[1];}
-  const liste=DB.hizmetler.filter(h=>{const d=new Date(h.tarih+'T12:00');return d>=d1&&d<=d2;});
-  const elId=`${donem}-${tip.replace('i','ilan').replace('ak','acak')}-liste`;
+  const elId=`${donem}-${tip}-liste`;
   const el=document.getElementById(elId);
-  if(!el) return;
+  if(!el)return;
   if(tip==='yapilan'){
+    const liste=DB.hizmetler.filter(h=>{const d=new Date(h.tarih+'T12:00');return d>=d1&&d<=d2;})
+      .sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
     if(!liste.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Bu dönemde hizmet yok</div></div>';return;}
-    el.innerHTML=liste.map(h=>`<div class="card-sm" style="margin-bottom:6px;">
-      <div style="font-weight:600;font-size:12px;">${dtStr(h.tarih)}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px;">${h.yapilan||'—'}</div>
+    el.innerHTML=liste.map(h=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:600;font-size:12px;">${dtStr(h.tarih)}</div>
+        ${h.sure_dk?`<span style="font-size:10px;color:var(--cy);">${h.sure_dk} dk</span>`:''}
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-top:3px;">${h.baslik||h.yapilan||'—'}</div>
+      ${h.personel?`<div style="font-size:11px;color:var(--text3);">👤 ${h.personel}</div>`:''}
+      ${h.notlar?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.notlar}</div>`:''}
     </div>`).join('');
   } else {
-    // yapılacaklar — notlardan veya manuel girişten
-    el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:10px 0;">Görev eklemek için aşağıdaki alana yazın.</div>';
+    // yapılacaklar — gorevler tablosundan
+    const gorevler=(DB.gorevler||[]).filter(g=>g.donem===donem&&!g.tamamlandi);
+    el.innerHTML=gorevler.length?gorevler.map(g=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" onchange="gorevTamamla(${g.id},this)" style="width:16px;height:16px;">
+      <div style="flex:1;font-size:13px;">${g.baslik}</div>
+      <button onclick="gorevSil(${g.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;">✕</button>
+    </div>`).join(''):
+    '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Henüz görev yok</div>';
   }
 }
 
-function gorevEkle(donem, btn) {
+async function gorevEkle(donem, btn) {
+  if(!seciliVilla)return;
   const inputId=`${donem}-yapilacak-input`;
   const val=document.getElementById(inputId)?.value.trim();
   if(!val){showToast('Görev girin','red');return;}
-  // Notu kaydet
-  const el=document.getElementById(`${donem}-yapilacak-liste`);
-  el.innerHTML+= `<div class="card-sm" style="margin-bottom:6px;display:flex;justify-content:space-between;">
-    <div style="font-size:13px;">${val}</div>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;">✕</button>
-  </div>`;
-  document.getElementById(inputId).value='';
+  if(btn)btn.disabled=true;
+  try{
+    await sbFetch('villa_gorevler',{method:'POST',body:JSON.stringify({villa_id:seciliVilla.id,baslik:val,donem})});
+    DB.gorevler=await sbFetch(`villa_gorevler?villa_id=eq.${seciliVilla.id}&order=created_at.asc`)||[];
+    document.getElementById(inputId).value='';
+    renderDonemHizmetler(donem,'yapilacak');
+  }catch(e){showToast('Hata','red');}
+  finally{if(btn)btn.disabled=false;}
+}
+
+async function gorevTamamla(id, chk) {
+  try{
+    await sbFetch(`villa_gorevler?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({tamamlandi:chk.checked})});
+    DB.gorevler=(DB.gorevler||[]).map(g=>g.id===id?{...g,tamamlandi:chk.checked}:g);
+  }catch(e){showToast('Hata','red');}
+}
+
+async function gorevSil(id) {
+  try{
+    await sbFetch(`villa_gorevler?id=eq.${id}`,{method:'DELETE'});
+    DB.gorevler=(DB.gorevler||[]).filter(g=>g.id!==id);
+    // Tüm açık görev listelerini yenile
+    ['hafta','ay','yil'].forEach(d=>renderDonemHizmetler(d,'yapilacak'));
+  }catch(e){showToast('Hata','red');}
 }
 
 // ══════════════ DÖNGÜ / GÜNLER / ACİL ══════════════
@@ -1395,10 +1608,19 @@ async function gunlerKaydet(btn) {
 }
 
 function toggleGun(gun) {
+  const GUN_TAM={'Pt':'Pazartesi','Sa':'Salı','Ça':'Çarşamba','Pe':'Perşembe','Cu':'Cuma','Ct':'Cumartesi','Pz':'Pazar'};
+  const tamGun=GUN_TAM[gun]||gun;
+  const saat=document.getElementById('gunler-saat')?.value||'';
+  const tamGunSaat=saat?tamGun+' '+saat:tamGun;
   const inp=document.getElementById('gunler-input');
   const val=inp.value;
-  if(val.includes(gun)) inp.value=val.replace(gun,'').replace(/\s+-\s+-/g,' - ').replace(/^-\s+/,'').replace(/\s+-$/,'').trim();
-  else inp.value=val?val+' - '+gun:gun;
+  // Eğer bu günün herhangi versiyonu varsa kaldır
+  const regex=new RegExp(tamGun+'[^-,]*','g');
+  if(val.match(regex)){
+    inp.value=val.replace(regex,'').replace(/,\s*,/g,',').replace(/^[,\s]+/,'').replace(/[,\s]+$/,'').replace(/\s*-\s*$/,'').trim();
+  } else {
+    inp.value=val?val+' - '+tamGunSaat:tamGunSaat;
+  }
 }
 
 async function acilHakKaydet(btn) {
@@ -1459,15 +1681,20 @@ async function odemeEkle(btn) {
   const tarih=document.getElementById('yeni-odeme-tarih').value;
   const tutar=parseFloat(document.getElementById('yeni-odeme-tutar').value)||0;
   if(!tarih||!tutar){showToast('Tarih ve tutar girin','red');return;}
+  const editId=btn?.dataset?.editId;
   if(btn)btn.disabled=true;
   try{
-    await sbFetch('villa_odemeler',{method:'POST',body:JSON.stringify({
-      villa_id:seciliVilla.id,tarih,tutar,
+    const payload={villa_id:seciliVilla.id,tarih,tutar,
       para_birimi:document.getElementById('yeni-odeme-pb').value,
-      aciklama:document.getElementById('yeni-odeme-aciklama').value
-    })});
+      aciklama:document.getElementById('yeni-odeme-aciklama').value};
+    if(editId){
+      await sbFetch(`villa_odemeler?id=eq.${editId}`,{method:'PATCH',body:JSON.stringify(payload)});
+      if(btn){btn.textContent='+ Ödeme Kaydet';delete btn.dataset.editId;}
+    }else{
+      await sbFetch('villa_odemeler',{method:'POST',body:JSON.stringify(payload)});
+    }
     ['yeni-odeme-tarih','yeni-odeme-tutar','yeni-odeme-aciklama'].forEach(id=>document.getElementById(id).value='');
-    showToast('Ödeme kaydedildi','green');
+    showToast('Kaydedildi','green');
     await loadVillaDetay(seciliVilla.id);
     renderOdenenlerModal();renderDetay();
   }catch(e){showToast('Hata','red');}
@@ -1476,27 +1703,65 @@ async function odemeEkle(btn) {
 
 function renderOdenenlerModal() {
   const el=document.getElementById('odenenler-liste');
-  if(!DB.odemeler.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;margin-bottom:8px;">Ödeme kaydı yok</div>';return;}
-  const top=DB.odemeler.reduce((a,o)=>a+o.tutar,0);
-  el.innerHTML=`<div style="margin-bottom:12px;padding:10px;background:var(--green-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--green);">Toplam: ${fmt(top)} ${DB.odemeler[0]?.para_birimi||''}</div>`+
-    DB.odemeler.map(o=>`<div class="payment-row">
-      <div><div style="font-weight:600;font-size:13px;">${dtStr(o.tarih)}</div>${o.aciklama?`<div style="font-size:11px;color:var(--text3);">${o.aciklama}</div>`:''}</div>
-      <div style="font-weight:600;">${fmt(o.tutar)} ${o.para_birimi}</div>
+  const sorted=[...DB.odemeler].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  if(!sorted.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;margin-bottom:8px;">Ödeme kaydı yok</div>';return;}
+  const top=sorted.reduce((a,o)=>a+o.tutar,0);
+  el.innerHTML=`<div style="margin-bottom:12px;padding:10px;background:var(--green-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--green);">Toplam: ${fmt(top)}</div>`+
+    sorted.map(o=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;">${dtStr(o.tarih)}</div>
+          <div style="font-size:13px;color:var(--green);font-weight:700;">${fmt(o.tutar)} ${o.para_birimi}</div>
+          ${o.aciklama?`<div style="font-size:11px;color:var(--text3);">${o.aciklama}</div>`:''}
+        </div>
+        <button onclick="odemeDuzenleAc(${o.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;">✏️</button>
+        <button onclick="odemeSil(${o.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">🗑</button>
+      </div>
     </div>`).join('');
+}
+
+function odemeDuzenleAc(id) {
+  const o=DB.odemeler.find(x=>x.id===id);
+  if(!o)return;
+  document.getElementById('yeni-odeme-tarih').value=o.tarih?.slice(0,10)||'';
+  document.getElementById('yeni-odeme-tutar').value=o.tutar||'';
+  document.getElementById('yeni-odeme-pb').value=o.para_birimi||'EUR';
+  document.getElementById('yeni-odeme-aciklama').value=o.aciklama||'';
+  const btn=document.getElementById('odeme-kaydet-btn');
+  if(btn){btn.dataset.editId=id;btn.textContent='Güncelle';}
+}
+
+async function odemeSil(id) {
+  if(!confirm('Ödeme silinecek?'))return;
+  try{
+    await sbFetch(`villa_odemeler?id=eq.${id}`,{method:'DELETE'});
+    DB.odemeler=DB.odemeler.filter(o=>o.id!==id);
+    renderOdenenlerModal();renderDetay();showToast('Silindi','amber');
+  }catch(e){showToast('Hata','red');}
 }
 
 // ══════════════ NOTLAR ══════════════
 async function notEkle(btn) {
   if(!seciliVilla) return;
   const val=document.getElementById('yeni-not-input').value.trim();
+  const tarih=document.getElementById('yeni-not-tarih')?.value||todayStr();
   if(!val){showToast('Not girin','red');return;}
   if(btn)btn.disabled=true;
   try{
-    await sbFetch('villa_notlar',{method:'POST',body:JSON.stringify({villa_id:seciliVilla.id,tarih:todayStr(),icerik:val})});
+    const k=DB.kisiler.find(k=>k.id===seciliVilla.kisi_id);
+    const isim=k?.isim||k?.firma_unvan||'Villa';
+    // villa_notlar'a kaydet
+    await sbFetch('villa_notlar',{method:'POST',body:JSON.stringify({villa_id:seciliVilla.id,tarih,icerik:val})});
+    // takvim tablosuna da ekle (beyaz nokta = Bilgi tipi)
+    await sbFetch('takvim',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      tarih,tip:'Bilgi',baslik:`${isim} - Not`,not:val
+    })});
+    DB.takvim=await sbFetch('takvim?order=tarih.asc')||[];
     document.getElementById('yeni-not-input').value='';
+    if(document.getElementById('yeni-not-tarih'))document.getElementById('yeni-not-tarih').value=todayStr();
     showToast('Not kaydedildi','green');
     await loadVillaDetay(seciliVilla.id);
-    renderNotlarModal();renderDetay();
+    renderNotlarModal();renderDetay();renderCalendar();
   }catch(e){showToast('Hata','red');}
   finally{if(btn)btn.disabled=false;}
 }
@@ -1517,16 +1782,29 @@ async function evrakEkle(btn) {
   if(!adi){showToast('Evrak adı girin','red');return;}
   if(btn)btn.disabled=true;
   try{
+    const bitTarih=document.getElementById('evrak-bit-input').value||null;
+    const k2=DB.kisiler.find(k=>k.id===seciliVilla.kisi_id);
+    const isim2=k2?.isim||k2?.firma_unvan||'Villa';
     await sbFetch('villa_evraklar',{method:'POST',body:JSON.stringify({
       villa_id:seciliVilla.id,evrak_adi:adi,
       tur:document.getElementById('evrak-tur-input').value,
       baslangic_tarihi:document.getElementById('evrak-bas-input').value||null,
-      bitis_tarihi:document.getElementById('evrak-bit-input').value||null,
+      bitis_tarihi:bitTarih,
       tutar:parseFloat(document.getElementById('evrak-tutar-input').value)||0,
       para_birimi:document.getElementById('evrak-pb-input').value,
       durum:document.getElementById('evrak-durum-input').value,
       aciklama:document.getElementById('evrak-aciklama-input').value
     })});
+    // Bitiş tarihi varsa takvime ekle
+    if(bitTarih){
+      await sbFetch('takvim',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        tarih:bitTarih,tip:'İş',
+        baslik:`${isim2} - ${adi} Süresi Doluyor`,
+        not:`Evrak bitiş: ${adi}`
+      })});
+      DB.takvim=await sbFetch('takvim?order=tarih.asc')||[];
+      renderCalendar();
+    }
     ['evrak-adi-input','evrak-tur-input','evrak-bas-input','evrak-bit-input','evrak-tutar-input','evrak-aciklama-input'].forEach(id=>document.getElementById(id).value='');
     showToast('Evrak kaydedildi','green');
     await loadVillaDetay(seciliVilla.id);
@@ -1537,17 +1815,53 @@ async function evrakEkle(btn) {
 
 function renderEvraklarModal() {
   const el=document.getElementById('evraklar-liste');
-  if(!DB.evraklar.length){el.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">Evrak yok</div></div>';return;}
+  const sorted=[...DB.evraklar].sort((a,b)=>new Date(a.bitis_tarihi||'9999')-new Date(b.bitis_tarihi||'9999'));
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">Evrak yok</div></div>';return;}
   const renkMap={'Aktif':'var(--green)','Süresi Doldu':'var(--red)','İptal':'var(--text3)'};
-  el.innerHTML=DB.evraklar.map(e=>`<div class="evrak-row">
+  el.innerHTML=sorted.map(e=>`<div class="evrak-row" onclick="evrakDetayAc(${e.id})">
     <div class="evrak-status" style="background:${renkMap[e.durum]||'var(--text3)'};"></div>
-    <div style="flex:1;">
+    <div style="flex:1;min-width:0;">
       <div style="font-weight:600;font-size:13px;">${e.evrak_adi}</div>
-      <div style="font-size:11px;color:var(--text3);">${e.tur||''} ${e.bitis_tarihi?'· Bitiş: '+dtStr(e.bitis_tarihi):''}</div>
-      ${e.tutar?`<div style="font-size:12px;color:var(--cy);margin-top:2px;">${fmt(e.tutar)} ${e.para_birimi}</div>`:''}
+      <div style="font-size:11px;color:var(--text3);">${e.tur||''}${e.bitis_tarihi?' · Bitiş: '+dtStr(e.bitis_tarihi):''}</div>
+      ${e.tutar?`<div style="font-size:12px;color:var(--cy);">${fmt(e.tutar)} ${e.para_birimi}</div>`:''}
     </div>
-    <span class="badge ${e.durum==='Aktif'?'badge-green':''}" style="${e.durum!=='Aktif'?'background:var(--surface2);color:var(--text3)':''}">${e.durum}</span>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <span style="font-size:10px;font-weight:700;color:${renkMap[e.durum]||'var(--text3)'}">${e.durum}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
   </div>`).join('');
+}
+
+function evrakDetayAc(id) {
+  const e=DB.evraklar.find(x=>x.id===id);
+  if(!e)return;
+  const renkMap={'Aktif':'var(--green)','Süresi Doldu':'var(--red)','İptal':'var(--text3)'};
+  const html=`<div style="display:flex;flex-direction:column;gap:10px;">
+    <div style="padding:12px;background:var(--surface2);border-radius:var(--r-sm);">
+      <div style="font-size:11px;color:var(--text3);">Evrak Adı</div>
+      <div style="font-weight:600;font-size:16px;margin-top:3px;">${e.evrak_adi}</div>
+    </div>
+    ${e.tur?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);"><span style="color:var(--text3)">Tür</span><span>${e.tur}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);"><span style="color:var(--text3)">Durum</span><span style="color:${renkMap[e.durum]||'var(--text3)'};font-weight:700;">${e.durum}</span></div>
+    ${e.baslangic_tarihi?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);"><span style="color:var(--text3)">Başlangıç</span><span>${dtStr(e.baslangic_tarihi)}</span></div>`:''}
+    ${e.bitis_tarihi?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);"><span style="color:var(--text3)">Bitiş</span><span>${dtStr(e.bitis_tarihi)}</span></div>`:''}
+    ${e.tutar?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);"><span style="color:var(--text3)">Tutar</span><span style="font-weight:700;">${fmt(e.tutar)} ${e.para_birimi}</span></div>`:''}
+    ${e.aciklama?`<div style="padding:10px 12px;background:var(--surface2);border-radius:var(--r-sm);"><div style="color:var(--text3);font-size:11px;margin-bottom:4px;">Açıklama</div><div>${e.aciklama}</div></div>`:''}
+    <button onclick="evrakSil(${e.id})" style="padding:10px;border-radius:var(--r-sm);border:1px solid rgba(255,23,68,0.2);background:var(--red-lt);color:var(--red);font-size:13px;cursor:pointer;margin-top:6px;">🗑 Evrakı Sil</button>
+  </div>`;
+  document.getElementById('evrak-detay-icerik').innerHTML=html;
+  openModal('modal-evrak-detay');
+}
+
+async function evrakSil(id) {
+  if(!confirm('Evrak silinecek?'))return;
+  closeModal('modal-evrak-detay');
+  try{
+    await sbFetch(`villa_evraklar?id=eq.${id}`,{method:'DELETE'});
+    DB.evraklar=DB.evraklar.filter(e=>e.id!==id);
+    renderEvraklarModal();renderDetay();
+    showToast('Silindi','amber');
+  }catch(e){showToast('Hata','red');}
 }
 
 // ══════════════ HARCAMALAR ══════════════
@@ -1561,9 +1875,12 @@ async function harcamaEkle(btn) {
     await sbFetch('villa_harcamalar',{method:'POST',body:JSON.stringify({
       villa_id:seciliVilla.id,tarih,tutar,
       para_birimi:document.getElementById('harcama-pb-input').value,
-      aciklama:document.getElementById('harcama-aciklama-input').value
+      aciklama:document.getElementById('harcama-aciklama-input').value,
+      hizmet_baslik:document.getElementById('harcama-hizmet-input')?.value||'',
+      odendi:false
     })});
     ['harcama-tarih-input','harcama-tutar-input','harcama-aciklama-input'].forEach(id=>document.getElementById(id).value='');
+    if(document.getElementById('harcama-hizmet-input'))document.getElementById('harcama-hizmet-input').value='';
     showToast('Harcama kaydedildi','green');
     await loadVillaDetay(seciliVilla.id);
     renderHarcamalarModal();renderDetay();
@@ -1574,12 +1891,86 @@ async function harcamaEkle(btn) {
 function renderHarcamalarModal() {
   const el=document.getElementById('harcamalar-liste');
   if(!DB.harcamalar.length){el.innerHTML='<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">Harcama yok</div></div>';return;}
-  const top=DB.harcamalar.reduce((a,h)=>a+h.tutar,0);
+  const sorted=[...DB.harcamalar].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  const top=sorted.reduce((a,h)=>a+h.tutar,0);
   el.innerHTML=`<div style="margin-bottom:10px;padding:10px;background:var(--red-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--red);">Toplam: ${fmt(top)} ₺</div>`+
-    DB.harcamalar.map(h=>`<div class="payment-row">
-      <div><div style="font-weight:600;font-size:13px;">${dtStr(h.tarih)}</div>${h.aciklama?`<div style="font-size:11px;color:var(--text3);">${h.aciklama}</div>`:''}</div>
-      <div style="font-weight:600;color:var(--red);">-${fmt(h.tutar)} ${h.para_birimi}</div>
+    sorted.map(h=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;color:var(--text3);">${dtStr(h.tarih)}${h.hizmet_baslik?' · '+h.hizmet_baslik:''}</div>
+          <div style="font-weight:600;font-size:13px;margin-top:2px;">${h.aciklama||'—'}</div>
+          <div style="font-weight:700;color:var(--red);font-size:13px;">${fmt(h.tutar)} ${h.para_birimi}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          ${h.odendi
+            ?'<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Ödendi</span>'
+            :`<button onclick="harcamaOde(${h.id})" style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--green);background:var(--green-lt);color:var(--green);font-size:11px;font-weight:600;cursor:pointer;">Öde</button>`
+          }
+          <button onclick="harcamaDuzenle(${h.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px;">✏️</button>
+          <button onclick="harcamaSil(${h.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:2px;">🗑</button>
+        </div>
+      </div>
     </div>`).join('');
+}
+
+async function harcamaOde(id) {
+  try{
+    await sbFetch(`villa_harcamalar?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({odendi:true})});
+    DB.harcamalar=DB.harcamalar.map(h=>h.id===id?{...h,odendi:true}:h);
+    renderHarcamalarModal();showToast('Ödendi olarak işaretlendi','green');
+  }catch(e){showToast('Hata','red');}
+}
+
+async function harcamaSil(id) {
+  if(!confirm('Harcama silinecek?'))return;
+  try{
+    await sbFetch(`villa_harcamalar?id=eq.${id}`,{method:'DELETE'});
+    DB.harcamalar=DB.harcamalar.filter(h=>h.id!==id);
+    renderHarcamalarModal();renderDetay();showToast('Silindi','amber');
+  }catch(e){showToast('Hata','red');}
+}
+
+function harcamaDuzenle(id) {
+  const h=DB.harcamalar.find(x=>x.id===id);
+  if(!h)return;
+  document.getElementById('harcama-tarih-input').value=h.tarih?.slice(0,10)||'';
+  document.getElementById('harcama-tutar-input').value=h.tutar||'';
+  document.getElementById('harcama-pb-input').value=h.para_birimi||'TRY';
+  document.getElementById('harcama-aciklama-input').value=h.aciklama||'';
+  if(document.getElementById('harcama-hizmet-input'))document.getElementById('harcama-hizmet-input').value=h.hizmet_baslik||'';
+  document.getElementById('harcama-kaydet-btn').dataset.editId=id;
+  document.getElementById('harcama-kaydet-btn').textContent='Güncelle';
+}
+
+// ══════════════ HİZMET TANIMLA ══════════════
+async function hizmetTanimlaKaydet(btn) {
+  if(!seciliVilla)return;
+  const secim=document.getElementById('hizmet-tanimla-baslik').value;
+  const ozel=document.getElementById('hizmet-tanimla-ozel').value.trim();
+  const baslik=ozel||secim;
+  const notlar=document.getElementById('hizmet-tanimla-not').value.trim();
+  if(!baslik){showToast('Hizmet başlığı girin','red');return;}
+  if(btn)btn.disabled=true;
+  try{
+    await sbFetch('villa_hizmetler',{method:'POST',body:JSON.stringify({
+      villa_id:seciliVilla.id,tarih:todayStr(),baslik,yapilan:baslik,notlar,sure_dk:0
+    })});
+    document.getElementById('hizmet-tanimla-baslik').value='';
+    document.getElementById('hizmet-tanimla-ozel').value='';
+    document.getElementById('hizmet-tanimla-not').value='';
+    showToast('Hizmet tanımlandı','green');
+    await loadVillaDetay(seciliVilla.id);
+    closeModal('modal-hizmet-tanimla');
+    openModal('modal-hizmetler');
+  }catch(e){showToast('Hata','red');}
+  finally{if(btn)btn.disabled=false;}
+}
+
+// ══════════════ YARDIMCI FONKSİYONLAR ══════════════
+function selectVillaDetay(id) {
+  // Takvimden villa detayına git
+  switchTab('listele', document.getElementById('botnav-listele'));
+  setTimeout(()=>selectVilla(id), 100);
 }
 
 // ══════════════ BAŞLANGIÇ ══════════════
