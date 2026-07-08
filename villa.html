@@ -315,15 +315,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </div>
 
       <div class="info-grid">
-        <div class="info-box" onclick="openModal('modal-odeme-bilgi')">
+        <div class="info-box info-box-full" onclick="openModal('modal-odeme-bilgi')">
           <div class="info-box-accent" style="background:var(--green);"></div>
-          <div class="info-box-label">Ödeme Türü</div>
-          <div class="info-box-val green" id="det-odeme-tur">—</div>
-        </div>
-        <div class="info-box" onclick="openModal('modal-odeme-bilgi')">
-          <div class="info-box-accent" style="background:var(--green);"></div>
-          <div class="info-box-label">Ödeme Tutarı</div>
-          <div class="info-box-val green" id="det-odeme-tutar">—</div>
+          <div class="info-box-label">Ödeme Türü & Tutarı</div>
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <div class="info-box-val green" id="det-odeme-tur">—</div>
+            <div class="info-box-val num" style="color:var(--green);font-size:18px;" id="det-odeme-tutar">—</div>
+          </div>
         </div>
         <div class="info-box info-box-full" onclick="openModal('modal-odenenler')">
           <div class="info-box-accent" style="background:var(--purple);"></div>
@@ -567,7 +565,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <!-- Ödeme Bilgileri -->
 <div class="modal-ov" id="modal-odeme-bilgi">
   <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>💶 Ödeme Bilgileri</h3><button class="modal-close" onclick="closeModal('modal-odeme-bilgi')">✕</button></div>
+    <div class="modal-head"><h3>💶 Ödeme Türü & Tutarı</h3><button class="modal-close" onclick="closeModal('modal-odeme-bilgi')">✕</button></div>
     <div class="modal-body">
       <div class="fg">
         <div class="fi"><label>Ödeme Türü</label>
@@ -671,20 +669,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="fi"><label>Hizmet Başlığı</label>
           <select id="hizmet-tanimla-baslik" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;">
             <option value="">Seçin veya yazın...</option>
+            <optgroup label="Villa">
             <option>Havuz Bakımı</option><option>Bahçe Bakımı</option>
-            <option>Teknik Bakım & Genel Tamirat</option>
             <option>Elektrik Tesisatı Kontrol & Onarımı</option>
-            <option>Klima Temizlik & Teknik Kontrol</option>
-            <option>Dış Cephe Ahşap Bakım & Onarımı</option>
-            <option>Boya & Badana İşleri</option>
-            <option>Su Tesisatı Kontrol & Onarımı</option>
-            <option>Isıtma Sistemi Bakımı</option>
-            <option>Güvenlik Sistemi Kontrolü</option>
-            <option>Sezon Açılış Hizmeti</option>
-            <option>Sezon Kapanış Hizmeti</option>
-            <option>Genel Temizlik</option>
-            <option>Çatı Kontrolü</option>
-            <option>Jeneratör Bakımı</option>
+            <option>Klima Temizlik ve Teknik Kontrol</option>
+            <option>Dış Cephe Ahşap Bakım ve Onarımı</option>
+            <option>Boya &amp; Badana İşleri</option>
+            <option>Teknik Bakım &amp; Genel Tamirat</option>
+            <option>Sezon Açılışı Hazırlık Hizmeti</option>
+            <option>Ev İçi Detaylı Temizlik (Sezonluk)</option>
+            <option>Banyo &amp; Mutfak Hazırlığı (Sezonluk)</option>
+            <option>Aylık 2 Acil Çağrı Hakkı</option>
+            <option>Kiralama &amp; Fatura &amp; Evrak</option>
+          </optgroup>
+          <optgroup label="Otel">
+            <option>Havuz Bakımı</option><option>Bahçe Bakımı</option>
+            <option>Elektrik Tesisatı Kontrol &amp; Onarımı</option>
+            <option>Klima Temizlik ve Teknik Kontrol</option>
+            <option>Dış Cephe Ahşap Bakım ve Onarımı</option>
+            <option>Boya &amp; Badana İşleri</option>
+            <option>Teknik Bakım &amp; Genel Tamirat</option>
+            <option>Sezon Öncesi Teknik Denetim &amp; Rapor</option>
+            <option>Sarf Malzeme &amp; Ürün Tedariki</option>
+            <option>Dekorasyon &amp; Konukseverlik</option>
+            <option>Aylık 4 Acil Çağrı Hakkı</option>
+            <option>Kiralama &amp; Fatura &amp; Evrak</option>
+          </optgroup>
           </select>
         </div>
         <div class="fi"><label>Özel Başlık (farklıysa)</label><input type="text" id="hizmet-tanimla-ozel" placeholder="Ör: Yüzme Havuzu Özel Bakım"></div>
@@ -1332,7 +1342,8 @@ function renderDetay() {
   document.getElementById('det-tur-icon').textContent = seciliVilla.tur==='Villa'?'🏡':'🏨';
   document.getElementById('det-hizmet-sayi').textContent = DB.hizmetler.length;
   document.getElementById('det-dongu').textContent = seciliVilla.hizmet_dongusu||'—';
-  document.getElementById('det-gunler').textContent = seciliVilla.hizmet_gunleri||'—';
+  const gunlerVal=seciliVilla.hizmet_gunleri||'';
+  document.getElementById('det-gunler').textContent = gunlerVal||'—';
   document.getElementById('det-acil-hak').textContent = seciliVilla.acil_cagri_hakki||0;
   // Bu ayın acil kullanımı
   const now=new Date();
@@ -1468,12 +1479,17 @@ async function hizmetEkle(btn) {
 function renderHizmetSecimListesi() {
   // Bu villaya özel kayıtlı hizmet başlıkları
   const kayitliBasliklar=new Set(DB.hizmetler.map(h=>h.baslik||h.yapilan).filter(Boolean));
-  const hizmetListesi=['Havuz Bakımı','Bahçe Bakımı','Teknik Bakım & Genel Tamirat',
-    'Elektrik Tesisatı Kontrol & Onarımı','Klima Temizlik & Teknik Kontrol',
-    'Dış Cephe Ahşap Bakım & Onarımı','Boya & Badana İşleri',
-    'Su Tesisatı Kontrol & Onarımı','Isıtma Sistemi Bakımı',
-    'Güvenlik Sistemi Kontrolü','Sezon Açılış Hizmeti','Sezon Kapanış Hizmeti',
-    'Genel Temizlik','Çatı Kontrolü','Jeneratör Bakımı'];
+  const VILLA_HIZMETLER=['Havuz Bakımı','Bahçe Bakımı','Elektrik Tesisatı Kontrol & Onarımı',
+    'Klima Temizlik ve Teknik Kontrol','Dış Cephe Ahşap Bakım ve Onarımı','Boya & Badana İşleri',
+    'Teknik Bakım & Genel Tamirat','Sezon Açılışı Hazırlık Hizmeti',
+    'Ev İçi Detaylı Temizlik (Sezonluk)','Banyo & Mutfak Hazırlığı (Sezonluk)',
+    'Aylık 2 Acil Çağrı Hakkı','Kiralama & Fatura & Evrak'];
+  const OTEL_HIZMETLER=['Havuz Bakımı','Bahçe Bakımı','Elektrik Tesisatı Kontrol & Onarımı',
+    'Klima Temizlik ve Teknik Kontrol','Dış Cephe Ahşap Bakım ve Onarımı','Boya & Badana İşleri',
+    'Teknik Bakım & Genel Tamirat','Sezon Öncesi Teknik Denetim & Rapor',
+    'Sarf Malzeme & Ürün Tedariki','Dekorasyon & Konukseverlik',
+    'Aylık 4 Acil Çağrı Hakkı','Kiralama & Fatura & Evrak'];
+  const hizmetListesi=seciliVilla?.tur==='Otel'?OTEL_HIZMETLER:VILLA_HIZMETLER;
   // Villaya kayıtlı olanları üste al
   const oncelikli=[...kayitliBasliklar].filter(b=>hizmetListesi.includes(b));
   const diger=hizmetListesi.filter(h=>!kayitliBasliklar.has(h));
