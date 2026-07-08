@@ -787,16 +787,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
     </div>
 
-    <!-- REhBER VİLLA & OTEL -->
-    <div id="r-panel-villa" style="display:flex;flex-direction:column;flex:1;min-height:0;border-top:1px solid var(--border);padding:10px 14px 0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-shrink:0;">
-        <div style="font-size:12px;font-weight:700;color:var(--mg);">🏡 Villa &amp; Otel</div>
-        <button class="btn btn-secondary btn-sm" onclick="openKisiModal('Villa & Otel')">+ Ekle</button>
-      </div>
-      <input type="text" id="r-ara-villa" placeholder="Villa veya otel ara..." oninput="renderRehber()" style="padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;width:100%;margin-bottom:7px;font-family:inherit;flex-shrink:0;">
-      <div class="stagger-wrap" id="r-list-villa" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:10px;display:flex;flex-direction:column;gap:3px;"></div>
-    </div>
-
     <!-- CARİ -->
     <div class="page" id="page-cari">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;">
@@ -6282,10 +6272,8 @@ async function toggleFavori(id,event){
 function renderRehber(){
   const ara=(document.getElementById('r-ara-mus')?.value||'').toLowerCase();
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
-  const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
+  const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs'||k.tip==='Villa & Otel')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
   const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
-  const araV=(document.getElementById('r-ara-villa')?.value||'').toLowerCase();
-  const villaOtel=DB.kisiler.filter(k=>k.tip==='Villa & Otel'&&((k.isim||'').toLowerCase().includes(araV)||(k.firma_adi||'').toLowerCase().includes(araV)));
   const sortFavori=(a,b)=>{if(a.favori&&!b.favori)return -1;if(!a.favori&&b.favori)return 1;return(a.isim||'').localeCompare(b.isim||'');};
   // ── REhBER LİSTE RENDER ──
   const ROW_STYLE='height:40px;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;gap:6px;margin-bottom:3px;';
@@ -6311,7 +6299,7 @@ function renderRehber(){
       </div>`;
     }).join('');
   }
-  buildList(musteri,'r-list-mus');buildList(firma,'r-list-top');buildList(villaOtel,'r-list-villa');
+  buildList(musteri,'r-list-mus');buildList(firma,'r-list-top');
 }
 
 function showKisiDetay(id){
