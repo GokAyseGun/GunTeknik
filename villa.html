@@ -1241,10 +1241,14 @@ async function villaEkle(btn) {
   if(!firma){showToast('Firma adı girin','red');return;}
   if(btn)btn.disabled=true;
   try{
-    // Önce kişi ekle
-    const kisi=await sbFetch('kisiler',{method:'POST',body:JSON.stringify({
-      ad:muhatap,firma_adi:firma,muhatap_adi:muhatap,telefon:tel,email,adres,
-      kategori:'Villa & Otel',tip:'Firma'
+    // Önce kişi ekle - ERP'deki kisiler tablosu kolonlarını kullan
+    const kisi=await sbFetch('kisiler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
+      isim: firma,          // Ana isim = firma adı
+      tip: tur==='Villa'?'Müşteri':'Firma',
+      kapsam: muhatap,      // Muhatap adı kapsam alanına
+      firma_unvan: firma,
+      tel, adres,
+      'not': muhatap+(email?' · '+email:'')
     })});
     const kisiId=Array.isArray(kisi)?kisi[0]?.id:kisi?.id;
     // Sonra villa ekle
@@ -1269,7 +1273,10 @@ async function villaGuncelle(btn) {
   if(btn)btn.disabled=true;
   try{
     const k=DB.kisiler.find(k=>k.id===seciliVilla?.kisi_id);
-    if(k){await sbFetch(`kisiler?id=eq.${k.id}`,{method:'PATCH',body:JSON.stringify({firma_adi:firma,muhatap_adi:muhatap,ad:muhatap,telefon:tel,email,adres})});}
+    if(k){await sbFetch(`kisiler?id=eq.${k.id}`,{method:'PATCH',body:JSON.stringify({
+      isim:firma,firma_unvan:firma,kapsam:muhatap,tel,adres,
+      'not':muhatap+(email?' · '+email:'')
+    })});}
     await sbFetch(`villa_oteller?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({tur})});
     closeModal('modal-villa-duzenle');
     showToast('Güncellendi','green');
