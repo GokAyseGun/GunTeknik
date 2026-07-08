@@ -787,6 +787,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
     </div>
 
+    <!-- REhBER VİLLA & OTEL -->
+    <div id="r-panel-villa" style="display:flex;flex-direction:column;flex:1;min-height:0;border-top:1px solid var(--border);padding:10px 14px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-shrink:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--mg);">🏡 Villa &amp; Otel</div>
+        <button class="btn btn-secondary btn-sm" onclick="openKisiModal('Villa & Otel')">+ Ekle</button>
+      </div>
+      <input type="text" id="r-ara-villa" placeholder="Villa veya otel ara..." oninput="renderRehber()" style="padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;width:100%;margin-bottom:7px;font-family:inherit;flex-shrink:0;">
+      <div class="stagger-wrap" id="r-list-villa" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:10px;display:flex;flex-direction:column;gap:3px;"></div>
+    </div>
+
     <!-- CARİ -->
     <div class="page" id="page-cari">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;">
@@ -1172,6 +1182,10 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('islemler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
       <span>İşlemler</span>
+    </div>
+    <div class="nav-item" onclick="location.href='villa.html'" title="Villa & Otel">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Villa</span>
     </div>
     <div class="nav-item" onclick="goPage('teklifler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
@@ -2213,7 +2227,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="hidden" id="mk-id"><input type="hidden" id="mk-source" value="rehber">
       <div class="fi"><label>Kategori</label>
         <select id="mk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Banka">Banka</option><option value="Şahıs">Şahıs</option>
+          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Banka">Banka</option><option value="Şahıs">Şahıs</option><option value="Villa & Otel">🏡 Villa &amp; Otel</option>
         </select>
       </div>
       <div class="fi"><label>Görünürlük</label>
@@ -6270,6 +6284,8 @@ function renderRehber(){
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
   const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
   const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
+  const araV=(document.getElementById('r-ara-villa')?.value||'').toLowerCase();
+  const villaOtel=DB.kisiler.filter(k=>k.tip==='Villa & Otel'&&((k.isim||'').toLowerCase().includes(araV)||(k.firma_adi||'').toLowerCase().includes(araV)));
   const sortFavori=(a,b)=>{if(a.favori&&!b.favori)return -1;if(!a.favori&&b.favori)return 1;return(a.isim||'').localeCompare(b.isim||'');};
   // ── REhBER LİSTE RENDER ──
   const ROW_STYLE='height:40px;display:flex;align-items:center;padding:0 10px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;gap:6px;margin-bottom:3px;';
@@ -6295,7 +6311,7 @@ function renderRehber(){
       </div>`;
     }).join('');
   }
-  buildList(musteri,'r-list-mus');buildList(firma,'r-list-top');
+  buildList(musteri,'r-list-mus');buildList(firma,'r-list-top');buildList(villaOtel,'r-list-villa');
 }
 
 function showKisiDetay(id){
