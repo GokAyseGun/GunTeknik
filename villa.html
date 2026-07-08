@@ -205,23 +205,52 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- TAKVİM SEKMESİ -->
     <div id="tab-takvim">
-      <div class="card">
-        <div class="cal-header">
-          <button class="cal-nav" onclick="calPrev()" style="width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;">‹</button>
-          <div class="cal-month" id="cal-month-label">—</div>
-          <button class="cal-nav" onclick="calNext()" style="width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;">›</button>
+      <!-- TAKVİM - ERP ile birebir aynı -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <button class="icon-btn" onclick="changeMonth(-1)">❮</button>
+          <div style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:var(--cy);">
+            <span id="cal-month-text">Ay</span>
+            <input type="number" id="cal-year" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;text-align:center;font-family:inherit;outline:none;" onchange="renderCalendar()">
+          </div>
+          <button class="icon-btn" onclick="changeMonth(1)">❯</button>
         </div>
-        <div class="cal-grid" id="cal-day-labels">
-          <div class="cal-day-label">Pt</div><div class="cal-day-label">Sa</div><div class="cal-day-label">Ça</div>
-          <div class="cal-day-label">Pe</div><div class="cal-day-label">Cu</div><div class="cal-day-label">Ct</div><div class="cal-day-label">Pz</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px;">
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Pt</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Sa</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Ça</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Pe</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Cu</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Ct</div>
+          <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px;">Pz</div>
         </div>
-        <div class="cal-grid" id="cal-days"></div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;" id="cal-days"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;padding:10px 4px 4px;font-size:10px;color:var(--text3);">
+          <span>🟡 Ajanda</span><span>⚪ Not</span><span>🔵 Hizmet</span>
+        </div>
       </div>
-      <!-- Bugünün hizmet özeti -->
-      <div class="sec-title">Yaklaşan Hizmetler</div>
-      <div id="cal-yaklasan-list">
-        <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Veri yükleniyor...</div></div>
+
+      <!-- Ajanda Ekle -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;">Ajanda Ekle</div>
+        <div class="fg">
+          <div style="display:flex;gap:8px;">
+            <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="tk-tarih"></div>
+            <div class="fi" style="flex:1"><label>Tür</label>
+              <select id="tk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+                <option value="Bilgi">Not</option><option value="İş">İş</option><option value="Alacak">Alacak</option><option value="Verecek">Verecek</option>
+              </select>
+            </div>
+          </div>
+          <div class="fi"><label>Başlık</label><input type="text" id="tk-baslik" placeholder="Ajanda başlığı..."></div>
+          <div class="fi"><label>Not</label><input type="text" id="tk-not" placeholder="Ek not..."></div>
+          <button class="btn btn-primary btn-full" onclick="saveTakvim(this)">+ Ajandaya Ekle</button>
+        </div>
       </div>
+
+      <!-- Yaklaşan Ajanda -->
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;">Yaklaşan Ajanda</div>
+      <div id="tk-list"></div>
     </div>
 
     <!-- LİSTELE SEKMESİ -->
@@ -745,8 +774,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <!-- Takvim Gün Detay -->
 <div class="modal-ov" id="modal-gun-detay">
   <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3 id="gun-detay-baslik">Gün Detayı</h3><button class="modal-close" onclick="closeModal('modal-gun-detay')">✕</button></div>
+    <div class="modal-head">
+      <h3 id="gun-detay-baslik">Gün Detayı</h3>
+      <button class="modal-close" onclick="closeModal('modal-gun-detay')">✕</button>
+    </div>
     <div class="modal-body"><div id="gun-detay-icerik"></div></div>
+  </div>
+</div>
+
+<!-- Ajanda Detay/Düzenle (ERP ile aynı) -->
+<div class="modal-ov" id="modal-tak-detay">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>Ajanda Detayı</h3>
+      <button class="modal-close" onclick="closeModal('modal-tak-detay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="takd-id">
+      <div class="fg">
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="takd-tarih"></div>
+          <div class="fi" style="flex:1"><label>Tür</label>
+            <select id="takd-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+              <option value="Bilgi">Not</option><option value="İş">İş</option><option value="Alacak">Alacak</option><option value="Verecek">Verecek</option>
+            </select>
+          </div>
+        </div>
+        <div class="fi"><label>Başlık</label><input type="text" id="takd-baslik" placeholder="Başlık..."></div>
+        <div class="fi"><label>Not</label><textarea id="takd-not" rows="3" placeholder="Detay..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-danger" onclick="takvimDetayModalSil()" style="flex:0 0 auto;">🗑 Sil</button>
+        <button class="btn btn-primary" onclick="takvimDetayModalKaydet(this)" style="flex:1;">Kaydet</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -796,15 +857,14 @@ async function loadAll() {
   try {
     const [villalar, kisiler, takvim] = await Promise.all([
       sbFetch('villa_oteller?order=created_at.desc'),
-      sbFetch('kisiler?kategori=eq.Villa%20%26%20Otel&order=firma_adi.asc'),
-      sbFetch('takvim?order=tarih.asc'),
+      sbFetch('kisiler?order=firma_adi.asc'),
+      sbFetch('takvim?order=tarih.asc'),  // ERP ile aynı tablo — paylaşımlı
     ]);
     DB.villalar = villalar || [];
-    DB.kisiler = kisiler || [];
+    DB.kisiler = (kisiler || []);
     DB.takvim = takvim || [];
     renderVillaListe();
     renderCalendar();
-    renderYaklasan();
   } catch(e) { console.error('loadAll:', e); showToast('Veri yüklenemedi', 'red'); }
 }
 
@@ -925,87 +985,166 @@ function switchTab(tab, btn) {
   document.getElementById('botnav-listele').classList.toggle('active', tab==='listele');
 }
 
-// ══════════════ TAKVİM ══════════════
-const AYLAR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+// ══════════════ TAKVİM (ERP ile birebir aynı) ══════════════
+const AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 
-function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
-function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
-
-function renderCalendar() {
-  document.getElementById('cal-month-label').textContent = AYLAR[calMonth] + ' ' + calYear;
-  const grid = document.getElementById('cal-days');
-  grid.innerHTML = '';
-  const first = new Date(calYear, calMonth, 1).getDay();
-  const offset = first===0?6:first-1;
-  const days = new Date(calYear, calMonth+1, 0).getDate();
-  const now = new Date();
-  const isCur = calMonth===now.getMonth()&&calYear===now.getFullYear();
-
-  for(let i=0;i<offset;i++) grid.innerHTML += '<div></div>';
-  for(let d=1;d<=days;d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayTk = DB.takvim.filter(t=>t.tarih?.startsWith(ds));
-    const dayHz = DB.hizmetler.filter(h=>h.tarih?.startsWith(ds));
-    const isToday = isCur && d===now.getDate();
-    let dots = '';
-    if(dayTk.some(t=>t.tip==='İş'||t.tip==='Alacak')) dots += '<div class="cal-dot" style="background:var(--amber);"></div>';
-    if(dayTk.some(t=>t.tip==='Bilgi')) dots += '<div class="cal-dot" style="background:var(--text3);"></div>';
-    if(dayHz.length) dots += '<div class="cal-dot" style="background:var(--cy);"></div>';
-    grid.innerHTML += `<div class="cal-day${isToday?' today':''}" onclick="showGunDetay('${ds}')">
-      <div class="cal-day-num">${d}</div>
-      <div class="cal-dots">${dots}</div>
-    </div>`;
-  }
+function localDateStr(tarih){
+  if(!tarih)return '';
+  const d=new Date(tarih);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function showGunDetay(ds) {
-  const dayTk = DB.takvim.filter(t=>t.tarih?.startsWith(ds));
-  const dayHz = DB.hizmetler.filter(h=>h.tarih?.startsWith(ds));
-  document.getElementById('gun-detay-baslik').textContent = new Date(ds+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
-  let html = '';
-  if(dayHz.length) {
-    html += '<div style="font-size:11px;color:var(--cy);font-weight:700;margin-bottom:8px;text-transform:uppercase;">Hizmetler</div>';
+function dtS(tarih){
+  if(!tarih)return '—';
+  return new Date(tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function changeMonth(dir){
+  calMonth+=dir;
+  if(calMonth<0){calMonth=11;calYear--;}
+  else if(calMonth>11){calMonth=0;calYear++;}
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const tEl=document.getElementById('cal-month-text');if(tEl)tEl.textContent=AYLAR[calMonth];
+  const yEl=document.getElementById('cal-year');if(yEl)yEl.value=calYear;
+  const grid=document.getElementById('cal-days');if(!grid)return;grid.innerHTML='';
+  const first=new Date(calYear,calMonth,1).getDay();const offset=first===0?6:first-1;const days=new Date(calYear,calMonth+1,0).getDate();
+  const now=new Date();const isCur=calMonth===now.getMonth()&&calYear===now.getFullYear();
+  for(let i=0;i<offset;i++)grid.innerHTML+=`<div></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dayTk=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
+    const dayHz=DB.hizmetler.filter(h=>localDateStr(h.tarih)===ds);
+    const isToday=isCur&&d===now.getDate();
+    const hasAjanda=dayTk.some(t=>t.tip==='İş'||t.tip==='Alacak'||t.tip==='Verecek');
+    const hasNot=dayTk.some(t=>t.tip==='Bilgi');
+    const hasHizmet=dayHz.length>0;
+    let dots='';
+    if(hasAjanda)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--amber);"></div>`;
+    if(hasNot)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--text3);"></div>`;
+    if(hasHizmet)dots+=`<div style="width:5px;height:5px;border-radius:50%;background:var(--cy);"></div>`;
+    grid.innerHTML+=`<div onclick="showDayDetails('${ds}')" style="text-align:center;padding:6px 2px;border-radius:var(--r-sm);cursor:pointer;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:${isToday?'var(--blue)':'var(--bg2)'};border:1px solid ${isToday?'var(--blue)':'var(--border)'};color:${isToday?'#fff':'var(--text)'};font-weight:${isToday?'700':'500'};font-size:13px;transition:all 0.3s;">
+      <span>${d}</span><div style="display:flex;gap:2px;margin-top:4px;justify-content:center;flex-wrap:wrap;">${dots}</div>
+    </div>`;
+  }
+  renderTakvimList();
+}
+
+function showDayDetails(ds){
+  const takvim=DB.takvim.filter(t=>localDateStr(t.tarih)===ds);
+  const dayHz=DB.hizmetler.filter(h=>localDateStr(h.tarih)===ds);
+  let html='';
+  // Villa hizmetleri
+  if(dayHz.length){
+    html+='<div style="font-size:11px;color:var(--cy);font-weight:700;margin-bottom:8px;text-transform:uppercase;">🔧 Hizmetler</div>';
     dayHz.forEach(h=>{
-      const v = DB.villalar.find(v=>v.id===h.villa_id);
-      const k = DB.kisiler.find(k=>k.id===v?.kisi_id);
-      html += `<div style="padding:10px 12px;background:var(--cy-lt);border-left:3px solid var(--cy);border-radius:var(--r-sm);margin-bottom:6px;">
-        <div style="font-weight:600;font-size:13px;">${k?.firma_adi||'Villa/Otel'}</div>
+      const v=DB.villalar.find(v=>v.id===h.villa_id);
+      const k=DB.kisiler.find(k=>k.id===v?.kisi_id);
+      html+=`<div style="padding:10px 12px;background:var(--cy-lt);border-left:3px solid var(--cy);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;">
+        <div style="font-weight:600;font-size:13px;">${k?.firma_adi||k?.isim||'—'}</div>
         <div style="font-size:12px;color:var(--text2);margin-top:3px;">${h.yapilan||'—'}</div>
-        ${h.personel?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">👤 ${h.personel}</div>`:''}
+        ${h.personel?`<div style="font-size:11px;color:var(--text3);">👤 ${h.personel}</div>`:''}
       </div>`;
     });
   }
-  if(dayTk.length) {
-    html += '<div style="font-size:11px;color:var(--amber);font-weight:700;margin:12px 0 8px;text-transform:uppercase;">Ajanda</div>';
-    dayTk.forEach(t=>{
-      const renkMap={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};
-      html += `<div style="padding:10px 12px;border-left:3px solid ${renkMap[t.tip]||'var(--blue)'};background:var(--surface2);border-radius:var(--r-sm);margin-bottom:6px;">
-        <div style="font-weight:600;font-size:13px;">${t.baslik||t.detay||'—'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.tip}</div>
-      </div>`;
-    });
-  }
-  if(!html) html = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Bu günde kayıt yok</div></div>';
-  document.getElementById('gun-detay-icerik').innerHTML = html;
+  // Ajanda kayıtları
+  takvim.forEach(t=>{
+    const c={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};
+    html+=`<div onclick="closeModal('modal-gun-detay');setTimeout(()=>openTakModal(${t.id}),120)" style="padding:12px;border-left:3px solid ${c[t.tip]||'var(--blue)'};background:var(--bg2);border-radius:var(--r-sm);cursor:pointer;margin-bottom:6px;">
+      <div style="font-weight:600;font-size:13px;">${t.baslik||t.detay||'—'}</div>
+      <div style="font-size:11px;color:var(--text2);">${t.tip}</div>
+    </div>`;
+  });
+  if(!html)html='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Bu güne ait kayıt yok</div></div>';
+  document.getElementById('gun-detay-baslik').textContent=dtS(ds+'T00:00:00');
+  document.getElementById('gun-detay-icerik').innerHTML=html;
   openModal('modal-gun-detay');
 }
 
-function renderYaklasan() {
-  const el = document.getElementById('cal-yaklasan-list');
-  const now = new Date(); now.setHours(0,0,0,0);
-  const soon = new Date(now); soon.setDate(soon.getDate()+7);
-  const liste = DB.takvim.filter(t=>{
-    const d=new Date(t.tarih+'T00:00:00');
-    return d>=now&&d<=soon;
-  }).slice(0,8);
-  if(!liste.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Bu hafta ajanda yok</div></div>';return;}
-  el.innerHTML=liste.map(t=>{
-    const renkMap={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};
-    return `<div class="card-sm" style="border-left:3px solid ${renkMap[t.tip]||'var(--blue)'};margin-bottom:6px;">
-      <div style="font-weight:600;font-size:13px;">${t.baslik||t.detay||'—'}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${dtStr(t.tarih)} · ${t.tip}</div>
-    </div>`;
-  }).join('');
+function renderTakvimList(){
+  const list=document.getElementById('tk-list');if(!list)return;
+  const now=new Date().setHours(0,0,0,0);
+  const items=DB.takvim.filter(t=>new Date(t.tarih)>=now).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Yaklaşan ajanda yok</div></div>';return;}
+  const colors={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};
+  list.innerHTML=items.map((t,i)=>`<div onclick="openTakModal(${t.id})" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${colors[t.tip]||'var(--blue)'};border-radius:var(--r-md);padding:12px 14px;margin-bottom:6px;cursor:pointer;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${t.baslik||t.detay||'—'}</div><div style="font-size:11px;color:var(--text2);">${dtS(t.tarih)} · ${t.tip}</div></div>
+      <button onclick="event.stopPropagation();deleteTakvim(${t.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px;">🗑</button>
+    </div>
+  </div>`).join('');
+}
+
+async function saveTakvim(btn){
+  const tarih=document.getElementById('tk-tarih').value;
+  if(!tarih){showToast('Tarih seçin','red');return;}
+  const bas=document.getElementById('tk-baslik').value;
+  const notT=document.getElementById('tk-not').value;
+  if(btn)btn.disabled=true;
+  try{
+    await sbFetch('takvim',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      tarih,tip:document.getElementById('tk-tip').value,
+      baslik:bas,not:bas+(notT?' - '+notT:'')
+    })});
+    DB.takvim=await sbFetch('takvim?order=tarih.asc')||[];
+    document.getElementById('tk-baslik').value='';
+    document.getElementById('tk-not').value='';
+    showToast('Ajandaya eklendi','green');
+    renderCalendar();
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+
+function deleteTakvim(id){
+  if(!confirm('Bu kayıt silinecek, emin misiniz?'))return;
+  sbFetch('takvim?id=eq.'+id,{method:'DELETE'}).then(()=>{
+    DB.takvim=DB.takvim.filter(t=>t.id!==id);
+    renderCalendar();
+    showToast('Silindi','amber');
+  }).catch(()=>showToast('Hata!','red'));
+}
+
+function openTakModal(id){
+  const t=(DB.takvim||[]).find(x=>x.id===id);
+  if(!t){showToast('Kayıt bulunamadı','red');return;}
+  document.getElementById('takd-id').value=t.id;
+  document.getElementById('takd-tarih').value=localDateStr(t.tarih).slice(0,10);
+  document.getElementById('takd-tip').value=t.tip||'Bilgi';
+  let bas=t.baslik||'';let notT='';
+  if(t.not&&t.not.startsWith(bas+' - ')){notT=t.not.slice((bas+' - ').length);}
+  else if(t.not&&t.not!==bas){notT=t.not;}
+  document.getElementById('takd-baslik').value=bas;
+  document.getElementById('takd-not').value=notT;
+  openModal('modal-tak-detay');
+}
+
+async function takvimDetayModalKaydet(btn){
+  const id=document.getElementById('takd-id').value;
+  const tarih=document.getElementById('takd-tarih').value;
+  if(!tarih){showToast('Tarih seçin','red');return;}
+  const tip=document.getElementById('takd-tip').value;
+  const bas=document.getElementById('takd-baslik').value;
+  const notT=document.getElementById('takd-not').value;
+  if(btn)btn.disabled=true;
+  try{
+    await sbFetch('takvim?id=eq.'+id,{method:'PATCH',body:JSON.stringify({
+      tarih,tip,baslik:bas,not:bas+(notT?' - '+notT:'')
+    })});
+    DB.takvim=await sbFetch('takvim?order=tarih.asc')||[];
+    closeModal('modal-tak-detay');
+    showToast('Güncellendi','green');
+    renderCalendar();
+  }catch(e){showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,800);}
+}
+
+function takvimDetayModalSil(){
+  const id=document.getElementById('takd-id').value;
+  if(!id)return;
+  closeModal('modal-tak-detay');
+  deleteTakvim(parseInt(id));
 }
 
 // ══════════════ VİLLA LİSTESİ ══════════════
@@ -1441,6 +1580,7 @@ function renderHarcamalarModal() {
   const now=new Date();
   calYear=now.getFullYear();calMonth=now.getMonth();
   await loadAll();
+  renderCalendar();
 })();
 </script>
 </body>
