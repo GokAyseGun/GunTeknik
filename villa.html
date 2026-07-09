@@ -1516,13 +1516,24 @@ function renderHizmetlerModal() {
     return;
   }
   el.innerHTML=DB.hizmetler.map(h=>`
-    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);" onclick="hizmetDetayAc(${h.id})">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="background:var(--surface2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="hizmetDetayAc(${h.id})">
         <div style="font-weight:600;font-size:14px;">${h.baslik||h.yapilan||'—'}</div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text3);"><polyline points="9 18 15 12 9 6"/></svg>
+        ${h.notlar?`<div style="font-size:12px;color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.notlar}</div>`:''}
       </div>
-      ${h.notlar?`<div style="font-size:12px;color:var(--text3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.notlar}</div>`:''}
+      <button onclick="hizmetSil(${h.id})" style="flex-shrink:0;width:30px;height:30px;border-radius:var(--r-sm);border:1px solid rgba(255,23,68,0.2);background:var(--red-lt);color:var(--red);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">🗑</button>
     </div>`).join('');
+}
+
+async function hizmetSil(id) {
+  if(!confirm('Bu hizmet silinecek?')) return;
+  try{
+    await sbFetch(`villa_hizmetler?id=eq.${id}`,{method:'DELETE'});
+    DB.hizmetler=DB.hizmetler.filter(h=>h.id!==id);
+    renderHizmetlerModal();
+    renderDetay();
+    showToast('Hizmet silindi','amber');
+  }catch(e){showToast('Hata','red');}
 }
 
 function hizmetDetayAc(id) {
