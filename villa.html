@@ -397,6 +397,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         </div>
         <div class="action-box-arrow">›</div>
       </div>
+      <div class="action-box" onclick="openModal('modal-rapor')" style="background:linear-gradient(135deg,var(--mg-lt),rgba(124,77,255,0.08));border-color:var(--mg-md);">
+        <div class="action-box-icon" style="background:var(--gmg);">📊</div>
+        <div class="action-box-text">
+          <div class="action-box-title" style="color:var(--mg);">Rapor Gönder</div>
+          <div class="action-box-sub">PDF oluştur & WhatsApp'a gönder</div>
+        </div>
+        <div class="action-box-arrow">›</div>
+      </div>
 
       <!-- İŞLEMLER PANELİ -->
       <div class="sec-title" style="margin-top:24px;">Tüm İşlemler</div>
@@ -999,6 +1007,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- Rapor Modalı -->
+<div class="modal-ov" id="modal-rapor">
+  <div class="modal" style="max-height:95vh;"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3>📊 Rapor Oluştur</h3>
+      <button class="modal-close" onclick="closeModal('modal-rapor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Tarih Kapsamı -->
+      <div class="fg">
+        <div class="fi"><label>Tarih Kapsamı</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+            <button class="rapor-kapsam-btn active" data-k="gunluk" onclick="setRaporKapsam('gunluk',this)" style="padding:8px 4px;border-radius:var(--r-sm);border:1px solid var(--mg-md);background:var(--mg-lt);color:var(--mg);font-size:12px;font-weight:600;cursor:pointer;">Günlük</button>
+            <button class="rapor-kapsam-btn" data-k="haftalik" onclick="setRaporKapsam('haftalik',this)" style="padding:8px 4px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">Haftalık</button>
+            <button class="rapor-kapsam-btn" data-k="aylik" onclick="setRaporKapsam('aylik',this)" style="padding:8px 4px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">Aylık</button>
+            <button class="rapor-kapsam-btn" data-k="yillik" onclick="setRaporKapsam('yillik',this)" style="padding:8px 4px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">Yıllık</button>
+          </div>
+        </div>
+        <div class="fi"><label>Tarih Seç</label>
+          <select id="rapor-tarih-sec" onchange="renderRaporListe()" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;"></select>
+        </div>
+        <!-- İşlem Listesi -->
+        <div class="fi">
+          <label>İşlemler <span id="rapor-secim-sayisi" style="color:var(--mg);"></span></label>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button onclick="raporHepsiniSec(true)" style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;cursor:pointer;">Tümünü Seç</button>
+            <button onclick="raporHepsiniSec(false)" style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;cursor:pointer;">Tümünü Kaldır</button>
+          </div>
+          <div id="rapor-islem-liste" style="max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r-sm);"></div>
+        </div>
+        <!-- Özet -->
+        <div id="rapor-ozet" style="background:var(--surface2);border-radius:var(--r-sm);padding:12px;display:none;">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:8px;">Özet</div>
+          <div id="rapor-ozet-icerik"></div>
+        </div>
+        <!-- Butonlar -->
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-secondary" onclick="raporPdfIndir()" style="flex:1;">⬇️ İndir</button>
+          <button class="btn btn-primary" onclick="raporWhatsapp()" style="flex:1;">💬 WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- İşlem Detay Modalı -->
 <div class="modal-ov" id="modal-islem-detay">
   <div class="modal"><div class="modal-handle"></div>
@@ -1152,6 +1205,10 @@ function openModal(id) {
   if (id === 'modal-yil-yapilacak') renderDonemHizmetler('yil', 'yapilacak');
   if (id === 'modal-notlar') { renderNotlarModal(); const el=document.getElementById('yeni-not-tarih'); if(el)el.value=todayStr(); }
   if (id === 'modal-evrak-ekle') { onEvrakTurChange(); }
+  if (id === 'modal-rapor') {
+    raporTarihlerDoldur();
+    setTimeout(renderRaporListe,50);
+  }
   if (id === 'modal-harcamalar') {
     renderHarcamalarModal();
     // Hizmet listesini dropdown'a yükle
@@ -2321,13 +2378,45 @@ function harcamaDuzenle(id) {
 }
 
 // ══════════════ DOSYA/GÖRSEL YÜKLEME ══════════════
+// Görseli Canvas ile sıkıştır (maks 1200px, kalite %75)
+async function gorselSikistir(file) {
+  // Görsel değilse olduğu gibi döndür
+  if(!file.type.startsWith('image/'))return file;
+  return new Promise((resolve)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const MAX=1200;
+      let w=img.width, h=img.height;
+      if(w>MAX||h>MAX){
+        if(w>h){h=Math.round(h*MAX/w);w=MAX;}
+        else{w=Math.round(w*MAX/h);h=MAX;}
+      }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        if(!blob){resolve(file);return;}
+        // Orijinalden büyükse sıkıştırma işe yaramadı, orijinali kullan
+        const sonuc=blob.size<file.size?new File([blob],file.name,{type:'image/jpeg'}):file;
+        resolve(sonuc);
+      },'image/jpeg',0.75);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};
+    img.src=url;
+  });
+}
+
 async function sbStorage(file, path){
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  // Önce sıkıştır
+  const sikFile=await gorselSikistir(file);
+  const ext=sikFile.type==='image/jpeg'?'jpg':(file.name.split('.').pop()||'jpg').toLowerCase();
   const fname=(path?path+'/':'')+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
   const res=await fetch(SUPABASE_URL+'/storage/v1/object/villa-files/'+fname,{
     method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},
-    body:file
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':sikFile.type||'application/octet-stream'},
+    body:sikFile
   });
   if(!res.ok){
     const errTxt=await res.text().catch(()=>'');
@@ -2575,6 +2664,369 @@ function islemDetayAc(tip, id) {
   document.getElementById('islem-detay-baslik').textContent=baslik;
   document.getElementById('islem-detay-icerik').innerHTML=html;
   openModal('modal-islem-detay');
+}
+
+// ══════════════ RAPOR SİSTEMİ ══════════════
+let _raporKapsam='gunluk';
+let _raporSeciliIslemler=new Set();
+
+function setRaporKapsam(kapsam, btn) {
+  _raporKapsam=kapsam;
+  document.querySelectorAll('.rapor-kapsam-btn').forEach(b=>{
+    const akt=b.dataset.k===kapsam;
+    b.style.background=akt?'var(--mg-lt)':'var(--surface2)';
+    b.style.color=akt?'var(--mg)':'var(--text2)';
+    b.style.borderColor=akt?'var(--mg-md)':'var(--border2)';
+  });
+  raporTarihlerDoldur();
+  renderRaporListe();
+}
+
+function raporTarihlerDoldur() {
+  const sel=document.getElementById('rapor-tarih-sec');
+  if(!sel)return;
+  // Tüm hizmet girişlerinden tarihleri çıkar
+  const tarihler=new Set();
+  DB.hizmetler.forEach(h=>{if(h.tarih)tarihler.add(h.tarih.slice(0,10));});
+  DB.odemeler.forEach(o=>{if(o.tarih)tarihler.add(o.tarih.slice(0,10));});
+  DB.harcamalar.forEach(h=>{if(h.tarih)tarihler.add(h.tarih.slice(0,10));});
+  DB.notlar.forEach(n=>{if(n.tarih)tarihler.add(n.tarih.slice(0,10));});
+  const sorted=[...tarihler].sort((a,b)=>b.localeCompare(a));
+
+  if(_raporKapsam==='gunluk'){
+    sel.innerHTML=sorted.map(t=>`<option value="${t}">${dtStr(t)}</option>`).join('');
+  } else if(_raporKapsam==='haftalik'){
+    const haftalar=new Map();
+    sorted.forEach(t=>{
+      const d=new Date(t+'T12:00:00');
+      const day=d.getDay()||7;
+      const mon=new Date(d);mon.setDate(d.getDate()-day+1);
+      const key=mon.toISOString().slice(0,10);
+      const yil=mon.getFullYear();
+      const haftaNo=Math.ceil(((mon-new Date(yil,0,1))/86400000+1)/7);
+      if(!haftalar.has(key))haftalar.set(key,`${yil} - ${haftaNo}. Hafta (${dtStr(mon)})`);
+    });
+    sel.innerHTML=[...haftalar.entries()].map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  } else if(_raporKapsam==='aylik'){
+    const AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    const aylar=new Map();
+    sorted.forEach(t=>{
+      const key=t.slice(0,7);
+      const [y,m]=key.split('-');
+      if(!aylar.has(key))aylar.set(key,`${AYLAR[parseInt(m)-1]} ${y}`);
+    });
+    sel.innerHTML=[...aylar.entries()].map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  } else {
+    const yillar=new Map();
+    sorted.forEach(t=>{
+      const y=t.slice(0,4);
+      if(!yillar.has(y))yillar.set(y,y+' Yılı');
+    });
+    sel.innerHTML=[...yillar.entries()].map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  }
+}
+
+function raporTarihFiltre(tarih) {
+  // Seçilen tarih/hafta/ay/yıl aralığını döndür [bas, bit]
+  if(_raporKapsam==='gunluk'){
+    return [new Date(tarih+'T00:00:00'), new Date(tarih+'T23:59:59')];
+  } else if(_raporKapsam==='haftalik'){
+    const bas=new Date(tarih+'T00:00:00');
+    const bit=new Date(bas);bit.setDate(bit.getDate()+6);bit.setHours(23,59,59);
+    return [bas,bit];
+  } else if(_raporKapsam==='aylik'){
+    const [y,m]=tarih.split('-');
+    const bas=new Date(parseInt(y),parseInt(m)-1,1);
+    const bit=new Date(parseInt(y),parseInt(m),0,23,59,59);
+    return [bas,bit];
+  } else {
+    const bas=new Date(parseInt(tarih),0,1);
+    const bit=new Date(parseInt(tarih),11,31,23,59,59);
+    return [bas,bit];
+  }
+}
+
+function renderRaporListe() {
+  const sel=document.getElementById('rapor-tarih-sec');
+  const liste=document.getElementById('rapor-islem-liste');
+  if(!sel||!liste||!sel.value)return;
+  const [bas,bit]=raporTarihFiltre(sel.value);
+  _raporSeciliIslemler.clear();
+
+  const items=[];
+  DB.hizmetler.forEach(h=>{
+    const d=new Date((h.tarih||'')+'T12:00:00');
+    if(d>=bas&&d<=bit)items.push({tip:'hizmet',id:h.id,tarih:h.tarih,obj:h});
+  });
+  DB.odemeler.forEach(o=>{
+    const d=new Date((o.tarih||'')+'T12:00:00');
+    if(d>=bas&&d<=bit)items.push({tip:'odeme',id:o.id,tarih:o.tarih,obj:o});
+  });
+  DB.harcamalar.forEach(h=>{
+    const d=new Date((h.tarih||'')+'T12:00:00');
+    if(d>=bas&&d<=bit)items.push({tip:'harcama',id:h.id,tarih:h.tarih,obj:h});
+  });
+  DB.notlar.forEach(n=>{
+    const d=new Date((n.tarih||'')+'T12:00:00');
+    if(d>=bas&&d<=bit)items.push({tip:'not',id:n.id,tarih:n.tarih,obj:n});
+  });
+  DB.evraklar.forEach(e=>{
+    if(!e.bitis_tarihi)return;
+    const d=new Date(e.bitis_tarihi+'T12:00:00');
+    if(d>=bas&&d<=bit)items.push({tip:'evrak',id:e.id,tarih:e.bitis_tarihi,obj:e});
+  });
+  items.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+
+  if(!items.length){
+    liste.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px;">Bu dönemde kayıt yok</div>';
+    document.getElementById('rapor-ozet').style.display='none';
+    return;
+  }
+
+  // Hepsini seçili yap
+  items.forEach(i=>_raporSeciliIslemler.add(i.tip+'_'+i.id));
+  raporSecimSayisiGuncelle();
+
+  const TIP_ICON={hizmet:'🔧',odeme:'💰',harcama:'💸',not:'📝',evrak:'📄'};
+  const TIP_AD={hizmet:'Hizmet',odeme:'Ödeme',harcama:'Harcama',not:'Not',evrak:'Evrak'};
+  const TIP_RENK={hizmet:'var(--cy)',odeme:'var(--green)',harcama:'var(--red)',not:'#fff',evrak:'var(--amber)'};
+
+  liste.innerHTML=items.map(i=>{
+    const key=i.tip+'_'+i.id;
+    let baslik='';
+    if(i.tip==='hizmet')baslik=i.obj.baslik||i.obj.yapilan||'—';
+    else if(i.tip==='odeme')baslik=`${fmt(i.obj.tutar)} ${i.obj.para_birimi}${i.obj.aciklama?' - '+i.obj.aciklama:''}`;
+    else if(i.tip==='harcama')baslik=`${fmt(i.obj.tutar)} ${i.obj.para_birimi}${i.obj.aciklama?' - '+i.obj.aciklama:''}`;
+    else if(i.tip==='not')baslik=(i.obj.icerik||'').substring(0,50)+'...';
+    else if(i.tip==='evrak')baslik=i.obj.evrak_adi||'—';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <input type="checkbox" checked onchange="raporSecimDegis('${key}',this.checked)" style="width:16px;height:16px;accent-color:var(--mg);flex-shrink:0;">
+      <span style="font-size:10px;color:${TIP_RENK[i.tip]};font-weight:700;flex-shrink:0;min-width:48px;">${TIP_ICON[i.tip]} ${TIP_AD[i.tip]}</span>
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${dtStr(i.tarih)}</span>
+      <span style="font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${baslik}</span>
+    </label>`;
+  }).join('');
+
+  raporOzetGuncelle(items);
+}
+
+function raporSecimDegis(key, secili) {
+  if(secili)_raporSeciliIslemler.add(key);
+  else _raporSeciliIslemler.delete(key);
+  raporSecimSayisiGuncelle();
+}
+
+function raporSecimSayisiGuncelle() {
+  const el=document.getElementById('rapor-secim-sayisi');
+  if(el)el.textContent=`(${_raporSeciliIslemler.size} seçili)`;
+}
+
+function raporHepsiniSec(sec) {
+  document.querySelectorAll('#rapor-islem-liste input[type=checkbox]').forEach(cb=>{
+    cb.checked=sec;
+    const key=cb.closest('label')?.querySelector('input')?.getAttribute('onchange')?.match(/'([^']+)'/)?.[1];
+    // key yerine direkt her checkbox'ı güncelle
+  });
+  if(sec){
+    document.querySelectorAll('#rapor-islem-liste input[type=checkbox]').forEach(cb=>{
+      const onch=cb.getAttribute('onchange')||'';
+      const m=onch.match(/'([^']+)'/);
+      if(m)_raporSeciliIslemler.add(m[1]);
+      cb.checked=true;
+    });
+  } else {
+    _raporSeciliIslemler.clear();
+    document.querySelectorAll('#rapor-islem-liste input[type=checkbox]').forEach(cb=>cb.checked=false);
+  }
+  raporSecimSayisiGuncelle();
+}
+
+function raporOzetGuncelle(items) {
+  const ozet=document.getElementById('rapor-ozet');
+  const icerik=document.getElementById('rapor-ozet-icerik');
+  if(!ozet||!icerik)return;
+  const gelir=DB.odemeler.filter(o=>items.some(i=>i.tip==='odeme'&&i.id===o.id))
+    .reduce((a,o)=>a+(o.tutar||0),0);
+  const gider=DB.harcamalar.filter(h=>!h.odendi&&items.some(i=>i.tip==='harcama'&&i.id===h.id))
+    .reduce((a,h)=>a+(h.tutar||0),0);
+  const evrakBorc=DB.evraklar.filter(e=>!e.odendi&&items.some(i=>i.tip==='evrak'&&i.id===e.id))
+    .reduce((a,e)=>a+(e.tutar||0),0);
+  const topGider=gider+evrakBorc;
+  const bakiye=gelir-topGider;
+  ozet.style.display='block';
+  icerik.innerHTML=`
+    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Tahsil Edilenler</span><span style="font-weight:700;color:var(--green);">${fmt(gelir)} ₺</span></div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Ödenmemiş Giderler</span><span style="font-weight:700;color:var(--red);">-${fmt(topGider)} ₺</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);margin-top:4px;"><span style="font-size:12px;font-weight:700;">Net Bakiye</span><span style="font-weight:700;color:${bakiye>=0?'var(--green)':'var(--red)'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</span></div>`;
+}
+
+function raporPdfIndir() {
+  const html=raporHtmlOlustur();
+  if(!html)return;
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),500);
+}
+
+function raporWhatsapp() {
+  if(!seciliVilla)return;
+  const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
+  const tel=(k?.tel||'').replace(/\D/g,'');
+  if(!tel){showToast('Telefon numarası kayıtlı değil','red');return;}
+  const isim=k?.isim||k?.firma_unvan||'Villa';
+  const sel=document.getElementById('rapor-tarih-sec');
+  const tarihStr=sel?.options[sel.selectedIndex]?.text||'';
+
+  // Özet metin
+  const gelir=DB.odemeler.filter(o=>_raporSeciliIslemler.has('odeme_'+o.id))
+    .reduce((a,o)=>a+(o.tutar||0),0);
+  const gider=[...DB.harcamalar.filter(h=>!h.odendi&&_raporSeciliIslemler.has('harcama_'+h.id)),
+               ...DB.evraklar.filter(e=>!e.odendi&&_raporSeciliIslemler.has('evrak_'+e.id))]
+    .reduce((a,x)=>a+(x.tutar||0),0);
+  const bakiye=gelir-gider;
+  const hizmetSayisi=DB.hizmetler.filter(h=>_raporSeciliIslemler.has('hizmet_'+h.id)).length;
+
+  const mesaj=`*GÜN TEKNİK — VİLLA BAKIM RAPORU*
+━━━━━━━━━━━━━━━━━━━━
+*${isim}*
+Dönem: ${tarihStr}
+━━━━━━━━━━━━━━━━━━━━
+✅ Verilen Hizmet: ${hizmetSayisi} adet
+💰 Tahsil Edilenler: ${fmt(gelir)} ₺
+💸 Ödenmemiş Giderler: ${fmt(gider)} ₺
+📊 Net Bakiye: ${bakiye>=0?'+':''}${fmt(bakiye)} ₺
+━━━━━━━━━━━━━━━━━━━━
+Detaylı rapor için raporunuzu inceleyiniz.
+📞 +90 544 652 94 86`;
+
+  const numara=tel.startsWith('0')?'90'+tel.slice(1):tel.startsWith('90')?tel:'90'+tel;
+  const url='https://wa.me/'+numara+'?text='+encodeURIComponent(mesaj);
+  window.open(url,'_blank');
+}
+
+function raporHtmlOlustur() {
+  if(!seciliVilla)return null;
+  const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
+  const isim=k?.isim||k?.firma_unvan||'Villa';
+  const muhatap=k?.kapsam||'';
+  const tel=k?.tel||'';
+  const sel=document.getElementById('rapor-tarih-sec');
+  const tarihStr=sel?.options[sel.selectedIndex]?.text||'';
+
+  // Seçili işlemleri topla
+  const seciliHizmetler=DB.hizmetler.filter(h=>_raporSeciliIslemler.has('hizmet_'+h.id));
+  const seciliOdemeler=DB.odemeler.filter(o=>_raporSeciliIslemler.has('odeme_'+o.id));
+  const seciliHarcamalar=DB.harcamalar.filter(h=>_raporSeciliIslemler.has('harcama_'+h.id));
+  const seciliNotlar=DB.notlar.filter(n=>_raporSeciliIslemler.has('not_'+n.id));
+  const seciliEvraklar=DB.evraklar.filter(e=>_raporSeciliIslemler.has('evrak_'+e.id));
+
+  const gelir=seciliOdemeler.reduce((a,o)=>a+(o.tutar||0),0);
+  const harcamaGider=seciliHarcamalar.filter(h=>!h.odendi).reduce((a,h)=>a+(h.tutar||0),0);
+  const evrakGider=seciliEvraklar.filter(e=>!e.odendi).reduce((a,e)=>a+(e.tutar||0),0);
+  const topGider=harcamaGider+evrakGider;
+  const bakiye=gelir-topGider;
+
+  // Seçili görseller
+  const seciliEkler=DB.ekler.filter(e=>{
+    return _raporSeciliIslemler.has(e.kayit_tip+'_'+e.kayit_id);
+  });
+  const gorseller=seciliEkler.filter(e=>/\.(jpg|jpeg|png|gif|webp)/i.test(e.dosya_adi||e.url||''));
+
+  const satirSatir=(items,tipFn)=>items.map(i=>`
+    <tr>
+      <td>${dtStr(i.tarih)}</td>
+      <td>${tipFn(i)}</td>
+    </tr>`).join('');
+
+  const gorselSayfasi=gorseller.length?`
+    <div style="page-break-before:always;padding:20px;">
+      <h3 style="margin-bottom:16px;color:#333;">Ekler & Görseller</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${gorseller.slice(0,8).map(e=>`<div>
+          <img src="${e.url}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid #eee;">
+          <div style="font-size:9px;color:#888;margin-top:3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.dosya_adi||''}</div>
+        </div>`).join('')}
+      </div>
+    </div>`:''
+
+  return `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">
+<title>Rapor - ${isim}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#222;padding:30px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #e8197a;padding-bottom:16px;margin-bottom:24px;}
+  .logo{font-size:22px;font-weight:800;letter-spacing:1px;}
+  .logo span{color:#e8197a;}
+  .musteri{background:#f9f9f9;border-radius:8px;padding:14px;margin-bottom:20px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  th{background:#f0f0f0;padding:8px 10px;text-align:left;font-size:12px;font-weight:700;color:#555;}
+  td{padding:8px 10px;border-bottom:1px solid #eee;font-size:12px;}
+  .sec-title{font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;}
+  .bakiye-box{border:2px solid #e8197a;border-radius:8px;padding:16px;margin-top:20px;}
+  .bakiye-satir{display:flex;justify-content:space-between;padding:5px 0;}
+  .bakiye-toplam{font-size:16px;font-weight:800;border-top:2px solid #eee;margin-top:8px;padding-top:8px;}
+  .green{color:#00a86b;} .red{color:#e53;}
+  @media print{body{padding:15px;} .no-print{display:none;}}
+</style>
+</head><body>
+<div class="header">
+  <div><div class="logo">GÜN <span>TEKNİK</span></div><div style="font-size:11px;color:#888;margin-top:4px;">Villa & Otel Bakım Hizmetleri</div></div>
+  <div style="text-align:right;font-size:12px;color:#555;">
+    <div>Rapor Tarihi: ${dtStr(new Date().toISOString())}</div>
+    <div>Dönem: <strong>${tarihStr}</strong></div>
+  </div>
+</div>
+
+<div class="musteri">
+  <div style="font-weight:700;font-size:15px;">${isim}</div>
+  ${muhatap?`<div style="color:#555;margin-top:3px;">${muhatap}</div>`:''}
+  ${tel?`<div style="color:#555;">📞 ${tel}</div>`:''}
+</div>
+
+${seciliHizmetler.length?`<div class="sec-title">🔧 Verilen Hizmetler</div>
+<table><thead><tr><th>Tarih</th><th>Hizmet</th><th>Personel</th><th>Süre</th></tr></thead><tbody>
+${seciliHizmetler.map(h=>`<tr><td>${dtStr(h.tarih)}</td><td>${h.baslik||h.yapilan||'—'}</td><td>${h.personel||'—'}</td><td>${h.sure_dk?h.sure_dk+' dk':'—'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${seciliOdemeler.length?`<div class="sec-title">💰 Tahsil Edilen Ödemeler</div>
+<table><thead><tr><th>Tarih</th><th>Tutar</th><th>Açıklama</th></tr></thead><tbody>
+${seciliOdemeler.map(o=>`<tr><td>${dtStr(o.tarih)}</td><td class="green"><strong>${fmt(o.tutar)} ${o.para_birimi}</strong></td><td>${o.aciklama||'—'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${seciliHarcamalar.length?`<div class="sec-title">💸 Ekstra Harcamalar</div>
+<table><thead><tr><th>Tarih</th><th>Tutar</th><th>Açıklama</th><th>Durum</th></tr></thead><tbody>
+${seciliHarcamalar.map(h=>`<tr><td>${dtStr(h.tarih)}</td><td class="red">${fmt(h.tutar)} ${h.para_birimi}</td><td>${h.aciklama||'—'}</td><td>${h.odendi?'<span class="green">Ödendi</span>':'<span class="red">Ödenmedi</span>'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${seciliEvraklar.length?`<div class="sec-title">📄 Evrak & Ödemeler</div>
+<table><thead><tr><th>Evrak</th><th>Tutar</th><th>Son Tarih</th><th>Durum</th></tr></thead><tbody>
+${seciliEvraklar.map(e=>`<tr><td>${e.evrak_adi||'—'}</td><td>${fmt(e.tutar)} ${e.para_birimi}</td><td>${dtStr(e.bitis_tarihi)}</td><td>${e.odendi?'<span class="green">Ödendi</span>':'<span class="red">Ödenmedi</span>'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${seciliNotlar.length?`<div class="sec-title">📝 Notlar</div>
+<table><thead><tr><th>Tarih</th><th>Not</th></tr></thead><tbody>
+${seciliNotlar.map(n=>`<tr><td>${dtStr(n.tarih)}</td><td>${n.icerik||'—'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+<div class="bakiye-box">
+  <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📊 Dönem Özeti</div>
+  <div class="bakiye-satir"><span>Tahsil Edilen Ödemeler</span><span class="green">+${fmt(gelir)} ₺</span></div>
+  <div class="bakiye-satir"><span>Sözleşme Dışı Harcamalar</span><span class="red">-${fmt(harcamaGider)} ₺</span></div>
+  <div class="bakiye-satir"><span>Evrak / Fatura Borçları</span><span class="red">-${fmt(evrakGider)} ₺</span></div>
+  <div class="bakiye-satir bakiye-toplam"><strong>Net Bakiye</strong><strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</strong></div>
+  ${topGider>0&&!seciliHarcamalar.filter(h=>!h.odendi).length?'':''}
+  <div style="margin-top:12px;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:10px;">
+    Bu dönemde sözleşme dışı ödenmemiş gider toplamınız <strong>${fmt(topGider)} ₺</strong>'dir.
+    Tahsil edilen ödeme toplamınız <strong class="green">${fmt(gelir)} ₺</strong> olup net bakiyeniz 
+    <strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</strong>'dir.
+  </div>
+</div>
+
+${gorselSayfasi}
+
+<div style="margin-top:30px;text-align:center;font-size:10px;color:#bbb;">Gün Teknik · +90 544 652 94 86 · gunelektrikklima.com</div>
+</body></html>`;
 }
 // ══════════════ BAŞLANGIÇ ══════════════
 (async()=>{
