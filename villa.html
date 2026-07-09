@@ -1166,7 +1166,13 @@ function openModal(id) {
   if (id === 'modal-harcamalar') renderHarcamalarModal();
   if (id === 'modal-acil-kullanim') renderAcilKullanimModal();
   if (id === 'modal-dongu') document.getElementById('dongu-input').value = seciliVilla?.hizmet_dongusu || '';
-  if (id === 'modal-gunler') document.getElementById('gunler-input').value = seciliVilla?.hizmet_gunleri || '';
+  if (id === 'modal-gunler') {
+    document.getElementById('gunler-input').value = seciliVilla?.hizmet_gunleri || '';
+    // Mevcut kayıttaki saati input'a yükle
+    const mevcutSaat=(seciliVilla?.hizmet_gunleri||'').match(/(\d{2}:\d{2})/);
+    const saatEl=document.getElementById('gunler-saat');
+    if(saatEl)saatEl.value=mevcutSaat?mevcutSaat[1]:'';
+  }
   if (id === 'modal-acil') document.getElementById('acil-hak-input').value = seciliVilla?.acil_cagri_hakki || '';
   if (id === 'modal-odeme-bilgi') {
     document.getElementById('odeme-tur-input').value = seciliVilla?.odeme_turu || 'Aylık';
@@ -1834,10 +1840,21 @@ async function gunlerKaydet(btn) {
   if(!seciliVilla) return;
   if(btn)btn.disabled=true;
   try{
-    const val=document.getElementById('gunler-input').value.trim();
+    let val=document.getElementById('gunler-input').value.trim();
+    const saat=(document.getElementById('gunler-saat')?.value||'').trim();
+    // Saat girildiyse her gün parçasına ekle (eğer zaten saat yoksa)
+    if(saat&&val){
+      val=val.split(/\s*-\s*/).map(g=>{
+        g=g.trim();
+        if(!g)return '';
+        // Zaten saat var mı (HH:MM formatı)
+        if(/\d{2}:\d{2}/.test(g))return g;
+        return g+' '+saat;
+      }).filter(Boolean).join(' - ');
+    }
     await sbFetch(`villa_oteller?id=eq.${seciliVilla.id}`,{method:'PATCH',body:JSON.stringify({hizmet_gunleri:val})});
     seciliVilla.hizmet_gunleri=val;
-    closeModal('modal-gunler');showToast('Kaydedildi','green');renderDetay();
+    closeModal('modal-gunler');showToast('Kaydedildi','green');renderDetay();renderCalendar();
   }catch(e){showToast('Hata','red');}
   finally{if(btn)btn.disabled=false;}
 }
