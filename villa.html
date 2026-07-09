@@ -398,6 +398,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="action-box-arrow">›</div>
       </div>
 
+      <!-- İŞLEMLER PANELİ -->
+      <div class="sec-title" style="margin-top:24px;">Tüm İşlemler</div>
+      <!-- Filtreler -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="islem-filtre-bar">
+        <button class="islem-f-btn active" data-f="hepsi" onclick="setIslemFiltre('hepsi',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--mg-lt);color:var(--mg);font-size:11px;font-weight:600;cursor:pointer;">Tümü</button>
+        <button class="islem-f-btn" data-f="hizmet" onclick="setIslemFiltre('hizmet',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;">🔧 Hizmet</button>
+        <button class="islem-f-btn" data-f="odeme" onclick="setIslemFiltre('odeme',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;">💰 Ödeme</button>
+        <button class="islem-f-btn" data-f="not" onclick="setIslemFiltre('not',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;">📝 Not</button>
+        <button class="islem-f-btn" data-f="evrak" onclick="setIslemFiltre('evrak',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;">📄 Evrak</button>
+        <button class="islem-f-btn" data-f="harcama" onclick="setIslemFiltre('harcama',this)" style="padding:5px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;">💸 Harcama</button>
+      </div>
+      <div id="villa-islemler-liste" style="display:flex;flex-direction:column;gap:6px;padding-bottom:40px;"></div>
+
     </div><!-- /tab-secili-content -->
 
   </div><!-- /main -->
@@ -638,8 +651,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           </div>
           <div class="fi"><label>Toplam Süre (dk)</label><input type="number" id="hiz-sure" inputmode="numeric" placeholder="60"></div>
         </div>
+        <div class="fi">
+          <label>Görsel / Dosya Ekle</label>
+          <button onclick="dosyaSec(f=>(_geciciEkler.hizmet=(_geciciEkler.hizmet||[])).push(...f.map(x=>({file:x,name:x.name}))),renderGeciciEkler('hiz-ekler-oniz','hizmet'))" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
+          <div id="hiz-ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:6px;">
-          <button class="btn btn-secondary" onclick="closeModal('modal-yeni-hizmet')" style="flex:1;">Vazgeç</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-yeni-hizmet');_geciciEkler.hizmet=[]" style="flex:1;">Vazgeç</button>
           <button class="btn btn-primary" onclick="hizmetEkle(this)" style="flex:2;">Kaydet</button>
         </div>
       </div>
@@ -796,6 +814,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="fg">
         <div class="fi"><label>Not Tarihi</label><input type="date" id="yeni-not-tarih"></div>
         <div class="fi"><label>Not İçeriği</label><textarea id="yeni-not-input" placeholder="Not içeriği..."></textarea></div>
+        <div class="fi">
+          <label>Görsel / Dosya Ekle</label>
+          <button onclick="dosyaSec(f=>(_geciciEkler.not=(_geciciEkler.not||[])).push(...f.map(x=>({file:x,name:x.name}))),renderGeciciEkler('not-ekler-oniz','not'))" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
+          <div id="not-ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
         <button class="btn btn-primary btn-full" onclick="notEkle(this)">+ Not Kaydet</button>
       </div>
     </div>
@@ -869,6 +892,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
             </select>
           </div>
         </div>
+        <div class="fi">
+          <label>Görsel / Dosya Ekle</label>
+          <button onclick="dosyaSec(f=>(_geciciEkler.evrak=(_geciciEkler.evrak||[])).push(...f.map(x=>({file:x,name:x.name}))),renderGeciciEkler('evrak-ekler-oniz','evrak'))" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
+          <div id="evrak-ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-evrak-ekle')" style="flex:1;">Vazgeç</button>
           <button class="btn btn-primary" id="evrak-kaydet-btn" onclick="evrakKaydet(this)" style="flex:2;">Kaydet</button>
@@ -912,6 +940,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           </select>
         </div>
         <div class="fi"><label>veya Manuel Giriş</label><input type="text" id="harcama-hizmet-input" placeholder="Havuz bakımı, klima servisi..."></div>
+        <div class="fi">
+          <label>Görsel / Dosya Ekle</label>
+          <button onclick="dosyaSec(f=>(_geciciEkler.harcama=(_geciciEkler.harcama||[])).push(...f.map(x=>({file:x,name:x.name}))),renderGeciciEkler('harc-ekler-oniz','harcama'))" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
+          <div id="harc-ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
         <button class="btn btn-primary btn-full" id="harcama-kaydet-btn" onclick="harcamaEkle(this)">+ Harcama Kaydet</button>
       </div>
     </div>
@@ -966,6 +999,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- İşlem Detay Modalı -->
+<div class="modal-ov" id="modal-islem-detay">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <h3 id="islem-detay-baslik">Detay</h3>
+      <button class="modal-close" onclick="closeModal('modal-islem-detay')">✕</button>
+    </div>
+    <div class="modal-body"><div id="islem-detay-icerik"></div></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -987,6 +1031,7 @@ let DB = {
   takvim: [],
   gorevler: [],
   personeller: [],
+  ekler: [],
 };
 let seciliVilla = null;
 let turFiltre = 'hepsi';
@@ -1029,7 +1074,7 @@ async function loadAll() {
 
 async function loadVillaDetay(villaId) {
   try {
-    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar, gorevler] = await Promise.all([
+    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar, gorevler, ekler] = await Promise.all([
       sbFetch(`villa_hizmetler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_odemeler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_evraklar?villa_id=eq.${villaId}&order=created_at.desc`),
@@ -1037,6 +1082,7 @@ async function loadVillaDetay(villaId) {
       sbFetch(`villa_acil_cagri?villa_id=eq.${villaId}&order=yil.desc,ay.desc`),
       sbFetch(`villa_notlar?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_gorevler?villa_id=eq.${villaId}&order=created_at.asc`).catch(()=>[]),
+      sbFetch(`villa_ekler?villa_id=eq.${villaId}&order=created_at.desc`).catch(()=>[]),
     ]);
     DB.hizmetler = hizmetler || [];
     DB.odemeler = odemeler || [];
@@ -1045,6 +1091,7 @@ async function loadVillaDetay(villaId) {
     DB.acilCagri = acil || [];
     DB.notlar = notlar || [];
     DB.gorevler = gorevler || [];
+    DB.ekler = ekler || [];
     renderDetay();
   } catch(e) { console.error('loadVillaDetay:', e); }
 }
@@ -1458,6 +1505,8 @@ function renderDetay() {
   document.getElementById('det-not-sayi').textContent = DB.notlar.length ? DB.notlar.length+' not' : 'Not yok';
   document.getElementById('det-evrak-sayi').textContent = DB.evraklar.length ? DB.evraklar.length+' evrak' : 'Evrak yok';
   document.getElementById('det-harcama-sayi').textContent = DB.harcamalar.length ? DB.harcamalar.length+' kayıt' : 'Harcama yok';
+  // İşlemler panelini güncelle
+  setTimeout(renderVillaIslemler, 50);
   // Özet ikonlar
   const [hw1,hw2]=thisWeekRange(); const [am1,am2]=thisMonthRange(); const [ay1,ay2]=thisYearRange();
   const haftaYap=DB.hizmetler.filter(h=>{const d=new Date(h.tarih+'T12:00');return d>=hw1&&d<=hw2;});
@@ -1668,21 +1717,29 @@ function renderDonemHizmetler(donem, tip) {
       .sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
     if(!liste.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Bu dönemde hizmet yok</div></div>';return;}
     el.innerHTML=liste.map(h=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-weight:600;font-size:12px;">${dtStr(h.tarih)}</div>
-        ${h.sure_dk?`<span style="font-size:10px;color:var(--cy);">${h.sure_dk} dk</span>`:''}
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+            <div style="font-weight:600;font-size:12px;">${dtStr(h.tarih)}</div>
+            ${h.sure_dk?`<span style="font-size:10px;color:var(--cy);">${h.sure_dk} dk</span>`:''}
+          </div>
+          <div style="font-size:13px;color:var(--text);">${h.baslik||h.yapilan||'—'}</div>
+          ${h.personel?`<div style="font-size:11px;color:var(--text3);">👤 ${h.personel}</div>`:''}
+          ${h.notlar?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.notlar}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="hizmetGirisiDuzenle(${h.id})" style="width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✏️</button>
+          <button onclick="hizmetGirisiSil(${h.id})" style="width:28px;height:28px;border-radius:var(--r-sm);border:1px solid rgba(255,23,68,0.2);background:var(--red-lt);color:var(--red);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">🗑</button>
+        </div>
       </div>
-      <div style="font-size:13px;color:var(--text);margin-top:3px;">${h.baslik||h.yapilan||'—'}</div>
-      ${h.personel?`<div style="font-size:11px;color:var(--text3);">👤 ${h.personel}</div>`:''}
-      ${h.notlar?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.notlar}</div>`:''}
     </div>`).join('');
   } else {
-    // yapılacaklar — gorevler tablosundan
     const gorevler=(DB.gorevler||[]).filter(g=>g.donem===donem&&!g.tamamlandi);
     el.innerHTML=gorevler.length?gorevler.map(g=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
       <input type="checkbox" onchange="gorevTamamla(${g.id},this)" style="width:16px;height:16px;">
       <div style="flex:1;font-size:13px;">${g.baslik}</div>
-      <button onclick="gorevSil(${g.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;">✕</button>
+      <button onclick="gorevDuzenle(${g.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px;">✏️</button>
+      <button onclick="gorevSil(${g.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:2px;">🗑</button>
     </div>`).join(''):
     '<div style="font-size:12px;color:var(--text3);padding:8px 0;">Henüz görev yok</div>';
   }
@@ -2246,6 +2303,118 @@ function harcamaDuzenle(id) {
   document.getElementById('harcama-kaydet-btn').textContent='Güncelle';
 }
 
+// ══════════════ DOSYA/GÖRSEL YÜKLEME ══════════════
+async function sbStorage(file, path){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const fname=(path?path+'/':'')+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+  const res=await fetch(SUPABASE_URL+'/storage/v1/object/villa-files/'+fname,{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},
+    body:file
+  });
+  if(!res.ok){
+    const errTxt=await res.text().catch(()=>'');
+    throw new Error('Storage hatası ('+res.status+'): '+errTxt.substring(0,120));
+  }
+  return SUPABASE_URL+'/storage/v1/object/public/villa-files/'+fname;
+}
+
+// Dosya input elementini oluştur ve tıklat
+function dosyaSec(callback, accept='image/*,application/pdf,.doc,.docx,.xls,.xlsx') {
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept=accept;
+  inp.multiple=true;
+  inp.onchange=async(e)=>{
+    const files=[...e.target.files];
+    if(!files.length)return;
+    callback(files);
+  };
+  inp.click();
+}
+
+// Villa eki kaydet
+async function villaEkKaydet(files, kayitTip, kayitId) {
+  if(!seciliVilla)return[];
+  const results=[];
+  for(const file of files){
+    try{
+      showToast(`Yükleniyor: ${file.name}`,'amber');
+      const url=await sbStorage(file,`villa_${seciliVilla.id}/${kayitTip}`);
+      const ek=await sbFetch('villa_ekler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
+        villa_id:seciliVilla.id,
+        kayit_tip:kayitTip,
+        kayit_id:kayitId||null,
+        url,
+        dosya_adi:file.name,
+        dosya_tipi:file.type||'',
+        dosya_boyut:file.size||0
+      })});
+      const ekObj=Array.isArray(ek)?ek[0]:ek;
+      if(ekObj)results.push(ekObj);
+    }catch(e){showToast('Yükleme hatası: '+e.message,'red');}
+  }
+  // DB.ekler güncelle
+  DB.ekler=[...DB.ekler,...results];
+  return results;
+}
+
+// Ekleri render et (modal içinde)
+function renderEkler(kayitTip, kayitId, containerId) {
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const ekler=(DB.ekler||[]).filter(e=>e.kayit_tip===kayitTip&&String(e.kayit_id)===String(kayitId));
+  if(!ekler.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);">Ek yok</div>';return;}
+  el.innerHTML=ekler.map(e=>{
+    const isImg=/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(e.dosya_adi||e.url||'');
+    const isimK=(e.dosya_adi||e.url||'').split('/').pop();
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+      ${isImg?`<img src="${e.url}" style="width:44px;height:44px;object-fit:cover;border-radius:var(--r-sm);cursor:pointer;" onclick="window.open('${e.url}','_blank')">`
+              :`<div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;" onclick="window.open('${e.url}','_blank')">📄</div>`}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${isimK}</div>
+        <div style="font-size:10px;color:var(--text3);">${e.dosya_boyut?Math.round(e.dosya_boyut/1024)+' KB':''}</div>
+      </div>
+      <button onclick="ekSil(${e.id},'${containerId}','${kayitTip}',${kayitId})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+async function ekSil(id, containerId, kayitTip, kayitId) {
+  if(!confirm('Dosya silinecek?'))return;
+  try{
+    const ek=DB.ekler.find(e=>e.id===id);
+    if(ek?.url){
+      const path=ek.url.split('/storage/v1/object/public/')[1];
+      if(path) await fetch(SUPABASE_URL+'/storage/v1/object/'+path,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).catch(()=>{});
+    }
+    await sbFetch(`villa_ekler?id=eq.${id}`,{method:'DELETE'});
+    DB.ekler=DB.ekler.filter(e=>e.id!==id);
+    renderEkler(kayitTip,kayitId,containerId);
+    showToast('Silindi','amber');
+  }catch(e){showToast('Hata','red');}
+}
+
+// Geçici ek önizleme (kayıt öncesi)
+const _geciciEkler={hizmet:[],not:[],evrak:[],harcama:[]};
+
+function renderGeciciEkler(containerId, tip) {
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const liste=_geciciEkler[tip]||[];
+  if(!liste.length){el.innerHTML='';return;}
+  el.innerHTML=liste.map((e,i)=>{
+    const isImg=/\.(jpg|jpeg|png|gif|webp|heic)$/i.test(e.name||'');
+    const url=e.previewUrl||(isImg?URL.createObjectURL(e.file):'');
+    if(isImg&&!e.previewUrl)e.previewUrl=url;
+    return `<div style="position:relative;width:60px;height:60px;">
+      ${isImg?`<img src="${url}" style="width:60px;height:60px;object-fit:cover;border-radius:var(--r-sm);">`
+             :`<div style="width:60px;height:60px;border-radius:var(--r-sm);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;">📄</div>`}
+      <button onclick="_geciciEkler['${tip}'].splice(${i},1);renderGeciciEkler('${containerId}','${tip}')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
+    </div>`;
+  }).join('');
+}
+
 // ══════════════ HİZMET TANIMLA ══════════════
 async function hizmetTanimlaKaydet(btn) {
   if(!seciliVilla)return;
@@ -2277,6 +2446,119 @@ function selectVillaDetay(id) {
   setTimeout(()=>selectVilla(id), 100);
 }
 
+
+// ══════════════ VİLLA İŞLEMLER PANELİ ══════════════
+let _islemFiltre='hepsi';
+
+function setIslemFiltre(f,btn) {
+  _islemFiltre=f;
+  document.querySelectorAll('.islem-f-btn').forEach(b=>{
+    const akt=b.dataset.f===f;
+    b.style.background=akt?'var(--mg-lt)':'var(--surface2)';
+    b.style.color=akt?'var(--mg)':'var(--text2)';
+    b.style.borderColor=akt?'var(--mg-md)':'var(--border2)';
+  });
+  renderVillaIslemler();
+}
+
+function renderVillaIslemler() {
+  const el=document.getElementById('villa-islemler-liste');
+  if(!el)return;
+
+  // Tüm kayıtları birleştir
+  const items=[];
+  DB.hizmetler.forEach(h=>items.push({tip:'hizmet',tarih:h.tarih||h.created_at,obj:h}));
+  DB.odemeler.forEach(o=>items.push({tip:'odeme',tarih:o.tarih||o.created_at,obj:o}));
+  DB.notlar.forEach(n=>items.push({tip:'not',tarih:n.tarih||n.created_at,obj:n}));
+  DB.evraklar.forEach(e=>items.push({tip:'evrak',tarih:e.created_at,obj:e}));
+  DB.harcamalar.forEach(h=>items.push({tip:'harcama',tarih:h.tarih||h.created_at,obj:h}));
+
+  // Filtre
+  const filtered=_islemFiltre==='hepsi'?items:items.filter(i=>i.tip===_islemFiltre);
+
+  // Tarih sırası (en yeni üstte)
+  filtered.sort((a,b)=>new Date(b.tarih||0)-new Date(a.tarih||0));
+
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Kayıt yok</div></div>';return;}
+
+  const TIP_RENK={hizmet:'var(--cy)',odeme:'var(--green)',not:'#fff',evrak:'var(--amber)',harcama:'var(--red)'};
+  const TIP_ICON={hizmet:'🔧',odeme:'💰',not:'📝',evrak:'📄',harcama:'💸'};
+  const TIP_AD={hizmet:'Hizmet',odeme:'Ödeme',not:'Not',evrak:'Evrak',harcama:'Harcama'};
+
+  el.innerHTML=filtered.map(i=>{
+    const {tip,obj}=i;
+    const renk=TIP_RENK[tip];
+    let baslik='',alt='';
+    if(tip==='hizmet'){baslik=obj.baslik||obj.yapilan||'—';alt=obj.personel||'';}
+    else if(tip==='odeme'){baslik=`${fmt(obj.tutar)} ${obj.para_birimi}`;alt=obj.aciklama||'';}
+    else if(tip==='not'){baslik=obj.icerik?.substring(0,60)||(obj.icerik||'—');alt='';}
+    else if(tip==='evrak'){baslik=obj.evrak_adi||'—';alt=obj.odeme_dongusu||'';}
+    else if(tip==='harcama'){baslik=`${fmt(obj.tutar)} ${obj.para_birimi}`;alt=obj.aciklama||'';}
+    // Ek var mı
+    const ekSayisi=(DB.ekler||[]).filter(e=>e.kayit_tip===tip&&String(e.kayit_id)===String(obj.id)).length;
+    return `<div onclick="islemDetayAc('${tip}',${obj.id})" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${renk};border-radius:var(--r-md);padding:10px 14px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">${TIP_ICON[tip]}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <span style="font-size:10px;font-weight:700;color:${renk};">${TIP_AD[tip]}</span>
+            <span style="font-size:10px;color:var(--text3);">${dtStr(i.tarih)}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${baslik}</div>
+          ${alt?`<div style="font-size:11px;color:var(--text3);">${alt}</div>`:''}
+        </div>
+        ${ekSayisi?`<span style="font-size:10px;color:var(--text3);">📎${ekSayisi}</span>`:''}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function islemDetayAc(tip, id) {
+  let obj,html='',baslik='';
+  if(tip==='hizmet') obj=DB.hizmetler.find(x=>x.id===id);
+  else if(tip==='odeme') obj=DB.odemeler.find(x=>x.id===id);
+  else if(tip==='not') obj=DB.notlar.find(x=>x.id===id);
+  else if(tip==='evrak') obj=DB.evraklar.find(x=>x.id===id);
+  else if(tip==='harcama') obj=DB.harcamalar.find(x=>x.id===id);
+  if(!obj)return;
+
+  const row=(label,val)=>val?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:4px;"><span style="color:var(--text3);font-size:12px;">${label}</span><span style="font-size:13px;font-weight:600;">${val}</span></div>`:'';
+
+  if(tip==='hizmet'){
+    baslik='🔧 Hizmet Detayı';
+    html=row('Başlık',obj.baslik||obj.yapilan||'—')+row('Tarih',dtStr(obj.tarih))+row('Personel',obj.personel)+row('Süre',obj.sure_dk?obj.sure_dk+' dk':'')+row('Not',obj.notlar);
+  }else if(tip==='odeme'){
+    baslik='💰 Ödeme Detayı';
+    html=row('Tarih',dtStr(obj.tarih))+row('Tutar',`${fmt(obj.tutar)} ${obj.para_birimi}`)+row('Açıklama',obj.aciklama);
+  }else if(tip==='not'){
+    baslik='📝 Not Detayı';
+    html=row('Tarih',dtStr(obj.tarih))+`<div style="padding:12px;background:var(--surface2);border-radius:var(--r-sm);font-size:13px;line-height:1.6;margin-bottom:4px;">${obj.icerik||'—'}</div>`;
+  }else if(tip==='evrak'){
+    baslik='📄 Evrak Detayı';
+    html=row('Evrak',obj.evrak_adi)+row('Tür',obj.tur)+row('Döngü',obj.odeme_dongusu)+row('İlk Tarih',dtStr(obj.baslangic_tarihi))+row('Son Tarih',dtStr(obj.bitis_tarihi))+row('Tutar',obj.tutar?`${fmt(obj.tutar)} ${obj.para_birimi}`:'');
+  }else if(tip==='harcama'){
+    baslik='💸 Harcama Detayı';
+    html=row('Tarih',dtStr(obj.tarih))+row('Tutar',`${fmt(obj.tutar)} ${obj.para_birimi}`)+row('Açıklama',obj.aciklama)+row('Hizmet',obj.hizmet_baslik)+row('Durum',obj.odendi?'✓ Ödendi':'Ödenmedi');
+  }
+
+  // Ekler
+  const ekler=(DB.ekler||[]).filter(e=>e.kayit_tip===tip&&String(e.kayit_id)===String(id));
+  if(ekler.length){
+    html+=`<div style="font-size:11px;color:var(--text3);font-weight:700;margin:10px 0 6px;text-transform:uppercase;">Ekler</div>`;
+    html+=ekler.map(e=>{
+      const isImg=/\.(jpg|jpeg|png|gif|webp)$/i.test(e.dosya_adi||'');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="window.open('${e.url}','_blank')">
+        ${isImg?`<img src="${e.url}" style="width:44px;height:44px;object-fit:cover;border-radius:var(--r-sm);">`:`<div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;">📄</div>`}
+        <div style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.dosya_adi||'Dosya'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('islem-detay-baslik').textContent=baslik;
+  document.getElementById('islem-detay-icerik').innerHTML=html;
+  openModal('modal-islem-detay');
+}
 // ══════════════ BAŞLANGIÇ ══════════════
 (async()=>{
   const now=new Date();
