@@ -591,7 +591,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="modal-body">
       <div class="fg">
         <div class="fi"><label>Ödeme Türü</label>
-          <select id="odeme-tur-input">
+          <select id="odeme-tur-input" onchange="odemePeriyotGoster()">
             <option value="Günlük">Günlük</option>
             <option value="Haftalık">Haftalık</option>
             <option value="Aylık">Aylık</option>
@@ -599,10 +599,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
             <option value="Yıllık">Yıllık</option>
           </select>
         </div>
+        <!-- Periyot tarihleme - türe göre değişir -->
+        <div id="periyot-wrap" style="background:var(--surface2);border-radius:var(--r-sm);padding:12px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:10px;">📅 Ödeme Döngüsü</div>
+          <div id="periyot-icerik"></div>
+        </div>
         <div class="row2">
           <div class="fi"><label>Tutar</label><input type="number" id="odeme-tutar-input" inputmode="decimal" placeholder="0"></div>
           <div class="fi"><label>Para Birimi</label>
-            <select id="odeme-pb-input">
+            <select id="odeme-pb-input" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
               <option value="EUR">EUR €</option>
               <option value="TRY">TRY ₺</option>
               <option value="USD">USD $</option>
@@ -618,23 +623,39 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
-<!-- Ödenenler -->
+<!-- Ödeme Bekleyenler + Ödenenler -->
 <div class="modal-ov" id="modal-odenenler">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head"><h3>💰 Ödeme Geçmişi</h3><button class="modal-close" onclick="closeModal('modal-odenenler')">✕</button></div>
+  <div class="modal" style="max-height:95vh;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3>💰 Ödemeler</h3><button class="modal-close" onclick="closeModal('modal-odenenler')">✕</button></div>
     <div class="modal-body">
-      <div id="odenenler-liste" style="margin-bottom:14px;"></div>
-      <div class="sec-title">Yeni Ödeme Ekle</div>
-      <div class="fg">
-        <div class="row2">
-          <div class="fi"><label>Tarih</label><input type="date" id="yeni-odeme-tarih"></div>
-          <div class="fi"><label>Tutar</label><input type="number" id="yeni-odeme-tutar" inputmode="decimal" placeholder="0"></div>
+      <!-- Sekmeler -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;">
+        <button id="odeme-tab-bekle" onclick="odemeTabSec('bekle')" style="flex:1;padding:10px;border:none;background:none;color:var(--mg);font-size:13px;font-weight:700;border-bottom:2px solid var(--mg);cursor:pointer;">⏳ Bekleyenler</button>
+        <button id="odeme-tab-odendi" onclick="odemeTabSec('odendi')" style="flex:1;padding:10px;border:none;background:none;color:var(--text3);font-size:13px;font-weight:600;border-bottom:2px solid transparent;cursor:pointer;">✅ Ödenenler</button>
+      </div>
+      <!-- Bekleyenler -->
+      <div id="odeme-panel-bekle">
+        <div id="bekleyen-odeme-liste" style="margin-bottom:12px;"></div>
+        <div class="sec-title">Yeni Ödeme Ekle</div>
+        <div class="fg">
+          <div class="row2">
+            <div class="fi"><label>Tarih</label><input type="date" id="yeni-odeme-tarih"></div>
+            <div class="fi"><label>Tutar</label><input type="number" id="yeni-odeme-tutar" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <div class="row2">
+            <div class="fi"><label>Para Birimi</label>
+              <select id="yeni-odeme-pb" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
+                <option value="EUR">EUR €</option><option value="TRY">TRY ₺</option><option value="USD">USD $</option>
+              </select>
+            </div>
+            <div class="fi"><label>Açıklama</label><input type="text" id="yeni-odeme-aciklama" placeholder="Mart ödemesi..."></div>
+          </div>
+          <button class="btn btn-primary btn-full" id="odeme-kaydet-btn" onclick="odemeEkle(this)">+ Ödeme Kaydet</button>
         </div>
-        <div class="row2">
-          <div class="fi"><label>Para Birimi</label><select id="yeni-odeme-pb"><option value="EUR">EUR €</option><option value="TRY">TRY ₺</option><option value="USD">USD $</option></select></div>
-          <div class="fi"><label>Açıklama</label><input type="text" id="yeni-odeme-aciklama" placeholder="Mart ödemesi..."></div>
-        </div>
-        <button class="btn btn-primary btn-full" id="odeme-kaydet-btn" onclick="odemeEkle(this)">+ Ödeme Kaydet</button>
+      </div>
+      <!-- Ödenenler -->
+      <div id="odeme-panel-odendi" style="display:none;">
+        <div id="odenenler-liste"></div>
       </div>
     </div>
   </div>
@@ -879,7 +900,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <input type="text" id="evrak-firma-input" placeholder="Firma veya kişi adı...">
         </div>
         <div class="fi"><label>Ödeme Döngüsü</label>
-          <select id="evrak-dongu-input" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
+          <select id="evrak-dongu-input" onchange="evrakPeriyotGoster()" style="padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;">
             <option value="Yok">Yok</option>
             <option value="Günlük">Günlük</option>
             <option value="Haftalık">Haftalık</option>
@@ -888,9 +909,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
             <option value="Yıllık">Yıllık</option>
           </select>
         </div>
-        <div class="row2">
-          <div class="fi"><label>İlk Ödeme Tarihi</label><input type="date" id="evrak-bas-input"></div>
-          <div class="fi"><label>Son Ödeme Tarihi</label><input type="date" id="evrak-bit-input"></div>
+        <!-- Evrak periyot -->
+        <div id="evrak-periyot-wrap" style="display:none;background:var(--surface2);border-radius:var(--r-sm);padding:12px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:8px;">📅 Ödeme Tarihleri</div>
+          <div id="evrak-periyot-icerik"></div>
         </div>
         <div class="row2">
           <div class="fi"><label>Tutar</label><input type="number" id="evrak-tutar-input" inputmode="decimal" placeholder="0"></div>
@@ -1085,6 +1107,7 @@ let DB = {
   gorevler: [],
   personeller: [],
   ekler: [],
+  evrakOdemeleri: [],
 };
 let seciliVilla = null;
 let turFiltre = 'hepsi';
@@ -1127,7 +1150,7 @@ async function loadAll() {
 
 async function loadVillaDetay(villaId) {
   try {
-    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar, gorevler, ekler] = await Promise.all([
+    const [hizmetler, odemeler, evraklar, harcamalar, acil, notlar, gorevler, ekler, evrakOdemeleri] = await Promise.all([
       sbFetch(`villa_hizmetler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_odemeler?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_evraklar?villa_id=eq.${villaId}&order=created_at.desc`),
@@ -1136,6 +1159,7 @@ async function loadVillaDetay(villaId) {
       sbFetch(`villa_notlar?villa_id=eq.${villaId}&order=tarih.desc`),
       sbFetch(`villa_gorevler?villa_id=eq.${villaId}&order=created_at.asc`).catch(()=>[]),
       sbFetch(`villa_ekler?villa_id=eq.${villaId}&order=created_at.desc`).catch(()=>[]),
+      sbFetch(`villa_evrak_odemeler?villa_id=eq.${villaId}&order=created_at.desc`).catch(()=>[]),
     ]);
     DB.hizmetler = hizmetler || [];
     DB.odemeler = odemeler || [];
@@ -1145,6 +1169,7 @@ async function loadVillaDetay(villaId) {
     DB.notlar = notlar || [];
     DB.gorevler = gorevler || [];
     DB.ekler = ekler || [];
+    DB.evrakOdemeleri = evrakOdemeleri || [];
     renderDetay();
   } catch(e) { console.error('loadVillaDetay:', e); }
 }
@@ -1196,7 +1221,10 @@ function openModal(id) {
   // Modallar açılınca içerik render et
   if (id === 'modal-hizmetler') renderHizmetlerModal();
   if (id === 'modal-yeni-hizmet') { document.getElementById('hiz-tarih').value=todayStr(); renderHizmetSecimListesi(); }
-  if (id === 'modal-odenenler') renderOdenenlerModal();
+  if (id === 'modal-odenenler') {
+    document.getElementById('yeni-odeme-tarih').value=todayStr();
+    setTimeout(()=>{renderBekleyenOdemeler();renderOdenenlerModal();odemeTabSec('bekle');},50);
+  }
   if (id === 'modal-hafta-yapilan') renderDonemHizmetler('hafta', 'yapilan');
   if (id === 'modal-hafta-yapilacak') renderDonemHizmetler('hafta', 'yapilacak');
   if (id === 'modal-ay-yapilan') renderDonemHizmetler('ay', 'yapilan');
@@ -1204,7 +1232,7 @@ function openModal(id) {
   if (id === 'modal-yil-yapilan') renderDonemHizmetler('yil', 'yapilan');
   if (id === 'modal-yil-yapilacak') renderDonemHizmetler('yil', 'yapilacak');
   if (id === 'modal-notlar') { renderNotlarModal(); const el=document.getElementById('yeni-not-tarih'); if(el)el.value=todayStr(); }
-  if (id === 'modal-evrak-ekle') { onEvrakTurChange(); }
+  if (id === 'modal-evrak-ekle') { onEvrakTurChange(); setTimeout(evrakPeriyotGoster,100); }
   if (id === 'modal-rapor') {
     raporTarihlerDoldur();
     setTimeout(renderRaporListe,50);
@@ -1235,6 +1263,7 @@ function openModal(id) {
     document.getElementById('odeme-tur-input').value = seciliVilla?.odeme_turu || 'Aylık';
     document.getElementById('odeme-tutar-input').value = seciliVilla?.odeme_tutari || '';
     document.getElementById('odeme-pb-input').value = seciliVilla?.odeme_para_birimi || 'EUR';
+    setTimeout(odemePeriyotGoster, 50);
   }
   if (id === 'modal-villa-duzenle' && seciliVilla) {
     document.getElementById('duz-id').value = seciliVilla.id;
@@ -1558,12 +1587,32 @@ function renderDetay() {
   document.getElementById('det-acil-kullanim').textContent = buAyAcil?.kullanim_sayisi||0;
   // Ödeme
   const pb=seciliVilla.odeme_para_birimi||'EUR';
-  document.getElementById('det-odeme-tur').textContent = seciliVilla.odeme_turu||'—';
+  const oturAciklama=seciliVilla.odeme_turu&&seciliVilla.odeme_periyot_bas
+    ? seciliVilla.odeme_turu+' · '+periyotAcikla(seciliVilla.odeme_turu,seciliVilla.odeme_periyot_bas,seciliVilla.odeme_periyot_bit)
+    : seciliVilla.odeme_turu||'—';
+  document.getElementById('det-odeme-tur').textContent = oturAciklama;
   document.getElementById('det-odeme-tutar').textContent = seciliVilla.odeme_tutari ? fmt(seciliVilla.odeme_tutari)+' '+pb : '—';
   // Son 2 ödeme
+  // Bekleyen ödeme durumunu göster
+  const tur2=seciliVilla.odeme_turu||'';
+  const bas2=seciliVilla.odeme_periyot_bas||'';
+  const bit2=seciliVilla.odeme_periyot_bit||'';
+  let odemeDurumStr='';
+  if(tur2&&bas2&&bit2){
+    if(odemeGecti(tur2,bit2)) odemeDurumStr='❗ Son ödeme tarihi geçti!';
+    else if(odemeBekleniyor(tur2,bas2,bit2)) odemeDurumStr='⏳ Bu dönem ödeme bekleniyor';
+  }
   const son2=DB.odemeler.slice(0,2);
-  document.getElementById('det-odenenler').textContent = son2.length ? son2.map(o=>dtStr(o.tarih)+' · '+fmt(o.tutar)+' '+o.para_birimi).join('\n') : '—';
-  document.getElementById('det-odenenler').style.whiteSpace='pre-line';
+  const det_el=document.getElementById('det-odenenler');
+  if(det_el){
+    if(odemeDurumStr){
+      det_el.innerHTML=`<div style="color:${odemeGecti(tur2,bit2)?'var(--red)':'var(--amber)'};font-size:12px;font-weight:700;">${odemeDurumStr}</div>`+
+        (son2.length?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">Son: ${son2.map(o=>dtStr(o.tarih)+' · '+fmt(o.tutar)+' '+o.para_birimi).join(', ')}</div>`:'');
+    } else {
+      det_el.textContent=son2.length?son2.map(o=>dtStr(o.tarih)+' · '+fmt(o.tutar)+' '+o.para_birimi).join('\n'):'—';
+      det_el.style.whiteSpace='pre-line';
+    }
+  }
   // Sayaçlar
   document.getElementById('det-not-sayi').textContent = DB.notlar.length ? DB.notlar.length+' not' : 'Not yok';
   document.getElementById('det-evrak-sayi').textContent = DB.evraklar.length ? DB.evraklar.length+' evrak' : 'Evrak yok';
@@ -1976,7 +2025,14 @@ async function odemeBilgiKaydet(btn) {
   if(!seciliVilla) return;
   if(btn)btn.disabled=true;
   try{
-    const data={odeme_turu:document.getElementById('odeme-tur-input').value,odeme_tutari:parseFloat(document.getElementById('odeme-tutar-input').value)||0,odeme_para_birimi:document.getElementById('odeme-pb-input').value};
+    const periyot=periyotDegerAl();
+    const data={
+      odeme_turu:document.getElementById('odeme-tur-input').value,
+      odeme_tutari:parseFloat(document.getElementById('odeme-tutar-input').value)||0,
+      odeme_para_birimi:document.getElementById('odeme-pb-input').value,
+      odeme_periyot_bas:periyot.bas,
+      odeme_periyot_bit:periyot.bit
+    };
     await sbFetch(`villa_oteller?id=eq.${seciliVilla.id}`,{method:'PATCH',body:JSON.stringify(data)});
     Object.assign(seciliVilla,data);
     closeModal('modal-odeme-bilgi');showToast('Kaydedildi','green');renderDetay();
@@ -2149,10 +2205,13 @@ async function evrakKaydet(btn) {
 
   if(btn)btn.disabled=true;
   try{
+    const ep=evrakPeriyotDegerAl();
     const payload={
       villa_id:seciliVilla.id,
       evrak_adi:evrakAdi,tur,alt_tur:altTur||'',firma:firma||'',
-      odeme_dongusu:dongu,baslangic_tarihi:bas||null,bitis_tarihi:bit||null,
+      odeme_dongusu:dongu,
+      periyot_bas:ep.bas,periyot_bit:ep.bit,
+      baslangic_tarihi:bas||null,bitis_tarihi:bit||null,
       tutar,para_birimi:pb,durum:'Aktif',aciklama:''
     };
     if(editId){
@@ -2207,21 +2266,35 @@ function renderEvraklarModal() {
   const TUR_RENK={'Fatura':'var(--amber)','Kira':'var(--cy)','Aidat':'var(--blue)','Sigorta':'var(--green)','Reklam':'var(--mg)','Personel Giderleri':'var(--purple)'};
   el.innerHTML=sorted.map(e=>{
     const renk=TUR_RENK[e.tur]||'var(--text3)';
-    const odenecek=e.bitis_tarihi&&!e.odendi;
+    const dongu=e.odeme_dongusu||'Yok';
+    const bas=e.periyot_bas||'';
+    const bit=e.periyot_bit||'';
+    // Döngü durumunu hesapla
+    let durumBadge='',oduBtn='';
+    if(dongu!=='Yok'&&bas&&bit){
+      const bekleniyor=odemeBekleniyor(dongu,bas,bit);
+      const gecti=odemeGecti(dongu,bit);
+      if(gecti){
+        durumBadge=`<span style="background:var(--red-lt);color:var(--red);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;">Gecikti!</span>`;
+        oduBtn=`<button onclick="evrakOdemeGir(${e.id})" style="padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--red);background:var(--red-lt);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;">Öde</button>`;
+      } else if(bekleniyor){
+        durumBadge=`<span style="background:var(--amber-lt);color:var(--amber);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;">Bekleniyor</span>`;
+        oduBtn=`<button onclick="evrakOdemeGir(${e.id})" style="padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--green);background:var(--green-lt);color:var(--green);font-size:11px;font-weight:700;cursor:pointer;">Öde</button>`;
+      }
+    }
+    const periyotStr=dongu!=='Yok'&&bas?periyotAcikla(dongu,bas,bit):'';
     return `<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;border-left:3px solid ${renk};">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;cursor:pointer;" onclick="evrakDetayAc(${e.id})">
-          <div style="font-weight:600;font-size:13px;">${e.evrak_adi}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px;">
-            ${e.odeme_dongusu&&e.odeme_dongusu!=='Yok'?e.odeme_dongusu+' · ':''}
-            ${e.baslangic_tarihi?dtStr(e.baslangic_tarihi)+' → ':''}
-            ${e.bitis_tarihi?dtStr(e.bitis_tarihi):''}
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-weight:600;font-size:13px;">${e.evrak_adi}</span>
+            ${durumBadge}
           </div>
-          ${e.tutar?`<div style="font-size:12px;color:var(--cy);">${fmt(e.tutar)} ${e.para_birimi}</div>`:''}
+          ${periyotStr?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${dongu} · ${periyotStr}</div>`:''}
+          ${e.tutar?`<div style="font-size:12px;color:var(--cy);margin-top:2px;">${fmt(e.tutar)} ${e.para_birimi}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:flex-end;">
-          ${odenecek?`<button onclick="evrakOde(${e.id})" style="padding:4px 8px;border-radius:var(--r-sm);border:1px solid var(--green);background:var(--green-lt);color:var(--green);font-size:11px;font-weight:700;cursor:pointer;">Öde</button>`:''}
-          ${e.odendi?'<span style="font-size:10px;color:var(--green);font-weight:700;">✓ Ödendi</span>':''}
+          ${oduBtn}
           <div style="display:flex;gap:4px;">
             <button onclick="evrakDuzenleAc(${e.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px;">✏️</button>
             <button onclick="evrakSil(${e.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:2px;">🗑</button>
@@ -2230,6 +2303,32 @@ function renderEvraklarModal() {
       </div>
     </div>`;
   }).join('');
+}
+
+function evrakOdemeGir(id) {
+  const e=DB.evraklar.find(x=>x.id===id);
+  if(!e)return;
+  // Küçük bir prompt ile tutar al ve kaydet
+  const tutar=parseFloat(prompt(`${e.evrak_adi} için ödeme tutarı (${e.para_birimi}):`,e.tutar||0));
+  if(!tutar||isNaN(tutar))return;
+  const tarih=new Date().toISOString().slice(0,10);
+  const donem=`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  sbFetch('villa_evrak_odemeler',{method:'POST',body:JSON.stringify({
+    evrak_id:id,villa_id:seciliVilla.id,
+    donem,tutar,para_birimi:e.para_birimi||'TRY',
+    odeme_tarihi:tarih,durum:'Ödendi',notlar:''
+  })}).then(()=>{
+    // Ekstra harcamalara da kaydet
+    return sbFetch('villa_harcamalar',{method:'POST',body:JSON.stringify({
+      villa_id:seciliVilla.id,tarih,
+      tutar,para_birimi:e.para_birimi||'TRY',
+      aciklama:`${e.evrak_adi} ödemesi`,
+      hizmet_baslik:e.tur||'',odendi:true
+    })});
+  }).then(()=>{
+    showToast('Ödeme kaydedildi','green');
+    loadVillaDetay(seciliVilla.id).then(()=>renderEvraklarModal());
+  }).catch(()=>showToast('Hata','red'));
 }
 
 async function evrakOde(id) {
@@ -2664,6 +2763,287 @@ function islemDetayAc(tip, id) {
   document.getElementById('islem-detay-baslik').textContent=baslik;
   document.getElementById('islem-detay-icerik').innerHTML=html;
   openModal('modal-islem-detay');
+}
+
+
+// ══════════════ PERİYOT (ÖDEME DÖNGÜSÜ) SİSTEMİ ══════════════
+const GUNLER=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+const AYLAR_UZUN=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+function odemePeriyotGoster() {
+  const tur=document.getElementById('odeme-tur-input')?.value||'Aylık';
+  const el=document.getElementById('periyot-icerik');
+  if(!el)return;
+
+  // Mevcut değerleri oku
+  const mevcutBas=seciliVilla?.odeme_periyot_bas||'';
+  const mevcutBit=seciliVilla?.odeme_periyot_bit||'';
+
+  if(tur==='Günlük'){
+    el.innerHTML=`<div style="font-size:12px;color:var(--text3);">Günlük ödeme — her hizmet günü aynı gün geçerli.</div>`;
+  } else if(tur==='Haftalık'){
+    const gunSelect=(id,val)=>`<select id="${id}" style="padding:10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;flex:1;">
+      ${GUNLER.map(g=>`<option value="${g}"${val===g?' selected':''}>${g}</option>`).join('')}
+    </select>`;
+    el.innerHTML=`<div style="display:flex;gap:8px;align-items:center;">
+      ${gunSelect('periyot-bas-hafta',mevcutBas)}
+      <span style="color:var(--text3);font-size:12px;">ile</span>
+      ${gunSelect('periyot-bit-hafta',mevcutBit)}
+      <span style="color:var(--text3);font-size:12px;">arası</span>
+    </div>`;
+  } else if(tur==='Aylık'){
+    const gunInput=(id,val,lbl)=>`<div style="flex:1;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${lbl}</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:12px;color:var(--text3);">Her ayın</span>
+        <input type="number" id="${id}" value="${val}" min="1" max="31" style="width:60px;padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;text-align:center;outline:none;">
+        <span style="font-size:12px;color:var(--text3);">.'i</span>
+      </div></div>`;
+    el.innerHTML=`<div style="display:flex;gap:12px;align-items:flex-end;">
+      ${gunInput('periyot-bas-gun',mevcutBas||'1','İlk Ödeme Günü')}
+      <span style="color:var(--text3);padding-bottom:10px;">—</span>
+      ${gunInput('periyot-bit-gun',mevcutBit||'15','Son Ödeme Günü')}
+    </div><div style="font-size:11px;color:var(--text3);margin-top:8px;">Örn: Her ayın 6'sı ile 12'si arası</div>`;
+  } else if(tur==='Sezonluk'||tur==='Yıllık'){
+    const ayGunInput=(idAy,idGun,ayVal,gunVal,lbl)=>`<div style="flex:1;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${lbl}</div>
+      <div style="display:flex;gap:4px;">
+        <select id="${idAy}" style="padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;flex:1;">
+          ${AYLAR_UZUN.map((a,i)=>`<option value="${i+1}"${parseInt(ayVal)===i+1?' selected':''}>${a}</option>`).join('')}
+        </select>
+        <input type="number" id="${idGun}" value="${gunVal||'1'}" min="1" max="31" style="width:50px;padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;text-align:center;outline:none;">
+      </div></div>`;
+    const [basAy,basGun]=(mevcutBas||'').split('-');
+    const [bitAy,bitGun]=(mevcutBit||'').split('-');
+    el.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-end;">
+      ${ayGunInput('periyot-bas-ay','periyot-bas-gun2',basAy,basGun,'İlk Ödeme')}
+      <span style="color:var(--text3);padding-bottom:10px;">—</span>
+      ${ayGunInput('periyot-bit-ay','periyot-bit-gun2',bitAy,bitGun,'Son Ödeme')}
+    </div>`;
+  }
+}
+
+function periyotDegerAl() {
+  const tur=document.getElementById('odeme-tur-input')?.value||'Aylık';
+  if(tur==='Günlük') return {bas:'1',bit:'1'};
+  if(tur==='Haftalık') return {
+    bas:document.getElementById('periyot-bas-hafta')?.value||'Pazartesi',
+    bit:document.getElementById('periyot-bit-hafta')?.value||'Cuma'
+  };
+  if(tur==='Aylık') return {
+    bas:document.getElementById('periyot-bas-gun')?.value||'1',
+    bit:document.getElementById('periyot-bit-gun')?.value||'15'
+  };
+  // Sezonluk/Yıllık
+  const basAy=document.getElementById('periyot-bas-ay')?.value||'1';
+  const basGun=document.getElementById('periyot-bas-gun2')?.value||'1';
+  const bitAy=document.getElementById('periyot-bit-ay')?.value||'1';
+  const bitGun=document.getElementById('periyot-bit-gun2')?.value||'15';
+  return {bas:`${basAy}-${basGun}`,bit:`${bitAy}-${bitGun}`};
+}
+
+// Periyot açıklaması - göstermek için
+function periyotAcikla(tur, bas, bit) {
+  if(!bas||!bit)return '—';
+  if(tur==='Günlük')return 'Hizmet günü';
+  if(tur==='Haftalık')return `Her hafta ${bas} - ${bit} arası`;
+  if(tur==='Aylık')return `Her ayın ${bas}. - ${bit}. günleri arası`;
+  if(tur==='Sezonluk'||tur==='Yıllık'){
+    const [ba,bg]=bas.split('-'); const [bia,big]=bit.split('-');
+    return `${AYLAR_UZUN[parseInt(ba)-1]} ${bg} - ${AYLAR_UZUN[parseInt(bia)-1]} ${big}`;
+  }
+  return bas+' - '+bit;
+}
+
+// Bugün ödeme bekleniyor mu?
+function odemeBekleniyor(tur, bas, bit) {
+  const bugun=new Date();
+  const gun=bugun.getDate();
+  const ay=bugun.getMonth()+1;
+  const haftaGunu=bugun.getDay()||7; // 1=Pt, 7=Pz
+
+  if(tur==='Günlük')return true;
+  if(tur==='Haftalık'){
+    const HAFTA_MAP={'Pazartesi':1,'Salı':2,'Çarşamba':3,'Perşembe':4,'Cuma':5,'Cumartesi':6,'Pazar':7};
+    const b=HAFTA_MAP[bas]||1, bi=HAFTA_MAP[bit]||7;
+    return haftaGunu>=b&&haftaGunu<=bi;
+  }
+  if(tur==='Aylık'){
+    return gun>=parseInt(bas)&&gun<=parseInt(bit);
+  }
+  if(tur==='Sezonluk'||tur==='Yıllık'){
+    const [ba,bg]=bas.split('-'); const [bia,big]=bit.split('-');
+    const basTs=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg));
+    const bitTs=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big));
+    return bugun>=basTs&&bugun<=bitTs;
+  }
+  return false;
+}
+
+// Son ödeme tarihi geçmiş mi?
+function odemeGecti(tur, bit) {
+  const bugun=new Date();
+  const gun=bugun.getDate();
+  const ay=bugun.getMonth()+1;
+  const haftaGunu=bugun.getDay()||7;
+
+  if(tur==='Günlük')return false;
+  if(tur==='Haftalık'){
+    const HAFTA_MAP={'Pazartesi':1,'Salı':2,'Çarşamba':3,'Perşembe':4,'Cuma':5,'Cumartesi':6,'Pazar':7};
+    return haftaGunu>=(HAFTA_MAP[bit]||7)+1;
+  }
+  if(tur==='Aylık') return gun>parseInt(bit);
+  if(tur==='Sezonluk'||tur==='Yıllık'){
+    const [bia,big]=bit.split('-');
+    const bitTs=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big));
+    return bugun>bitTs;
+  }
+  return false;
+}
+
+function evrakPeriyotGoster() {
+  const dongu=document.getElementById('evrak-dongu-input')?.value||'Yok';
+  const wrap=document.getElementById('evrak-periyot-wrap');
+  const el=document.getElementById('evrak-periyot-icerik');
+  if(!wrap||!el)return;
+  if(dongu==='Yok'){wrap.style.display='none';return;}
+  wrap.style.display='block';
+
+  // Mevcut değer
+  const editId=document.getElementById('evrak-edit-id')?.value;
+  const mevcut=editId?DB.evraklar.find(e=>String(e.id)===String(editId)):null;
+  const mevcutBas=mevcut?.periyot_bas||'';
+  const mevcutBit=mevcut?.periyot_bit||'';
+
+  if(dongu==='Aylık'){
+    el.innerHTML=`<div style="display:flex;gap:12px;align-items:flex-end;">
+      <div style="flex:1;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">İlk Hatırlatma Günü</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:var(--text3);">Her ayın</span>
+          <input type="number" id="evrak-periyot-bas" value="${mevcutBas||'1'}" min="1" max="31" style="width:60px;padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;text-align:center;outline:none;">
+          <span style="font-size:12px;color:var(--text3);">.'i</span>
+        </div></div>
+      <span style="color:var(--text3);padding-bottom:10px;">—</span>
+      <div style="flex:1;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Son Ödeme Günü</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:var(--text3);">Her ayın</span>
+          <input type="number" id="evrak-periyot-bit" value="${mevcutBit||'15'}" min="1" max="31" style="width:60px;padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;text-align:center;outline:none;">
+          <span style="font-size:12px;color:var(--text3);">.'i</span>
+        </div></div>
+    </div><div style="font-size:11px;color:var(--text3);margin-top:6px;">Örn: Her ayın 5'i - 15'i arası elektrik faturası gelir</div>`;
+  } else if(dongu==='Haftalık'){
+    const gunSel=(id,val)=>`<select id="${id}" style="padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;flex:1;">
+      ${['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'].map(g=>`<option value="${g}"${val===g?' selected':''}>${g}</option>`).join('')}
+    </select>`;
+    el.innerHTML=`<div style="display:flex;gap:8px;align-items:center;">
+      ${gunSel('evrak-periyot-bas',mevcutBas)}
+      <span style="color:var(--text3);">ile</span>
+      ${gunSel('evrak-periyot-bit',mevcutBit)}
+      <span style="color:var(--text3);">arası</span>
+    </div>`;
+  } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
+    const ayGunInput=(idAy,idGun,ayVal,gunVal,lbl)=>`<div style="flex:1;"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${lbl}</div>
+      <div style="display:flex;gap:4px;">
+        <select id="${idAy}" style="padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;flex:1;">
+          ${['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'].map((a,i)=>`<option value="${i+1}"${parseInt(ayVal)===i+1?' selected':''}>${a}</option>`).join('')}
+        </select>
+        <input type="number" id="${idGun}" value="${gunVal||'1'}" min="1" max="31" style="width:50px;padding:8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;text-align:center;outline:none;">
+      </div></div>`;
+    const [ba,bg]=(mevcutBas||'').split('-'); const [bia,big]=(mevcutBit||'').split('-');
+    el.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-end;">
+      ${ayGunInput('evrak-periyot-bas-ay','evrak-periyot-bas-gun',ba,bg,'İlk Hatırlatma')}
+      <span style="color:var(--text3);padding-bottom:10px;">—</span>
+      ${ayGunInput('evrak-periyot-bit-ay','evrak-periyot-bit-gun',bia,big,'Son Ödeme')}
+    </div>`;
+  } else {
+    el.innerHTML=`<div style="font-size:12px;color:var(--text3);">Bu döngü için tarih belirsizdir.</div>`;
+  }
+}
+
+function evrakPeriyotDegerAl() {
+  const dongu=document.getElementById('evrak-dongu-input')?.value||'Yok';
+  if(dongu==='Yok')return {bas:'',bit:''};
+  if(dongu==='Aylık')return {
+    bas:document.getElementById('evrak-periyot-bas')?.value||'1',
+    bit:document.getElementById('evrak-periyot-bit')?.value||'15'
+  };
+  if(dongu==='Haftalık')return {
+    bas:document.getElementById('evrak-periyot-bas')?.value||'Pazartesi',
+    bit:document.getElementById('evrak-periyot-bit')?.value||'Cuma'
+  };
+  const basAy=document.getElementById('evrak-periyot-bas-ay')?.value||'1';
+  const basGun=document.getElementById('evrak-periyot-bas-gun')?.value||'1';
+  const bitAy=document.getElementById('evrak-periyot-bit-ay')?.value||'1';
+  const bitGun=document.getElementById('evrak-periyot-bit-gun')?.value||'15';
+  return {bas:`${basAy}-${basGun}`,bit:`${bitAy}-${bitGun}`};
+}
+
+// ══════════════ ÖDEME TAB SİSTEMİ ══════════════
+function odemeTabSec(tab) {
+  const beklePanel=document.getElementById('odeme-panel-bekle');
+  const odendiPanel=document.getElementById('odeme-panel-odendi');
+  const bekleBtn=document.getElementById('odeme-tab-bekle');
+  const odendiBtn=document.getElementById('odeme-tab-odendi');
+  if(!beklePanel||!odendiPanel)return;
+  if(tab==='bekle'){
+    beklePanel.style.display='block';odendiPanel.style.display='none';
+    if(bekleBtn){bekleBtn.style.color='var(--mg)';bekleBtn.style.borderBottomColor='var(--mg)';}
+    if(odendiBtn){odendiBtn.style.color='var(--text3)';odendiBtn.style.borderBottomColor='transparent';}
+    renderBekleyenOdemeler();
+  }else{
+    beklePanel.style.display='none';odendiPanel.style.display='block';
+    if(odendiBtn){odendiBtn.style.color='var(--green)';odendiBtn.style.borderBottomColor='var(--green)';}
+    if(bekleBtn){bekleBtn.style.color='var(--text3)';bekleBtn.style.borderBottomColor='transparent';}
+    renderOdenenlerModal();
+  }
+}
+
+function renderBekleyenOdemeler() {
+  const el=document.getElementById('bekleyen-odeme-liste');
+  if(!el||!seciliVilla)return;
+  const tur=seciliVilla.odeme_turu||'';
+  const bas=seciliVilla.odeme_periyot_bas||'';
+  const bit=seciliVilla.odeme_periyot_bit||'';
+  const tutar=seciliVilla.odeme_tutari||0;
+  const pb=seciliVilla.odeme_para_birimi||'EUR';
+  if(!tur||!tutar){
+    el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:10px 0;">Ödeme türü ve tutarı henüz girilmemiş.</div>';
+    return;
+  }
+  const bekleniyor=odemeBekleniyor(tur,bas,bit);
+  const gecti=odemeGecti(tur,bit);
+  const periyotStr=periyotAcikla(tur,bas,bit);
+  const bugun=new Date();
+  const buDonemOdendi=DB.odemeler.some(o=>{
+    const od=new Date(o.tarih+'T12:00');
+    if(tur==='Aylık')return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
+    if(tur==='Yıllık')return od.getFullYear()===bugun.getFullYear();
+    if(tur==='Haftalık'){const fark=Math.abs(bugun-od)/86400000;return fark<=7;}
+    return false;
+  });
+  let renk='var(--text2)',durumMetin='',durumBadge='';
+  if(buDonemOdendi){
+    durumMetin='✅ Bu dönem ödendi';renk='var(--green)';
+    durumBadge=`<span style="background:var(--green-lt);color:var(--green);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">Ödendi</span>`;
+  }else if(gecti){
+    durumMetin='❗ Son ödeme tarihi geçti!';renk='var(--red)';
+    durumBadge=`<span style="background:var(--red-lt);color:var(--red);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">Gecikti</span>`;
+  }else if(bekleniyor){
+    durumMetin='⏳ Ödeme bekleniyor';renk='var(--amber)';
+    durumBadge=`<span style="background:var(--amber-lt);color:var(--amber);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">Bekleniyor</span>`;
+  }else{
+    durumMetin='📅 Henüz ödeme dönemi gelmedi';renk='var(--text3)';
+    durumBadge=`<span style="background:var(--surface2);color:var(--text3);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;">Bekleme</span>`;
+  }
+  el.innerHTML=`<div style="background:var(--surface2);border-radius:var(--r-md);padding:14px;border-left:4px solid ${renk};margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+      <div>
+        <div style="font-weight:700;font-size:15px;">${fmt(tutar)} ${pb} <span style="font-size:12px;color:var(--text3);">/ ${tur}</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px;">📅 ${periyotStr}</div>
+      </div>
+      ${durumBadge}
+    </div>
+    <div style="font-size:13px;color:${renk};font-weight:600;">${durumMetin}</div>
+    ${!buDonemOdendi&&(bekleniyor||gecti)?`<div style="margin-top:8px;font-size:12px;color:var(--text3);">↓ Ödeme almak için aşağıdaki formu kullanın</div>`:''}
+  </div>`;
 }
 
 // ══════════════ RAPOR SİSTEMİ ══════════════
