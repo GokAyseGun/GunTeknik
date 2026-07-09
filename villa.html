@@ -191,6 +191,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="topbar">
     <button class="topbar-back" onclick="window.history.back()" title="Geri">←</button>
     <div class="topbar-title">Villa <span>&</span> Otel</div>
+    <button id="kur-goster" onclick="kurManuelGir()" title="Kuru güncelle" style="padding:5px 10px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--cy);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fm);white-space:nowrap;">€ yükleniyor...</button>
     <button onclick="openModal('modal-villa-ekle')" style="padding:8px 14px;border-radius:var(--r-sm);border:1px solid var(--mg-md);background:var(--mg-lt);color:var(--mg);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fu);">+ Ekle</button>
   </div>
 
@@ -1064,6 +1065,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
           <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:8px;">Özet</div>
           <div id="rapor-ozet-icerik"></div>
         </div>
+        <!-- Para Birimi Seçimi -->
+        <div class="fi">
+          <label>Rapor Para Birimi</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button id="rapor-pb-tl" onclick="setRaporPb('TRY',this)" style="padding:8px;border-radius:var(--r-sm);border:1px solid var(--mg-md);background:var(--mg-lt);color:var(--mg);font-size:12px;font-weight:700;cursor:pointer;">₺ Türk Lirası</button>
+            <button id="rapor-pb-eur" onclick="setRaporPb('EUR',this)" style="padding:8px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;">€ Euro</button>
+          </div>
+        </div>
         <!-- Butonlar -->
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-secondary" onclick="raporPdfIndir()" style="flex:1;">⬇️ İndir</button>
@@ -1133,6 +1142,7 @@ async function sbFetch(path, opts={}) {
 // ══════════════ VERİ YÜKLE ══════════════
 async function loadAll() {
   try {
+    kurYukle(); // Kuru arka planda yükle
     const [villalar, kisiler, takvim, personeller] = await Promise.all([
       sbFetch('villa_oteller?order=created_at.desc'),
       sbFetch('kisiler?order=isim.asc'),
@@ -2476,6 +2486,77 @@ function harcamaDuzenle(id) {
   document.getElementById('harcama-kaydet-btn').textContent='Güncelle';
 }
 
+
+// ══════════════ KUR SİSTEMİ ══════════════
+let _eurTlKur = 0; // 0 = henüz yüklenmedi
+
+async function kurYukle() {
+  // Önce Supabase'den kayıtlı kuru al
+  try {
+    const rows = await sbFetch("sistem_ayarlar?anahtar=eq.eur_tl_kur&limit=1").catch(()=>[]);
+    if(rows&&rows.length&&rows[0].deger){
+      _eurTlKur = parseFloat(rows[0].deger)||0;
+      kurGoster();
+    }
+  } catch(e) {}
+  // Arka planda güncel kuru çek
+  kurGuncelle(false);
+}
+
+async function kurGuncelle(kaydet=true) {
+  try {
+    const r = await fetch('https://api.frankfurter.app/latest?from=EUR&to=TRY');
+    const d = await r.json();
+    const yeniKur = d?.rates?.TRY;
+    if(!yeniKur) return;
+    _eurTlKur = yeniKur;
+    kurGoster();
+    if(kaydet) await kurKaydet(yeniKur);
+  } catch(e) {
+    console.warn('Kur çekilemedi:', e);
+  }
+}
+
+async function kurKaydet(kur) {
+  try {
+    // Upsert — anahtar varsa güncelle, yoksa ekle
+    await fetch(SUPABASE_URL+'/rest/v1/sistem_ayarlar', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer '+SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({anahtar:'eur_tl_kur', deger:String(kur)})
+    });
+  } catch(e) {}
+}
+
+function kurGoster() {
+  const el = document.getElementById('kur-goster');
+  if(el) el.textContent = _eurTlKur ? '1 € = '+_eurTlKur.toFixed(2)+' ₺' : '€ kur yükleniyor...';
+}
+
+function kurManuelGir() {
+  const yeni = prompt('1 EUR = ? TL (güncel kur):', _eurTlKur||'');
+  if(!yeni||isNaN(parseFloat(yeni))) return;
+  _eurTlKur = parseFloat(yeni);
+  kurGoster();
+  kurKaydet(_eurTlKur);
+  showToast('Kur güncellendi: 1 EUR = '+_eurTlKur.toFixed(2)+' TRY', 'green');
+}
+
+// Para birimi dönüşüm yardımcıları
+function eurToTl(eur) { return _eurTlKur ? eur * _eurTlKur : eur; }
+function tlToEur(tl) { return _eurTlKur ? tl / _eurTlKur : tl; }
+function normalize(tutar, pb, hedef) {
+  if(pb===hedef) return tutar;
+  if(hedef==='TRY'&&pb==='EUR') return eurToTl(tutar);
+  if(hedef==='EUR'&&pb==='TRY') return tlToEur(tutar);
+  return tutar; // USD vb. şimdilik aynen bırak
+}
+
 // ══════════════ DOSYA/GÖRSEL YÜKLEME ══════════════
 // Görseli Canvas ile sıkıştır (maks 1200px, kalite %75)
 async function gorselSikistir(file) {
@@ -3046,6 +3127,38 @@ function renderBekleyenOdemeler() {
   </div>`;
 }
 
+
+// ══════════════ RAPOR PARA BİRİMİ ══════════════
+let _raporPb = 'TRY';
+
+function setRaporPb(pb) {
+  _raporPb = pb;
+  const tlBtn=document.getElementById('rapor-pb-tl');
+  const eurBtn=document.getElementById('rapor-pb-eur');
+  if(tlBtn){
+    tlBtn.style.background=pb==='TRY'?'var(--mg-lt)':'var(--surface2)';
+    tlBtn.style.color=pb==='TRY'?'var(--mg)':'var(--text2)';
+    tlBtn.style.borderColor=pb==='TRY'?'var(--mg-md)':'var(--border2)';
+  }
+  if(eurBtn){
+    eurBtn.style.background=pb==='EUR'?'var(--cy-lt)':'var(--surface2)';
+    eurBtn.style.color=pb==='EUR'?'var(--cy)':'var(--text2)';
+    eurBtn.style.borderColor=pb==='EUR'?'var(--cy-md)':'var(--border2)';
+  }
+  const sel=document.getElementById('rapor-tarih-sec');
+  if(sel&&sel.value) renderRaporListe();
+}
+
+function fmtKur(tutar, pb) {
+  const donusum=normalize(tutar, pb, _raporPb);
+  const sembol=_raporPb==='EUR'?'€':'₺';
+  return fmt(donusum)+' '+sembol;
+}
+
+function toplamKur(items) {
+  return items.reduce((a,i)=>a+normalize(i.tutar||0, i.pb||'TRY', _raporPb), 0);
+}
+
 // ══════════════ RAPOR SİSTEMİ ══════════════
 let _raporKapsam='gunluk';
 let _raporSeciliIslemler=new Set();
@@ -3247,17 +3360,17 @@ function raporOzetGuncelle(items) {
         if(tur==='Yıllık')return od.getFullYear()===bugun.getFullYear();
         return false;
       });
-      if(!odendi)sozBorcu=tutar;
+      if(!odendi)sozBorcu=normalize(tutar,seciliVilla.odeme_para_birimi||'EUR',_raporPb);
     }
   }
   const topGider=gider+evrakBorc+sozBorcu;
   const bakiye=gelir-topGider;
   ozet.style.display='block';
   icerik.innerHTML=`
-    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Tahsil Edilenler</span><span style="font-weight:700;color:var(--green);">${fmt(gelir)} ₺</span></div>
-    ${sozBorcu>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--amber);">⏳ Bekleyen Sözleşme</span><span style="font-weight:700;color:var(--amber);">-${fmt(sozBorcu)} ₺</span></div>`:''}
-    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Ödenmemiş Giderler</span><span style="font-weight:700;color:var(--red);">-${fmt(gider+evrakBorc)} ₺</span></div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);margin-top:4px;"><span style="font-size:12px;font-weight:700;">Net Bakiye</span><span style="font-weight:700;color:${bakiye>=0?'var(--green)':'var(--red)'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</span></div>`;
+    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Tahsil Edilenler</span><span style="font-weight:700;color:var(--green);">${fmt(gelir)} ${_sem}</span></div>
+    ${sozBorcu>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--amber);">⏳ Bekleyen Sözleşme</span><span style="font-weight:700;color:var(--amber);">-${fmt(sozBorcu)} ${_sem}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="font-size:12px;color:var(--text3);">Ödenmemiş Giderler</span><span style="font-weight:700;color:var(--red);">-${fmt(gider+evrakBorc)} ${_sem}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);margin-top:4px;"><span style="font-size:12px;font-weight:700;">Net Bakiye</span><span style="font-weight:700;color:${bakiye>=0?'var(--green)':'var(--red)'};">${bakiye>=0?'+':''}${fmt(bakiye)} ${_sem}</span></div>`;
 }
 
 function raporPdfIndir() {
@@ -3312,7 +3425,7 @@ Dönem: ${tarihStr}
 ✅ Verilen Hizmet: ${hizmetSayisi} adet
 💰 Tahsil Edilenler: ${fmt(gelir)} ₺
 💸 Ödenmemiş Giderler: ${fmt(gider)} ₺
-📊 Net Bakiye: ${bakiye>=0?'+':''}${fmt(bakiye)} ₺
+📊 Net Bakiye: ${bakiye>=0?'+':''}${fmt(bakiye)} ${_raporPb==='EUR'?'€':'₺'}
 ━━━━━━━━━━━━━━━━━━━━
 Detaylı rapor için raporunuzu inceleyiniz.
 📞 +90 544 652 94 86`;
@@ -3426,12 +3539,12 @@ ${seciliHizmetler.map(h=>`<tr><td>${dtStr(h.tarih)}</td><td>${h.baslik||h.yapila
 
 ${seciliOdemeler.length?`<div class="sec-title">💰 Tahsil Edilen Ödemeler</div>
 <table><thead><tr><th>Tarih</th><th>Tutar</th><th>Açıklama</th></tr></thead><tbody>
-${seciliOdemeler.map(o=>`<tr><td>${dtStr(o.tarih)}</td><td class="green"><strong>${fmt(o.tutar)} ${o.para_birimi}</strong></td><td>${o.aciklama||'—'}</td></tr>`).join('')}
+${seciliOdemeler.map(o=>`<tr><td>${dtStr(o.tarih)}</td><td class="green"><strong>${fmt(o.tutar)} ${o.para_birimi}${o.para_birimi!==_raporPb?' (='+fmtKur(o.tutar,o.para_birimi)+')':''}</strong></td><td>${o.aciklama||'—'}</td></tr>`).join('')}
 </tbody></table>`:''}
 
 ${seciliHarcamalar.length?`<div class="sec-title">💸 Ekstra Harcamalar</div>
 <table><thead><tr><th>Tarih</th><th>Tutar</th><th>Açıklama</th><th>Durum</th></tr></thead><tbody>
-${seciliHarcamalar.map(h=>`<tr><td>${dtStr(h.tarih)}</td><td class="red">${fmt(h.tutar)} ${h.para_birimi}</td><td>${h.aciklama||'—'}</td><td>${h.odendi?'<span class="green">Ödendi</span>':'<span class="red">Ödenmedi</span>'}</td></tr>`).join('')}
+${seciliHarcamalar.map(h=>`<tr><td>${dtStr(h.tarih)}</td><td class="red">${fmt(h.tutar)} ${h.para_birimi}${h.para_birimi!==_raporPb?' (='+fmtKur(h.tutar,h.para_birimi)+')':''}</td><td>${h.aciklama||'—'}</td><td>${h.odendi?'<span class="green">Ödendi</span>':'<span class="red">Ödenmedi</span>'}</td></tr>`).join('')}
 </tbody></table>`:''}
 
 ${seciliEvraklar.length?`<div class="sec-title">📄 Evrak & Ödemeler</div>
@@ -3446,17 +3559,17 @@ ${seciliNotlar.map(n=>`<tr><td>${dtStr(n.tarih)}</td><td>${n.icerik||'—'}</td>
 
 <div class="bakiye-box">
   <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📊 Dönem Özeti</div>
-  <div class="bakiye-satir"><span>Tahsil Edilen Ödemeler</span><span class="green">+${fmt(gelir)} ₺</span></div>
-  ${sozlesmeBorcu>0?`<div class="bakiye-satir"><span>⏳ Bekleyen Sözleşme Ödemesi</span><span class="red">-${fmt(sozlesmeBorcu)} ₺</span></div>`:''}
-  <div class="bakiye-satir"><span>Sözleşme Dışı Harcamalar</span><span class="red">-${fmt(harcamaGider)} ₺</span></div>
-  <div class="bakiye-satir"><span>Evrak / Fatura Borçları</span><span class="red">-${fmt(evrakGider)} ₺</span></div>
-  <div class="bakiye-satir bakiye-toplam"><strong>Net Bakiye</strong><strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</strong></div>
+  <div class="bakiye-satir"><span>Tahsil Edilen Ödemeler</span><span class="green">+${fmt(gelir)} ${sembol}</span></div>
+  ${sozlesmeBorcu>0?`<div class="bakiye-satir"><span>⏳ Bekleyen Sözleşme Ödemesi</span><span class="red">-${fmt(sozlesmeBorcu)} ${sembol}</span></div>`:''}
+  <div class="bakiye-satir"><span>Sözleşme Dışı Harcamalar</span><span class="red">-${fmt(harcamaGider)} ${sembol}</span></div>
+  <div class="bakiye-satir"><span>Evrak / Fatura Borçları</span><span class="red">-${fmt(evrakGider)} ${sembol}</span></div>
+  <div class="bakiye-satir bakiye-toplam"><strong>Net Bakiye</strong><strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ${sembol}</strong></div>
   ${topGider>0&&!seciliHarcamalar.filter(h=>!h.odendi).length?'':''}
   <div style="margin-top:12px;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:10px;">
     ${sozlesmeBorcu>0?`Bu dönem sözleşme ödemesi <strong>${fmt(sozlesmeBorcu)} ₺</strong> henüz tahsil edilmemiştir. `:''}
     Tahsil edilen ödeme toplamınız <strong class="green">${fmt(gelir)} ₺</strong>, 
     sözleşme dışı ödenmemiş gider toplamınız <strong class="red">${fmt(topGider+sozlesmeBorcu)} ₺</strong> olup 
-    net bakiyeniz <strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ₺</strong>'dir.
+    net bakiyeniz <strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ${sembol}</strong>'dir.
   </div>
 </div>
 
