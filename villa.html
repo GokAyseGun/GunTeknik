@@ -2496,17 +2496,16 @@ let _kurlar = {TRY: 0, USD: 0, GBP: 0}; // 1 EUR kaç TRY/USD/GBP
 
 async function kurYukle() {
   try {
-    const rows = await sbFetch("sistem_ayarlar?anahtar=like.kur_%").catch(()=>[]);
-    if(rows&&rows.length){
-      rows.forEach(r=>{
-        if(r.anahtar==='kur_try') _kurlar.TRY=parseFloat(r.deger)||0;
-        if(r.anahtar==='kur_usd') _kurlar.USD=parseFloat(r.deger)||0;
-        if(r.anahtar==='kur_gbp') _kurlar.GBP=parseFloat(r.deger)||0;
-      });
-      // Geriye dönük uyumluluk
-      if(_kurlar.TRY) _eurTlKur=_kurlar.TRY;
-      if(_kurlar.TRY) kurGoster();
-    }
+    // % karakteri CORS sorununa yol açtığı için ayrı sorgular kullan
+    const [rTry, rUsd, rGbp] = await Promise.all([
+      sbFetch("sistem_ayarlar?anahtar=eq.kur_try&limit=1").catch(()=>[]),
+      sbFetch("sistem_ayarlar?anahtar=eq.kur_usd&limit=1").catch(()=>[]),
+      sbFetch("sistem_ayarlar?anahtar=eq.kur_gbp&limit=1").catch(()=>[]),
+    ]);
+    if(rTry?.length) _kurlar.TRY=parseFloat(rTry[0].deger)||0;
+    if(rUsd?.length) _kurlar.USD=parseFloat(rUsd[0].deger)||0;
+    if(rGbp?.length) _kurlar.GBP=parseFloat(rGbp[0].deger)||0;
+    if(_kurlar.TRY){ _eurTlKur=_kurlar.TRY; kurGoster(); }
   } catch(e) {}
   kurGuncelle(false);
 }
@@ -3497,9 +3496,9 @@ function raporHtmlOlustur() {
   const seciliNotlar=DB.notlar.filter(n=>_raporSeciliIslemler.has('not_'+n.id));
   const seciliEvraklar=DB.evraklar.filter(e=>_raporSeciliIslemler.has('evrak_'+e.id));
 
-  const gelir=seciliOdemeler.reduce((a,o)=>a+(o.tutar||0),0);
-  const harcamaGider=seciliHarcamalar.filter(h=>!h.odendi).reduce((a,h)=>a+(h.tutar||0),0);
-  const evrakGider=seciliEvraklar.filter(e=>!e.odendi).reduce((a,e)=>a+(e.tutar||0),0);
+  const gelir=toplamKur(seciliOdemeler.map(o=>({tutar:o.tutar,pb:o.para_birimi||'TRY'})));
+  const harcamaGider=toplamKur(seciliHarcamalar.filter(h=>!h.odendi).map(h=>({tutar:h.tutar,pb:h.para_birimi||'TRY'})));
+  const evrakGider=toplamKur(seciliEvraklar.filter(e=>!e.odendi).map(e=>({tutar:e.tutar,pb:e.para_birimi||'TRY'})));
   // Sözleşme ödemesi borcu: periyot gelmiş ama ödeme yapılmamışsa borç
   let sozlesmeBorcu=0;
   if(seciliVilla){
@@ -3515,7 +3514,7 @@ function raporHtmlOlustur() {
         if(tur==='Yıllık')return od.getFullYear()===bugun.getFullYear();
         return false;
       });
-      if(!buDonemOdendi)sozlesmeBorcu=tutar;
+      if(!buDonemOdendi)sozlesmeBorcu=normalize(tutar,seciliVilla.odeme_para_birimi||'EUR',_raporPb);
     }
   }
   const topGider=harcamaGider+evrakGider;
@@ -3612,9 +3611,9 @@ ${seciliNotlar.map(n=>`<tr><td>${dtStr(n.tarih)}</td><td>${n.icerik||'—'}</td>
   <div class="bakiye-satir bakiye-toplam"><strong>Net Bakiye</strong><strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ${sembol}</strong></div>
   ${topGider>0&&!seciliHarcamalar.filter(h=>!h.odendi).length?'':''}
   <div style="margin-top:12px;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:10px;">
-    ${sozlesmeBorcu>0?`Bu dönem sözleşme ödemesi <strong>${fmt(sozlesmeBorcu)} ₺</strong> henüz tahsil edilmemiştir. `:''}
-    Tahsil edilen ödeme toplamınız <strong class="green">${fmt(gelir)} ₺</strong>, 
-    sözleşme dışı ödenmemiş gider toplamınız <strong class="red">${fmt(topGider+sozlesmeBorcu)} ₺</strong> olup 
+    ${sozlesmeBorcu>0?`Bu dönem sözleşme ödemesi <strong>${fmt(sozlesmeBorcu)} ${sembol}</strong> henüz tahsil edilmemiştir. `:''}
+    Tahsil edilen ödeme toplamınız <strong class="green">${fmt(gelir)} ${sembol}</strong>, 
+    sözleşme dışı ödenmemiş gider toplamınız <strong class="red">${fmt(topGider+sozlesmeBorcu)} ${sembol}</strong> olup 
     net bakiyeniz <strong style="color:${bakiye>=0?'#00a86b':'#e53'};">${bakiye>=0?'+':''}${fmt(bakiye)} ${sembol}</strong>'dir.
   </div>
 </div>
