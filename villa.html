@@ -1190,7 +1190,9 @@ async function loadVillaDetay(villaId) {
 // ══════════════ YARDIMCI ══════════════
 function fmt(n, pb='') {
   if (!n && n !== 0) return '—';
-  return Number(n).toLocaleString('tr-TR') + (pb ? ' ' + pb : '');
+  // Kur dönüşümünden gelen küsüratları üst tam sayıya yuvarla
+  const tam = Number.isInteger(n) ? n : Math.ceil(n);
+  return tam.toLocaleString('tr-TR') + (pb ? ' ' + pb : '');
 }
 function dtStr(d) {
   if (!d) return '—';
