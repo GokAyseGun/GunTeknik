@@ -1173,10 +1173,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
       <span>İşlemler</span>
     </div>
-    <div class="nav-item" onclick="location.href='villa.html'" title="Villa & Otel">
-      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-      <span>Villa</span>
-    </div>
     <div class="nav-item" onclick="goPage('teklifler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
       <span>Teklif</span>
@@ -1230,6 +1226,14 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mg)"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2"/><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="3" fill="var(--mg)" stroke="none" opacity="0.3"/><path d="M9.5 9.5 Q12 6 14.5 9.5 Q12 13 9.5 9.5"/></svg>
       </span>
       <span style="color:var(--mg);font-weight:600;">AI</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='villa.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Villa</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='evrak.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+      <span>Evrak</span>
     </div>
   </nav>
 </div>
@@ -2217,7 +2221,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="hidden" id="mk-id"><input type="hidden" id="mk-source" value="rehber">
       <div class="fi"><label>Kategori</label>
         <select id="mk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Banka">Banka</option><option value="Şahıs">Şahıs</option><option value="Villa & Otel">🏡 Villa &amp; Otel</option>
+          <option value="Müşteri">Müşteri</option><option value="Firma">Firma</option><option value="Kurum">Kurum</option><option value="Banka">Banka</option><option value="Şahıs">Şahıs</option>
         </select>
       </div>
       <div class="fi"><label>Görünürlük</label>
@@ -6272,7 +6276,7 @@ async function toggleFavori(id,event){
 function renderRehber(){
   const ara=(document.getElementById('r-ara-mus')?.value||'').toLowerCase();
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
-  const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs'||k.tip==='Villa & Otel')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
+  const musteri=DB.kisiler.filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&((k.isim||'').toLowerCase().includes(ara)||fmtKId(k.id).toLowerCase().includes(ara)));
   const firma=DB.kisiler.filter(k=>(k.tip==='Firma'||k.tip==='Kurum'||k.tip==='Banka')&&((k.isim||'').toLowerCase().includes(araT)||fmtKId(k.id).toLowerCase().includes(araT)));
   const sortFavori=(a,b)=>{if(a.favori&&!b.favori)return -1;if(!a.favori&&b.favori)return 1;return(a.isim||'').localeCompare(b.isim||'');};
   // ── REhBER LİSTE RENDER ──
