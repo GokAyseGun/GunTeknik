@@ -3625,6 +3625,22 @@ ${gorselSayfasi}
 }
 // ══════════════ BAŞLANGIÇ ══════════════
 (async()=>{
+  // Rapor görüntüleme modu - ?rapor=TOKEN
+  const urlParams=new URLSearchParams(window.location.search);
+  const raporToken=urlParams.get('rapor');
+  if(raporToken){
+    try{
+      const rows=await sbFetch('villa_raporlar?token=eq.'+raporToken+'&limit=1').catch(()=>[]);
+      if(rows&&rows.length&&rows[0].icerik){
+        document.open();
+        document.write(rows[0].icerik);
+        document.close();
+        return;
+      }
+    }catch(e){}
+    document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;color:#333;"><h2>Rapor bulunamadı</h2><p>Link geçersiz veya süresi dolmuş olabilir.</p></div>';
+    return;
+  }
   const now=new Date();
   calYear=now.getFullYear();calMonth=now.getMonth();
   await loadAll();
