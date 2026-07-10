@@ -3462,19 +3462,29 @@ async function raporWhatsapp() {
   const sel=document.getElementById('rapor-tarih-sec');
   const tarihStr=sel?.options[sel.selectedIndex]?.text||'';
 
-  showToast('Rapor hazırlanıyor...','amber');
+  showToast('Rapor kaydediliyor...','amber');
   let raporUrl='';
   try{
     const html=raporHtmlOlustur();
     if(html){
-      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-      const dosyaAdi='rapor_villa'+seciliVilla.id+'_'+Date.now()+'.html';
-      const file=new File([blob],dosyaAdi,{type:'text/html'});
-      raporUrl=await sbStorage(file,'raporlar');
+      const token=Math.random().toString(36).slice(2)+Date.now().toString(36);
+      await sbFetch('villa_raporlar',{
+        method:'POST',
+        prefer:'return=minimal',
+        body:JSON.stringify({
+          villa_id:seciliVilla.id,
+          token:token,
+          icerik:html
+        })
+      });
+      const baseUrl=window.location.href.split('?')[0];
+      raporUrl=baseUrl+'?rapor='+token;
     }
-  }catch(e){ console.warn('Rapor yüklenemedi:',e); }
+  }catch(e){
+    console.warn('Rapor kaydedilemedi:',e);
+  }
 
-  const mesaj='*Gün Teknik — Villa Bakım Raporu*\n'+isim+' · '+tarihStr+'\n\nDetaylı dönem raporunuza aşağıdaki bağlantıdan ulaşabilirsiniz:\n'+(raporUrl||'(Rapor linki oluşturulamadı)')+'\n\n📞 +90 544 652 94 86';
+  const mesaj='*Gün Teknik — Villa Bakım Raporu*\n'+isim+' · '+tarihStr+'\n\nDetaylı dönem raporunuza aşağıdaki bağlantıdan ulaşabilirsiniz:\n'+(raporUrl||'(Rapor oluşturulamadı)')+'\n\n📞 +90 544 652 94 86';
   const url='https://wa.me/'+tel+'?text='+encodeURIComponent(mesaj);
   window.open(url,'_blank');
 }
