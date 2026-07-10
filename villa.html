@@ -2562,25 +2562,41 @@ function kurGoster() {
   const el = document.getElementById('kur-goster');
   if(!el) return;
   if(_kurlar.TRY){
-    el.textContent = `€${_kurlar.TRY.toFixed(1)} · $${_kurlar.USD?.toFixed(2)||'?'} · £${_kurlar.GBP?.toFixed(2)||'?'}`;
-    el.title = `1 EUR = ${_kurlar.TRY.toFixed(2)} TRY / ${_kurlar.USD?.toFixed(4)} USD / ${_kurlar.GBP?.toFixed(4)} GBP`;
+    // USD/TL ve GBP/TL hesapla (EUR baz alınarak)
+    const usdTl = _kurlar.TRY && _kurlar.USD ? (_kurlar.TRY/_kurlar.USD) : 0;
+    const gbpTl = _kurlar.TRY && _kurlar.GBP ? (_kurlar.TRY/_kurlar.GBP) : 0;
+    el.textContent = `€=${_kurlar.TRY.toFixed(1)}₺ · $=${usdTl.toFixed(1)}₺ · £=${gbpTl.toFixed(1)}₺`;
+    el.title = `1 EUR=${_kurlar.TRY.toFixed(2)}₺ · 1 USD=${usdTl.toFixed(2)}₺ · 1 GBP=${gbpTl.toFixed(2)}₺ (Güncelleme için tıkla)`;
   } else {
     el.textContent = 'Kur yükleniyor...';
   }
 }
 
 function kurManuelGir() {
-  const try_ = prompt(`1 EUR = ? TRY (mevcut: ${_kurlar.TRY||'?'}):`, _kurlar.TRY||'');
-  if(!try_||isNaN(parseFloat(try_))) return;
-  _kurlar.TRY = parseFloat(try_);
+  const usdTlMev = _kurlar.TRY&&_kurlar.USD ? (_kurlar.TRY/_kurlar.USD).toFixed(2) : '?';
+  const gbpTlMev = _kurlar.TRY&&_kurlar.GBP ? (_kurlar.TRY/_kurlar.GBP).toFixed(2) : '?';
+
+  const tryV = prompt(`1 EUR = ? TRY (mevcut: ${_kurlar.TRY?.toFixed(2)||'?'}):`, _kurlar.TRY||'');
+  if(!tryV||isNaN(parseFloat(tryV))) return;
+  _kurlar.TRY = parseFloat(tryV);
   _eurTlKur = _kurlar.TRY;
-  const usd_ = prompt(`1 EUR = ? USD (mevcut: ${_kurlar.USD||'?'}):`, _kurlar.USD||'');
-  if(usd_&&!isNaN(parseFloat(usd_))) _kurlar.USD=parseFloat(usd_);
-  const gbp_ = prompt(`1 EUR = ? GBP (mevcut: ${_kurlar.GBP||'?'}):`, _kurlar.GBP||'');
-  if(gbp_&&!isNaN(parseFloat(gbp_))) _kurlar.GBP=parseFloat(gbp_);
+
+  const usdTlV = prompt(`1 USD = ? TRY (mevcut: ${usdTlMev}):`, usdTlMev);
+  if(usdTlV&&!isNaN(parseFloat(usdTlV))) {
+    // USD/TL'den EUR/USD hesapla
+    _kurlar.USD = _kurlar.TRY / parseFloat(usdTlV);
+  }
+
+  const gbpTlV = prompt(`1 GBP = ? TRY (mevcut: ${gbpTlMev}):`, gbpTlMev);
+  if(gbpTlV&&!isNaN(parseFloat(gbpTlV))) {
+    _kurlar.GBP = _kurlar.TRY / parseFloat(gbpTlV);
+  }
+
   kurGoster();
   kurKaydet();
-  showToast(`Kur güncellendi: €1 = ${_kurlar.TRY.toFixed(2)}₺ / ${_kurlar.USD?.toFixed(4)}$ / ${_kurlar.GBP?.toFixed(4)}£`, 'green');
+  const usdTl2=(_kurlar.TRY/_kurlar.USD).toFixed(2);
+  const gbpTl2=(_kurlar.TRY/_kurlar.GBP).toFixed(2);
+  showToast(`Kurlar: €=${_kurlar.TRY.toFixed(2)}₺ · $=${usdTl2}₺ · £=${gbpTl2}₺`, 'green');
 }
 
 // Para birimi dönüşüm - EUR baz alınır
@@ -3398,10 +3414,8 @@ function raporOzetGuncelle(items) {
   const _sem=_raporPb==='EUR'?'€':_raporPb==='USD'?'$':_raporPb==='GBP'?'£':'₺';
   const gelir=DB.odemeler.filter(o=>items.some(i=>i.tip==='odeme'&&i.id===o.id))
     .reduce((a,o)=>a+(o.tutar||0),0);
-  const gider=DB.harcamalar.filter(h=>!h.odendi&&items.some(i=>i.tip==='harcama'&&i.id===h.id))
-    .reduce((a,h)=>a+(h.tutar||0),0);
-  const evrakBorc=DB.evraklar.filter(e=>!e.odendi&&items.some(i=>i.tip==='evrak'&&i.id===e.id))
-    .reduce((a,e)=>a+(e.tutar||0),0);
+  const gider=toplamKur(DB.harcamalar.filter(h=>!h.odendi&&items.some(i=>i.tip==='harcama'&&i.id===h.id)).map(h=>({tutar:h.tutar,pb:h.para_birimi||'TRY'})));
+  const evrakBorc=toplamKur(DB.evraklar.filter(e=>!e.odendi&&items.some(i=>i.tip==='evrak'&&i.id===e.id)).map(e=>({tutar:e.tutar,pb:e.para_birimi||'TRY'})));
   // Sözleşme bekleyen borcu
   let sozBorcu=0;
   if(seciliVilla){
@@ -3432,69 +3446,43 @@ function raporOzetGuncelle(items) {
 
 function raporPdfIndir() {
   const html=raporHtmlOlustur();
-  if(!html)return;
-  const w=window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>w.print(),500);
+  if(!html){showToast('Rapor oluşturulamadı','red');return;}
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w){showToast('Pop-up engellendi','red');return;}
+  setTimeout(()=>{try{w.print();}catch(e){}},800);
 }
 
-function raporWhatsapp() {
+async function raporWhatsapp() {
   if(!seciliVilla)return;
   const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
-  const tel=(k?.tel||'').replace(/\D/g,'');
+  const tel=(k?.tel||'').replace(/[^\d+]/g,'').replace(/^\+/,'');
   if(!tel){showToast('Telefon numarası kayıtlı değil','red');return;}
   const isim=k?.isim||k?.firma_unvan||'Villa';
   const sel=document.getElementById('rapor-tarih-sec');
   const tarihStr=sel?.options[sel.selectedIndex]?.text||'';
 
-  // Özet metin
-  const gelir=DB.odemeler.filter(o=>_raporSeciliIslemler.has('odeme_'+o.id))
-    .reduce((a,o)=>a+(o.tutar||0),0);
-  const gider=[...DB.harcamalar.filter(h=>!h.odendi&&_raporSeciliIslemler.has('harcama_'+h.id)),
-               ...DB.evraklar.filter(e=>!e.odendi&&_raporSeciliIslemler.has('evrak_'+e.id))]
-    .reduce((a,x)=>a+(x.tutar||0),0);
-  // Sözleşme borcu
-  let sozWaBorcu=0;
-  if(seciliVilla){
-    const tur=seciliVilla.odeme_turu||'';
-    const bas=seciliVilla.odeme_periyot_bas||'';
-    const bit=seciliVilla.odeme_periyot_bit||'';
-    const tutar=seciliVilla.odeme_tutari||0;
-    if(tur&&tutar&&(odemeBekleniyor(tur,bas,bit)||odemeGecti(tur,bit))){
-      const bugun=new Date();
-      const od=DB.odemeler.some(o=>{
-        const d=new Date(o.tarih+'T12:00');
-        if(tur==='Aylık')return d.getFullYear()===bugun.getFullYear()&&d.getMonth()===bugun.getMonth();
-        return false;
-      });
-      if(!od)sozWaBorcu=tutar;
+  showToast('Rapor hazırlanıyor...','amber');
+  let raporUrl='';
+  try{
+    const html=raporHtmlOlustur();
+    if(html){
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const dosyaAdi='rapor_villa'+seciliVilla.id+'_'+Date.now()+'.html';
+      const file=new File([blob],dosyaAdi,{type:'text/html'});
+      raporUrl=await sbStorage(file,'raporlar');
     }
-  }
-  const bakiye=gelir-gider-sozWaBorcu;
-  const hizmetSayisi=DB.hizmetler.filter(h=>_raporSeciliIslemler.has('hizmet_'+h.id)).length;
+  }catch(e){ console.warn('Rapor yüklenemedi:',e); }
 
-  const mesaj=`*GÜN TEKNİK — VİLLA BAKIM RAPORU*
-━━━━━━━━━━━━━━━━━━━━
-*${isim}*
-Dönem: ${tarihStr}
-━━━━━━━━━━━━━━━━━━━━
-✅ Verilen Hizmet: ${hizmetSayisi} adet
-💰 Tahsil Edilenler: ${fmt(gelir)} ₺
-💸 Ödenmemiş Giderler: ${fmt(gider)} ₺
-📊 Net Bakiye: ${bakiye>=0?'+':''}${fmt(bakiye)} ${_raporPb==='EUR'?'€':'₺'}
-━━━━━━━━━━━━━━━━━━━━
-Detaylı rapor için raporunuzu inceleyiniz.
-📞 +90 544 652 94 86`;
-
-  // Tel numarasını wa.me formatına çevir - + işaretlerini kaldır
-  const temizTel=tel.replace(/[^\d+]/g,'').replace(/^\+/,'');
-  const url='https://wa.me/'+temizTel+'?text='+encodeURIComponent(mesaj);
+  const mesaj='*Gün Teknik — Villa Bakım Raporu*\n'+isim+' · '+tarihStr+'\n\nDetaylı dönem raporunuza aşağıdaki bağlantıdan ulaşabilirsiniz:\n'+(raporUrl||'(Rapor linki oluşturulamadı)')+'\n\n📞 +90 544 652 94 86';
+  const url='https://wa.me/'+tel+'?text='+encodeURIComponent(mesaj);
   window.open(url,'_blank');
 }
 
 function raporHtmlOlustur() {
   if(!seciliVilla)return null;
+  const sembol=_raporPb==='EUR'?'€':_raporPb==='USD'?'$':_raporPb==='GBP'?'£':'₺';
   const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
   const isim=k?.isim||k?.firma_unvan||'Villa';
   const muhatap=k?.kapsam||'';
