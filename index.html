@@ -1173,6 +1173,14 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
       <span>İşlemler</span>
     </div>
+    <div class="nav-item" onclick="window.location.href='villa.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Villa</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='evrak.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+      <span>Evrak</span>
+    </div>
     <div class="nav-item" onclick="goPage('teklifler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
       <span>Teklif</span>
@@ -4412,7 +4420,7 @@ function dashGrafikCiz(){
     },
     plugins:[sifirCizgisi],
   });
-  // Zoom: chart render sonrası uygula (setTimeout ile)
+  // Zoom: chart render sonrası uygula
   if(_wrapper&&_gunSayisi>0){
     const _iw=_wrapper.querySelector('.dash-inner-wrap');
     if(_iw)setTimeout(()=>_grafikZoomUygula(_wrapper,_iw,canvas,_gunSayisi,_dashZoom,'dash-zoom-label'),50);
@@ -7873,7 +7881,7 @@ function reklamGrafikCiz(veri){
       scales,
     }
   });
-  // Zoom: chart render sonrası
+  // Zoom: reklam chart render sonrası
   if(_rWrap&&_rInner&&canvas){
     const _rGunSayisi=grafikVerileri?.length||30;
     setTimeout(()=>_grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label'),150);
