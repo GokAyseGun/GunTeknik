@@ -6,6 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Gün Teknik — Deprem</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 
 
@@ -444,67 +446,74 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 
 
-/* Magnitude renk skalası */
+/* ── Magnitude renk skalası ── */
 .mag-badge {
   display:inline-flex;align-items:center;justify-content:center;
-  min-width:40px;height:24px;border-radius:var(--r-sm);
-  font-size:12px;font-weight:800;padding:0 6px;flex-shrink:0;
+  min-width:44px;height:26px;border-radius:var(--r-sm);
+  font-size:12px;font-weight:800;padding:0 8px;flex-shrink:0;letter-spacing:0.3px;
 }
-.mag-1 {background:#1a3a1a;color:#4caf50;}
-.mag-2 {background:#2a3a1a;color:#8bc34a;}
-.mag-3 {background:#3a3a1a;color:#ffd600;}
-.mag-4 {background:#3a2a1a;color:#ff9800;}
-.mag-5 {background:#3a1a1a;color:#ff5722;}
-.mag-6 {background:#3a0a0a;color:#f44336;}
-.mag-7 {background:#2a0000;color:#ff1744;}
+.mag-1{background:rgba(76,175,80,0.15);color:#4caf50;border:1px solid rgba(76,175,80,0.3);}
+.mag-2{background:rgba(139,195,74,0.15);color:#8bc34a;border:1px solid rgba(139,195,74,0.3);}
+.mag-3{background:rgba(255,214,0,0.15);color:#ffd600;border:1px solid rgba(255,214,0,0.3);}
+.mag-4{background:rgba(255,152,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.3);}
+.mag-5{background:rgba(255,87,34,0.18);color:#ff5722;border:1px solid rgba(255,87,34,0.35);}
+.mag-6{background:rgba(244,67,54,0.18);color:#f44336;border:1px solid rgba(244,67,54,0.35);}
+.mag-7{background:rgba(255,23,68,0.22);color:#ff1744;border:1px solid rgba(255,23,68,0.4);}
 
+/* ── Deprem listesi ── */
 .deprem-item {
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-md);padding:12px 14px;
+  border-radius:var(--r-md);padding:11px 14px;
   display:flex;align-items:center;gap:12px;
-  cursor:pointer;transition:background 0.15s;
+  cursor:pointer;transition:background 0.12s;margin-bottom:6px;
 }
-.deprem-item:hover {background:var(--surface2);}
-.deprem-item.buyuk {border-left:3px solid var(--red);}
+.deprem-item:hover{background:var(--surface2);}
+.deprem-item.buyuk{border-left:3px solid var(--red);}
+.dep-konum{font-weight:600;font-size:13px;line-height:1.3;}
+.dep-meta{font-size:11px;color:var(--text3);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px;}
+.dep-meta span{display:flex;align-items:center;gap:3px;}
 
-.dep-konum {font-weight:600;font-size:13px;line-height:1.3;}
-.dep-meta {font-size:11px;color:var(--text3);margin-top:3px;}
+/* ── İstatistikler ── */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.stat-kart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center;}
+.stat-val{font-size:22px;font-weight:800;color:var(--cy);}
+.stat-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
 
-.stats-grid {
-  display:grid;grid-template-columns:repeat(2,1fr);gap:8px;
-  margin-bottom:14px;
-}
-.stat-kart {
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-md);padding:12px;text-align:center;
-}
-.stat-val {font-size:22px;font-weight:800;color:var(--cy);}
-.stat-lbl {font-size:10px;color:var(--text3);font-weight:600;
-  text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
+/* ── Filtreler ── */
+.filtre-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.filtre-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fm);}
+.filtre-btn.aktif{background:var(--mg-lt);color:var(--mg);border-color:var(--mg-md);}
 
-.filtre-bar {
-  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;
-}
-.filtre-btn {
-  padding:5px 12px;border-radius:20px;border:1px solid var(--border2);
-  background:var(--surface2);color:var(--text2);
-  font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fm);
-}
-.filtre-btn.aktif {
-  background:var(--mg-lt);color:var(--mg);border-color:var(--mg-md);
-}
+/* ── Sekme sistemi ── */
+.sek-bar{display:flex;gap:2px;background:var(--surface);border-radius:var(--r-md);padding:3px;margin-bottom:14px;border:1px solid var(--border);}
+.sek-btn{flex:1;padding:8px;border:none;border-radius:var(--r-sm);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fm);transition:all 0.15s;}
+.sek-btn.aktif{background:var(--surface2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
 
-.guncelle-btn {
-  padding:5px 12px;border-radius:var(--r-sm);border:1px solid var(--cy-md);
-  background:var(--cy-lt);color:var(--cy);font-size:11px;font-weight:700;
-  cursor:pointer;font-family:var(--fm);display:flex;align-items:center;gap:4px;
-}
-.spin {animation:spin 1s linear infinite;display:inline-block;}
-@keyframes spin {to{transform:rotate(360deg);}}
+/* ── Harita ── */
+#deprem-harita{height:320px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);margin-bottom:14px;}
+.leaflet-container{background:#0d1117;}
+.dep-popup{font-family:var(--fm);font-size:12px;color:#222;}
+.dep-popup strong{font-size:13px;}
 
-.bos-ekran {
-  text-align:center;padding:60px 20px;color:var(--text3);
-}
+/* ── Güncelle ── */
+.guncelle-btn{padding:5px 12px;border-radius:var(--r-sm);border:1px solid var(--cy-md);background:var(--cy-lt);color:var(--cy);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fm);display:flex;align-items:center;gap:4px;}
+.spin{animation:spin 1s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Detay modal ── */
+.detay-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:4px;}
+.detay-lbl{color:var(--text3);font-size:12px;}
+.detay-val{font-size:13px;font-weight:600;text-align:right;}
+
+.kaynak-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;}
+.kaynak-kandilli{background:rgba(0,229,255,0.1);color:var(--cy);border-color:var(--cy-md);}
+.kaynak-afad{background:rgba(232,25,122,0.1);color:var(--mg);border-color:var(--mg-md);}
+.kaynak-usgs{background:rgba(255,152,0,0.1);color:#ff9800;border-color:rgba(255,152,0,0.3);}
+
+.istasyon-item{background:var(--surface2);border-radius:var(--r-sm);padding:7px 10px;margin-bottom:4px;font-size:12px;}
+.yakin-item{background:var(--surface2);border-radius:var(--r-sm);padding:7px 10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+
+.bos-ekran{text-align:center;padding:60px 20px;color:var(--text3);}
 </style>
 </head>
 <body>
@@ -519,39 +528,78 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <!-- Ana İçerik -->
-<div style="padding:12px;max-width:640px;margin:0 auto;">
+<div style="padding:12px;max-width:680px;margin:0 auto;">
 
   <!-- Son güncelleme -->
-  <div id="son-guncelleme" style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px;"></div>
+  <div id="son-guncelleme" style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:10px;min-height:16px;"></div>
 
   <!-- İstatistikler -->
-  <div class="stats-grid" id="stats-grid">
-    <div class="stat-kart"><div class="stat-val" id="s-bugun">—</div><div class="stat-lbl">Bugün</div></div>
-    <div class="stat-kart"><div class="stat-val" id="s-max">—</div><div class="stat-lbl">Maks Büyüklük</div></div>
-    <div class="stat-kart"><div class="stat-val" id="s-ort">—</div><div class="stat-lbl">Ort. Büyüklük</div></div>
-    <div class="stat-kart"><div class="stat-val" id="s-toplam" style="font-size:16px;">—</div><div class="stat-lbl">Toplam DB</div></div>
+  <div class="stats-grid">
+    <div class="stat-kart">
+      <div class="stat-val" id="s-bugun">—</div>
+      <div class="stat-lbl">Bugün</div>
+    </div>
+    <div class="stat-kart">
+      <div class="stat-val" id="s-max" style="color:var(--red);">—</div>
+      <div class="stat-lbl">Maks Büyüklük</div>
+    </div>
+    <div class="stat-kart">
+      <div class="stat-val" id="s-ort" style="color:var(--amber);">—</div>
+      <div class="stat-lbl">Ort. Büyüklük</div>
+    </div>
+    <div class="stat-kart">
+      <div class="stat-val" id="s-toplam" style="font-size:18px;color:var(--text2);">—</div>
+      <div class="stat-lbl">Toplam DB</div>
+    </div>
+  </div>
+
+  <!-- Sekme Bar -->
+  <div class="sek-bar">
+    <button class="sek-btn aktif" id="sek-liste" onclick="sekSec('liste')">📋 Liste</button>
+    <button class="sek-btn" id="sek-harita" onclick="sekSec('harita')">🗺️ Harita</button>
   </div>
 
   <!-- Filtreler -->
   <div class="filtre-bar">
     <button class="filtre-btn aktif" data-min="0" onclick="setFiltre(this)">Tümü</button>
+    <button class="filtre-btn" data-min="2" onclick="setFiltre(this)">M2+</button>
     <button class="filtre-btn" data-min="3" onclick="setFiltre(this)">M3+</button>
     <button class="filtre-btn" data-min="4" onclick="setFiltre(this)">M4+</button>
     <button class="filtre-btn" data-min="5" onclick="setFiltre(this)">M5+</button>
+    <div style="flex:1;"></div>
+    <select id="kaynak-filtre" onchange="renderListe();renderHarita()" style="padding:4px 8px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;outline:none;font-family:var(--fm);">
+      <option value="">Tüm Kaynaklar</option>
+      <option value="kandilli">Kandilli</option>
+      <option value="afad">AFAD</option>
+      <option value="usgs">USGS</option>
+    </select>
   </div>
 
-  <!-- Deprem Listesi -->
-  <div id="deprem-listesi"></div>
+  <!-- Liste Sekmesi -->
+  <div id="icerik-liste">
+    <div id="deprem-listesi"></div>
+  </div>
+
+  <!-- Harita Sekmesi -->
+  <div id="icerik-harita" style="display:none;">
+    <div id="deprem-harita"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text3);margin-bottom:8px;">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4caf50;margin-right:4px;"></span>M1-3</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff9800;margin-right:4px;"></span>M3-5</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f44336;margin-right:4px;"></span>M5+</span>
+      <span style="margin-left:auto;">Daire büyüklüğü = deprem büyüklüğü</span>
+    </div>
+  </div>
 
 </div>
 
 <!-- Detay Modalı -->
 <div class="modal-ov" id="modal-deprem-detay">
-  <div class="modal"><div class="modal-handle"></div>
+  <div class="modal" style="max-height:92vh;"><div class="modal-handle"></div>
     <div class="modal-head">
-      <div>
-        <h3 id="detay-baslik">Deprem Detayı</h3>
-        <div id="detay-alt" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      <div style="flex:1;min-width:0;">
+        <h3 id="detay-baslik" style="font-size:15px;line-height:1.3;">Deprem Detayı</h3>
+        <div id="detay-tarih" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
       </div>
       <button class="modal-close" onclick="closeModal('modal-deprem-detay')">✕</button>
     </div>
@@ -566,12 +614,17 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 <script>
 // ════ CONFIG ════
 const API_BASE = 'https://sismikharita.com';
-const CACHE_KEY = 'deprem_cache';
-const CACHE_TS_KEY = 'deprem_cache_ts';
-const CACHE_TTL = 5 * 60 * 1000; // 5 dakika
+const CACHE_KEY = 'deprem_v2_cache';
+const CACHE_TS_KEY = 'deprem_v2_ts';
+const STATS_KEY = 'deprem_v2_stats';
+const CACHE_TTL = 5 * 60 * 1000;
 
 let _depremler = [];
 let _minMag = 0;
+let _kaynak = '';
+let _aktifSek = 'liste';
+let _harita = null;
+let _haritaMarkers = [];
 let _loading = false;
 
 // ════ YARDIMCI ════
@@ -583,9 +636,7 @@ function showToast(msg,type='blue'){
   t.classList.add('show');toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-function todayStr() {
-  return new Date().toISOString().slice(0,10);
-}
+function todayStr() { return new Date().toISOString().slice(0,10); }
 
 function dtStr(d) {
   if(!d) return '—';
@@ -594,7 +645,17 @@ function dtStr(d) {
     +' '+dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
 }
 
-function magnitudeRenk(m) {
+function gecenSure(d) {
+  if(!d) return '';
+  const dt = new Date(d.replace(' ','T'));
+  const fark = (Date.now()-dt)/1000;
+  if(fark<60) return Math.round(fark)+'sn önce';
+  if(fark<3600) return Math.round(fark/60)+'dk önce';
+  if(fark<86400) return Math.round(fark/3600)+'sa önce';
+  return Math.round(fark/86400)+'g önce';
+}
+
+function magRenk(m) {
   if(m>=7) return 'mag-7';
   if(m>=6) return 'mag-6';
   if(m>=5) return 'mag-5';
@@ -602,6 +663,19 @@ function magnitudeRenk(m) {
   if(m>=3) return 'mag-3';
   if(m>=2) return 'mag-2';
   return 'mag-1';
+}
+
+function magHexRenk(m) {
+  if(m>=5) return '#f44336';
+  if(m>=3) return '#ff9800';
+  return '#4caf50';
+}
+
+function kaynakBadge(src) {
+  if(!src) return '';
+  const cls = 'kaynak-'+(src||'').toLowerCase();
+  const label = (src||'').charAt(0).toUpperCase()+(src||'').slice(1);
+  return '<span class="kaynak-badge '+cls+'">'+label+'</span>';
 }
 
 let _zIdx=100;
@@ -612,77 +686,66 @@ function closeModal(id){const el=document.getElementById(id);if(el)el.classList.
 async function veriYukle(zorla=false) {
   if(_loading) return;
 
-  // Cache kontrol (zorla değilse)
+  // Cache kontrol
   if(!zorla) {
-    const cachedTs = localStorage.getItem(CACHE_TS_KEY);
+    const ts = localStorage.getItem(CACHE_TS_KEY);
     const cached = localStorage.getItem(CACHE_KEY);
-    if(cachedTs && cached && (Date.now()-parseInt(cachedTs)) < CACHE_TTL) {
+    if(ts && cached && (Date.now()-parseInt(ts)) < CACHE_TTL) {
       _depremler = JSON.parse(cached);
+      statsCache();
+      renderListe();
+      return;
+    }
+    // Aynı gün içinde zaten çekildiyse
+    if(sessionStorage.getItem('dep_done_'+todayStr()) && cached) {
+      _depremler = JSON.parse(cached);
+      statsCache();
       renderListe();
       return;
     }
   }
 
-  // Bugün içinde bir kez API çek (zorla olmadıkça)
-  if(!zorla) {
-    const bugunKey = 'deprem_bugun_'+todayStr();
-    const bugunDone = sessionStorage.getItem(bugunKey);
-    if(bugunDone) {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if(cached) {
-        _depremler = JSON.parse(cached);
-        renderListe();
-        return;
-      }
-    }
-  }
-
   _loading = true;
-  const btn = document.getElementById('guncelle-btn');
   const icon = document.getElementById('guncelle-icon');
-  if(icon) icon.className='spin'; icon.textContent='↻';
+  if(icon){icon.className='spin';icon.textContent='↻';}
 
   try {
-    // Paralel: deprem listesi + istatistikler
     const [listRes, statsRes] = await Promise.all([
-      fetch(API_BASE+'/api.php?min_magnitude=1.0&limit=200&sources=kandilli,afad', {
-        headers:{'User-Agent':'GunTeknik-ERP/1.0'}
-      }),
-      fetch(API_BASE+'/stats_api.php', {
-        headers:{'User-Agent':'GunTeknik-ERP/1.0'}
-      })
+      fetch(API_BASE+'/api.php?min_magnitude=1.0&limit=200&sources=kandilli,afad,usgs',
+        {headers:{'User-Agent':'GunTeknik-ERP/1.0'}}),
+      fetch(API_BASE+'/stats_api.php',
+        {headers:{'User-Agent':'GunTeknik-ERP/1.0'}})
     ]);
 
-    const listData = await listRes.json();
-    const statsData = await statsRes.json();
-
-    if(listData.status==='success') {
-      _depremler = listData.earthquakes||[];
-      localStorage.setItem(CACHE_KEY, JSON.stringify(_depremler));
-      localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
-      sessionStorage.setItem('deprem_bugun_'+todayStr(), '1');
+    if(listRes.ok) {
+      const listData = await listRes.json();
+      if(listData.status==='success') {
+        _depremler = listData.earthquakes||[];
+        localStorage.setItem(CACHE_KEY, JSON.stringify(_depremler));
+        localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+        sessionStorage.setItem('dep_done_'+todayStr(),'1');
+      }
     }
 
-    if(statsData.status==='success') {
-      document.getElementById('s-bugun').textContent = statsData.today||'—';
-      document.getElementById('s-max').textContent = statsData.max_magnitude ? 'M'+statsData.max_magnitude : '—';
-      document.getElementById('s-ort').textContent = statsData.avg_magnitude ? 'M'+parseFloat(statsData.avg_magnitude).toFixed(1) : '—';
-      document.getElementById('s-toplam').textContent = statsData.total ? (statsData.total/1000).toFixed(0)+'K' : '—';
-      localStorage.setItem('deprem_stats', JSON.stringify(statsData));
+    if(statsRes.ok) {
+      const sd = await statsRes.json();
+      if(sd.status==='success') {
+        localStorage.setItem(STATS_KEY, JSON.stringify(sd));
+        renderStats(sd);
+      }
     }
 
-    // Son güncelleme
     const now = new Date();
     document.getElementById('son-guncelleme').textContent =
       'Son güncelleme: '+now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+
-      ' · '+(_depremler.length)+' deprem yüklendi · Kaynak: Sismik Harita';
+      ' · '+_depremler.length+' kayıt · Kaynak: Sismik Harita (sismikharita.com)';
 
     renderListe();
+    if(_aktifSek==='harita') renderHarita();
     if(zorla) showToast('Güncellendi','green');
 
   } catch(e) {
-    console.error('Deprem API hatası:', e);
-    // Cache'den yükle
+    console.error('API hatası:',e);
     const cached = localStorage.getItem(CACHE_KEY);
     if(cached) {
       _depremler = JSON.parse(cached);
@@ -693,121 +756,257 @@ async function veriYukle(zorla=false) {
     }
   } finally {
     _loading = false;
-    if(icon){ icon.className=''; icon.textContent='↻'; }
+    if(icon){icon.className='';icon.textContent='↻';}
   }
 }
 
-// ════ FİLTRE ════
+function renderStats(sd) {
+  if(sd.today!=null) document.getElementById('s-bugun').textContent = sd.today;
+  if(sd.max_magnitude!=null) document.getElementById('s-max').textContent = 'M'+parseFloat(sd.max_magnitude).toFixed(1);
+  if(sd.avg_magnitude!=null) document.getElementById('s-ort').textContent = 'M'+parseFloat(sd.avg_magnitude).toFixed(1);
+  if(sd.total!=null) document.getElementById('s-toplam').textContent = (sd.total/1000).toFixed(0)+'K';
+}
+
+function statsCache() {
+  const s = localStorage.getItem(STATS_KEY);
+  if(!s) return;
+  try { renderStats(JSON.parse(s)); } catch(e){}
+}
+
+// ════ FİLTRE & SEKME ════
 function setFiltre(btn) {
   _minMag = parseFloat(btn.dataset.min)||0;
   document.querySelectorAll('.filtre-btn').forEach(b=>b.classList.toggle('aktif',b===btn));
   renderListe();
+  if(_aktifSek==='harita') renderHarita();
+}
+
+function sekSec(sek) {
+  _aktifSek = sek;
+  document.getElementById('sek-liste').classList.toggle('aktif',sek==='liste');
+  document.getElementById('sek-harita').classList.toggle('aktif',sek==='harita');
+  document.getElementById('icerik-liste').style.display = sek==='liste'?'':'none';
+  document.getElementById('icerik-harita').style.display = sek==='harita'?'':'none';
+  if(sek==='harita') {
+    setTimeout(()=>{
+      if(!_harita) initHarita();
+      else renderHarita();
+    },50);
+  }
+}
+
+// ════ FİLTRELİ LİSTE ════
+function filtreliListe() {
+  _kaynak = document.getElementById('kaynak-filtre')?.value||'';
+  return _depremler.filter(d=>{
+    if((d.magnitude||0)<_minMag) return false;
+    if(_kaynak && d.source!==_kaynak) return false;
+    return true;
+  });
 }
 
 // ════ LİSTE RENDER ════
 function renderListe() {
   const el = document.getElementById('deprem-listesi');
   if(!el) return;
-
-  const liste = _depremler.filter(d=>(d.magnitude||0)>=_minMag);
+  const liste = filtreliListe();
 
   if(!liste.length) {
-    el.innerHTML='<div class="bos-ekran"><div style="font-size:48px;">🌍</div><div style="margin-top:12px;font-size:15px;font-weight:600;">Veri yükleniyor...</div></div>';
+    el.innerHTML='<div class="bos-ekran"><div style="font-size:48px;">🌍</div><div style="margin-top:12px;font-size:15px;font-weight:600;">'
+      +(_depremler.length?'Filtre sonucu boş':'Yükleniyor...')+'</div></div>';
     return;
   }
 
-  // Önce büyük depremler (M4.5+) öne çıkar
-  const sorted = [...liste].sort((a,b)=>new Date(b.occurred_at)-new Date(a.occurred_at));
-
-  el.innerHTML = sorted.map(d=>{
+  el.innerHTML = liste.map(d=>{
     const m = d.magnitude||0;
     const buyuk = m>=4.5;
-    const renk = magnitudeRenk(m);
-    const kaynak = d.source ? d.source.charAt(0).toUpperCase()+d.source.slice(1) : '';
-    return `<div class="deprem-item ${buyuk?'buyuk':''}" onclick="depremDetay(${d.id})" style="margin-bottom:6px;">
-      <span class="mag-badge ${renk}">M${m.toFixed(1)}</span>
-      <div style="flex:1;min-width:0;">
-        <div class="dep-konum">${d.location||'—'}</div>
-        <div class="dep-meta">${dtStr(d.occurred_at)} · ${d.depth_km||'?'}km derinlik · ${kaynak}</div>
-      </div>
-      ${buyuk?'<span style="font-size:18px;">⚠️</span>':''}
-    </div>`;
+    const sure = gecenSure(d.occurred_at);
+
+    // Çoklu kaynak badge
+    let kaynakHtml = '';
+    if(d.sources && d.sources.length>1) {
+      kaynakHtml = d.sources.map(s=>kaynakBadge(s.name)).join(' ');
+    } else {
+      kaynakHtml = kaynakBadge(d.source);
+    }
+
+    return '<div class="deprem-item '+(buyuk?'buyuk':'')+'" onclick="depremDetay('+d.id+')">'
+      +'<span class="mag-badge '+magRenk(m)+'">M'+m.toFixed(1)+'</span>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div class="dep-konum">'+( d.location||'—')+'</div>'
+      +'<div class="dep-meta">'
+      +'<span>🕐 '+sure+'</span>'
+      +'<span>📅 '+dtStr(d.occurred_at)+'</span>'
+      +'<span>📏 '+(d.depth_km||'?')+'km</span>'
+      +(d.event_id?'<span>🔑 '+d.event_id.slice(0,8)+'...</span>':'')
+      +'</div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">'+kaynakHtml+'</div>'
+      +'</div>'
+      +(buyuk?'<span style="font-size:20px;flex-shrink:0;">⚠️</span>':'')
+      +'</div>';
   }).join('');
 }
 
-// ════ DETAY ════
+// ════ HARİTA ════
+function initHarita() {
+  if(_harita) return;
+  _harita = L.map('deprem-harita').setView([39.0, 35.0], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap',
+    maxZoom:18
+  }).addTo(_harita);
+  renderHarita();
+}
+
+function renderHarita() {
+  if(!_harita) return;
+  // Eski marker'ları temizle
+  _haritaMarkers.forEach(m=>m.remove());
+  _haritaMarkers=[];
+
+  const liste = filtreliListe();
+  liste.forEach(d=>{
+    if(!d.latitude||!d.longitude) return;
+    const m = d.magnitude||0;
+    const r = Math.max(4, m*3.5);
+    const renk = magHexRenk(m);
+    const circle = L.circleMarker([d.latitude,d.longitude],{
+      radius:r,
+      fillColor:renk,color:renk,
+      weight:1,opacity:0.9,fillOpacity:0.55
+    }).addTo(_harita);
+    circle.bindPopup(
+      '<div class="dep-popup">'
+      +'<strong>M'+m.toFixed(1)+' — '+(d.location||'—')+'</strong><br>'
+      +'<span style="color:#666;">'+dtStr(d.occurred_at)+'</span><br>'
+      +'Derinlik: '+(d.depth_km||'?')+'km · '+(d.source||'')
+      +'<br><a href="#" onclick="closeHaritaPopup();depremDetay('+d.id+');return false;" style="color:#0066cc;">Detay →</a>'
+      +'</div>'
+    );
+    circle.on('click',()=>circle.openPopup());
+    _haritaMarkers.push(circle);
+  });
+}
+
+function closeHaritaPopup() {
+  if(_harita) _harita.closePopup();
+}
+
+// ════ DETAY MODAL ════
 async function depremDetay(id) {
-  document.getElementById('detay-baslik').textContent='Yükleniyor...';
-  document.getElementById('detay-alt').textContent='';
-  document.getElementById('detay-icerik').innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Detaylar yükleniyor...</div>';
+  const local = _depremler.find(d=>d.id===id);
+  if(local) {
+    document.getElementById('detay-baslik').textContent = local.location||'—';
+    document.getElementById('detay-tarih').textContent = dtStr(local.occurred_at);
+    document.getElementById('detay-icerik').innerHTML = renderDetayHTML(local,'loading');
+  }
   openModal('modal-deprem-detay');
 
-  // Önce listeden bul
-  const local = _depremler.find(d=>d.id===id);
-  if(local) renderDetayLocal(local);
-
-  // API'den detay çek
   try {
-    const r = await fetch(API_BASE+'/deprem_api.php?id='+id, {
-      headers:{'User-Agent':'GunTeknik-ERP/1.0'}
-    });
+    const r = await fetch(API_BASE+'/deprem_api.php?id='+id,
+      {headers:{'User-Agent':'GunTeknik-ERP/1.0'}});
     const data = await r.json();
     if(data.status==='success'&&data.earthquake) {
-      renderDetayFull(data.earthquake);
+      const d = data.earthquake;
+      document.getElementById('detay-baslik').textContent = d.location||'—';
+      document.getElementById('detay-tarih').textContent = dtStr(d.occurred_at);
+      document.getElementById('detay-icerik').innerHTML = renderDetayHTML(d,'full');
     }
   } catch(e) {
-    if(!local) document.getElementById('detay-icerik').innerHTML='<div style="color:var(--red);">Detay yüklenemedi</div>';
+    console.warn('Detay çekilemedi:',e);
   }
 }
 
-function renderDetayLocal(d) {
-  document.getElementById('detay-baslik').textContent = d.location||'—';
-  document.getElementById('detay-alt').textContent = dtStr(d.occurred_at);
+function renderDetayHTML(d, mod) {
   const m = d.magnitude||0;
-  const renk = magnitudeRenk(m);
-  document.getElementById('detay-icerik').innerHTML = detayHTML(d);
-}
+  const row = (lbl,val)=>val!=null&&val!==''&&val!==undefined
+    ?'<div class="detay-row"><span class="detay-lbl">'+lbl+'</span><span class="detay-val">'+val+'</span></div>':'' ;
 
-function renderDetayFull(d) {
-  document.getElementById('detay-baslik').textContent = d.location||'—';
-  document.getElementById('detay-alt').textContent = dtStr(d.occurred_at);
-  document.getElementById('detay-icerik').innerHTML = detayHTML(d);
-}
+  // Çoklu büyüklük
+  let magHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+  magHtml += '<div style="flex:1;text-align:center;background:var(--surface2);border-radius:var(--r-md);padding:12px;">'
+    +'<div style="font-size:28px;font-weight:900;color:'+magHexRenk(m)+';">M'+m.toFixed(1)+'</div>'
+    +'<div style="font-size:10px;color:var(--text3);margin-top:2px;">GENEL</div></div>';
+  if(d.magnitude_ml!=null) magHtml+='<div style="flex:1;text-align:center;background:var(--surface2);border-radius:var(--r-md);padding:12px;"><div style="font-size:20px;font-weight:800;color:var(--amber);">'+parseFloat(d.magnitude_ml).toFixed(1)+'</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">ML</div></div>';
+  if(d.magnitude_md!=null) magHtml+='<div style="flex:1;text-align:center;background:var(--surface2);border-radius:var(--r-md);padding:12px;"><div style="font-size:20px;font-weight:800;color:var(--amber);">'+parseFloat(d.magnitude_md).toFixed(1)+'</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">MD</div></div>';
+  if(d.magnitude_mw!=null) magHtml+='<div style="flex:1;text-align:center;background:var(--surface2);border-radius:var(--r-md);padding:12px;"><div style="font-size:20px;font-weight:800;color:var(--amber);">'+parseFloat(d.magnitude_mw).toFixed(1)+'</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">MW</div></div>';
+  magHtml += '</div>';
 
-function detayHTML(d) {
-  const row=(lbl,val)=>val!=null&&val!==''?`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:4px;"><span style="color:var(--text3);font-size:12px;">${lbl}</span><span style="font-size:13px;font-weight:600;">${val}</span></div>`:'';
-  const m = d.magnitude||0;
-  const renk = magnitudeRenk(m);
-  return `<div style="text-align:center;margin-bottom:16px;">
-    <span class="mag-badge ${renk}" style="font-size:28px;height:52px;min-width:80px;border-radius:var(--r-md);">M${m.toFixed(1)}</span>
-  </div>`
-  +row('Tarih/Saat', dtStr(d.occurred_at))
-  +row('Konum', d.location)
-  +row('Koordinat', d.latitude&&d.longitude?d.latitude.toFixed(4)+'°K, '+d.longitude.toFixed(4)+'°D':null)
-  +row('Derinlik', d.depth_km ? d.depth_km+'km' : null)
-  +row('ML Büyüklük', d.magnitude_ml)
-  +row('MD Büyüklük', d.magnitude_md)
-  +row('MW Büyüklük', d.magnitude_mw)
-  +row('Kaynak', d.source ? d.source.charAt(0).toUpperCase()+d.source.slice(1) : null)
-  +(d.nearby_quakes&&d.nearby_quakes.length?`<div style="font-size:11px;color:var(--text3);font-weight:700;margin:12px 0 6px;text-transform:uppercase;">Yakın Depremler</div>`
-    +d.nearby_quakes.slice(0,5).map(q=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:4px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:var(--text2);">${q.location||'—'}</span><span style="font-size:12px;font-weight:700;color:var(--cy);">M${q.magnitude||'?'}</span></div>`).join(''):'')
-  +`<div style="margin-top:16px;text-align:center;">
-    <a href="https://sismikharita.com/deprem/${d.slug||''}" target="_blank" style="color:var(--cy);font-size:12px;text-decoration:none;">🔗 Sismik Harita'da Görüntüle →</a>
-  </div>
-  <div style="margin-top:8px;text-align:center;font-size:10px;color:var(--text3);">Veri kaynağı: Sismik Harita (sismikharita.com)</div>`;
-}
+  // Kaynaklar
+  let kaynakHtml = '';
+  if(d.sources && d.sources.length) {
+    kaynakHtml = '<div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin:12px 0 6px;">Kaynaklar</div>';
+    kaynakHtml += d.sources.map(s=>
+      '<div class="detay-row"><span class="detay-lbl">'+kaynakBadge(s.name)+'</span>'
+      +'<span class="detay-val">M'+(s.magnitude||'?')+'</span></div>'
+    ).join('');
+  }
 
-// ════ İSTATİSTİKLER CACHE'DEN YÜKLE ════
-function statsCache() {
-  const s = localStorage.getItem('deprem_stats');
-  if(!s) return;
-  try {
-    const d = JSON.parse(s);
-    if(d.today) document.getElementById('s-bugun').textContent = d.today;
-    if(d.max_magnitude) document.getElementById('s-max').textContent = 'M'+d.max_magnitude;
-    if(d.avg_magnitude) document.getElementById('s-ort').textContent = 'M'+parseFloat(d.avg_magnitude).toFixed(1);
-    if(d.total) document.getElementById('s-toplam').textContent = (d.total/1000).toFixed(0)+'K';
-  } catch(e){}
+  // Yakın istasyonlar
+  let istHtml = '';
+  if(d.nearby_stations && d.nearby_stations.length) {
+    istHtml = '<div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin:12px 0 6px;">Yakın İstasyonlar ('+d.nearby_stations.length+')</div>';
+    istHtml += d.nearby_stations.slice(0,6).map(s=>
+      '<div class="istasyon-item" style="display:flex;justify-content:space-between;">'
+      +'<span style="color:var(--text2);">'+(s.name||s.code||'—')+'</span>'
+      +'<span style="color:var(--text3);">'+(s.distance_km!=null?s.distance_km+'km ':'')+(s.source||'')+'</span>'
+      +'</div>'
+    ).join('');
+  }
+
+  // Yakın depremler
+  let yakinHtml = '';
+  if(d.nearby_quakes && d.nearby_quakes.length) {
+    yakinHtml = '<div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin:12px 0 6px;">Yakın Depremler ('+d.nearby_quakes.length+')</div>';
+    yakinHtml += d.nearby_quakes.slice(0,6).map(q=>
+      '<div class="yakin-item">'
+      +'<div><div style="font-weight:600;font-size:12px;">'+(q.location||'—')+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);">'+dtStr(q.occurred_at||q.date)+'</div></div>'
+      +'<span class="mag-badge '+magRenk(q.magnitude||0)+'" style="font-size:11px;">M'+(q.magnitude||'?')+'</span>'
+      +'</div>'
+    ).join('');
+  }
+
+  // Odak mekanizması
+  let fokalHtml = '';
+  if(d.focal_mechanism) {
+    const f = d.focal_mechanism;
+    fokalHtml = '<div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin:12px 0 6px;">Odak Mekanizması</div>';
+    fokalHtml += row('Strike',f.strike!=null?f.strike+'°':null);
+    fokalHtml += row('Dip',f.dip!=null?f.dip+'°':null);
+    fokalHtml += row('Rake',f.rake!=null?f.rake+'°':null);
+    fokalHtml += row('Tip',f.type||null);
+  }
+
+  // Harita küçük önizleme - detayda
+  const haritaHtml = (d.latitude&&d.longitude)
+    ? '<a href="https://www.google.com/maps?q='+d.latitude+','+d.longitude+'" target="_blank" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:4px;text-decoration:none;color:var(--text);font-size:13px;">'
+      +'<span style="font-size:18px;">📍</span>'
+      +'<span>'+parseFloat(d.latitude).toFixed(4)+'°K, '+parseFloat(d.longitude).toFixed(4)+'°D</span>'
+      +'<span style="margin-left:auto;font-size:11px;color:var(--cy);">Haritada Gör →</span>'
+      +'</a>' : '';
+
+  // Loading spinner
+  const loadingHtml = mod==='loading'
+    ? '<div id="detay-loading" style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">⏳ Detaylar yükleniyor...</div>' : '';
+
+  return magHtml
+    +'<div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:6px;">Konum & Zaman</div>'
+    +row('Tarih/Saat', dtStr(d.occurred_at))
+    +row('Konum', d.location)
+    +haritaHtml
+    +row('Derinlik', d.depth_km!=null?d.depth_km+' km':null)
+    +row('Geçen Süre', gecenSure(d.occurred_at))
+    +(d.event_id?row('Olay ID','<span style="font-family:monospace;font-size:11px;">'+d.event_id+'</span>'):'' )
+    +kaynakHtml
+    +fokalHtml
+    +istHtml
+    +yakinHtml
+    +loadingHtml
+    +'<div style="margin-top:16px;text-align:center;">'
+    +(d.slug?'<a href="https://sismikharita.com/deprem/'+d.slug+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--cy);font-size:12px;text-decoration:none;padding:8px 16px;border:1px solid var(--cy-md);border-radius:var(--r-sm);background:var(--cy-lt);">🔗 Sismik Harita\'da Görüntüle</a>':'')
+    +'</div>'
+    +'<div style="margin-top:10px;text-align:center;font-size:10px;color:var(--text3);">Veri kaynağı: Sismik Harita (sismikharita.com)</div>';
 }
 
 // ════ BAŞLANGIÇ ════
