@@ -6313,7 +6313,9 @@ async function googleKisiGonder(token, kisiId) {
   const p = {};
   if(k.isim) {
     const pts = k.isim.trim().split(' ');
-    p.names = [{ givenName: pts.length>1?pts.slice(0,-1).join(' '):k.isim, familyName: pts.length>1?pts[pts.length-1]:'' }];
+    // GT prefix: iş rehberini kişisel rehberden ayırt etmek için
+    const tamIsim = 'GT ' + k.isim.trim();
+    p.names = [{ givenName: 'GT '+(pts.length>1?pts.slice(0,-1).join(' '):k.isim), familyName: pts.length>1?pts[pts.length-1]:'' , displayName: tamIsim}];
   }
   const orgName = k.firmaUnvan||k.firma_unvan||'';
   if(orgName||k.tip||(k.vergiDairesi||k.vergi_dairesi)) {
@@ -6333,10 +6335,10 @@ async function googleKisiGonder(token, kisiId) {
   try {
     showToast('Aktariyor...','blue');
     // Var mi kontrol
-    const ar = await fetch('https://people.googleapis.com/v1/people:searchContacts?query='+encodeURIComponent(k.isim||'')+'&readMask=names,phoneNumbers,metadata&pageSize=5',
+    const ar = await fetch('https://people.googleapis.com/v1/people:searchContacts?query='+encodeURIComponent('GT '+(k.isim||''))+'&readMask=names,phoneNumbers,metadata&pageSize=5',
       {headers:{'Authorization':'Bearer '+token}});
     const ad = await ar.json();
-    const mv = (ad.results||[]).find(r=>(r.person?.names?.[0]?.displayName||'').toLowerCase()===(k.isim||'').toLowerCase());
+    const mv = (ad.results||[]).find(r=>(r.person?.names?.[0]?.displayName||'').toLowerCase()===('GT '+(k.isim||'')).toLowerCase());
     if(mv) {
       // Guncelle - once etag al
       const er = await fetch('https://people.googleapis.com/v1/'+mv.person.resourceName+'?personFields=names,metadata',
