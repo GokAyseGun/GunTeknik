@@ -4384,7 +4384,6 @@ function dashGrafikCiz(){
       [..._wrapper.children].forEach(el=>{if(el.tagName==='CANVAS')_innerWrap.appendChild(el);});
       _wrapper.insertBefore(_innerWrap,_wrapper.firstChild);
     }
-    _grafikZoomUygula(_wrapper,_innerWrap,canvas,_gunSayisi,_dashZoom,'dash-zoom-label');
   }
 
   _dashChart=new Chart(canvas,{
@@ -4425,6 +4424,16 @@ function dashGrafikCiz(){
     },
     plugins:[sifirCizgisi],
   });
+  // Zoom + scroll sonrası
+  if(_wrapper&&_gunSayisi>0){
+    const _iw=_wrapper.querySelector('.dash-inner-wrap');
+    if(_iw)setTimeout(()=>{
+      _grafikZoomUygula(_wrapper,_iw,canvas,_gunSayisi,_dashZoom,'dash-zoom-label');
+      if(_dashDonem==='6ay'||_dashDonem==='1yil'){
+        setTimeout(()=>{_wrapper.scrollLeft=_wrapper.scrollWidth;},80);
+      }
+    },50);
+  }
 }
 
 function dashMumCiz(canvas,labels,sonuclar){
@@ -7749,12 +7758,6 @@ function reklamGrafikCiz(veri){
   // Zoom uygula
   const _rWrap=document.getElementById('reklam-grafik-scroll');
   const _rInner=document.getElementById('reklam-grafik-inner');
-  if(_rWrap&&_rInner&&canvas){
-    setTimeout(()=>{
-      const _rGunSayisi=grafikVerileri?.length||30;
-      _grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label');
-    },100);
-  }
   canvas.style.display='block';
   if(!veri.length){
     if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
@@ -7778,7 +7781,13 @@ function reklamGrafikCiz(veri){
   let donemBaslangic=new Date(bugunGraf);
   if(_reklamDonem==='dun'){donemBaslangic=new Date(dunGraf);}
   else if(_reklamDonem==='1yil'){donemBaslangic.setFullYear(donemBaslangic.getFullYear()-1);}
-  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-gs);}
+  else{
+    if(_reklamDonem==='90gun'){donemBaslangic.setDate(donemBaslangic.getDate()-90);}
+    else if(_reklamDonem==='60gun'){donemBaslangic.setDate(donemBaslangic.getDate()-60);}
+    else if(_reklamDonem==='30gun'){donemBaslangic.setDate(donemBaslangic.getDate()-30);}
+    else if(_reklamDonem==='6ay'){donemBaslangic.setMonth(donemBaslangic.getMonth()-6);}
+    else{donemBaslangic.setDate(donemBaslangic.getDate()-7);}
+  }
   const donemBasStr=_reklamTarihStr(donemBaslangic);
 
   // Yeni parametreler: DB.islemler + reklam_manuel (dönem filtreli)
@@ -7884,6 +7893,11 @@ function reklamGrafikCiz(veri){
       scales,
     }
   });
+  // Reklam zoom chart sonrası
+  if(_rWrap&&_rInner&&canvas){
+    const _rGunSayisi=grafikVerileri?.length||30;
+    setTimeout(()=>_grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label'),150);
+  }
 }
 
 function reklamGrafikOzetCiz(veri){
