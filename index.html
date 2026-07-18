@@ -7096,8 +7096,22 @@ function renderFis(i){
   if(!hizSatirlar.length&&i.kat)hizSatirlar.push(pad(i.kat));
   // Malzeme/stok detayı
   let malzSatirlar=[];
-  if(stokHar.length){stokHar.forEach(h=>{const s=DB.stok.find(x=>x.id===h.stokId);const fiyat=s?.birimFiyat||0;const top=h.miktar*fiyat;malzSatirlar.push(pad(s?.ad||'Malzeme'));malzSatirlar.push('  '+h.miktar+' '+(s?.birim||'Adet')+(fiyat>0?' x '+fmtTL(fiyat):''+(top>0?' = '+fmtTL(top):'')));});}
-  if(i.malzemeTutar>0)malzSatirlar.push('Malzeme Toplami: '+fmtTL(i.malzemeTutar));
+  if(stokHar.length){stokHar.forEach(h=>{
+    const s=DB.stok.find(x=>x.id===h.stokId);
+    const ad=s?.ad||'Malzeme';
+    const birim=s?.birim||'Adet';
+    const fiyat=Number(h.birimFiyat||s?.birimFiyat||0);
+    const miktar=Number(h.miktar||1);
+    const top=miktar*fiyat;
+    // Malzeme adı - bold satır
+    malzSatirlar.push(pad(ad));
+    // Miktar x Birim Fiyat = Toplam satırı
+    let detay='  '+miktar+' '+birim;
+    if(fiyat>0) detay+=' x '+fmtTL(fiyat);
+    if(top>0) detay+=' = '+fmtTL(top);
+    malzSatirlar.push(detay);
+  });}
+  if(i.malzemeTutar>0&&!stokHar.length)malzSatirlar.push('Malzeme Toplami: '+fmtTL(i.malzemeTutar));
   if(malzSatirlar.length)malzSatirlar.push('(Toplam fiyata dahildir)');
   // Taksit planı
   let taksitSatirlar=[];
