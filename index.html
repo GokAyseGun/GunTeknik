@@ -468,7 +468,23 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </style>
 </head>
 <body>
-<div id="toast"><span class="toast-dot" id="toast-dot"></span><span id="toast-msg"></span></div>
+<!-- Google Kişiler Onay Modalı -->
+<div class="modal-ov" id="modal-google-onay" style="z-index:99999;">
+  <div class="modal" style="max-width:320px;margin:auto;">
+    <div class="modal-body" style="padding:24px 20px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:36px;margin-bottom:8px;">📲</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px;">Google Kişiler'e de Kaydedilsin mi?</div>
+        <div id="goog-onay-isim" style="font-size:13px;color:var(--text3);margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button onclick="googOnaySecim(false)" style="flex:1;padding:12px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;">Hayır</button>
+        <button onclick="googOnaySecim(true)" style="flex:1;padding:12px;border-radius:var(--r-sm);border:1px solid var(--green);background:var(--green-lt);color:var(--green);font-size:14px;font-weight:700;cursor:pointer;">✓ Evet</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast""><span class="toast-dot" id="toast-dot"></span><span id="toast-msg"></span></div>
 <!-- Global file input'lar -->
 <input type="file" id="global-file-kamera" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="image/*" capture="environment">
 <input type="file" id="global-file-galeri"  style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="image/*">
@@ -6281,7 +6297,12 @@ async function saveKisi(btn){
       if(newK&&src==='islem'){await loadDB();acSelect('mi-ac',newK.id,newK.isim,newK.tip);}
       else if(newK&&src==='borc'){await loadDB();acSelect('mb-ac',newK.id,newK.isim,newK.tip);}
       else if(newK&&src==='vergi'){await loadDB();acSelectVergi({id:newK.id,isim:newK.isim,tip:newK.tip,vergiNo:newK.vergi_no||''});}
-      showToast('Eklendi','green');
+      await loadDB();closeModal('modal-kisi');
+      _googYeniKisiId=newK?.id||null;
+      if(newK)googOnayAc(newK.isim);
+      else showToast(isim+' rehbere eklendi','green');
+      if(btn)btn.disabled=false;
+      return;
     }
     await loadDB();closeModal('modal-kisi');
   }catch(e){showToast('Hata!','red');}
@@ -6362,6 +6383,36 @@ async function googleKisiGonder(token,kisiId){
       showToast('GT '+(k.isim||'Kisi')+' Google Rehbere eklendi','green');
     }
   }catch(e){console.error('Google aktarim:',e);showToast('Hata: '+(e.message||'Basarisiz'),'red');}
+}
+
+
+// ════ GOOGLE ONAY SİSTEMİ ════
+let _googYeniKisiId=null;
+
+function googOnayAc(isim){
+  const el=document.getElementById('goog-onay-isim');
+  if(el)el.textContent='"'+isim+'" ERP rehberine eklendi.';
+  const m=document.getElementById('modal-google-onay');
+  if(m){m.style.zIndex='99999';m.classList.add('open');}
+}
+
+async function googOnaySecim(evet){
+  const m=document.getElementById('modal-google-onay');
+  if(m)m.classList.remove('open');
+  const kisiId=_googYeniKisiId;
+  _googYeniKisiId=null;
+  if(!kisiId)return;
+  const k=DB.kisiler.find(x=>x.id===kisiId);
+  if(!k)return;
+  if(evet){
+    showToast(k.isim+' ERP rehberine eklendi, Google Kişilere gönderiliyor...','blue');
+    googleTokenAl(async(token)=>{
+      await googleKisiGonder(token,kisiId);
+      showToast('✓ '+k.isim+' hem ERP rehberine hem Google Kişilere (GT '+k.isim+') eklendi','green');
+    });
+  }else{
+    showToast('✓ '+k.isim+' ERP rehberine eklendi — Google Kişilere eklenmedi','green');
+  }
 }
 
 function renderRehber(){
