@@ -6324,7 +6324,15 @@ function googleAktar(kisiId){
 async function googleKisiGonder(token,kisiId){
   const k=DB.kisiler.find(x=>x.id===kisiId);if(!k)return;
   const p={};
-  if(k.isim){const pts=k.isim.trim().split(' ');p.names=[{givenName:pts.length>1?pts.slice(0,-1).join(' '):k.isim,familyName:pts.length>1?pts[pts.length-1]:''}];}
+  if(k.isim){
+    const pts=k.isim.trim().split(' ');
+    // GT prefix: iş rehberini kişisel rehberden ayırt etmek için
+    p.names=[{
+      givenName:'GT '+(pts.length>1?pts.slice(0,-1).join(' '):k.isim),
+      familyName:pts.length>1?pts[pts.length-1]:'',
+      displayName:'GT '+k.isim.trim()
+    }];
+  }
   p.nicknames=[{value:fmtKId(k.id)}];
   const orgName=k.firmaUnvan||k.firma_unvan||'';
   if(orgName||k.tip||(k.vergiDairesi||k.vergi_dairesi))p.organizations=[{name:orgName,title:k.tip||'',department:k.vergiDairesi||k.vergi_dairesi||''}];
