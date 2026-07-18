@@ -821,6 +821,44 @@ async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih){
     showToast('Odeme kaydedildi ama ERP islemi basarisiz: '+e.message,'amber');
   }
 }
+
+function evrakBildirimBarGoster(bildirimler){
+  const eskiBar=document.getElementById('evrak-bildirim-bar');
+  if(eskiBar)eskiBar.remove();
+  if(!bildirimler||!bildirimler.length) return;
+
+  const bar=document.createElement('div');
+  bar.id='evrak-bildirim-bar';
+  bar.style.cssText='background:var(--surface);border-bottom:2px solid var(--red);padding:10px 14px;';
+
+  bildirimler.forEach((h,idx)=>{
+    const renk=h.tip==='hata'?'var(--red)':'var(--amber)';
+    const bgRenk=h.tip==='hata'?'var(--red-lt)':'var(--amber-lt)';
+    const satir=document.createElement('div');
+    satir.style.cssText='display:flex;align-items:center;gap:10px;background:'+bgRenk+';border-radius:var(--r-sm);padding:8px 12px;'+(idx>0?'margin-top:6px;':'');
+    const ikon=document.createElement('span');ikon.style.fontSize='18px';ikon.textContent=h.tip==='hata'?'⚠️':'📅';
+    const metin=document.createElement('div');metin.style.cssText='flex:1;font-size:12px;font-weight:600;color:'+renk+';';metin.textContent=h.mesaj;
+    satir.appendChild(ikon);satir.appendChild(metin);
+    bar.appendChild(satir);
+  });
+
+  const kapatDiv=document.createElement('div');
+  kapatDiv.style.cssText='text-align:right;margin-top:6px;';
+  const kapatBtn=document.createElement('button');
+  kapatBtn.style.cssText='font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 8px;';
+  kapatBtn.textContent='✕ Kapat';
+  kapatBtn.addEventListener('click',()=>bar.remove());
+  kapatDiv.appendChild(kapatBtn);
+  bar.appendChild(kapatDiv);
+
+  // Ana içeriğin başına ekle
+  const icerik=document.querySelector('.topbar');
+  if(icerik&&icerik.nextSibling){
+    icerik.parentNode.insertBefore(bar,icerik.nextSibling);
+  } else {
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+}
 async function loadAll(){
   try{
     const [evraklar,odemeler,kisiler,ekler]=await Promise.all([
@@ -1274,21 +1312,19 @@ async function evrakBildirimKontrol(){try{
   const gosterilmisKey = 'evrak_popup_'+bugunStr;
   const gosterilmis = JSON.parse(localStorage.getItem(gosterilmisKey)||'[]');
 
-  let popupSirasi = 0;
+  // Bildirimleri evrak sayfasının üstünde göster
+  const gosterilecek=[];
   for(const h of hatirlaticilar){
-    const key = String(h.evrakId);
+    const key=String(h.evrakId);
     if(h.herGiris){
-      // Her girişte göster (geçmiş tarih, son gün) - localStorage'a yazmaz
-      setTimeout(()=>evrakPopupGoster(h.mesaj, h.tip), popupSirasi*800);
-      popupSirasi++;
+      gosterilecek.push(h);
     } else if(!gosterilmis.includes(key)){
-      // Günde bir kez göster (dönem içi, ilk gün)
-      setTimeout(()=>evrakPopupGoster(h.mesaj, h.tip), popupSirasi*800);
       gosterilmis.push(key);
-      popupSirasi++;
+      gosterilecek.push(h);
     }
   }
   localStorage.setItem(gosterilmisKey, JSON.stringify(gosterilmis));
+  if(gosterilecek.length) evrakBildirimBarGoster(gosterilecek);
 
   // Çan bildirimleri - sadece kayıt et
   const tumBildirimler = [...hatirlaticilar.map(h=>({...h,tur:'can'})), ...canBildirimleri];
