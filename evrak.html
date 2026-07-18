@@ -632,6 +632,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 let SB_TOKEN = null, SB_REFRESH_TOKEN = null;
 
 function fmt(n){return (Math.abs(n)||0).toLocaleString('tr-TR',{minimumFractionDigits:0,maximumFractionDigits:0})+' ₺';}
+let toastTimer;
 function showToast(msg,type='blue'){
   clearTimeout(toastTimer);
   const t=document.getElementById('toast');const dot=document.getElementById('toast-dot');
@@ -790,7 +791,8 @@ async function loadAll(){
     DB.evraklar=evraklar||[];DB.odemeler=odemeler||[];
     DB.kisiler=kisiler||[];DB.ekler=ekler||[];
     renderAnaListe();kisilerDropdown();
-    evrakBildirimKontrol();
+    // Bildirim kontrolü ayrı - hata olursa loadAll'ı etkilemesin
+    setTimeout(()=>evrakBildirimKontrol().catch(()=>{}),500);
   }catch(e){console.error('loadAll:',e);showToast('Veri yüklenemedi','red');}
 }
 
@@ -1132,7 +1134,7 @@ function evrakOdemeDetayAc(id){
 }
 
 // ════ BİLDİRİM ════
-async function evrakBildirimKontrol(){
+async function evrakBildirimKontrol(){try{
   const bugun=new Date();
   for(const e of DB.evraklar){
     const dongu=e.odeme_dongusu||'Yok';const bas=e.periyot_bas||'';const bit=e.periyot_bit||'';
@@ -1151,8 +1153,8 @@ async function evrakBildirimKontrol(){
     const mesaj=gecti?adi+' - Son ödeme tarihi geçti!':adi+' - Ödeme bekleniyor';
     const tip=gecti?'hata':'uyari';
     try{
-      const var_=await sbFetch('sistem_bildirimleri?mesaj=eq.'+encodeURIComponent(mesaj)+'&tarih=eq.'+todayStr()+'&limit=1').catch(()=>[]);
-      if(!var_||!var_.length){await sbFetch('sistem_bildirimleri',{method:'POST',body:JSON.stringify({mesaj,tip,konu:'Evrak',tarih:todayStr()})}).catch(()=>{});}
+      const var_=await sbFetch('sistem_bildirimleri?mesaj=eq.'+encodeURIComponent(mesaj)+'&limit=1').catch(()=>[]);
+      if(!var_||!var_.length){await sbFetch('sistem_bildirimleri',{method:'POST',body:JSON.stringify({mesaj,tip})}).catch(()=>{});}
     }catch(ex){}
   }
   try{
@@ -1161,7 +1163,7 @@ async function evrakBildirimKontrol(){
     if(badge&&okunmamis?.length){badge.style.display='block';badge.textContent=okunmamis.length>9?'9+':okunmamis.length;}
     else if(badge)badge.style.display='none';
   }catch(ex){}
-}
+}catch(e){console.warn('Bildirim kontrol hatası:',e);}}
 
 async function bildirimAc(){
   try{
