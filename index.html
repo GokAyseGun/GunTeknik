@@ -465,6 +465,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 [data-tema="acik"] #bg-circuit-fx{opacity:0.4;}
 
 
+
+@keyframes slideDown {
+  from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+  to { opacity:1; transform:translateX(-50%) translateY(0); }
+}
 </style>
 </head>
 <body>
@@ -2533,7 +2538,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="modal-handle"></div>
     <div class="modal-head" style="border-bottom:2px solid var(--amber);">
       <div>
-        <h3 style="color:var(--amber);">⏰ Yaklaşan Vadeler</h3>
+        <h3 style="color:var(--amber);">⏰ Hatırlatıcılar</h3>
         <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="yaklasan-alt-baslik"></div>
       </div>
       <button class="modal-close" onclick="closeModal('modal-yaklasan')">✕</button>
@@ -3451,10 +3456,12 @@ async function startApp(){
   // Teklif gerçek zamanlı takip
   teklifPollBaslat();
   // Yaklaşan ödeme + bütçe kontrolü
-  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},800);
+  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster().catch(()=>{});butceAsimiKontrol();},800);
   // Sistem bildirim kontrolü
   setTimeout(bildirimKontrol,3000);
   setInterval(bildirimKontrol,15*60*1000);
+  // Evrak bildirimleri - 5sn sonra (DB yüklendikten sonra)
+  // Evrak bildirimleri yaklaşanUyariGoster içinde gösteriliyor
 }
 
 // ============================================================ VERİTABANI
@@ -9226,7 +9233,7 @@ function desenHaklariGuncelle(){
 
 // ============================================================ YAKLAŞAN ÖDEME UYARISI
 
-function yaklaşanUyariGoster(){
+async function yaklaşanUyariGoster(){
   const now=new Date();
   const hafta=new Date(now.getTime()+7*24*60*60*1000);
 
@@ -9234,10 +9241,58 @@ function yaklaşanUyariGoster(){
   const yaklasanlar=DB.islemler.filter(i=>{
     if(i.statu!=='Bekliyor')return false;
     const t=new Date(i.tarih);
-    return t<=hafta;// Geçmiş veya 7 gün içi
+    return t<=hafta;
   }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
 
-  if(!yaklasanlar.length)return;// Yaklaşan yoksa modal açma
+  // Evrak bildirimlerini çek
+  let evrakBildirimler=[];
+  try{
+    const [evraklar,odemeler]=await Promise.all([
+      sbFetch('sirket_evraklar?order=created_at.desc').catch(()=>[]),
+      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[])
+    ]);
+    const bugun=new Date();bugun.setHours(0,0,0,0);
+    const bugunStr=bugun.toISOString().slice(0,10);
+    for(const e of (evraklar||[])){
+      const dongu=e.odeme_dongusu||'Yok';
+      const bas=e.periyot_bas||'';
+      const bit=e.periyot_bit||'';
+      if(dongu==='Yok'||!bas||!bit) continue;
+      const buDonemOdendi=(odemeler||[]).filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
+        const od=new Date(o.odeme_tarihi+'T12:00');od.setHours(0,0,0,0);
+        if(dongu==='Aylık') return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
+        if(dongu==='Yıllık') return od.getFullYear()===bugun.getFullYear();
+        return false;
+      });
+      if(buDonemOdendi) continue;
+      const adi=evrakAdiErp(e);
+      let ilkGun=null,sonGun=null;
+      if(dongu==='Aylık'){
+        ilkGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1);
+        sonGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||15);
+        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bas)||1);sonGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bit)||15);}
+      } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
+        const [ba,bg]=bas.split('-');const [bia,big]=bit.split('-');
+        ilkGun=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg)||1);
+        sonGun=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big)||1);
+        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear()+1,parseInt(ba)-1,parseInt(bg)||1);sonGun=new Date(bugun.getFullYear()+1,parseInt(bia)-1,parseInt(big)||1);}
+      } else continue;
+      ilkGun.setHours(0,0,0,0);sonGun.setHours(0,0,0,0);
+      const sonGunStr=sonGun.toISOString().slice(0,10);
+      const tarihGecti=bugun>sonGun;
+      const bugunSonGun=bugunStr===sonGunStr;
+      const donemIcinde=bugun>=ilkGun&&bugun<=sonGun;
+      if(tarihGecti){
+        evrakBildirimler.push({adi,sonGunStr,tip:'gecmis',renk:'var(--red)',ikon:'⚠️',mesaj:'Son ödeme tarihi geçti! ('+sonGunStr+')'});
+      } else if(bugunSonGun){
+        evrakBildirimler.push({adi,sonGunStr,tip:'songun',renk:'var(--red)',ikon:'⏰',mesaj:'Bugün son ödeme günü!'});
+      } else if(donemIcinde){
+        evrakBildirimler.push({adi,sonGunStr,tip:'donem',renk:'var(--amber)',ikon:'📅',mesaj:'Ödeme bekleniyor (son gün: '+sonGunStr+')'});
+      }
+    }
+  }catch(ex){console.warn('Evrak bildirim hatası:',ex);}
+
+  if(!yaklasanlar.length&&!evrakBildirimler.length)return;
 
   const gecmis=yaklasanlar.filter(i=>new Date(i.tarih)<now);
   const yakin=yaklasanlar.filter(i=>new Date(i.tarih)>=now);
@@ -9266,6 +9321,52 @@ function yaklaşanUyariGoster(){
       html+=_yaklaşanSatir(i,k,pos,'var(--amber)',etiket);
     });
   }
+
+  // Evrak bildirimleri ekle
+  if(evrakBildirimler.length){
+    const gecmisEvrak=evrakBildirimler.filter(e=>e.tip==='gecmis'||e.tip==='songun');
+    const donemEvrak=evrakBildirimler.filter(e=>e.tip==='donem');
+    if(gecmisEvrak.length){
+      html+=`<div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:8px 0 4px;">⚠️ Evrak — Acil Ödeme</div>`;
+      gecmisEvrak.forEach(e=>{
+        html+=`<div style="background:var(--red-lt);border:1px solid rgba(255,23,68,0.2);border-radius:var(--r-sm);padding:10px 12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">${e.ikon}</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:13px;color:var(--text);">${e.adi}</div>
+              <div style="font-size:11px;color:var(--red);margin-top:2px;">${e.mesaj}</div>
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+    if(donemEvrak.length){
+      html+=`<div style="font-size:11px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:8px 0 4px;">📅 Evrak — Ödeme Dönemi</div>`;
+      donemEvrak.forEach(e=>{
+        html+=`<div style="background:var(--amber-lt);border:1px solid rgba(255,171,0,0.2);border-radius:var(--r-sm);padding:10px 12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">${e.ikon}</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:13px;color:var(--text);">${e.adi}</div>
+              <div style="font-size:11px;color:var(--amber);margin-top:2px;">${e.mesaj}</div>
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+  }
+
+  // Alt başlık güncelle
+  const gecmisIslem=yaklasanlar.filter(i=>new Date(i.tarih)<now).length;
+  const yakinIslem=yaklasanlar.filter(i=>new Date(i.tarih)>=now).length;
+  const evrakAcil=evrakBildirimler.filter(e=>e.tip!=='donem').length;
+  const evrakDonem=evrakBildirimler.filter(e=>e.tip==='donem').length;
+  const parcalar=[];
+  if(gecmisIslem) parcalar.push(gecmisIslem+' vadesi geçmiş işlem');
+  if(yakinIslem) parcalar.push(yakinIslem+' yaklaşan işlem');
+  if(evrakAcil) parcalar.push(evrakAcil+' acil evrak ödemesi');
+  if(evrakDonem) parcalar.push(evrakDonem+' evrak ödeme dönemi');
+  document.getElementById('yaklasan-alt-baslik').textContent=parcalar.join(' · ');
 
   document.getElementById('yaklasan-content').innerHTML=html;
   openModal('modal-yaklasan');
@@ -16152,6 +16253,148 @@ function initBgCircuit(){
 // ═══════════════════════════════════════════════════════
 
 let _bildirimler=[];
+
+function erpOdemeBekleniyor(tur, bas, bit) {
+  const bugun=new Date();
+  const gun=bugun.getDate();
+  const ay=bugun.getMonth()+1;
+  const haftaGunu=bugun.getDay()||7; // 1=Pt, 7=Pz
+
+  if(tur==='Günlük')return true;
+  if(tur==='Haftalık'){
+    const HAFTA_MAP={'Pazartesi':1,'Salı':2,'Çarşamba':3,'Perşembe':4,'Cuma':5,'Cumartesi':6,'Pazar':7};
+    const b=HAFTA_MAP[bas]||1, bi=HAFTA_MAP[bit]||7;
+    return haftaGunu>=b&&haftaGunu<=bi;
+  }
+  if(tur==='Aylık'){
+    return gun>=parseInt(bas)&&gun<=parseInt(bit);
+  }
+  if(tur==='Sezonluk'||tur==='Yıllık'){
+    const [ba,bg]=bas.split('-'); const [bia,big]=bit.split('-');
+    const basTs=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg));
+    const bitTs=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big));
+    return bugun>=basTs&&bugun<=bitTs;
+  }
+  return false;
+}
+
+function erpOdemeGecti(tur, bit) {
+  const bugun=new Date();
+  const gun=bugun.getDate();
+  const ay=bugun.getMonth()+1;
+  const haftaGunu=bugun.getDay()||7;
+
+  if(tur==='Günlük')return false;
+  if(tur==='Haftalık'){
+    const HAFTA_MAP={'Pazartesi':1,'Salı':2,'Çarşamba':3,'Perşembe':4,'Cuma':5,'Cumartesi':6,'Pazar':7};
+    return haftaGunu>=(HAFTA_MAP[bit]||7)+1;
+  }
+  if(tur==='Aylık') return gun>parseInt(bit);
+  if(tur==='Sezonluk'||tur==='Yıllık'){
+    const [bia,big]=bit.split('-');
+    const bitTs=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big));
+    return bugun>bitTs;
+  }
+  return false;
+}
+
+function evrakPopupGoster(mesaj, tip, evrakId){
+  // Mevcut popup varsa kaldır
+  const eski=document.getElementById('evrak-popup-bildirim');
+  if(eski)eski.remove();
+
+  const renk=tip==='hata'?'var(--red)':'var(--amber)';
+  const bgRenk=tip==='hata'?'var(--red-lt)':'var(--amber-lt)';
+  const popup=document.createElement('div');
+  popup.id='evrak-popup-bildirim';
+  popup.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:2px solid '+renk+';border-radius:var(--r-md);padding:14px 18px;z-index:99998;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideDown 0.3s ease;';
+
+  const ikonEl=document.createElement('div');ikonEl.style.cssText='font-size:22px;flex-shrink:0;';ikonEl.textContent=tip==='hata'?'⚠️':'📅';
+  const textWrap=document.createElement('div');textWrap.style.flex='1';
+  const baslikEl=document.createElement('div');baslikEl.style.cssText='font-size:13px;font-weight:700;color:'+renk+';';baslikEl.textContent='Evrak Hatırlatıcı';
+  const mesajEl=document.createElement('div');mesajEl.style.cssText='font-size:12px;color:var(--text2);margin-top:4px;';mesajEl.textContent=mesaj;
+  textWrap.appendChild(baslikEl);textWrap.appendChild(mesajEl);
+  const kapatBtn=document.createElement('button');
+  kapatBtn.style.cssText='background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;';
+  kapatBtn.textContent='✕';kapatBtn.addEventListener('click',()=>popup.remove());
+  const row=document.createElement('div');row.style.cssText='display:flex;align-items:flex-start;gap:10px;';
+  row.appendChild(ikonEl);row.appendChild(textWrap);row.appendChild(kapatBtn);
+  popup.appendChild(row);
+
+  document.body.appendChild(popup);
+  setTimeout(()=>{if(popup.parentNode)popup.remove();},10000);
+}
+
+function evrakAdiErp(e){
+  if(e.tur==='Fatura') return 'Fatura'+(e.alt_tur?' - '+e.alt_tur:'');
+  if(e.tur==='Araç') return 'Araç'+(e.alt_tur?' - '+e.alt_tur:'');
+  return e.tur||'Evrak';
+}
+
+async function erpEvrakBildirimKontrol(){
+  try{
+    const [evraklar,odemeler]=await Promise.all([
+      sbFetch('sirket_evraklar?order=created_at.desc').catch(()=>[]),
+      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[])
+    ]);
+    if(!evraklar||!evraklar.length) return;
+    const bugun=new Date();bugun.setHours(0,0,0,0);
+    const bugunStr=bugun.toISOString().slice(0,10);
+    const hatirlaticilar=[];
+    for(const e of evraklar){
+      const dongu=e.odeme_dongusu||'Yok';
+      const bas=e.periyot_bas||'';
+      const bit=e.periyot_bit||'';
+      if(dongu==='Yok'||!bas||!bit) continue;
+      const buDonemOdendi=(odemeler||[]).filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
+        const od=new Date(o.odeme_tarihi+'T12:00');od.setHours(0,0,0,0);
+        if(dongu==='Aylık') return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
+        if(dongu==='Yıllık') return od.getFullYear()===bugun.getFullYear();
+        if(dongu==='Haftalık') return Math.abs(bugun-od)/86400000<=7;
+        return false;
+      });
+      if(buDonemOdendi) continue;
+      const adi=evrakAdiErp(e);
+      let ilkGun=null,sonGun=null;
+      if(dongu==='Aylık'){
+        ilkGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1);
+        sonGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||15);
+        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bas)||1);sonGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bit)||15);}
+      } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
+        const [ba,bg]=bas.split('-');const [bia,big]=bit.split('-');
+        ilkGun=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg)||1);
+        sonGun=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big)||1);
+        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear()+1,parseInt(ba)-1,parseInt(bg)||1);sonGun=new Date(bugun.getFullYear()+1,parseInt(bia)-1,parseInt(big)||1);}
+      } else continue;
+      ilkGun.setHours(0,0,0,0);sonGun.setHours(0,0,0,0);
+      const sonGunStr=sonGun.toISOString().slice(0,10);
+      const tarihGecti=bugun>sonGun;
+      const bugunSonGun=bugunStr===sonGunStr;
+      const donemIcinde=bugun>=ilkGun&&bugun<=sonGun;
+      if(tarihGecti){
+        hatirlaticilar.push({mesaj:'⚠️ '+adi+' — Son ödeme tarihi geçti! ('+sonGunStr+')',tip:'hata',herGiris:true});
+      } else if(bugunSonGun){
+        hatirlaticilar.push({mesaj:'⏰ '+adi+' — Bugün son ödeme günü!',tip:'hata',herGiris:true});
+      } else if(donemIcinde){
+        hatirlaticilar.push({mesaj:'📅 '+adi+' — Ödeme bekleniyor (son gün: '+sonGunStr+')',tip:'uyari',herGiris:false});
+      }
+    }
+    if(!hatirlaticilar.length) return;
+    const gKey='erp_evrak_popup_'+bugunStr;
+    const gosterilmis=JSON.parse(localStorage.getItem(gKey)||'[]');
+    let si=0;
+    for(const h of hatirlaticilar){
+      const key=h.mesaj.slice(0,40);
+      if(h.herGiris){
+        setTimeout(()=>evrakPopupGoster(h.mesaj,h.tip),2000+(si*800));si++;
+      } else if(!gosterilmis.includes(key)){
+        setTimeout(()=>evrakPopupGoster(h.mesaj,h.tip),2000+(si*800));
+        gosterilmis.push(key);si++;
+      }
+    }
+    localStorage.setItem(gKey,JSON.stringify(gosterilmis));
+  }catch(e){console.warn('ERP evrak bildirim:',e);}
+}
 
 async function bildirimKontrol(){
   try{
