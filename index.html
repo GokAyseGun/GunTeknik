@@ -7058,17 +7058,22 @@ function renderIrsaliye(){
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
 }
 
-function selectIrsaliye(id){
+async function selectIrsaliye(id){
   const i=DB.islemler.find(x=>x.id===id);if(!i)return;
-  selectedIrsaliye=i;renderFis(i);
+  selectedIrsaliye=i;await renderFis(i);
   ['btn-wp-irs','btn-wp-img-irs','btn-print-irs'].forEach(b=>{const el=document.getElementById(b);if(el)el.style.display='inline-flex';});
 }
 
-function renderFis(i){
+async function renderFis(i){
   const k=getKisi(i.kisiId)||{isim:'—',tel:'',adres:''};
   const dt=new Date(i.tarih);
   const dtStr=dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
   const stokHar=DB.stokHareketleri.filter(h=>String(h.islemId)===String(i.id));
+  // islem_kalemleri tablosundan malzeme/işçilik kalemlerini çek
+  let _kalemler=[];
+  try{_kalemler=await sbFetch('islem_kalemleri?islem_id=eq.'+i.id+'&order=id.asc')||[];}catch(e){}
+  const _malzKalemler=_kalemler.filter(k=>k.tip==='malzeme');
+  const _iscKalemler=_kalemler.filter(k=>k.tip==='iscilik');
   const SEP='--------------------------------';
   const W=32;
   // Uzun metni W karakter satırlara böler, hiçbir şeyi kesmez
@@ -7086,7 +7091,15 @@ function renderFis(i){
   // Hizmet detayı
   const hizmetler=i.altKat&&i.altKat!=='-'?i.altKat:'';
   let hizSatirlar=[];
-  if(hizmetler){
+  if(_iscKalemler.length){
+    // islem_kalemleri'nden gelen işçilik kalemleri
+    _iscKalemler.forEach(k=>{
+      const fiyat=Number(k.birim_fiyat)||Number(k.toplam)||0;
+      hizSatirlar.push(pad(k.aciklama||'İşçilik'));
+      if(fiyat>0) hizSatirlar.push('  '+fmtTL(fiyat));
+    });
+  } else if(hizmetler){
+    // Eski format - metin olarak kaydedilmiş
     hizmetler.split(' | ').forEach(p=>{
       const sp=p.split(': ');
       if(sp.length>=2){hizSatirlar.push(pad(sp[0]+':'));sp[1].split(', ').forEach(s=>hizSatirlar.push('  - '+pad(s)));}
@@ -7096,23 +7109,37 @@ function renderFis(i){
   if(!hizSatirlar.length&&i.kat)hizSatirlar.push(pad(i.kat));
   // Malzeme/stok detayı
   let malzSatirlar=[];
-  if(stokHar.length){stokHar.forEach(h=>{
-    const s=DB.stok.find(x=>x.id===h.stokId);
-    const ad=s?.ad||'Malzeme';
-    const birim=s?.birim||'Adet';
-    const fiyat=Number(h.birimFiyat||s?.birimFiyat||0);
-    const miktar=Number(h.miktar||1);
-    const top=miktar*fiyat;
-    // Malzeme adı - bold satır
-    malzSatirlar.push(pad(ad));
-    // Miktar x Birim Fiyat = Toplam satırı
-    let detay='  '+miktar+' '+birim;
-    if(fiyat>0) detay+=' x '+fmtTL(fiyat);
-    if(top>0) detay+=' = '+fmtTL(top);
-    malzSatirlar.push(detay);
-  });}
-  if(i.malzemeTutar>0&&!stokHar.length)malzSatirlar.push('Malzeme Toplami: '+fmtTL(i.malzemeTutar));
-  if(malzSatirlar.length)malzSatirlar.push('(Toplam fiyata dahildir)');
+  if(_malzKalemler.length){
+    // islem_kalemleri'nden gelen malzemeler
+    _malzKalemler.forEach(k=>{
+      const miktar=Number(k.miktar)||1;
+      const birim=k.birim||'Adet';
+      const fiyat=Number(k.birim_fiyat)||0;
+      const top=Number(k.toplam)||miktar*fiyat;
+      malzSatirlar.push(pad(k.aciklama||'Malzeme'));
+      let detay='  '+miktar+' '+birim;
+      if(fiyat>0) detay+=' x '+fmtTL(fiyat);
+      if(top>0) detay+=' = '+fmtTL(top);
+      malzSatirlar.push(detay);
+    });
+  } else if(stokHar.length){
+    // stok_hareketleri'nden gelen malzemeler (eski kayıtlar)
+    stokHar.forEach(h=>{
+      const s=DB.stok.find(x=>x.id===h.stokId);
+      const ad=s?.ad||'Malzeme';
+      const birim=s?.birim||'Adet';
+      const fiyat=Number(s?.birimFiyat)||0;
+      const miktar=Number(h.miktar)||1;
+      const top=miktar*fiyat;
+      malzSatirlar.push(pad(ad));
+      let detay='  '+miktar+' '+birim;
+      if(fiyat>0) detay+=' x '+fmtTL(fiyat);
+      if(top>0) detay+=' = '+fmtTL(top);
+      malzSatirlar.push(detay);
+    });
+  }
+  if(!malzSatirlar.length&&i.malzemeTutar>0) malzSatirlar.push('Malzeme Toplami: '+fmtTL(i.malzemeTutar));
+  if(malzSatirlar.length) malzSatirlar.push('(Toplam fiyata dahildir)');
   // Taksit planı
   let taksitSatirlar=[];
   if(i.groupId){
@@ -7179,10 +7206,10 @@ function renderFis(i){
 
 function fmtTL(n){return Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+' TL';}
 
-function sendWhatsapp(){
+async function sendWhatsapp(){
   if(!selectedIrsaliye)return;
   const k=getKisi(selectedIrsaliye.kisiId);const tel=k?.tel?.replace(/\D/g,'')||'';
-  const fis=renderFis(selectedIrsaliye);
+  const fis=await renderFis(selectedIrsaliye);
   const url='https://wa.me/'+(tel?(t=>(t.startsWith('+')?t.replace(/\D/g,''):(t.replace(/\D/g,'').startsWith('0')?'90'+t.replace(/\D/g,'').slice(1):t.replace(/\D/g,''))))(tel):'')+'?text='+encodeURIComponent(fis);
   window.open(url,'_blank');
 }
