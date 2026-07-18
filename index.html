@@ -7091,39 +7091,37 @@ async function renderFis(i){
   // Hizmet detayı
   const hizmetler=i.altKat&&i.altKat!=='-'?i.altKat:'';
   let hizSatirlar=[];
+  let _hizToplamHesap=0;
   if(_iscKalemler.length){
-    // islem_kalemleri'nden gelen işçilik kalemleri
     _iscKalemler.forEach(k=>{
       const fiyat=Number(k.birim_fiyat)||Number(k.toplam)||0;
-      hizSatirlar.push(pad(k.aciklama||'İşçilik'));
-      if(fiyat>0) hizSatirlar.push('  '+fmtTL(fiyat));
+      hizSatirlar.push('- '+pad(k.aciklama||'İşçilik'));
+      if(fiyat>0){ hizSatirlar.push('  '+fmtTL(fiyat)); _hizToplamHesap+=fiyat; }
     });
   } else if(hizmetler){
-    // Eski format - metin olarak kaydedilmiş
     hizmetler.split(' | ').forEach(p=>{
       const sp=p.split(': ');
-      if(sp.length>=2){hizSatirlar.push(pad(sp[0]+':'));sp[1].split(', ').forEach(s=>hizSatirlar.push('  - '+pad(s)));}
-      else hizSatirlar.push(pad(p));
+      if(sp.length>=2){hizSatirlar.push('- '+pad(sp[0]+':'));sp[1].split(', ').forEach(s=>hizSatirlar.push('  '+pad(s)));}
+      else hizSatirlar.push('- '+pad(p));
     });
   }
-  if(!hizSatirlar.length&&i.kat)hizSatirlar.push(pad(i.kat));
+  if(!hizSatirlar.length&&i.kat)hizSatirlar.push('- '+pad(i.kat));
   // Malzeme/stok detayı
   let malzSatirlar=[];
+  let _malzToplamHesap=0;
   if(_malzKalemler.length){
-    // islem_kalemleri'nden gelen malzemeler
     _malzKalemler.forEach(k=>{
       const miktar=Number(k.miktar)||1;
       const birim=k.birim||'Adet';
       const fiyat=Number(k.birim_fiyat)||0;
       const top=Number(k.toplam)||miktar*fiyat;
-      malzSatirlar.push(pad(k.aciklama||'Malzeme'));
+      malzSatirlar.push('- '+pad(k.aciklama||'Malzeme'));
       let detay='  '+miktar+' '+birim;
       if(fiyat>0) detay+=' x '+fmtTL(fiyat);
-      if(top>0) detay+=' = '+fmtTL(top);
+      if(top>0){ detay+=' = '+fmtTL(top); _malzToplamHesap+=top; }
       malzSatirlar.push(detay);
     });
   } else if(stokHar.length){
-    // stok_hareketleri'nden gelen malzemeler (eski kayıtlar)
     stokHar.forEach(h=>{
       const s=DB.stok.find(x=>x.id===h.stokId);
       const ad=s?.ad||'Malzeme';
@@ -7131,15 +7129,14 @@ async function renderFis(i){
       const fiyat=Number(s?.birimFiyat)||0;
       const miktar=Number(h.miktar)||1;
       const top=miktar*fiyat;
-      malzSatirlar.push(pad(ad));
+      malzSatirlar.push('- '+pad(ad));
       let detay='  '+miktar+' '+birim;
       if(fiyat>0) detay+=' x '+fmtTL(fiyat);
-      if(top>0) detay+=' = '+fmtTL(top);
+      if(top>0){ detay+=' = '+fmtTL(top); _malzToplamHesap+=top; }
       malzSatirlar.push(detay);
     });
   }
-  if(!malzSatirlar.length&&i.malzemeTutar>0) malzSatirlar.push('Malzeme Toplami: '+fmtTL(i.malzemeTutar));
-  if(malzSatirlar.length) malzSatirlar.push('(Toplam fiyata dahildir)');
+  if(!malzSatirlar.length&&i.malzemeTutar>0){ _malzToplamHesap=i.malzemeTutar; }
   // Taksit planı
   let taksitSatirlar=[];
   if(i.groupId){
@@ -7147,13 +7144,13 @@ async function renderFis(i){
     if(group.length>0){group.forEach((t,idx)=>taksitSatirlar.push((idx+1)+'. '+dtS(t.tarih)+' — '+fmtTL(t.tutar)));}
   }
   // HTML render
-  const satir=(t,bold=false,center=false,small=false)=>{
-    const style=`font-family:monospace;font-size:${small?'9px':'10px'};line-height:1.6;color:#000;${bold?'font-weight:bold;':''}${center?'text-align:center;':''}word-break:break-all;`;
+  const satir=(t,bold=false,center=false,small=false,right=false)=>{
+    const style=`font-family:monospace;font-size:${small?'9px':'10px'};line-height:1.6;color:#000;${bold?'font-weight:bold;':''}${center?'text-align:center;':''}${right?'text-align:right;font-weight:bold;':''}word-break:break-all;`;
     return `<div style="${style}">${t||'&nbsp;'}</div>`;
   };
   const sep=()=>`<div style="font-family:monospace;font-size:9px;color:#aaa;margin:2px 0;">${SEP}</div>`;
   let html='';
-  html+=`<div style="text-align:center;margin-bottom:4px;"><div style="font-family:monospace;font-weight:bold;font-size:13px;color:#000;">GÜN TEKNİK</div><div style="font-family:monospace;font-size:9px;color:#555;">İhtiyacınız olduğu anda...</div><div style="font-family:monospace;font-size:10px;color:#000;">+90 544 652 94 86</div></div>`;
+  html+=`<div style="text-align:center;margin-bottom:4px;"><div style="font-family:monospace;font-weight:bold;font-size:13px;color:#000;">GÜN ELEKTRİK & KLİMA</div><div style="font-family:monospace;font-size:9px;color:#555;">İhtiyacınız olduğu anda...</div><div style="font-family:monospace;font-size:10px;color:#000;">+90 544 652 94 86</div></div>`;
   html+=sep();
   html+=satir('Fiş No: '+fmtId(i.id),true);
   html+=satir('Tarih: '+dtStr);
@@ -7166,12 +7163,15 @@ async function renderFis(i){
   html+=satir('Hizmet Detayı',true);
   html+=sep();
   hizSatirlar.forEach(s=>html+=satir(s));
+  if(_hizToplamHesap>0){html+=sep();html+=satir('HIZ. TOPLAM: '+fmtTL(_hizToplamHesap),false,false,false,true);}
   if(malzSatirlar.length){html+=sep();html+=satir('Malzeme Detayı',true);html+=sep();malzSatirlar.forEach(s=>html+=satir(s,false,false,true));}
+  if(_malzToplamHesap>0){html+=sep();html+=satir('MALZ. TOPLAM: '+fmtTL(_malzToplamHesap),false,false,false,true);}
+  html+=sep();
+  html+=`<div style="font-family:monospace;font-weight:bold;font-size:14px;color:#000;text-align:center;border-top:2px solid #000;border-bottom:2px solid #000;padding:4px 0;margin:4px 0;">ANA TOPLAM: ${fmtTL(i.tutar)}</div>`;
   html+=sep();
   html+=satir('Ödeme Şekli: '+(i.odemeYontemi||'Nakit'));
   html+=satir('Ödeme Durumu: '+i.statu);
   html+=sep();
-  html+=`<div style="font-family:monospace;font-weight:bold;font-size:14px;color:#000;text-align:center;border-top:2px solid #000;border-bottom:2px solid #000;padding:4px 0;margin:4px 0;">TOPLAM: ${fmtTL(i.tutar)}</div>`;
   if(taksitSatirlar.length){html+=sep();html+=satir('Ödeme Planı:',true);taksitSatirlar.forEach(s=>html+=satir(s,false,false,true));}
   if(i.not){html+=sep();html+=satir('Not: '+pad(i.not),false,false,true);}
   html+=sep();
@@ -7187,9 +7187,11 @@ async function renderFis(i){
 <div style="font-family:monospace;font-size:8px;color:#888;text-align:center;margin-top:6px;">--------------------------------</div>`;
   document.getElementById('irs-print-area').innerHTML=html;
   // WhatsApp metin versiyonu
-  let txt='GÜN TEKNİK\nİhtiyacınız olduğunda...\n+90 544 652 94 86\n'+SEP+'\nFiş No: '+fmtId(i.id)+'\nTarih: '+dtStr+'\n'+SEP+'\nSayın: '+k.isim+'\nID No: '+fmtKId(i.kisiId||0)+(k.tel?'\nTel: '+k.tel:'')+(k.adres?'\nAdres: '+k.adres:'')+'\n'+SEP+'\nHizmet Detayı\n'+SEP+'\n'+hizSatirlar.join('\n');
+  let txt='GÜN ELEKTRİK & KLİMA\nİhtiyacınız olduğu anda...\n+90 544 652 94 86\n'+SEP+'\nFiş No: '+fmtId(i.id)+'\nTarih: '+dtStr+'\n'+SEP+'\nSayın: '+k.isim+'\nID No: '+fmtKId(i.kisiId||0)+(k.tel?'\nTel: '+k.tel:'')+(k.adres?'\nAdres: '+k.adres:'')+'\n'+SEP+'\nHizmet Detayı\n'+SEP+'\n'+hizSatirlar.join('\n');
+  if(_hizToplamHesap>0)txt+='\n'+SEP+'\nHİZ. TOPLAM: '+fmtTL(_hizToplamHesap);
   if(malzSatirlar.length)txt+='\n'+SEP+'\nMalzeme Detayı\n'+SEP+'\n'+malzSatirlar.join('\n');
-  txt+='\n'+SEP+'\nÖdeme Şekli: '+(i.odemeYontemi||'Nakit')+'\nÖdeme Durumu: '+i.statu+'\n'+SEP+'\nTOPLAM: '+fmtTL(i.tutar);
+  if(_malzToplamHesap>0)txt+='\n'+SEP+'\nMALZ. TOPLAM: '+fmtTL(_malzToplamHesap);
+  txt+='\n'+SEP+'\nANA TOPLAM: '+fmtTL(i.tutar)+'\n'+SEP+'\nÖdeme Şekli: '+(i.odemeYontemi||'Nakit')+'\nÖdeme Durumu: '+i.statu;
   if(taksitSatirlar.length)txt+='\n'+SEP+'\nÖdeme Planı:\n'+taksitSatirlar.join('\n');
   txt+='\n'+SEP+'\nBizi tercih ettiğiniz için teşekkür ederiz.';
   txt+='\n'+SEP;
