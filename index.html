@@ -3335,7 +3335,11 @@ async function checkSession(){
       const ok=await tryRefreshToken();
       if(!ok){
         // Refresh da olmadı — desen varsa desen sor, yoksa auth
-        if(desenVarMi()){
+        const _lastB=parseInt(localStorage.getItem('erp_last_active')||'0');
+        if(Date.now()-_lastB < 30*60*1000 && _lastB > 0){
+          // 30 dk içinde aktifti - token refresh olmadı ama sayfa geçişiydi
+          showAuthScreen();
+        } else if(desenVarMi()){
           await cihazKilidiKontrol(async()=>{await startApp();});
         }else{
           showAuthScreen();
@@ -3344,13 +3348,25 @@ async function checkSession(){
       }
     }
     await loadUserRol();
-    // Token geçerli — desen varsa sor, yoksa direkt başlat
-    await cihazKilidiKontrol(async()=>{await startApp();});
+    // Token geçerli — sayfa geçişinden mi dönüldü?
+    const lastActive=parseInt(localStorage.getItem('erp_last_active')||'0');
+    const gecenSure=Date.now()-lastActive;
+    // 30 dakika içinde aktif ise (sayfa geçişi) kilidi atla
+    if(gecenSure < 30*60*1000 && lastActive > 0){
+      await startApp();
+    } else {
+      await cihazKilidiKontrol(async()=>{await startApp();});
+    }
   }catch(e){
     // Ağ hatası — desen varsa offline modda devam et
     if(CURRENT_USER){
       USER_ROL='admin';
-      await cihazKilidiKontrol(async()=>{await startApp();});
+      const _lastA=parseInt(localStorage.getItem('erp_last_active')||'0');
+      if(Date.now()-_lastA < 30*60*1000 && _lastA > 0){
+        await startApp();
+      } else {
+        await cihazKilidiKontrol(async()=>{await startApp();});
+      }
     }else{
       showAuthScreen();
     }
@@ -3384,6 +3400,10 @@ async function doLogout(){
 }
 
 async function startApp(){
+  // Sayfa geçişi takibi için aktif zamanı kaydet
+  localStorage.setItem('erp_last_active', String(Date.now()));
+  // Her 5 dakikada güncelle
+  setInterval(()=>localStorage.setItem('erp_last_active', String(Date.now())), 5*60*1000);
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
@@ -6237,8 +6257,25 @@ async function saveKisi(btn){
       iban:document.getElementById('mk-iban')?.value||'',
       e_fatura:document.getElementById('mk-efatura')?.checked||false,
       tel:document.getElementById('mk-tel').value,adres:document.getElementById('mk-adres').value,"not":document.getElementById('mk-not').value};
-    if(kId){await sbFetch('kisiler?id=eq.'+kId,{method:'PATCH',body:JSON.stringify(payload)});showToast('Güncellendi','green');}
+    if(kId){
+      // GÜNCELLEME - mükerrer kontrol (kendi ID hariç)
+      const tel=payload.tel?.trim()||'';
+      if(isim||tel){
+        const mevcut=DB.kisiler.filter(k=>String(k.id)!==String(kId));
+        const isimMukerer=mevcut.find(k=>(k.isim||'').trim().toLowerCase()===(isim||'').toLowerCase());
+        const telMukerer=tel?mevcut.find(k=>(k.tel||'').replace(/\s/g,'')===tel.replace(/\s/g,'')):'';
+        if(isimMukerer){showToast('⚠️ "'+isim+'" ismi rehberde zaten var! ('+fmtKId(isimMukerer.id)+')','red');if(btn)btn.disabled=false;return;}
+        if(telMukerer){showToast('⚠️ Bu telefon numarası "'+telMukerer.isim+'" kaydında zaten var! ('+fmtKId(telMukerer.id)+')','red');if(btn)btn.disabled=false;return;}
+      }
+      await sbFetch('kisiler?id=eq.'+kId,{method:'PATCH',body:JSON.stringify(payload)});showToast('Güncellendi','green');
+    }
     else{
+      // YENİ KAYIT - mükerrer kontrol
+      const tel=payload.tel?.trim()||'';
+      const isimMukerer=DB.kisiler.find(k=>(k.isim||'').trim().toLowerCase()===(isim||'').toLowerCase());
+      const telMukerer=tel?DB.kisiler.find(k=>(k.tel||'').replace(/\s/g,'')===tel.replace(/\s/g,'')):'';
+      if(isimMukerer){showToast('⚠️ "'+isim+'" ismi rehberde zaten var! ('+fmtKId(isimMukerer.id)+')','red');if(btn)btn.disabled=false;return;}
+      if(telMukerer){showToast('⚠️ Bu telefon "'+telMukerer.isim+'" kaydında zaten kayıtlı! ('+fmtKId(telMukerer.id)+')','red');if(btn)btn.disabled=false;return;}
       const result=await sbFetch('kisiler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});const newK=result&&result[0];
       const src=document.getElementById('mk-source').value;
       if(newK&&src==='islem'){await loadDB();acSelect('mi-ac',newK.id,newK.isim,newK.tip);}
