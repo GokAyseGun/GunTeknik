@@ -782,6 +782,31 @@ let DB={evraklar:[],odemeler:[],kisiler:[],ekler:[]};
 let _filtre='hepsi';
 let _seciliEvrakId=null;
 
+
+async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih){
+  try{
+    const evrak=DB.evraklar.find(e=>e.id===_seciliEvrakId);if(!evrak)return;
+    const adi=evrakAdi(evrak);
+    const kisi=DB.kisiler.find(k=>String(k.id)===String(evrak.kisi_id));
+    const katMap={'Fatura':'Giderler','Kira':'Kira & Aidat','Aidat':'Kira & Aidat',
+      'Sigorta':'Sigorta','Vergi & Harçlar':'Vergi & Harçlar',
+      'Araç':'Araç Giderleri','Sözleşme':'Giderler','Personel':'Personel Giderleri'};
+    const kat=katMap[evrak.tur]||'Giderler';
+    const odemeNot=[adi,kisi?kisi.isim:'',notlar,pb!=='TRY'?('('+tutar+' '+pb+')'):''
+    ].filter(Boolean).join(' — ');
+    const payload={
+      tarih:tarih+'T12:00:00.000Z',tip:'Gider',statu:'Tamamlandı',
+      kisi_id:evrak.kisi_id||null,kat:kat,alt_kat:adi,
+      tutar:tutar,malzeme_tutar:0,not:odemeNot,
+      odeme_yontemi:'Banka / Havale',personel_ids:[],islem_kaynagi:'Evrak'
+    };
+    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
+    console.log('ERP islemi kaydedildi:',adi,tutar);
+  }catch(e){
+    console.error('ERP islem kayit hatasi:',e);
+    showToast('Odeme kaydedildi ama ERP islemi basarisiz: '+e.message,'amber');
+  }
+}
 async function loadAll(){
   try{
     const [evraklar,odemeler,kisiler,ekler]=await Promise.all([
@@ -1045,6 +1070,7 @@ function evrakOdemeEkleAc(){
   document.getElementById('evrak-odeme-not').value='';
   document.getElementById('evrak-odeme-pb').value='TRY';
   _geciciEkler=[];renderGeciciEkler();
+  const _chk=document.getElementById('evrak-islem-olarak');if(_chk)_chk.checked=false;
   openModal('modal-evrak-odeme-ekle');
 }
 
@@ -1096,7 +1122,13 @@ async function evrakOdemeKaydet(btn){
       }
     }
     _geciciEkler=[];
-    showToast(editId?'Güncellendi':'Ödeme kaydedildi','green');
+    const _islemOlarak=document.getElementById('evrak-islem-olarak')?.checked;
+    if(_islemOlarak&&!editId){
+      await evrakOdemeErpIslemKaydet(kayitId,tutar,
+        document.getElementById('evrak-odeme-pb').value,
+        document.getElementById('evrak-odeme-not').value,tarih);
+    }
+    showToast(editId?'Güncellendi':(_islemOlarak?'Ödeme ve ERP işlemi kaydedildi':'Ödeme kaydedildi'),'green');
     closeModal('modal-evrak-odeme-ekle');
     await loadAll();
     renderEvrakOdemeGecmis(_seciliEvrakId);
