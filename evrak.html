@@ -443,6 +443,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 
 
+
+@keyframes slideDown {
+  from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+  to { opacity:1; transform:translateX(-50%) translateY(0); }
+}
 </style>
 </head>
 <body>
@@ -597,7 +602,16 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <button onclick="dosyaSec(f=>{_geciciEkler=f.map(x=>({file:x,name:x.name}));renderGeciciEkler();})" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
           <div id="ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:6px;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="evrak-islem-olarak" style="width:18px;height:18px;accent-color:var(--mg);cursor:pointer;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);">ERP İşlem Olarak da Kaydet</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Gider işlemi olarak özet ve raporlara yansır</div>
+            </div>
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-evrak-odeme-ekle')" style="flex:1;">Vazgeç</button>
           <button class="btn btn-primary" id="evrak-odeme-kaydet-btn" onclick="evrakOdemeKaydet(this)" style="flex:2;">Kaydet</button>
         </div>
@@ -1091,7 +1105,7 @@ async function evrakOdemeKaydet(btn){
   if(!_seciliEvrakId){showToast('Evrak seçili değil','red');return;}
   const tarih=document.getElementById('evrak-odeme-tarih').value;
   const tutar=parseFloat(document.getElementById('evrak-odeme-tutar').value)||0;
-  if(!tarih||!tutar){showToast('Tarih ve tutar girin','red');return;}
+  if(!tarih){showToast('Tarih girin','red');return;}
   const editId=document.getElementById('evrak-odeme-edit-id').value;
   if(btn)btn.disabled=true;
   try{
@@ -1169,35 +1183,163 @@ function evrakOdemeDetayAc(id){
 
 // ════ BİLDİRİM ════
 async function evrakBildirimKontrol(){try{
-  const bugun=new Date();
+  const bugun = new Date();
+  bugun.setHours(0,0,0,0);
+  const bugunStr = todayStr();
+  const hatirlaticilar = []; // Ekrana çıkacak popup bildirimleri
+  const canBildirimleri = [];  // Sadece çan bildirimlerine gidecekler
+
   for(const e of DB.evraklar){
-    const dongu=e.odeme_dongusu||'Yok';const bas=e.periyot_bas||'';const bit=e.periyot_bit||'';
-    if(dongu==='Yok'||!bas||!bit)continue;
-    const buDonemOdendi=DB.odemeler.filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
-      const od=new Date(o.odeme_tarihi+'T12:00');
-      if(dongu==='Aylık')return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
-      if(dongu==='Yıllık')return od.getFullYear()===bugun.getFullYear();
+    const dongu = e.odeme_dongusu||'Yok';
+    const bas = e.periyot_bas||'';
+    const bit = e.periyot_bit||'';
+    if(dongu==='Yok'||!bas||!bit) continue;
+
+    // Bu dönem ödendi mi?
+    const buDonemOdendi = DB.odemeler.filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
+      const od = new Date(o.odeme_tarihi+'T12:00');
+      od.setHours(0,0,0,0);
+      if(dongu==='Aylık') return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
+      if(dongu==='Yıllık') return od.getFullYear()===bugun.getFullYear();
+      if(dongu==='Haftalık') return Math.abs(bugun-od)/86400000<=7;
       return false;
     });
-    if(buDonemOdendi)continue;
-    const bekleniyor=odemeBekleniyor(dongu,bas,bit);
-    const gecti=odemeGecti(dongu,bit);
-    if(!bekleniyor&&!gecti)continue;
-    const adi=evrakAdi(e);
-    const mesaj=gecti?adi+' - Son ödeme tarihi geçti!':adi+' - Ödeme bekleniyor';
-    const tip=gecti?'hata':'uyari';
+    if(buDonemOdendi) continue;
+
+    const adi = evrakAdi(e);
+
+    // İlk ödeme günü ve son ödeme günü hesapla
+    let ilkGun = null, sonGun = null;
+    if(dongu==='Aylık'){
+      ilkGun = new Date(bugun.getFullYear(), bugun.getMonth(), parseInt(bas)||1);
+      sonGun = new Date(bugun.getFullYear(), bugun.getMonth(), parseInt(bit)||15);
+      // Ay geçmişse sonraki aya bak
+      if(sonGun < bugun){
+        ilkGun = new Date(bugun.getFullYear(), bugun.getMonth()+1, parseInt(bas)||1);
+        sonGun = new Date(bugun.getFullYear(), bugun.getMonth()+1, parseInt(bit)||15);
+      }
+    } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
+      const [ba,bg]=bas.split('-'); const [bia,big]=bit.split('-');
+      ilkGun = new Date(bugun.getFullYear(), parseInt(ba)-1, parseInt(bg)||1);
+      sonGun = new Date(bugun.getFullYear(), parseInt(bia)-1, parseInt(big)||1);
+      if(sonGun < bugun){
+        ilkGun = new Date(bugun.getFullYear()+1, parseInt(ba)-1, parseInt(bg)||1);
+        sonGun = new Date(bugun.getFullYear()+1, parseInt(bia)-1, parseInt(big)||1);
+      }
+    } else continue;
+
+    // Tarihleri normalize et
+    ilkGun.setHours(0,0,0,0);
+    sonGun.setHours(0,0,0,0);
+
+    const ilkGunStr = ilkGun.toISOString().slice(0,10);
+    const sonGunStr = sonGun.toISOString().slice(0,10);
+    const tarihGecti = bugun > sonGun;
+    const bugunIlkGun = bugunStr === ilkGunStr;
+    const bugunSonGun = bugunStr === sonGunStr;
+    const donemIcinde = bugun >= ilkGun && bugun <= sonGun;
+
+    // Bildirim türünü belirle
+    if(tarihGecti){
+      // Son ödeme tarihi geçmiş → HER GİRİŞTE popup (localStorage takibi yok)
+      hatirlaticilar.push({
+        evrakId: e.id,
+        mesaj: '⚠️ '+adi+' — Son ödeme tarihi geçti! ('+sonGunStr+')',
+        tip: 'hata',
+        tur: 'popup',
+        herGiris: true  // localStorage'a yazılmaz, her girişte çıkar
+      });
+    } else if(bugunSonGun){
+      // Son ödeme günü → HER GİRİŞTE popup (localStorage takibi yok)
+      hatirlaticilar.push({
+        evrakId: e.id,
+        mesaj: '⏰ '+adi+' — Bugün son ödeme günü! Lütfen ödeyin.',
+        tip: 'hata',
+        tur: 'popup',
+        herGiris: true
+      });
+    } else if(bugunIlkGun || donemIcinde){
+      // İlk gün ve dönem içi → günde bir kez popup
+      hatirlaticilar.push({
+        evrakId: e.id,
+        mesaj: (bugunIlkGun ? '📅 '+adi+' — Bugün ödeme başlangıç günü' : '📅 '+adi+' — Ödeme bekleniyor (son gün: '+sonGunStr+')'),
+        tip: 'uyari',
+        tur: 'popup',
+        herGiris: false  // günde bir kez
+      });
+    }
+  }
+
+  // Popup hatırlatıcıları göster
+  const gosterilmisKey = 'evrak_popup_'+bugunStr;
+  const gosterilmis = JSON.parse(localStorage.getItem(gosterilmisKey)||'[]');
+
+  let popupSirasi = 0;
+  for(const h of hatirlaticilar){
+    const key = String(h.evrakId);
+    if(h.herGiris){
+      // Her girişte göster (geçmiş tarih, son gün) - localStorage'a yazmaz
+      setTimeout(()=>evrakPopupGoster(h.mesaj, h.tip), popupSirasi*800);
+      popupSirasi++;
+    } else if(!gosterilmis.includes(key)){
+      // Günde bir kez göster (dönem içi, ilk gün)
+      setTimeout(()=>evrakPopupGoster(h.mesaj, h.tip), popupSirasi*800);
+      gosterilmis.push(key);
+      popupSirasi++;
+    }
+  }
+  localStorage.setItem(gosterilmisKey, JSON.stringify(gosterilmis));
+
+  // Çan bildirimleri - sadece kayıt et
+  const tumBildirimler = [...hatirlaticilar.map(h=>({...h,tur:'can'})), ...canBildirimleri];
+  for(const bil of tumBildirimler){
     try{
-      const var_=await sbFetch('sistem_bildirimleri?mesaj=eq.'+encodeURIComponent(mesaj)+'&limit=1').catch(()=>[]);
-      if(!var_||!var_.length){await sbFetch('sistem_bildirimleri',{method:'POST',body:JSON.stringify({baslik:mesaj.slice(0,60),mesaj,tip})}).catch(()=>{});}
+      const var_=await sbFetch('sistem_bildirimleri?mesaj=eq.'+encodeURIComponent(bil.mesaj)+'&limit=1').catch(()=>[]);
+      if(!var_||!var_.length){
+        await sbFetch('sistem_bildirimleri',{method:'POST',body:JSON.stringify({
+          baslik:(bil.mesaj||'').slice(0,60),mesaj:bil.mesaj,tip:bil.tip
+        })}).catch(()=>{});
+      }
     }catch(ex){}
   }
+
+  // Çan badge güncelle
   try{
     const okunmamis=await sbFetch('sistem_bildirimleri?okundu=eq.false').catch(()=>[]);
     const badge=document.getElementById('bil-badge');
-    if(badge&&okunmamis?.length){badge.style.display='block';badge.textContent=okunmamis.length>9?'9+':okunmamis.length;}
+    const toplam=(okunmamis?.length||0)+(hatirlaticilar.length>0?1:0);
+    if(badge&&toplam){badge.style.display='block';badge.textContent=toplam>9?'9+':toplam;}
     else if(badge)badge.style.display='none';
   }catch(ex){}
 }catch(e){console.warn('Bildirim kontrol hatası:',e);}}
+
+// Evrak popup hatırlatıcı
+function evrakPopupGoster(mesaj, tip, evrakId){
+  // Mevcut popup varsa kaldır
+  const eski=document.getElementById('evrak-popup-bildirim');
+  if(eski)eski.remove();
+
+  const renk=tip==='hata'?'var(--red)':'var(--amber)';
+  const bgRenk=tip==='hata'?'var(--red-lt)':'var(--amber-lt)';
+  const popup=document.createElement('div');
+  popup.id='evrak-popup-bildirim';
+  popup.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:2px solid '+renk+';border-radius:var(--r-md);padding:14px 18px;z-index:99998;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideDown 0.3s ease;';
+
+  const ikonEl=document.createElement('div');ikonEl.style.cssText='font-size:22px;flex-shrink:0;';ikonEl.textContent=tip==='hata'?'⚠️':'📅';
+  const textWrap=document.createElement('div');textWrap.style.flex='1';
+  const baslikEl=document.createElement('div');baslikEl.style.cssText='font-size:13px;font-weight:700;color:'+renk+';';baslikEl.textContent='Evrak Hatırlatıcı';
+  const mesajEl=document.createElement('div');mesajEl.style.cssText='font-size:12px;color:var(--text2);margin-top:4px;';mesajEl.textContent=mesaj;
+  textWrap.appendChild(baslikEl);textWrap.appendChild(mesajEl);
+  const kapatBtn=document.createElement('button');
+  kapatBtn.style.cssText='background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;';
+  kapatBtn.textContent='✕';kapatBtn.addEventListener('click',()=>popup.remove());
+  const row=document.createElement('div');row.style.cssText='display:flex;align-items:flex-start;gap:10px;';
+  row.appendChild(ikonEl);row.appendChild(textWrap);row.appendChild(kapatBtn);
+  popup.appendChild(row);
+
+  document.body.appendChild(popup);
+  setTimeout(()=>{if(popup.parentNode)popup.remove();},10000);
+}
 
 async function bildirimAc(){
   try{
