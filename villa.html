@@ -1720,19 +1720,16 @@ async function villaEkle(btn) {
   if(!firma){showToast('Firma adı girin','red');return;}
   if(btn)btn.disabled=true;
   try{
-    // Önce kişi ekle - ERP'deki kisiler tablosu kolonlarını kullan
-    const kisi=await sbFetch('kisiler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
+    // Villa ekle (rehbere kişi eklenmez - kişi ayrıca rehberden seçilir)
+    await sbFetch('villa_oteller',{method:'POST',body:JSON.stringify({
+      kisi_id: null,
+      tur,
       isim: firma,
-      tip: 'Müşteri',
-      kapsam: muhatap,
-      firma_unvan: firma,
+      muhatap,
       tel,
-      adres,
-      'not': [muhatap, email, tur].filter(Boolean).join(' · ')
+      email,
+      adres
     })});
-    const kisiId=Number(Array.isArray(kisi)?kisi[0]?.id:kisi?.id);
-    // Sonra villa ekle
-    await sbFetch('villa_oteller',{method:'POST',body:JSON.stringify({kisi_id:kisiId,tur})});
     closeModal('modal-villa-ekle');
     ['ekle-firma','ekle-muhatap','ekle-tel','ekle-email','ekle-adres'].forEach(id=>document.getElementById(id).value='');
     showToast('Eklendi','green');
