@@ -1173,18 +1173,6 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
       <span>İşlemler</span>
     </div>
-    <div class="nav-item" onclick="window.location.href='villa.html'">
-      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-      <span>Villa</span>
-    </div>
-    <div class="nav-item" onclick="window.location.href='evrak.html'">
-      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
-      <span>Evrak</span>
-    </div>
-    <div class="nav-item" onclick="window.location.href='deprem.html'">
-      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 20 7 10 12 15 16 8 22 20"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
-      <span>Deprem</span>
-    </div>
     <div class="nav-item" onclick="goPage('teklifler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
       <span>Teklif</span>
@@ -4384,6 +4372,7 @@ function dashGrafikCiz(){
       [..._wrapper.children].forEach(el=>{if(el.tagName==='CANVAS')_innerWrap.appendChild(el);});
       _wrapper.insertBefore(_innerWrap,_wrapper.firstChild);
     }
+    _grafikZoomUygula(_wrapper,_innerWrap,canvas,_gunSayisi,_dashZoom,'dash-zoom-label');
   }
 
   _dashChart=new Chart(canvas,{
@@ -4424,13 +4413,6 @@ function dashGrafikCiz(){
     },
     plugins:[sifirCizgisi],
   });
-  if(_wrapper&&_gunSayisi>0){
-    const _iw=_wrapper.querySelector('.dash-inner-wrap');
-    if(_iw)setTimeout(()=>{
-      _grafikZoomUygula(_wrapper,_iw,canvas,_gunSayisi,_dashZoom,'dash-zoom-label');
-      if(_dashDonem==='6ay'||_dashDonem==='1yil'){setTimeout(()=>{_wrapper.scrollLeft=_wrapper.scrollWidth;},80);}
-    },50);
-  }
 }
 
 function dashMumCiz(canvas,labels,sonuclar){
@@ -5669,8 +5651,15 @@ function renderKisiSelect(selId,katId,araId,tipId){
 function acGetKisiler(prefix){
   const katSel=prefix==='mi-ac'?document.getElementById('mi-kisi-kat'):null;
   const kat=katSel?.value||'';
+  const tipEl=prefix==='mi-ac'?document.getElementById('mi-tip'):document.getElementById('mb-tip');
+  const tipVal=tipEl?.value||'';
+  const isTip=['Gelir','Alındı'].includes(tipVal)?'Gelir':'Gider';
   return DB.kisiler.filter(k=>{
     if(kat&&k.tip!==kat)return false;
+    if(k.kapsam&&k.kapsam!=='Hepsi'){
+      if(isTip==='Gelir'&&k.kapsam==='Gider')return false;
+      if(isTip==='Gider'&&k.kapsam==='Gelir')return false;
+    }
     return true;
   }).sort((a,b)=>(a.isim||'').localeCompare(b.isim||''));
 }
@@ -5685,7 +5674,7 @@ function acSearch(prefix){
   if(!list.length){
     drop.innerHTML='<div class="kisi-ac-empty">Sonuç bulunamadı</div>';
   }else{
-    list.slice(0,30).forEach(k=>{
+    list.slice(0,12).forEach(k=>{
       const div=document.createElement('div');
       div.className='kisi-ac-item';
       div.innerHTML=`<div>${k.isim}</div><div class="ac-sub">${k.tip} · ${fmtKId(k.id)}${k.tel?' · '+k.tel:''}</div>`;
@@ -5696,11 +5685,7 @@ function acSearch(prefix){
   drop.classList.add('open');
 }
 
-function acFilter(prefix){
-  const input=document.getElementById(prefix+'-input');
-  acSearch(prefix);
-  if(input)input.focus();
-}
+function acFilter(prefix){acSearch(prefix);}
 
 function acSelect(prefix,id,isim,tip){
   document.getElementById(prefix.replace('-ac','')+'-kisi').value=id;
@@ -6280,90 +6265,6 @@ async function toggleFavori(id,event){
   catch(e){showToast('Hata!','red');}
 }
 
-
-// ════ GOOGLE CONTACTS AKTARIM ════
-const GOOGLE_CLIENT_ID = '341229493021-mtj2q3qmnt1e74425m7u5eevtbph7ao9.apps.googleusercontent.com';
-let _gToken = null, _gTokenExp = 0;
-
-function googleTokenAl(cb) {
-  if(_gToken && Date.now() < _gTokenExp - 60000) { cb(_gToken); return; }
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/contacts',
-    callback: (r) => {
-      if(r.error){ showToast('Google izni alinamadi: '+r.error,'red'); return; }
-      _gToken = r.access_token;
-      _gTokenExp = Date.now() + r.expires_in*1000;
-      cb(_gToken);
-    }
-  });
-  client.requestAccessToken({prompt:''});
-}
-
-function googleAktar(kisiId) {
-  const k = DB.kisiler.find(x=>x.id===kisiId);
-  if(!k) return;
-  if(!confirm('"'+(k.isim||'—')+'" kisiyi Google Rehbere aktarmak istiyor musunuz?')) return;
-  googleTokenAl(token => googleKisiGonder(token, kisiId));
-}
-
-async function googleKisiGonder(token, kisiId) {
-  const k = DB.kisiler.find(x=>x.id===kisiId);
-  if(!k) return;
-  const p = {};
-  if(k.isim) {
-    const pts = k.isim.trim().split(' ');
-    // GT prefix: iş rehberini kişisel rehberden ayırt etmek için
-    const tamIsim = 'GT ' + k.isim.trim();
-    p.names = [{ givenName: 'GT '+(pts.length>1?pts.slice(0,-1).join(' '):k.isim), familyName: pts.length>1?pts[pts.length-1]:'' , displayName: tamIsim}];
-  }
-  const orgName = k.firmaUnvan||k.firma_unvan||'';
-  if(orgName||k.tip||(k.vergiDairesi||k.vergi_dairesi)) {
-    p.organizations = [{ name:orgName, title:k.tip||'', department:k.vergiDairesi||k.vergi_dairesi||'' }];
-  }
-  // R numarası → nickname
-  p.nicknames = [{ value: fmtKId(k.id) }];
-  if(k.tel) p.phoneNumbers = [{value:k.tel,type:'mobile'}];
-  if(k.adres) p.addresses = [{streetAddress:k.adres,type:'work'}];
-  if(k.vergiNo||k.vergi_no) p.externalIds = [{value:String(k.vergiNo||k.vergi_no),type:'account'}];
-  const notlar=[];
-  if(k.not) notlar.push(k.not);
-  if(k.iban) notlar.push('IBAN: '+k.iban);
-  if(k.bankaAdi||k.banka_adi) notlar.push('Banka: '+(k.bankaAdi||k.banka_adi));
-  if(k.efatura!=null) notlar.push('E-Fatura: '+(k.efatura?'Evet':'Hayir'));
-  if(notlar.length) p.biographies = [{value:notlar.join('\n'),contentType:'TEXT_PLAIN'}];
-  try {
-    showToast('Aktariyor...','blue');
-    // Var mi kontrol
-    const ar = await fetch('https://people.googleapis.com/v1/people:searchContacts?query='+encodeURIComponent('GT '+(k.isim||''))+'&readMask=names,phoneNumbers,metadata&pageSize=5',
-      {headers:{'Authorization':'Bearer '+token}});
-    const ad = await ar.json();
-    const mv = (ad.results||[]).find(r=>(r.person?.names?.[0]?.displayName||'').toLowerCase()===('GT '+(k.isim||'')).toLowerCase());
-    if(mv) {
-      // Guncelle - once etag al
-      const er = await fetch('https://people.googleapis.com/v1/'+mv.person.resourceName+'?personFields=names,metadata',
-        {headers:{'Authorization':'Bearer '+token}});
-      const ed = await er.json();
-      p.etag = ed.etag;
-      const ur = await fetch('https://people.googleapis.com/v1/'+mv.person.resourceName+':updateContact?updatePersonFields=names,nicknames,organizations,phoneNumbers,addresses,biographies,externalIds',
-        {method:'PATCH',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(p)});
-      const ud = await ur.json();
-      if(ud.error) throw new Error(ud.error.message);
-      showToast((k.isim||'Kisi')+' guncellendi','green');
-    } else {
-      // Yeni ekle
-      const cr = await fetch('https://people.googleapis.com/v1/people:createContact',
-        {method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(p)});
-      const cd = await cr.json();
-      if(cd.error) throw new Error(cd.error.message);
-      showToast((k.isim||'Kisi')+' Google Rehbere eklendi','green');
-    }
-  } catch(e) {
-    console.error('Google aktarim:', e);
-    showToast('Hata: '+(e.message||'Basarisiz'),'red');
-  }
-}
-
 function renderRehber(){
   const ara=(document.getElementById('r-ara-mus')?.value||'').toLowerCase();
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
@@ -6383,14 +6284,13 @@ function renderRehber(){
       const analiz=`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();showMusteriAnaliz(${k.id})" title="Analiz">📊</button>`;
       const duzenle=USER_ROL!=='goruntule'?`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();editKisi(${k.id},event)">✏️</button>`:'';
       const sil=USER_ROL==='admin'?`<button style="${BTN}font-size:14px;color:var(--red);" onclick="event.stopPropagation();deleteKisi(${k.id},event)">🗑</button>`:'';
-      const ggl=`<button style="${BTN}font-size:13px;" onclick="event.stopPropagation();googleAktar(${k.id})" title="Google Rehbere Aktar">📲</button>`;
       return `<div style="${ROW_STYLE}" onclick="showKisiDetay(${k.id})">
         <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;">
           <span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.isim}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <span class="id-badge" style="flex-shrink:0;">${fmtKId(k.id)}</span>
-          ${yildiz}${analiz}${ggl}${duzenle}${sil}
+          ${yildiz}${analiz}${duzenle}${sil}
         </div>
       </div>`;
     }).join('');
@@ -7234,7 +7134,16 @@ function renderFis(i){
   if(taksitSatirlar.length){html+=sep();html+=satir('Ödeme Planı:',true);taksitSatirlar.forEach(s=>html+=satir(s,false,false,true));}
   if(i.not){html+=sep();html+=satir('Not: '+pad(i.not),false,false,true);}
   html+=sep();
-  html+=`<div style="font-family:monospace;font-size:9px;color:#555;text-align:center;margin-top:4px;">Bizi tercih ettiğiniz için teşekkür ederiz.</div>`;
+  html+=`<div style="font-family:monospace;font-size:9px;color:#555;text-align:center;margin-top:4px;">Bizi tercih ettiğiniz için teşekkür ederiz.</div>
+<div style="font-family:monospace;font-size:8px;color:#888;text-align:center;margin-top:6px;">--------------------------------</div>
+<div style="font-family:monospace;font-size:8px;color:#333;text-align:center;margin-top:4px;font-weight:bold;">⭐ BİZİ DEĞERLENDİRİN</div>
+<div style="font-family:monospace;font-size:8px;color:#555;text-align:center;">g.page/r/Cdq32mSn9e6KEBM/review</div>
+<div style="font-family:monospace;font-size:8px;color:#333;text-align:center;margin-top:4px;font-weight:bold;">🌐 BİZİ ZİYARET EDİN</div>
+<div style="font-family:monospace;font-size:8px;color:#555;text-align:center;">www.gunelektrikklima.com</div>
+<div style="font-family:monospace;font-size:8px;color:#333;text-align:center;margin-top:4px;font-weight:bold;">📱 BİZİ TAKİP EDİN</div>
+<div style="font-family:monospace;font-size:8px;color:#555;text-align:center;">instagram.com/gunelektriklima</div>
+<div style="font-family:monospace;font-size:8px;color:#555;text-align:center;">facebook.com/share/1DK8EYxqt6</div>
+<div style="font-family:monospace;font-size:8px;color:#888;text-align:center;margin-top:6px;">--------------------------------</div>`;
   document.getElementById('irs-print-area').innerHTML=html;
   // WhatsApp metin versiyonu
   let txt='GÜN TEKNİK\nİhtiyacınız olduğunda...\n+90 544 652 94 86\n'+SEP+'\nFiş No: '+fmtId(i.id)+'\nTarih: '+dtStr+'\n'+SEP+'\nSayın: '+k.isim+'\nID No: '+fmtKId(i.kisiId||0)+(k.tel?'\nTel: '+k.tel:'')+(k.adres?'\nAdres: '+k.adres:'')+'\n'+SEP+'\nHizmet Detayı\n'+SEP+'\n'+hizSatirlar.join('\n');
@@ -7242,6 +7151,15 @@ function renderFis(i){
   txt+='\n'+SEP+'\nÖdeme Şekli: '+(i.odemeYontemi||'Nakit')+'\nÖdeme Durumu: '+i.statu+'\n'+SEP+'\nTOPLAM: '+fmtTL(i.tutar);
   if(taksitSatirlar.length)txt+='\n'+SEP+'\nÖdeme Planı:\n'+taksitSatirlar.join('\n');
   txt+='\n'+SEP+'\nBizi tercih ettiğiniz için teşekkür ederiz.';
+  txt+='\n'+SEP;
+  txt+='\n⭐ BİZİ DEĞERLENDİRİN';
+  txt+='\nhttps://g.page/r/Cdq32mSn9e6KEBM/review';
+  txt+='\n\n🌐 BİZİ ZİYARET EDİN';
+  txt+='\nhttps://www.gunelektrikklima.com/';
+  txt+='\n\n📸 Instagram';
+  txt+='\nhttps://www.instagram.com/gunelektriklima';
+  txt+='\n\n👍 Facebook';
+  txt+='\nhttps://www.facebook.com/share/1DK8EYxqt6/';
   return txt;
 }
 
@@ -7840,6 +7758,12 @@ function reklamGrafikCiz(veri){
   // Zoom uygula
   const _rWrap=document.getElementById('reklam-grafik-scroll');
   const _rInner=document.getElementById('reklam-grafik-inner');
+  if(_rWrap&&_rInner&&canvas){
+    setTimeout(()=>{
+      const _rGunSayisi=grafikVerileri?.length||30;
+      _grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label');
+    },100);
+  }
   canvas.style.display='block';
   if(!veri.length){
     if(_reklamChart){_reklamChart.destroy();_reklamChart=null;}
@@ -7863,13 +7787,7 @@ function reklamGrafikCiz(veri){
   let donemBaslangic=new Date(bugunGraf);
   if(_reklamDonem==='dun'){donemBaslangic=new Date(dunGraf);}
   else if(_reklamDonem==='1yil'){donemBaslangic.setFullYear(donemBaslangic.getFullYear()-1);}
-  else{
-    if(_reklamDonem==='90gun'){donemBaslangic.setDate(donemBaslangic.getDate()-90);}
-    else if(_reklamDonem==='60gun'){donemBaslangic.setDate(donemBaslangic.getDate()-60);}
-    else if(_reklamDonem==='30gun'){donemBaslangic.setDate(donemBaslangic.getDate()-30);}
-    else if(_reklamDonem==='6ay'){donemBaslangic.setMonth(donemBaslangic.getMonth()-6);}
-    else{donemBaslangic.setDate(donemBaslangic.getDate()-7);}
-  }
+  else{const gs=_reklamDonem==='30gun'?30:7;donemBaslangic.setDate(donemBaslangic.getDate()-gs);}
   const donemBasStr=_reklamTarihStr(donemBaslangic);
 
   // Yeni parametreler: DB.islemler + reklam_manuel (dönem filtreli)
@@ -7975,10 +7893,6 @@ function reklamGrafikCiz(veri){
       scales,
     }
   });
-  if(_rWrap&&_rInner&&canvas){
-    const _rGunSayisi=grafikVerileri?.length||30;
-    setTimeout(()=>_grafikZoomUygula(_rWrap,_rInner,canvas,_rGunSayisi,_reklamZoom,'reklam-zoom-label'),150);
-  }
 }
 
 function reklamGrafikOzetCiz(veri){
@@ -16167,6 +16081,5 @@ if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
 }
 </script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
