@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <!-- v202607191712 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#060606">
@@ -3413,17 +3412,13 @@ async function startApp(){
 // ============================================================ VERİTABANI
 let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[],projeler:[],teklifler:[],butceLimitler:[],bankaKredileri:[],krediOdemeleri:[],tavsiyeler:[]};
 
-let _islemOffset=0,_islemTumYuklendi=false;
-async function refreshTablo(tablo){try{if(tablo==='islemler'){const r=await sbFetch('islemler?order=tarih.desc&select=*&limit=50').catch(()=>[]);if(r){_islemOffset=0;_islemTumYuklendi=r.length<50;DB.islemler=r.map(i=>({id:i.id,tarih:i.tarih,tip:i.tip,statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i['not']||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null,islemKaynagi:i.islem_kaynagi||'',groupId:i.group_id||null}));renderIslemler();const b=document.getElementById('btn-daha-fazla-islem');if(b)b.style.display=_islemTumYuklendi?'none':'block';}}else if(tablo==='kisiler'){const r=await sbFetch('kisiler?order=isim.asc&select=*').catch(()=>[]);if(r){DB.kisiler=r.map(k=>({id:k.id,isim:k.isim,tip:k.tip,kapsam:k.kapsam||'Hepsi',tel:k.tel||'',adres:k.adres||'',vergiNo:k.vergi_no||'',vergiDairesi:k.vergi_dairesi||'',firmaUnvan:k.firma_unvan||'',iban:k.iban||'',bankaAdi:k.banka_adi||'',efatura:k.efatura||false,not:k['not']||'',yildiz:k.yildiz||false}));renderRehber();}}else if(tablo==='odemeler'){const r=await sbFetch('odemeler?order=tarih.desc&select=*&limit=50').catch(()=>[]);if(r) DB.odemeler=r.map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,tutar:parseFloat(o.tutar)||0,tip:o.tip||'',not:o.not||'',islemId:o.islem_id||null}));}else if(tablo==='stok'){const r=await sbFetch('stok?order=ad.asc&select=*').catch(()=>[]);if(r) DB.stok=r.map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,alisFiyat:parseFloat(s.alis_fiyat)||0}));}}catch(e){console.warn('refreshTablo:',e);}}
-async function dhaFazlaIslemYukle(){if(_islemTumYuklendi)return;const btn=document.getElementById('btn-daha-fazla-islem');if(btn){btn.disabled=true;btn.textContent='Yükleniyor...';}_islemOffset+=50;const r=await sbFetch('islemler?order=tarih.desc&select=*&limit=50&offset='+_islemOffset).catch(()=>[]);if(!r||r.length<50)_islemTumYuklendi=true;if(r&&r.length){DB.islemler=[...DB.islemler,...r.map(i=>({id:i.id,tarih:i.tarih,tip:i.tip,statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i['not']||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null,islemKaynagi:i.islem_kaynagi||'',groupId:i.group_id||null}))];renderIslemler();}if(btn){btn.disabled=false;btn.textContent='⬇ Daha Fazla (50)';btn.style.display=_islemTumYuklendi?'none':'block';}}
 async function loadDB(){
-  _islemOffset=0;_islemTumYuklendi=false;
   showLoading(true);
   try{
     const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri,tavsiyeler]=await Promise.all([
       sbFetch('kisiler?order=isim.asc&select=*'),
-      sbFetch('islemler?order=tarih.desc&select=*&limit=50'),
-      sbFetch('odemeler?order=tarih.desc&select=*&limit=50'),
+      sbFetch('islemler?order=tarih.desc&select=*'),
+      sbFetch('odemeler?order=tarih.desc&select=*'),
       sbFetch('yardimci_islemleri?order=tarih.desc&select=*'),
       sbFetch('takvim?order=tarih.asc&select=*'),
       sbFetch('stok?order=ad.asc&select=*'),
@@ -6095,7 +6090,7 @@ async function saveIslem(btn){
         })});
       }catch(e){console.error('Personel hak ediş yardımcı islem:',e);}
     }
-    await refreshTablo('islemler');closeModal('modal-islem');
+    await loadDB();closeModal('modal-islem');
     // Animasyon — gelir veya gider
     try{
       const _son=DB.islemler.find(i=>i.statu==='Tamamlandı')||DB.islemler[0];
@@ -6197,7 +6192,7 @@ async function saveBorc(btn){
     }
 
     await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify([anaKayit,...taksitKayitlar])});
-    await refreshTablo('odemeler');closeModal('modal-borc');showToast('Finansman oluşturuldu','green');
+    await loadDB();closeModal('modal-borc');showToast('Finansman oluşturuldu','green');
   }catch(e){console.error(e);showToast('Hata: '+String(e?.message||e).substring(0,60),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -6249,7 +6244,7 @@ async function saveKisi(btn){
       else if(newK&&src==='vergi'){await loadDB();acSelectVergi({id:newK.id,isim:newK.isim,tip:newK.tip,vergiNo:newK.vergi_no||''});}
       showToast('Eklendi','green');
     }
-    await refreshTablo('kisiler');closeModal('modal-kisi');
+    await loadDB();closeModal('modal-kisi');
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
@@ -14841,7 +14836,7 @@ async function saveBorcOrKredi(btn){
         kisi_id:bankaKisiId||null,
         not:`${bankaAdi} ${krediTipi} kredisi — ${vade} ay`
       })});
-      await refreshTablo('odemeler');closeModal('modal-borc');renderKrediPanel();
+      await loadDB();closeModal('modal-borc');renderKrediPanel();
       showToast('✅ Kredi ve kasa kaydı oluşturuldu','green');
     }catch(e){showToast('Hata: '+e.message,'red');}
     finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -16062,9 +16057,11 @@ function reklamGrafikZoom(yon){
 
 // Tema başlangıç
 try{initTema();}catch(e){console.error('initTema hatası:',e);}
-// bg-circuit devre dışı
+try{initBgCircuit();}catch(e){console.error('initBgCircuit hatası:',e);}
 // Garanti: DOM tam yüklendiğinde de tekrar dene (script sırası garantisi için)
-// bg-circuit devre dışı
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
+}
 </script>
 </body>
 </html>
