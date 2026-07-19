@@ -2544,9 +2544,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="modal-close" onclick="closeModal('modal-yaklasan')">✕</button>
     </div>
     <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:8px;" id="yaklasan-content"></div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-yaklasan')">Kapat</button>
-      <button class="btn btn-primary btn-full" onclick="closeModal('modal-yaklasan');goPage('takvim')">📅 Takvime Git</button>
+    <div class="modal-foot" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-yaklasan')" style="flex:1;min-width:100px;">✕ Kapat</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('takvim')" style="flex:1;min-width:100px;">📅 Takvim</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');window.location.href='evrak.html'" style="flex:1;min-width:100px;">📄 Evraklar</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('banka')" style="flex:1;min-width:100px;">🏦 Hesaplar</button>
     </div>
   </div>
 </div>
@@ -9247,9 +9249,10 @@ async function yaklaşanUyariGoster(){
   // Evrak bildirimlerini çek
   let evrakBildirimler=[];
   try{
-    const [evraklar,odemeler]=await Promise.all([
+    const [evraklar,odemeler,kisiler]=await Promise.all([
       sbFetch('sirket_evraklar?order=created_at.desc').catch(()=>[]),
-      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[])
+      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[]),
+      sbFetch('kisiler?select=id,isim,firma_unvan').catch(()=>[])
     ]);
     const bugun=new Date();bugun.setHours(0,0,0,0);
     const bugunStr=bugun.toISOString().slice(0,10);
@@ -9265,17 +9268,17 @@ async function yaklaşanUyariGoster(){
         return false;
       });
       if(buDonemOdendi) continue;
-      const adi=evrakAdiErp(e);
+      const adi=evrakAdiErp(e,kisiler);
       let ilkGun=null,sonGun=null;
       if(dongu==='Aylık'){
         ilkGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1);
         sonGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||15);
-        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bas)||1);sonGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bit)||15);}
+        // Tarihi geçmişse sonraki aya atma - tarihGecti true olsun
       } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
         const [ba,bg]=bas.split('-');const [bia,big]=bit.split('-');
         ilkGun=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg)||1);
         sonGun=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big)||1);
-        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear()+1,parseInt(ba)-1,parseInt(bg)||1);sonGun=new Date(bugun.getFullYear()+1,parseInt(bia)-1,parseInt(big)||1);}
+        // Yıllık tarihi geçmişse sonraki yıla atma - tarihGecti true olsun
       } else continue;
       ilkGun.setHours(0,0,0,0);sonGun.setHours(0,0,0,0);
       const sonGunStr=sonGun.toISOString().slice(0,10);
@@ -16325,17 +16328,25 @@ function evrakPopupGoster(mesaj, tip, evrakId){
   setTimeout(()=>{if(popup.parentNode)popup.remove();},10000);
 }
 
-function evrakAdiErp(e){
-  if(e.tur==='Fatura') return 'Fatura'+(e.alt_tur?' - '+e.alt_tur:'');
-  if(e.tur==='Araç') return 'Araç'+(e.alt_tur?' - '+e.alt_tur:'');
-  return e.tur||'Evrak';
+function evrakAdiErp(e,kisiler){
+  let temel;
+  if(e.tur==='Fatura')temel='Fatura'+(e.alt_tur?' - '+e.alt_tur:'');
+  else if(e.tur==='Araç')temel='Araç'+(e.alt_tur?' - '+e.alt_tur:'');
+  else temel=e.tur||'Evrak';
+  if(kisiler&&e.kisi_id){
+    const k=kisiler.find(k=>String(k.id)===String(e.kisi_id));
+    const kAdi=k?.isim||k?.firma_unvan||'';
+    if(kAdi)return kAdi+' — '+temel;
+  }
+  return temel;
 }
 
 async function erpEvrakBildirimKontrol(){
   try{
-    const [evraklar,odemeler]=await Promise.all([
+    const [evraklar,odemeler,kisiler]=await Promise.all([
       sbFetch('sirket_evraklar?order=created_at.desc').catch(()=>[]),
-      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[])
+      sbFetch('sirket_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[]),
+      sbFetch('kisiler?select=id,isim,firma_unvan').catch(()=>[])
     ]);
     if(!evraklar||!evraklar.length) return;
     const bugun=new Date();bugun.setHours(0,0,0,0);
@@ -16354,17 +16365,17 @@ async function erpEvrakBildirimKontrol(){
         return false;
       });
       if(buDonemOdendi) continue;
-      const adi=evrakAdiErp(e);
+      const adi=evrakAdiErp(e,kisiler);
       let ilkGun=null,sonGun=null;
       if(dongu==='Aylık'){
         ilkGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1);
         sonGun=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||15);
-        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bas)||1);sonGun=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bit)||15);}
+        // Tarihi geçmişse sonraki aya atma - tarihGecti true olsun
       } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
         const [ba,bg]=bas.split('-');const [bia,big]=bit.split('-');
         ilkGun=new Date(bugun.getFullYear(),parseInt(ba)-1,parseInt(bg)||1);
         sonGun=new Date(bugun.getFullYear(),parseInt(bia)-1,parseInt(big)||1);
-        if(sonGun<bugun){ilkGun=new Date(bugun.getFullYear()+1,parseInt(ba)-1,parseInt(bg)||1);sonGun=new Date(bugun.getFullYear()+1,parseInt(bia)-1,parseInt(big)||1);}
+        // Yıllık tarihi geçmişse sonraki yıla atma - tarihGecti true olsun
       } else continue;
       ilkGun.setHours(0,0,0,0);sonGun.setHours(0,0,0,0);
       const sonGunStr=sonGun.toISOString().slice(0,10);
