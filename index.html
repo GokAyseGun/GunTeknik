@@ -552,7 +552,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password">
       <div class="auth-err" id="err-pass"></div>
     </div>
-    <button class="btn-auth" id="btn-giris" onclick="doLogin()" disabled>Giriş Yap</button>
+    <button class="btn-auth" id="btn-giris" onclick="doLogin()">Giriş Yap</button>
   </div>
 </div>
 
@@ -2922,6 +2922,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <script>"use strict";
+
 // ============================================================ SUPABASE
 const SB_URL='https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
@@ -3329,12 +3330,6 @@ async function loadUserRol(){
   }catch(e){USER_ROL='admin';}
 }
 
-// Script yüklenince giriş butonunu etkinleştir
-document.addEventListener('DOMContentLoaded',()=>{
-  const btn=document.getElementById('btn-giris');
-  if(btn)btn.disabled=false;
-});
-
 async function checkSession(){
   const token=localStorage.getItem('sb_token');
   const user=localStorage.getItem('sb_user');
@@ -3468,7 +3463,7 @@ async function refreshTablo(tablo){
       const r=await sbFetch('islemler?order=tarih.desc&select=*&limit=50').catch(()=>[]);
       if(r){_islemOffset=0;_islemTumYuklendi=r.length<50;
         DB.islemler=r.map(i=>({id:i.id,tarih:i.tarih,tip:i.tip,statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i['not']||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null,islemKaynagi:i.islem_kaynagi||'',groupId:i.group_id||null}));
-        renderIslemListesi();}
+        renderIslemler();}
     } else if(tablo==='kisiler'){
       const r=await sbFetch('kisiler?order=isim.asc&select=*').catch(()=>[]);
       if(r) DB.kisiler=r.map(k=>({id:k.id,isim:k.isim,tip:k.tip,kapsam:k.kapsam||'Hepsi',tel:k.tel||'',adres:k.adres||'',vergiNo:k.vergi_no||'',vergiDairesi:k.vergi_dairesi||'',firmaUnvan:k.firma_unvan||'',iban:k.iban||'',bankaAdi:k.banka_adi||'',efatura:k.efatura||false,not:k['not']||'',yildiz:k.yildiz||false}));
@@ -3493,7 +3488,7 @@ async function dhaFazlaIslemYukle(){
   if(!r||r.length<50)_islemTumYuklendi=true;
   if(r&&r.length){
     DB.islemler=[...DB.islemler,...r.map(i=>({id:i.id,tarih:i.tarih,tip:i.tip,statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i['not']||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null,islemKaynagi:i.islem_kaynagi||'',groupId:i.group_id||null}))];
-    renderIslemListesi();
+    renderIslemler();
   }
   if(btn){btn.disabled=false;btn.textContent='⬇ Daha Fazla (50)';btn.style.display=_islemTumYuklendi?'none':'block';}
 }
@@ -4938,6 +4933,8 @@ function renderIslemler(){
     </div>`;
   }).join('');
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
+
+  const _dfw=document.getElementById('btn-daha-fazla-islem');if(_dfw)_dfw.style.display=(_islemTumYuklendi||DB.islemler.length<50)?'none':'block';
 }
 
 async function showIslemDetay(id){
