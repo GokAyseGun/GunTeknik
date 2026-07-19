@@ -903,9 +903,16 @@ function evrakDurum(e){
 }
 
 function evrakAdi(e){
-  if(e.tur==='Fatura')return 'Fatura'+(e.alt_tur?' - '+e.alt_tur:'');
-  if(e.tur==='Araç')return 'Araç'+(e.alt_tur?' - '+e.alt_tur:'');
-  return e.tur||'Evrak';
+  let temel;
+  if(e.tur==='Fatura')temel='Fatura'+(e.alt_tur?' - '+e.alt_tur:'');
+  else if(e.tur==='Araç')temel='Araç'+(e.alt_tur?' - '+e.alt_tur:'');
+  else temel=e.tur||'Evrak';
+  if(e.kisi_id&&DB.kisiler){
+    const k=DB.kisiler.find(k=>String(k.id)===String(e.kisi_id));
+    const kAdi=k?.isim||k?.firma_unvan||'';
+    if(kAdi)return kAdi+' — '+temel;
+  }
+  return temel;
 }
 
 // ════ FİLTRE ════
