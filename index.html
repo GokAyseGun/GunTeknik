@@ -2921,8 +2921,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
 </div>
 
-<script>"use strict";
-
+<script>
 // ============================================================ SUPABASE
 const SB_URL='https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
@@ -3320,6 +3319,8 @@ async function doLogin(){
   }catch(e){document.getElementById('err-pass').textContent='Bağlantı hatası';}
   finally{btn.disabled=false;btn.textContent='Giriş Yap';}
 }
+window.doLogin=doLogin;
+
 document.addEventListener('keydown',e=>{if(document.getElementById('auth-screen').style.display!=='none'&&e.key==='Enter')doLogin();});
 
 async function loadUserRol(){
@@ -15485,3 +15486,31 @@ function reklamGrafikZoom(yon){
 try{initTema();}catch(e){console.error('initTema hatası:',e);}
 // bg-circuit kaldırıldı
 // bg-circuit kaldırıldı
+// Global fonksiyon atamaları (onclick erişimi için)
+if(typeof goPage!=="undefined")window.goPage=goPage;
+if(typeof openModal!=="undefined")window.openModal=openModal;
+if(typeof closeModal!=="undefined")window.closeModal=closeModal;
+if(typeof showToast!=="undefined")window.showToast=showToast;
+if(typeof saveIslem!=="undefined")window.saveIslem=saveIslem;
+if(typeof saveKisi!=="undefined")window.saveKisi=saveKisi;
+if(typeof deleteKisi!=="undefined")window.deleteKisi=deleteKisi;
+if(typeof showKisiDetay!=="undefined")window.showKisiDetay=showKisiDetay;
+if(typeof openIslemModal!=="undefined")window.openIslemModal=openIslemModal;
+if(typeof openBorcModal!=="undefined")window.openBorcModal=openBorcModal;
+if(typeof selectIrsaliye!=="undefined")window.selectIrsaliye=selectIrsaliye;
+if(typeof sendWhatsapp!=="undefined")window.sendWhatsapp=sendWhatsapp;
+if(typeof renderFis!=="undefined")window.renderFis=renderFis;
+if(typeof googleAktar!=="undefined")window.googleAktar=googleAktar;
+if(typeof googOnaySecim!=="undefined")window.googOnaySecim=googOnaySecim;
+if(typeof yaklaşanUyariGoster!=="undefined")window.yaklaşanUyariGoster=yaklaşanUyariGoster;
+if(typeof dhaFazlaIslemYukle!=="undefined")window.dhaFazlaIslemYukle=dhaFazlaIslemYukle;
+if(typeof acSearch!=="undefined")window.acSearch=acSearch;
+if(typeof acSelect!=="undefined")window.acSelect=acSelect;
+if(typeof acFilter!=="undefined")window.acFilter=acFilter;
+if(typeof acGetKisiler!=="undefined")window.acGetKisiler=acGetKisiler;
+if(typeof islemKalemEkle!=="undefined")window.islemKalemEkle=islemKalemEkle;
+if(typeof calcIslemToplam!=="undefined")window.calcIslemToplam=calcIslemToplam;
+if(typeof saveStok!=="undefined")window.saveStok=saveStok;
+if(typeof deleteStok!=="undefined")window.deleteStok=deleteStok;
+if(typeof saveProje!=="undefined")window.saveProje=saveProje;
+if(typeof deleteProje!=="undefined")window.deleteProje=deleteProje;
