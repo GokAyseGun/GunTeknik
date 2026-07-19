@@ -552,7 +552,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password">
       <div class="auth-err" id="err-pass"></div>
     </div>
-    <button class="btn-auth" id="btn-giris" onclick="doLogin()">Giriş Yap</button>
+    <button class="btn-auth" id="btn-giris" onclick="doLogin()" disabled>Giriş Yap</button>
   </div>
 </div>
 
@@ -3328,6 +3328,12 @@ async function loadUserRol(){
     else{await sbFetch('kullanici_profiller',{method:'POST',prefer:'return=minimal',body:JSON.stringify({id:CURRENT_USER.id,isim:CURRENT_USER.email,rol:'admin'})});USER_ROL='admin';}
   }catch(e){USER_ROL='admin';}
 }
+
+// Script yüklenince giriş butonunu etkinleştir
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.getElementById('btn-giris');
+  if(btn)btn.disabled=false;
+});
 
 async function checkSession(){
   const token=localStorage.getItem('sb_token');
