@@ -748,34 +748,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;"></span>Not/Bilgi</span>
       </div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;">
-        <div class="sec-title mt0">Ajanda Ekle</div>
-        <div class="fg">
-          <div style="display:flex;gap:8px;">
-            <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="tk-tarih"></div>
-            <div class="fi" style="flex:1"><label>Tür</label>
-              <select id="tk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
-                <option value="Bilgi">Not</option><option value="İş">İş</option><option value="Alacak">Alacak</option><option value="Verecek">Verecek</option>
-              </select>
-            </div>
-          </div>
-          <div class="fi"><label>Başlık / Kişi</label>
-            <div style="position:relative;">
-              <input type="text" id="tk-baslik" placeholder="Başlık yaz veya kişi seç..." autocomplete="off"
-                oninput="tkKisiAra(this.value)" onfocus="tkKisiAra(this.value)">
-              <input type="hidden" id="tk-kisi-id">
-              <div id="tk-kisi-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:100;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <div class="fi" style="flex:1;"><label>Tarih</label><input type="date" id="tk-tarih-ek"></div>
-            <div class="fi" style="width:110px;"><label>Saat</label><input type="time" id="tk-saat" placeholder="09:00"></div>
-          </div>
-          <div class="fi"><label>Detay / Not</label><textarea id="tk-not" rows="2" placeholder="Notlar, açıklama..."></textarea></div>
-          <button class="btn btn-primary btn-full" onclick="saveTakvim(this)">Ajandaya Ekle</button>
-        </div>
-      </div>
-      
+
 <!-- Saat Paneli -->
 <div id="saat-paneli" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -784,6 +757,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   </div>
   <div id="saat-panel-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;"></div>
 </div>
+      <button class="btn btn-primary btn-full" onclick="openModal('modal-ajanda-ekle')" style="margin-bottom:16px;">
+  ＋ Ajanda Ekle
+</button>
+
+      
 <div class="sec-title">Yaklaşan Ajanda</div>
       <div class="stagger-wrap" id="tk-list"></div>
       <!-- Takvim Senkronizasyon Butonu -->
@@ -2861,6 +2839,49 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <!-- Ajanda/Takvim Detay-Düzenle Modal -->
+
+<!-- Ajanda Ekle Modalı -->
+<div class="modal-ov" id="modal-ajanda-ekle">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 class="modal-title">Ajanda Ekle</h3>
+      <button class="modal-close" onclick="closeModal('modal-ajanda-ekle')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <div style="display:flex;gap:8px;">
+          <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="tk-tarih-ek"></div>
+          <div class="fi" style="width:110px;"><label>Saat</label><input type="time" id="tk-saat" placeholder="09:00"></div>
+        </div>
+        <div class="fi">
+          <label>Tür</label>
+          <select id="tk-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+            <option value="Bilgi">Not</option>
+            <option value="İş">İş</option>
+            <option value="Alacak">Alacak</option>
+            <option value="Verecek">Verecek</option>
+          </select>
+        </div>
+        <div class="fi"><label>Başlık / Kişi</label>
+          <div style="position:relative;">
+            <input type="text" id="tk-baslik" placeholder="Başlık yaz veya müşteri seç..." autocomplete="off"
+              oninput="tkKisiAra(this.value)" onfocus="tkKisiAra(this.value)">
+            <input type="hidden" id="tk-kisi-id">
+            <div id="tk-kisi-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:200;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
+          </div>
+        </div>
+        <div class="fi"><label>Detay / Not</label>
+          <textarea id="tk-not" rows="3" placeholder="Notlar, açıklama..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ajanda-ekle')">İptal</button>
+      <button class="btn btn-primary" onclick="saveTakvim(this)">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-ov" id="modal-tak-detay">
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
@@ -7152,7 +7173,7 @@ async function saveTakvim(btn){
     document.getElementById('tk-not').value='';
     if(document.getElementById('tk-saat'))document.getElementById('tk-saat').value='';
     if(kisiIdEl)kisiIdEl.value='';
-    showToast('Ajandaya eklendi','green');
+    closeModal('modal-ajanda-ekle');showToast('Ajandaya eklendi','green');
     renderCalendar();renderTakvimList();
   }catch(e){console.error(e);showToast('Hata: '+String(e?.message||e).slice(0,50),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -7313,6 +7334,7 @@ function showDayDetails(ds){
   titleEl.dataset.tarih=ds;
   document.getElementById('gun-detay-content').innerHTML=html;
   openModal('modal-gun-detay');
+  renderSaatPaneli(ds);
 }
 
 // ============================================================ İRSALİYE / FİŞ
