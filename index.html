@@ -3414,7 +3414,7 @@ async function startApp(){
   // Teklif gerçek zamanlı takip
   teklifPollBaslat();
   // Yaklaşan ödeme + bütçe kontrolü
-  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},1500);
+  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster().catch(()=>{});butceAsimiKontrol();},1500);
   // Sistem bildirim kontrolü
   setTimeout(bildirimKontrol,3000);
   setInterval(bildirimKontrol,15*60*1000);
@@ -9030,44 +9030,151 @@ function desenHaklariGuncelle(){
 
 // ============================================================ YAKLAŞAN ÖDEME UYARISI
 
-function yaklaşanUyariGoster(){
-  const now=new Date();
+async function yaklaşanUyariGoster(){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const bugunStr=now.toISOString().slice(0,10);
   const hafta=new Date(now.getTime()+7*24*60*60*1000);
 
-  // Vadeli işlemleri filtrele — 7 gün içinde veya geçmiş
-  const yaklasanlar=DB.islemler.filter(i=>{
+  // ── 1. Bekliyor statüsündeki işlemler (mevcut) ──
+  const yaklasanIslemler=DB.islemler.filter(i=>{
     if(i.statu!=='Bekliyor')return false;
-    const t=new Date(i.tarih);
-    return t<=hafta;// Geçmiş veya 7 gün içi
+    const t=new Date(i.tarih); t.setHours(0,0,0,0);
+    return t<=hafta;
   }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
 
-  if(!yaklasanlar.length)return;// Yaklaşan yoksa modal açma
+  // ── 2. Banka kredisi taksitleri (1 hafta içi veya geçmiş) ──
+  const krediUyarilari=[];
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
+    if(!k.ilkTaksitTarihi||!k.taksitGunu)return;
+    // Bu ayın taksit tarihi
+    const taksitTarihi=new Date(now.getFullYear(),now.getMonth(),k.taksitGunu);
+    taksitTarihi.setHours(0,0,0,0);
+    // Bu ay ödendi mi? krediOdemeleri'ne bak
+    const buAyOdendi=(DB.krediOdemeleri||[]).some(o=>{
+      if(String(o.krediId)!==String(k.id))return false;
+      const od=new Date(o.odemeTarihi); od.setHours(0,0,0,0);
+      return od.getFullYear()===now.getFullYear()&&od.getMonth()===now.getMonth();
+    });
+    if(buAyOdendi)return;
+    const gecmis=taksitTarihi<now;
+    const yakin=taksitTarihi>=now&&taksitTarihi<=hafta;
+    if(gecmis||yakin){
+      const gunFark=Math.round((taksitTarihi-now)/(24*60*60*1000));
+      krediUyarilari.push({id:'k_'+k.id,tip:'kredi',baslik:k.bankaAdi+' Kredisi',
+        detay:'Taksit: '+k.taksitGunu+'. gün',tutar:k.taksitTutari,
+        tarih:taksitTarihi.toISOString().slice(0,10),renk:gecmis?'var(--red)':'var(--amber)',
+        etiket:gecmis?'Geçmiş!':(gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra'),
+        gecmis:gecmis});
+    }
+  });
 
-  const gecmis=yaklasanlar.filter(i=>new Date(i.tarih)<now);
-  const yakin=yaklasanlar.filter(i=>new Date(i.tarih)>=now);
+  // ── 3. Evrak ödemeleri (Supabase'den çek) ──
+  const evrakUyarilari=[];
+  try{
+    const [evraklar,evrakOdemeler]=await Promise.all([
+      sbFetch('sirket_evraklar?select=id,tur,alt_tur,kisi_id,odeme_dongusu,periyot_bas,periyot_bit&order=created_at.desc').catch(()=>[]),
+      sbFetch('sirket_evrak_odemeler?select=evrak_id,odeme_tarihi&order=odeme_tarihi.desc').catch(()=>[])
+    ]);
+    (evraklar||[]).forEach(e=>{
+      const dongu=e.odeme_dongusu||'Yok';
+      const bas=e.periyot_bas||'';
+      const bit=e.periyot_bit||'';
+      if(dongu==='Yok'||!bas||!bit)return;
+      // Bu dönem ödendi mi?
+      const buDonemOdendi=(evrakOdemeler||[]).some(o=>{
+        if(String(o.evrak_id)!==String(e.id))return false;
+        const od=new Date(o.odeme_tarihi); od.setHours(0,0,0,0);
+        if(dongu==='Aylık') return od.getFullYear()===now.getFullYear()&&od.getMonth()===now.getMonth();
+        if(dongu==='Yıllık') return od.getFullYear()===now.getFullYear();
+        return false;
+      });
+      if(buDonemOdendi)return;
+      // Dönem bitiş tarihini hesapla
+      let sonTarihi=null;
+      if(dongu==='Aylık'){
+        sonTarihi=new Date(now.getFullYear(),now.getMonth(),parseInt(bit)||15);
+      }else if(dongu==='Yıllık'||dongu==='Sezonluk'){
+        const [bitAy,bitGun]=(bit||'').split('-');
+        sonTarihi=new Date(now.getFullYear(),parseInt(bitAy||1)-1,parseInt(bitGun||1));
+      }
+      if(!sonTarihi)return;
+      sonTarihi.setHours(0,0,0,0);
+      const gecmis=sonTarihi<now;
+      const donemIcinde=!gecmis&&sonTarihi>=now;
+      const yakin=donemIcinde&&sonTarihi<=hafta;
+      if(!gecmis&&!yakin)return;
+      const k=DB.kisiler.find(k2=>String(k2.id)===String(e.kisi_id));
+      const kAdi=k?.firmaUnvan||k?.isim||'';
+      const baslik=(kAdi?kAdi+' — ':'')+( e.tur||'Evrak')+(e.alt_tur?' ('+e.alt_tur+')':'');
+      const gunFark=Math.round((sonTarihi-now)/(24*60*60*1000));
+      evrakUyarilari.push({
+        id:'e_'+e.id,tip:'evrak',baslik:baslik,
+        detay:'Son: '+sonTarihi.toLocaleDateString('tr-TR'),tutar:0,
+        tarih:sonTarihi.toISOString().slice(0,10),renk:gecmis?'var(--red)':'var(--amber)',
+        etiket:gecmis?'Vadesi geçti!':(gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra'),
+        gecmis:gecmis
+      });
+    });
+  }catch(e2){console.warn('Evrak bildirim:',e2);}
 
-  const altBaslik=`${gecmis.length>0?gecmis.length+' vadesi geçmiş · ':''}${yakin.length} yaklaşan işlem`;
+  // ── Tüm uyarıları birleştir ──
+  const tumGecmisIslem=yaklasanIslemler.filter(i=>new Date(i.tarih)<now);
+  const tumYakinIslem=yaklasanIslemler.filter(i=>new Date(i.tarih)>=now);
+  const tumGecmis=[...tumGecmisIslem.map(i=>({_type:'islem',data:i})),
+    ...krediUyarilari.filter(x=>x.gecmis).map(x=>({_type:'kredi',data:x})),
+    ...evrakUyarilari.filter(x=>x.gecmis).map(x=>({_type:'evrak',data:x}))];
+  const tumYakin=[...tumYakinIslem.map(i=>({_type:'islem',data:i})),
+    ...krediUyarilari.filter(x=>!x.gecmis).map(x=>({_type:'kredi',data:x})),
+    ...evrakUyarilari.filter(x=>!x.gecmis).map(x=>({_type:'evrak',data:x}))];
+
+  if(!tumGecmis.length&&!tumYakin.length)return;
+
+  // ── Başlık ──
+  const altBaslik=(tumGecmis.length?tumGecmis.length+' vadesi geçmiş · ':'')+tumYakin.length+' yaklaşan';
   document.getElementById('yaklasan-alt-baslik').textContent=altBaslik;
 
-  const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
+  // ── HTML oluştur ──
   let html='';
 
-  if(gecmis.length){
-    html+=`<div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:4px;">⚠️ Vadesi Geçmiş</div>`;
-    gecmis.forEach(i=>{
-      const k=getKisi(i.kisiId);
-      const pos=i.tip==='Gelir';
-      html+=_yaklaşanSatir(i,k,pos,'var(--red)');
-    });
+  function _satir(type,data,renk,etiket){
+    if(type==='islem'){
+      const k=getKisi(data.kisiId);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${renk};border-radius:var(--r-sm);cursor:pointer;gap:8px;"
+        onclick="closeModal('modal-yaklasan');showIslemDetay(${data.id})">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k?.isim||'—'}</div>
+          <div style="font-size:11px;color:var(--text2);">${dtS(data.tarih)} · ${data.kat||data.tip}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-weight:700;font-size:14px;color:${renk};" class="num">${fmt(data.tutar)}</div>
+          ${etiket?`<div style="font-size:10px;color:var(--text3);">${etiket}</div>`:''}
+        </div>
+      </div>`;
+    }else{
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${renk};border-radius:var(--r-sm);cursor:pointer;gap:8px;"
+        onclick="closeModal('modal-yaklasan');${type==='kredi'?"goPage('banka')":"window.location.href='evrak.html'"}">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:13px;">${data.baslik}</div>
+          <div style="font-size:11px;color:var(--text2);">${data.tarih} · ${data.detay}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          ${data.tutar?`<div style="font-weight:700;font-size:14px;color:${renk};" class="num">${fmt(data.tutar)}</div>`:''}
+          ${etiket?`<div style="font-size:10px;color:var(--text3);">${etiket}</div>`:''}
+        </div>
+      </div>`;
+    }
   }
-  if(yakin.length){
-    html+=`<div style="font-size:11px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:${gecmis.length?'8px':0} 0 4px;">📅 Bu Hafta</div>`;
-    yakin.forEach(i=>{
-      const k=getKisi(i.kisiId);
-      const pos=i.tip==='Gelir';
-      const gunFark=Math.ceil((new Date(i.tarih)-now)/(24*60*60*1000));
-      const etiket=gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra';
-      html+=_yaklaşanSatir(i,k,pos,'var(--amber)',etiket);
+
+  if(tumGecmis.length){
+    html+=`<div style="font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:4px;">⚠️ Vadesi Geçmiş (${tumGecmis.length})</div>`;
+    tumGecmis.forEach(({_type,data})=>{ html+=_satir(_type,data,'var(--red)',data.etiket||'Geçmiş!'); });
+  }
+  if(tumYakin.length){
+    html+=`<div style="font-size:11px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:${tumGecmis.length?'8px':0} 0 4px;">📅 Bu Hafta (${tumYakin.length})</div>`;
+    tumYakin.forEach(({_type,data})=>{
+      const gunFark=Math.round((new Date(data.tarih)-now)/(24*60*60*1000));
+      const etiket=data.etiket||(gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra');
+      html+=_satir(_type,data,'var(--amber)',etiket);
     });
   }
 
