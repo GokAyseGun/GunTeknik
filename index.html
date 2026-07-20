@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<!DOCTYP
+<script src="https://accounts.google.com/gsi/client" async defer></script>E html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -3589,6 +3590,8 @@ function localDateStr(tarih){
   const d=new Date(tarih);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+function localToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function localDateObjStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 // Yerel tarih ile ISO string üret (gece yarısı kaymasını önler)
 function localISOString(date){
   const d=date||new Date();
@@ -5145,7 +5148,7 @@ async function openProjeTamamlaModal(projeId){
   document.getElementById('ptm-proje-id').value=projeId;
   document.getElementById('ptm-proje-adi').textContent=p.isim;
   document.getElementById('ptm-tutar').value=p.teklifFiyat||'';
-  document.getElementById('ptm-tarih').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ptm-tarih').value=localToday();
   document.getElementById('ptm-not').value='';
   document.getElementById('ptm-fatura').checked=false;
   _ptmCache={malzemeler,iscilikler:[],giderler:[],personeller};
@@ -5264,7 +5267,7 @@ async function projejiTamamla(btn){
     const tutar=parseFloat(document.getElementById('ptm-tutar').value)||0;
     if(tutar<=0){showToast('Gerçekleşen tutar girin','red');if(btn)btn.disabled=false;return;}
     const odeme=document.getElementById('ptm-odeme').value||'Nakit';
-    const tarih=document.getElementById('ptm-tarih').value||new Date().toISOString().split('T')[0];
+    const tarih=document.getElementById('ptm-tarih').value||localToday();
     const not=document.getElementById('ptm-not').value||'';
     const faturaVar=document.getElementById('ptm-fatura').checked;
 
@@ -6125,7 +6128,7 @@ async function saveIslem(btn){
       // Çoklu stok satırları kaydet
       const stokSatirlar=getStokSatirlari();
       for(const satir of stokSatirlar){
-        await sbFetch('stok_hareketleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({stok_id:satir.stokId,islem_id:result[0].id,hareket_tipi:'Çıkış',miktar:satir.miktar,"not":'İşlem ile kullanıldı',tarih:tarih.toISOString()})});
+        await sbFetch('stok_hareketleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({stok_id:satir.stokId,islem_id:result[0].id,hareket_tipi:'Çıkış',miktar:satir.miktar,"not":'İşlem ile kullanıldı',tarih:tarih.toISOString().replace(/T\d{2}:\d{2}:\d{2}/,"T12:00:00").replace(/T\d{2}:\d{2}:\d{2}/,"T12:00:00")})});
         const s=DB.stok.find(x=>x.id===satir.stokId);
         if(s)await sbFetch('stok?id=eq.'+satir.stokId,{method:'PATCH',body:JSON.stringify({miktar:Math.max(0,s.miktar-satir.miktar)})});
       }
@@ -6155,7 +6158,7 @@ async function saveIslem(btn){
         if(kdvTutar>0){
           const vTip=tip==='Gelir'?'giden':'gelen';
           await sbFetch('vergi_faturalari',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-            tarih:tarih.toISOString(),tip:vTip,fatura_no:kdvNo,
+            tarih:tarih.toISOString().replace(/T\d{2}:\d{2}:\d{2}/,"T12:00:00").replace(/T\d{2}:\d{2}:\d{2}/,"T12:00:00"),tip:vTip,fatura_no:kdvNo,
             firma:firma,vergi_no:faturaVergiNo,tutar:faturaToplam||tutar,kdv_tutar:kdvTutar,
             aciklama:(notDetay||'').substring(0,100),kaynak:'islem',islem_id:result[0].id
           })});
@@ -6167,7 +6170,7 @@ async function saveIslem(btn){
     const _hdPid=document.getElementById('mi-hakdis-personel-id')?.value;
     if(_hdPid&&document.getElementById('mi-altkat')?.value==='Personel Hak Ediş'){
       try{
-        const _hdTarih=dtVal||(new Date().toISOString().split('T')[0]);
+        const _hdTarih=dtVal||(localToday());
         await sbFetch('yardimci_islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
           personel_id:parseInt(_hdPid),tip:'Avans/Ödeme',tutar:tutar,
           tarih:_hdTarih,not:'İşlem girişi: Personel Hak Ediş ödemesi'
@@ -7053,15 +7056,20 @@ function renderSaatPaneli(tarihStr){
   const grid=document.getElementById('saat-panel-grid');
   const label=document.getElementById('saat-panel-tarih');
   if(!grid)return;
-  const bugunStr=new Date().toISOString().slice(0,10);
+  // Yerel tarih ve saat (UTC değil)
+  const simdi=new Date();
+  const bugunStr=simdi.getFullYear()+'-'+String(simdi.getMonth()+1).padStart(2,'0')+'-'+String(simdi.getDate()).padStart(2,'0');
   const hedef=tarihStr||bugunStr;
   const bugun=hedef===bugunStr;
   if(label){
     const d=new Date(hedef+'T12:00');
     label.textContent=d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
   }
-  const simdikiSaat=new Date().getHours();
-  const gunAjandalar=(DB.takvim||[]).filter(t=>t.tarih===hedef&&t.saat);
+  const simdikiSaat=simdi.getHours();
+  const gunAjandalar=(DB.takvim||[]).filter(t=>{
+    const tStr=t.tarih?(t.tarih.includes('T')?t.tarih.slice(0,10):t.tarih):'';
+    return tStr===hedef&&t.saat;
+  });
   const saatMap={};
   gunAjandalar.forEach(t=>{
     const s=parseInt((t.saat||'0').split(':')[0]);
@@ -7234,7 +7242,7 @@ function openAvansModal(personelId){
     bakiye<0?'Fazla ödeme yapılmış':
     'Bakiye sıfır';
   // Tarih bugün
-  document.getElementById('avans-tarih').value=new Date().toISOString().split('T')[0];
+  document.getElementById('avans-tarih').value=localToday();
   // Öneri: mevcut bakiye kadar (pozitifse)
   document.getElementById('avans-tutar').value=bakiye>0?bakiye.toFixed(2):'';
   document.getElementById('avans-not').value='';
@@ -9322,7 +9330,7 @@ function desenHaklariGuncelle(){
 
 async function yaklaşanUyariGoster(){
   const now=new Date(); now.setHours(0,0,0,0);
-  const bugunStr=now.toISOString().slice(0,10);
+  const bugunStr=localDateObjStr(now);
   const hafta=new Date(now.getTime()+7*24*60*60*1000);
 
   // ── 1. Bekliyor statüsündeki işlemler (mevcut) ──
@@ -9352,7 +9360,7 @@ async function yaklaşanUyariGoster(){
       const gunFark=Math.round((taksitTarihi-now)/(24*60*60*1000));
       krediUyarilari.push({id:'k_'+k.id,tip:'kredi',baslik:k.bankaAdi+' Kredisi',
         detay:'Taksit: '+k.taksitGunu+'. gün',tutar:k.taksitTutari,
-        tarih:taksitTarihi.toISOString().slice(0,10),renk:gecmis?'var(--red)':'var(--amber)',
+        tarih:localDateObjStr(taksitTarihi),renk:gecmis?'var(--red)':'var(--amber)',
         etiket:gecmis?'Geçmiş!':(gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra'),
         gecmis:gecmis});
     }
@@ -9391,7 +9399,7 @@ async function yaklaşanUyariGoster(){
       }else return;
       ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
       const sonMs=son.getTime(); const ilkMs=ilk.getTime(); const nowMs=now.getTime();
-      const sonStr=son.toISOString().slice(0,10);
+      const sonStr=localDateObjStr(son);
       const k=DB.kisiler.find(k2=>String(k2.id)===String(e.kisi_id));
       const kAdi=k?.firmaUnvan||k?.isim||'';
       const baslik=(kAdi?kAdi+' — ':'')+( e.tur||'Evrak')+(e.alt_tur?' ('+e.alt_tur+')':'');
@@ -9812,7 +9820,7 @@ async function saveTeklif(btn){
     if(!kalemler.length){showToast('En az bir kalem girin','red');return;}
     const toplam=kalemler.reduce((a,k)=>a+k.toplam,0);
     const teklifKaynak=document.getElementById('teklif-islem-kaynagi')?.value||null;
-    const payload={kisi_id:kisiId,tarih:new Date(document.getElementById('teklif-tarih').value).toISOString(),gecerlilik_tarihi:document.getElementById('teklif-gecerlilik').value||null,kalemler:JSON.stringify(kalemler),toplam,aciklama:document.getElementById('teklif-aciklama').value,islem_kaynagi:teklifKaynak};
+    const payload={kisi_id:kisiId,tarih:document.getElementById('teklif-tarih').value+'T12:00:00.000Z',gecerlilik_tarihi:document.getElementById('teklif-gecerlilik').value||null,kalemler:JSON.stringify(kalemler),toplam,aciklama:document.getElementById('teklif-aciklama').value,islem_kaynagi:teklifKaynak};
     let teklifKayitId = id ? parseInt(id) : null;
     if(id){await sbFetch('teklifler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});}
     else{const r=await sbFetch('teklifler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});if(r&&r[0]){teklifKayitId=r[0].id;await guncelOnayToken(r[0].id);}}
@@ -14130,7 +14138,7 @@ async function teklifdenProjeOlustur(teklifId){
     return;
   }
   const k=getKisi(t.kisiId);
-  const bugun=new Date().toISOString().split('T')[0];
+  const bugun=localToday();
   const payload={
     isim:(k?k.isim+' — ':'')+new Date(t.tarih).toLocaleDateString('tr-TR')+' Projesi',
     musteri_id:t.kisiId||null,
@@ -14878,7 +14886,7 @@ function openKrediModal(id){
     document.getElementById('kredi-taksit-gunu').value=1;
     document.getElementById('kredi-tur').value='Ticari';
     document.getElementById('kredi-tipi').value='İhtiyaç';
-    document.getElementById('kredi-baslangic').value=new Date().toISOString().split('T')[0];
+    document.getElementById('kredi-baslangic').value=localToday();
   }
   openModal('modal-kredi');
 }
@@ -14897,7 +14905,7 @@ function krediTaksitHesapla(){
   if(bas){
     const d=new Date(bas);d.setMonth(d.getMonth()+1);
     const el2=document.getElementById('kredi-ilk-taksit');
-    if(el2&&!el2.value)el2.value=d.toISOString().split('T')[0];
+    if(el2&&!el2.value)el2.value=localDateObjStr(d);
   }
   krediOzetGoster(anapara,taksit,vade,faiz,parseInt(document.getElementById('kredi-odenen-taksit')?.value)||0);
 }
@@ -15049,7 +15057,7 @@ function openTaksitOdeModal(krediId){
   document.getElementById('to-kredi-id').value=krediId;
   document.getElementById('to-tutar').value=k.taksitTutari||'';
   document.getElementById('to-tutar').readOnly=true;
-  document.getElementById('to-tarih').value=new Date().toISOString().split('T')[0];
+  document.getElementById('to-tarih').value=localToday();
   document.getElementById('to-not').value='';
   document.getElementById('to-tam-mi').value='tam';
   const sonrakiNo=k.odenenTaksit+1;
@@ -15096,7 +15104,7 @@ async function taksitOde(btn){
     const k=DB.bankaKredileri.find(x=>x.id===krediId);if(!k)return;
     const tutar=parseFloat(document.getElementById('to-tutar').value)||k.taksitTutari;
     const yontem=document.getElementById('to-yontem').value;
-    const tarih=document.getElementById('to-tarih').value||new Date().toISOString().split('T')[0];
+    const tarih=document.getElementById('to-tarih').value||localToday();
     const not=document.getElementById('to-not').value||'';
     const taksitNo=k.odenenTaksit+1;
     const kat=k.krediTuru==='Ticari'?'İşletme Gideri':'Şahsi Gider';
@@ -15171,7 +15179,7 @@ function mbKrediHesapla(){
   if(bas){
     const d=new Date(bas);d.setMonth(d.getMonth()+1);
     const el2=document.getElementById('mb-kredi-ilk-taksit');
-    if(el2&&!el2.value)el2.value=d.toISOString().split('T')[0];
+    if(el2&&!el2.value)el2.value=localDateObjStr(d);
   }
   const toplamGeri=Math.round(taksit)*vade;
   const ozet=document.getElementById('mb-kredi-ozet');
@@ -15238,7 +15246,7 @@ async function saveBorcOrKredi(btn){
       const faiz=parseFloat(document.getElementById('mb-kredi-faiz').value)||0;
       const vade=parseInt(document.getElementById('mb-kredi-vade').value)||12;
       const taksit=parseFloat(document.getElementById('mb-kredi-taksit').value)||Math.round(anapara/vade);
-      const baslangic=document.getElementById('mb-kredi-baslangic').value||new Date().toISOString().split('T')[0];
+      const baslangic=document.getElementById('mb-kredi-baslangic').value||localToday();
       const ilkTaksit=document.getElementById('mb-kredi-ilk-taksit').value||'';
       const krediTuru=document.getElementById('mb-kredi-tur').value;
       const krediTipi=document.getElementById('mb-kredi-tipi').value;
@@ -15605,7 +15613,7 @@ function openSablonModal(id){
   const per=document.getElementById('sablon-periyot');
   if(per)per.value=s?.periyot||'Aylık';
   // Tarihler
-  document.getElementById('sablon-baslangic').value=s?.baslangic||new Date().toISOString().split('T')[0];
+  document.getElementById('sablon-baslangic').value=s?.baslangic||localToday();
   document.getElementById('sablon-bitis').value=s?.bitis||'';
   // Tip (gelir/gider)
   const tipVal=s?.tip||'Gider';
@@ -15693,13 +15701,13 @@ function sablonSonrakiTarih(baslangic, periyot, sonIslem){
     case 'Yıllık': next.setFullYear(next.getFullYear()+1); break;
     default: next.setMonth(next.getMonth()+1);
   }
-  return next.toISOString().split('T')[0];
+  return localDateObjStr(next);
 }
 
 async function sablonlariKontrolEt(){
   // Her loadDB'de çağrılır - vadesi gelen şablonları işler
   if(!DB.sablonlar||!DB.sablonlar.length)return;
-  const bugun=new Date().toISOString().split('T')[0];
+  const bugun=localToday();
   let islemYapildi=false;
   for(const s of DB.sablonlar){
     if(!s.aktif)continue;
@@ -15731,7 +15739,7 @@ function renderSablonlar(){
   }
   el.innerHTML=DB.sablonlar.map(s=>{
     const k=getKisi(s.kisiId);
-    const bugun=new Date().toISOString().split('T')[0];
+    const bugun=localToday();
     const sonraki=s.sonIslemTarihi
       ?sablonSonrakiTarih(s.baslangic,s.periyot,s.sonIslemTarihi)
       :s.baslangic;
@@ -15934,7 +15942,7 @@ function projeAraOdemeModal(projeId){
     <select id="pao-yontem" style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;">
       <option value="Nakit">💵 Nakit</option><option value="Kart">💳 Kart</option><option value="İBAN">🏦 Havale/EFT</option>
     </select>
-    <input type="date" id="pao-tarih" value="${new Date().toISOString().split('T')[0]}"
+    <input type="date" id="pao-tarih" value="${localToday()}"
       style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
     <input type="text" id="pao-not" placeholder="Not (isteğe bağlı)"
       style="padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;width:100%;">
@@ -15956,7 +15964,7 @@ async function projeAraOdemeKaydet(projeId){
   const tutar=parseTutar(document.getElementById('pao-tutar')?.value)||0;
   if(!tutar){showToast('Tutar girin','red');return;}
   const yontem=document.getElementById('pao-yontem')?.value||'Nakit';
-  const tarih=document.getElementById('pao-tarih')?.value||new Date().toISOString().split('T')[0];
+  const tarih=document.getElementById('pao-tarih')?.value||localToday();
   const not=document.getElementById('pao-not')?.value||'';
   const p=DB.projeler.find(x=>x.id===projeId);
   await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
@@ -16484,8 +16492,4 @@ try{initBgCircuit();}catch(e){console.error('initBgCircuit hatası:',e);}
 // Garanti: DOM tam yüklendiğinde de tekrar dene (script sırası garantisi için)
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
-}
-</script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-</body>
-</html>
+}>
