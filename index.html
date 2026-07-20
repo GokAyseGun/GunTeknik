@@ -468,6 +468,22 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </style>
 </head>
 <body>
+<!-- Google Kişiler Onay Modalı -->
+<div class="modal-ov" id="modal-google-onay" style="z-index:99999;">
+  <div class="modal" style="max-width:320px;margin:auto;">
+    <div class="modal-body" style="padding:24px 20px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:36px;margin-bottom:8px;">📲</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px;">Google Kişiler'e de Kaydedilsin mi?</div>
+        <div id="goog-onay-isim" style="font-size:13px;color:var(--text3);margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button onclick="googOnaySecim(false)" style="flex:1;padding:12px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;">Hayır</button>
+        <button onclick="googOnaySecim(true)" style="flex:1;padding:12px;border-radius:var(--r-sm);border:1px solid var(--green);background:var(--green-lt);color:var(--green);font-size:14px;font-weight:700;cursor:pointer;">✓ Evet</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="toast"><span class="toast-dot" id="toast-dot"></span><span id="toast-msg"></span></div>
 <!-- Global file input'lar -->
 <input type="file" id="global-file-kamera" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:99999;" accept="image/*" capture="environment">
@@ -6268,7 +6284,12 @@ async function saveKisi(btn){
       if(newK&&src==='islem'){await loadDB();acSelect('mi-ac',newK.id,newK.isim,newK.tip);}
       else if(newK&&src==='borc'){await loadDB();acSelect('mb-ac',newK.id,newK.isim,newK.tip);}
       else if(newK&&src==='vergi'){await loadDB();acSelectVergi({id:newK.id,isim:newK.isim,tip:newK.tip,vergiNo:newK.vergi_no||''});}
-      showToast('Eklendi','green');
+      await loadDB();closeModal('modal-kisi');
+      _googYeniKisiId=newK?.id||null;
+      if(newK) googOnayAc(newK.isim);
+      else showToast(isim+' rehbere eklendi','green');
+      if(btn) btn.disabled=false;
+      return;
     }
     await loadDB();closeModal('modal-kisi');
   }catch(e){showToast('Hata!','red');}
@@ -6291,6 +6312,103 @@ async function toggleFavori(id,event){
   catch(e){showToast('Hata!','red');}
 }
 
+
+// ════ GOOGLE CONTACTS ════
+const GOOGLE_CLIENT_ID='341229493021-mtj2q3qmnt1e74425m7u5eevtbph7ao9.apps.googleusercontent.com';
+let _gToken=null,_gTokenExp=0,_googYeniKisiId=null;
+
+function googleTokenAl(cb){
+  if(_gToken&&Date.now()<_gTokenExp-60000){cb(_gToken);return;}
+  const client=google.accounts.oauth2.initTokenClient({
+    client_id:GOOGLE_CLIENT_ID,
+    scope:'https://www.googleapis.com/auth/contacts',
+    callback:(r)=>{
+      if(r.error){showToast('Google izni alınamadı: '+r.error,'red');return;}
+      _gToken=r.access_token;_gTokenExp=Date.now()+r.expires_in*1000;cb(_gToken);
+    }
+  });
+  client.requestAccessToken({prompt:''});
+}
+
+function googleAktar(kisiId){
+  const k=DB.kisiler.find(x=>x.id===kisiId);if(!k)return;
+  if(!confirm('"'+(k.isim||'—')+'" kişiyi Google Rehbere aktarmak istiyor musunuz?'))return;
+  googleTokenAl(token=>googleKisiGonder(token,kisiId));
+}
+
+async function googleKisiGonder(token,kisiId){
+  const k=DB.kisiler.find(x=>x.id===kisiId);if(!k)return;
+  const p={};
+  if(k.isim){
+    const pts=k.isim.trim().split(' ');
+    p.names=[{givenName:'GT '+(pts.length>1?pts.slice(0,-1).join(' '):k.isim),
+      familyName:pts.length>1?pts[pts.length-1]:'',displayName:'GT '+k.isim.trim()}];
+  }
+  p.nicknames=[{value:fmtKId(k.id)}];
+  const orgName=k.firmaUnvan||'';
+  if(orgName||k.tip||(k.vergiDairesi||''))
+    p.organizations=[{name:orgName,title:k.tip||'',department:k.vergiDairesi||''}];
+  if(k.tel) p.phoneNumbers=[{value:k.tel,type:'mobile'}];
+  if(k.adres) p.addresses=[{streetAddress:k.adres,type:'work'}];
+  if(k.vergiNo) p.externalIds=[{value:String(k.vergiNo),type:'account'}];
+  const notlar=[];
+  if(k.not) notlar.push(k.not);
+  if(k.iban) notlar.push('IBAN: '+k.iban);
+  if(k.bankaAdi) notlar.push('Banka: '+k.bankaAdi);
+  if(k.efatura!=null) notlar.push('E-Fatura: '+(k.efatura?'Evet':'Hayır'));
+  if(notlar.length) p.biographies=[{value:notlar.join('\n'),contentType:'TEXT_PLAIN'}];
+  try{
+    showToast('Aktarılıyor...','blue');
+    const ar=await fetch('https://people.googleapis.com/v1/people:searchContacts?query='+
+      encodeURIComponent('GT '+(k.isim||''))+'&readMask=names,phoneNumbers,metadata&pageSize=5',
+      {headers:{'Authorization':'Bearer '+token}});
+    const ad=await ar.json();
+    const mv=(ad.results||[]).find(r=>(r.person?.names?.[0]?.displayName||'').toLowerCase()===
+      ('GT '+(k.isim||'')).toLowerCase());
+    if(mv){
+      const er=await fetch('https://people.googleapis.com/v1/'+mv.person.resourceName+
+        '?personFields=names,metadata',{headers:{'Authorization':'Bearer '+token}});
+      const ed=await er.json();p.etag=ed.etag;
+      const ur=await fetch('https://people.googleapis.com/v1/'+mv.person.resourceName+
+        ':updateContact?updatePersonFields=names,nicknames,organizations,phoneNumbers,addresses,biographies,externalIds',
+        {method:'PATCH',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(p)});
+      const ud=await ur.json();
+      if(ud.error)throw new Error(ud.error.message);
+      showToast((k.isim||'Kişi')+' Google Rehberde güncellendi','green');
+    }else{
+      const cr=await fetch('https://people.googleapis.com/v1/people:createContact',
+        {method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(p)});
+      const cd=await cr.json();
+      if(cd.error)throw new Error(cd.error.message);
+      showToast('GT '+(k.isim||'Kişi')+' Google Rehbere eklendi','green');
+    }
+  }catch(e){console.error('Google aktarım:',e);showToast('Hata: '+(e.message||'Başarısız'),'red');}
+}
+
+function googOnayAc(isim){
+  const el=document.getElementById('goog-onay-isim');
+  if(el) el.textContent='"'+isim+'" ERP rehberine eklendi.';
+  const m=document.getElementById('modal-google-onay');
+  if(m){m.style.zIndex='99999';m.classList.add('open');}
+}
+
+async function googOnaySecim(evet){
+  const m=document.getElementById('modal-google-onay');
+  if(m) m.classList.remove('open');
+  const kisiId=_googYeniKisiId;_googYeniKisiId=null;
+  if(!kisiId)return;
+  const k=DB.kisiler.find(x=>x.id===kisiId);if(!k)return;
+  if(evet){
+    showToast(k.isim+' Google Kişilere gönderiliyor...','blue');
+    googleTokenAl(async(token)=>{
+      await googleKisiGonder(token,kisiId);
+      showToast('✓ '+k.isim+' hem ERP hem Google Kişilere eklendi','green');
+    });
+  }else{
+    showToast('✓ '+k.isim+' ERP rehberine eklendi','green');
+  }
+}
+
 function renderRehber(){
   const ara=(document.getElementById('r-ara-mus')?.value||'').toLowerCase();
   const araT=(document.getElementById('r-ara-top')?.value||'').toLowerCase();
@@ -6310,13 +6428,14 @@ function renderRehber(){
       const analiz=`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();showMusteriAnaliz(${k.id})" title="Analiz">📊</button>`;
       const duzenle=USER_ROL!=='goruntule'?`<button style="${BTN}font-size:14px;" onclick="event.stopPropagation();editKisi(${k.id},event)">✏️</button>`:'';
       const sil=USER_ROL==='admin'?`<button style="${BTN}font-size:14px;color:var(--red);" onclick="event.stopPropagation();deleteKisi(${k.id},event)">🗑</button>`:'';
+      const ggl=`<button style="${BTN}font-size:13px;" onclick="event.stopPropagation();googleAktar(${k.id})" title="Google Rehbere Aktar">📲</button>`;
       return `<div style="${ROW_STYLE}" onclick="showKisiDetay(${k.id})">
         <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px;">
           <span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.isim}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <span class="id-badge" style="flex-shrink:0;">${fmtKId(k.id)}</span>
-          ${yildiz}${analiz}${duzenle}${sil}
+          ${yildiz}${analiz}${ggl}${duzenle}${sil}
         </div>
       </div>`;
     }).join('');
@@ -16211,5 +16330,6 @@ if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
 }
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
