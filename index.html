@@ -3343,13 +3343,25 @@ async function checkSession(){
       }
     }
     await loadUserRol();
-    // Token geçerli — desen varsa sor, yoksa direkt başlat
-    await cihazKilidiKontrol(async()=>{await startApp();});
+    // Token geçerli — 30 dk içinde aktifse direkt gir, değilse desen/parmak izi sor
+    const _la=parseInt(localStorage.getItem('erp_last_active')||'0');
+    const _gecen=Date.now()-_la;
+    if(_la>0 && _gecen < 30*60*1000){
+      // 30 dakika içinde aktifti — direkt giriş
+      await startApp();
+    } else {
+      await cihazKilidiKontrol(async()=>{await startApp();});
+    }
   }catch(e){
     // Ağ hatası — desen varsa offline modda devam et
     if(CURRENT_USER){
       USER_ROL='admin';
-      await cihazKilidiKontrol(async()=>{await startApp();});
+      const _la2=parseInt(localStorage.getItem('erp_last_active')||'0');
+      if(_la2>0 && Date.now()-_la2 < 30*60*1000){
+        await startApp();
+      } else {
+        await cihazKilidiKontrol(async()=>{await startApp();});
+      }
     }else{
       showAuthScreen();
     }
@@ -3383,6 +3395,9 @@ async function doLogout(){
 }
 
 async function startApp(){
+  // Sayfa geçişi için aktif zaman damgası
+  localStorage.setItem('erp_last_active', String(Date.now()));
+  setInterval(()=>localStorage.setItem('erp_last_active', String(Date.now())), 2*60*1000);
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
