@@ -759,12 +759,32 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
               </select>
             </div>
           </div>
-          <div class="fi"><label>Başlık</label><input type="text" id="tk-baslik" placeholder="Örn: Ahmet Bey Montaj"></div>
-          <div class="fi"><label>Detay</label><textarea id="tk-not" rows="2" placeholder="Saat, notlar..."></textarea></div>
+          <div class="fi"><label>Başlık / Kişi</label>
+            <div style="position:relative;">
+              <input type="text" id="tk-baslik" placeholder="Başlık yaz veya kişi seç..." autocomplete="off"
+                oninput="tkKisiAra(this.value)" onfocus="tkKisiAra(this.value)">
+              <input type="hidden" id="tk-kisi-id">
+              <div id="tk-kisi-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:100;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div class="fi" style="flex:1;"><label>Tarih</label><input type="date" id="tk-tarih-ek"></div>
+            <div class="fi" style="width:110px;"><label>Saat</label><input type="time" id="tk-saat" placeholder="09:00"></div>
+          </div>
+          <div class="fi"><label>Detay / Not</label><textarea id="tk-not" rows="2" placeholder="Notlar, açıklama..."></textarea></div>
           <button class="btn btn-primary btn-full" onclick="saveTakvim(this)">Ajandaya Ekle</button>
         </div>
       </div>
-      <div class="sec-title">Yaklaşan Ajanda</div>
+      
+<!-- Saat Paneli -->
+<div id="saat-paneli" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="font-weight:700;font-size:13px;color:var(--text2);">🕐 Gün Görünümü</div>
+    <div id="saat-panel-tarih" style="font-size:12px;color:var(--text3);"></div>
+  </div>
+  <div id="saat-panel-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;"></div>
+</div>
+<div class="sec-title">Yaklaşan Ajanda</div>
       <div class="stagger-wrap" id="tk-list"></div>
       <!-- Takvim Senkronizasyon Butonu -->
       <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;">
@@ -2852,6 +2872,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <div class="fg">
         <div style="display:flex;gap:8px;">
           <div class="fi" style="flex:1"><label>Tarih</label><input type="date" id="takd-tarih"></div>
+          <div class="fi" style="width:110px;"><label>Saat</label><input type="time" id="takd-saat"></div>
           <div class="fi" style="flex:1"><label>Tür</label>
             <select id="takd-tip" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
               <option value="Bilgi">Not</option><option value="İş">İş</option><option value="Alacak">Alacak</option><option value="Verecek">Verecek</option>
@@ -3498,7 +3519,7 @@ async function loadDB(){
     DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,islemKaynagi:i.islem_kaynagi||'',malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
     DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
-    DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:t.tarih,tip:t.tip,baslik:t.baslik||t.not||'',detay:t.not||''}));
+    DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:t.tarih,tip:t.tip,baslik:t.baslik||t.not||'',detay:t.detay||t.not||'',saat:t.saat||'',kisiId:t.kisi_id||null}));
     DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
       alisFiyat:parseFloat(s.alis_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
@@ -6964,6 +6985,91 @@ let calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
 const AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 function changeMonth(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}else if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
 
+
+// ── TAKVİM KİŞİ ARAMA ──
+function tkKisiAra(val,prefix){
+  prefix=prefix||'tk';
+  const dd=document.getElementById(prefix+'-kisi-dropdown');
+  if(!dd)return;
+  if(!val||val.length<1){dd.style.display='none';return;}
+  const q=val.toLowerCase();
+  const musteriler=(DB.kisiler||[]).filter(k=>{
+    const tip=(k.tip||'').toLowerCase();
+    return (tip.includes('müşteri')||tip.includes('musteri'))&&
+      ((k.isim||'').toLowerCase().includes(q)||(k.firmaUnvan||'').toLowerCase().includes(q));
+  }).slice(0,8);
+  if(!musteriler.length){dd.style.display='none';return;}
+  dd.innerHTML=musteriler.map(k=>`<div onclick="tkKisiSec(${k.id},this)" data-isim="${(k.isim||'').replace(/"/g,'&quot;')}" data-prefix="${prefix}"
+    style="padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);"
+    onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+    <span style="font-weight:600;">${k.isim||'—'}</span>
+    ${k.firmaUnvan?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${k.firmaUnvan}</span>`:''}
+  </div>`).join('');
+  dd.style.display='block';
+}
+
+function tkKisiSec(id,el){
+  const prefix=el?.dataset?.prefix||'tk';
+  const isim=el?.dataset?.isim||'';
+  const inp=document.getElementById(prefix+'-baslik');
+  const hid=document.getElementById(prefix+'-kisi-id');
+  const dd=document.getElementById(prefix+'-kisi-dropdown');
+  if(inp)inp.value=isim;
+  if(hid)hid.value=id;
+  if(dd)dd.style.display='none';
+}
+
+document.addEventListener('click',e=>{
+  ['tk','takd'].forEach(p=>{
+    const dd=document.getElementById(p+'-kisi-dropdown');
+    const inp=document.getElementById(p+'-baslik');
+    if(dd&&inp&&!dd.contains(e.target)&&e.target!==inp)dd.style.display='none';
+  });
+});
+
+// ── SAAT PANELİ ──
+function renderSaatPaneli(tarihStr){
+  const grid=document.getElementById('saat-panel-grid');
+  const label=document.getElementById('saat-panel-tarih');
+  if(!grid)return;
+  const bugunStr=new Date().toISOString().slice(0,10);
+  const hedef=tarihStr||bugunStr;
+  const bugun=hedef===bugunStr;
+  if(label){
+    const d=new Date(hedef+'T12:00');
+    label.textContent=d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+  }
+  const simdikiSaat=new Date().getHours();
+  const gunAjandalar=(DB.takvim||[]).filter(t=>t.tarih===hedef&&t.saat);
+  const saatMap={};
+  gunAjandalar.forEach(t=>{
+    const s=parseInt((t.saat||'0').split(':')[0]);
+    if(!saatMap[s])saatMap[s]=[];
+    saatMap[s].push(t);
+  });
+  let html='';
+  for(let s=0;s<24;s++){
+    const aktif=bugun&&s===simdikiSaat;
+    const var_=!!(saatMap[s]&&saatMap[s].length);
+    const sAdi=String(s).padStart(2,'0')+':00';
+    html+=`<div onclick="${var_?`tkSaatTikla([${(saatMap[s]||[]).map(t=>t.id).join(',')}])`:'void(0)'}"
+      style="padding:5px 2px;border-radius:var(--r-sm);text-align:center;font-size:10px;font-weight:600;
+        cursor:${var_?'pointer':'default'};position:relative;user-select:none;
+        background:${aktif?'var(--blue)':var_?'var(--blue-lt)':'var(--bg2)'};
+        color:${aktif?'#fff':var_?'var(--blue)':'var(--text3)'};
+        border:1px solid ${aktif?'var(--blue)':var_?'var(--blue)':'var(--border)'};
+        transition:opacity 0.15s;">
+      ${sAdi}${var_?'<span style="display:block;width:5px;height:5px;border-radius:50%;background:'+(aktif?'#fff':'var(--blue)')+';margin:2px auto 0;"></span>':''}
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function tkSaatTikla(ids){
+  if(!ids||!ids.length)return;
+  if(ids.length===1){openTakModal(ids[0]);return;}
+  openTakModal(ids[0]);
+}
 function renderCalendar(){
   const tEl=document.getElementById('cal-month-text');if(tEl)tEl.textContent=AYLAR[calMonth];
   const yEl=document.getElementById('cal-year');if(yEl)yEl.value=calYear;
@@ -6994,31 +7100,61 @@ function renderCalendar(){
     </div>`;
   }
   renderTakvimList();
+
+  setTimeout(renderSaatPaneli,50);
 }
 
 function renderTakvimList(){
   const list=document.getElementById('tk-list');if(!list)return;
-  const now=new Date().setHours(0,0,0,0);
-  const items=DB.takvim.filter(t=>new Date(t.tarih)>=now).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  const now=new Date();now.setHours(0,0,0,0);
+  const items=DB.takvim.filter(t=>new Date(t.tarih+'T00:00')>=now).sort((a,b)=>{
+    const da=a.tarih+(a.saat?'T'+a.saat:'T00:00');
+    const db2=b.tarih+(b.saat?'T'+b.saat:'T00:00');
+    return new Date(da)-new Date(db2);
+  });
   if(!items.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Yaklaşan ajanda yok</div></div>';return;}
   const colors={İş:'var(--amber)',Alacak:'var(--green)',Verecek:'var(--red)',Bilgi:'var(--text3)'};
-  list.innerHTML=items.map((t,i)=>`<div class="stagger-item" onclick="openTakModal(${t.id})" style="animation-delay:${i*0.05}s;border-left:3px solid ${colors[t.tip]||'var(--blue)'};">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-      <div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${t.baslik||t.detay||'—'}</div><div style="font-size:11px;color:var(--text2);">${dtS(t.tarih)} · ${t.tip}</div></div>
+  list.innerHTML=items.map((t,i)=>{
+    const saatStr=t.saat?` · ⏰ ${t.saat}`:'';
+    const detayStr=t.detay?`<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.detay}</div>`:'';
+    return `<div class="stagger-item" onclick="openTakModal(${t.id})" style="animation-delay:${i*0.05}s;border-left:3px solid ${colors[t.tip]||'var(--blue)'};">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.baslik||'—'}</div>
+        <div style="font-size:11px;color:var(--text2);">${dtS(t.tarih)}${saatStr} · ${t.tip}</div>
+        ${detayStr}
+      </div>
       ${USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="event.stopPropagation();deleteTakvim(${t.id})" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:''}
     </div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
 }
 
 async function saveTakvim(btn){
   if(USER_ROL==='goruntule')return;if(btn)btn.disabled=true;
   try{
-    const tarih=document.getElementById('tk-tarih').value;if(!tarih){showToast('Tarih seçin','red');return;}
-    const bas=document.getElementById('tk-baslik').value;const notT=document.getElementById('tk-not').value;
-    await sbFetch('takvim',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih,tip:document.getElementById('tk-tip').value,baslik:bas,not:bas+(notT?' - '+notT:'')})});
-    await loadDB();document.getElementById('tk-baslik').value='';document.getElementById('tk-not').value='';showToast('Ajandaya eklendi','green');renderCalendar();
-  }catch(e){showToast('Hata!','red');}
+    const tarih=document.getElementById('tk-tarih').value;if(!tarih){showToast('Tarih seçin','red');if(btn)btn.disabled=false;return;}
+    const saat=document.getElementById('tk-saat')?.value||'';
+    const bas=(document.getElementById('tk-baslik').value||'').trim();
+    const detay=(document.getElementById('tk-not').value||'').trim();
+    const tip=document.getElementById('tk-tip').value;
+    // kisi_id - rehberden seçildiyse
+    const kisiIdEl=document.getElementById('tk-kisi-id');
+    const kisi_id=kisiIdEl?.value?parseInt(kisiIdEl.value):null;
+    if(!bas){showToast('Başlık girin','red');if(btn)btn.disabled=false;return;}
+    await sbFetch('takvim',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      tarih,saat:saat||null,tip,baslik:bas,detay:detay||null,not:detay||null,
+      kisi_id:kisi_id||null
+    })});
+    await loadDB();
+    document.getElementById('tk-baslik').value='';
+    document.getElementById('tk-not').value='';
+    if(document.getElementById('tk-saat'))document.getElementById('tk-saat').value='';
+    if(kisiIdEl)kisiIdEl.value='';
+    showToast('Ajandaya eklendi','green');
+    renderCalendar();renderTakvimList();
+  }catch(e){console.error(e);showToast('Hata: '+String(e?.message||e).slice(0,50),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
@@ -7028,34 +7164,32 @@ async function openTakModal(id){
   document.getElementById('takd-id').value=t.id;
   document.getElementById('takd-tarih').value=localDateStr(t.tarih).slice(0,10);
   document.getElementById('takd-tip').value=t.tip||'Bilgi';
-  // baslik ve not birlikte saklanıyor ("baslik - not" formatında), ayır
-  let bas=t.baslik||'';let notT='';
-  if(t.not&&t.not.startsWith(bas+' - ')){notT=t.not.slice((bas+' - ').length);}
-  else if(t.not&&t.not!==bas){notT=t.not;}
-  document.getElementById('takd-baslik').value=bas;
-  document.getElementById('takd-not').value=notT;
+  document.getElementById('takd-baslik').value=t.baslik||'';
+  document.getElementById('takd-not').value=t.detay||'';
+  if(document.getElementById('takd-saat'))document.getElementById('takd-saat').value=t.saat||'';
+  if(document.getElementById('takd-kisi-id'))document.getElementById('takd-kisi-id').value=t.kisiId||'';
   openModal('modal-tak-detay');
 }
 
 async function takvimDetayModalKaydet(btn){
-  if(USER_ROL==='goruntule')return;
-  const id=document.getElementById('takd-id').value;
-  const tarih=document.getElementById('takd-tarih').value;
-  if(!tarih){showToast('Tarih seçin','red');return;}
-  const tip=document.getElementById('takd-tip').value;
-  const bas=document.getElementById('takd-baslik').value;
-  const notT=document.getElementById('takd-not').value;
-  if(btn)btn.disabled=true;
+  if(USER_ROL==='goruntule')return;if(btn)btn.disabled=true;
   try{
+    const id=document.getElementById('takd-id').value;
+    const tarih=document.getElementById('takd-tarih').value;
+    const saat=document.getElementById('takd-saat')?.value||'';
+    const bas=(document.getElementById('takd-baslik').value||'').trim();
+    const detay=(document.getElementById('takd-not').value||'').trim();
+    const tip=document.getElementById('takd-tip').value;
+    const kisiIdEl=document.getElementById('takd-kisi-id');
+    const kisi_id=kisiIdEl?.value?parseInt(kisiIdEl.value):null;
     await sbFetch('takvim?id=eq.'+id,{method:'PATCH',body:JSON.stringify({
-      tarih,tip,baslik:bas,not:bas+(notT?' - '+notT:'')
+      tarih,saat:saat||null,tip,baslik:bas,detay:detay||null,not:detay||null,
+      kisi_id:kisi_id||null
     })});
-    await loadDB();
-    closeModal('modal-tak-detay');
-    showToast('Güncellendi','green');
-    renderCalendar();renderDashVade();
-  }catch(e){showToast('Hata!','red');}
-  finally{if(btn)setTimeout(()=>btn.disabled=false,800);}
+    await loadDB();closeModal('modal-tak-detay');
+    showToast('Güncellendi','green');renderCalendar();renderTakvimList();
+  }catch(e){console.error(e);showToast('Hata!','red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
 // ============================================================
