@@ -553,15 +553,12 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="topbar-actions">
       <input type="month" class="month-input" id="global-month" onchange="onMonthChange()" title="Dönem filtresi">
       <button class="icon-btn" onclick="clearMonth()" title="Temizle">✕</button>
-      <button class="icon-btn" id="bildirim-btn" onclick="openModal('modal-bildirimler')" title="Bildirimler" style="position:relative;display:none;">
+      <button class="icon-btn" id="bildirim-btn" onclick="openModal('modal-bildirimler')" title="Bildirimler" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span id="bildirim-badge" style="position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--red);display:none;"></span>
       </button>
       <button class="icon-btn" onclick="openModal('modal-ayarlar')">⚙️</button>
-      <button class="icon-btn" onclick="openBildirimMerkezi()" style="position:relative;" title="Bildirimler">
-        🔔
-        <span id="bildirim-rozet" style="display:none;position:absolute;top:4px;right:4px;background:var(--red);color:white;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;line-height:1;"></span>
-      </button>
+      
     </div>
   </div>
 
@@ -1172,6 +1169,18 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
     <div class="nav-item" onclick="goPage('islemler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
       <span>İşlemler</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='villa.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Villa</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='evrak.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+      <span>Evrak</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='deprem.html'">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 20 7 10 12 15 16 8 22 20"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
+      <span>Deprem</span>
     </div>
     <div class="nav-item" onclick="goPage('teklifler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
@@ -2511,9 +2520,11 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       <button class="modal-close" onclick="closeModal('modal-yaklasan')">✕</button>
     </div>
     <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:8px;" id="yaklasan-content"></div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary btn-full" onclick="closeModal('modal-yaklasan')">Kapat</button>
-      <button class="btn btn-primary btn-full" onclick="closeModal('modal-yaklasan');goPage('takvim')">📅 Takvime Git</button>
+    <div class="modal-foot" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-yaklasan')" style="flex:1;min-width:100px;">✕ Kapat</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('takvim')" style="flex:1;min-width:100px;">📅 Takvim</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');window.location.href='evrak.html'" style="flex:1;min-width:100px;">📄 Evraklar</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('banka')" style="flex:1;min-width:100px;">🏦 Hesaplar</button>
     </div>
   </div>
 </div>
@@ -3403,7 +3414,7 @@ async function startApp(){
   // Teklif gerçek zamanlı takip
   teklifPollBaslat();
   // Yaklaşan ödeme + bütçe kontrolü
-  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},800);
+  setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster();butceAsimiKontrol();},1500);
   // Sistem bildirim kontrolü
   setTimeout(bildirimKontrol,3000);
   setInterval(bildirimKontrol,15*60*1000);
