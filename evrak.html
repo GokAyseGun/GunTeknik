@@ -1256,20 +1256,55 @@ async function evrakBildirimKontrol(){try{
     // İlk ödeme günü ve son ödeme günü hesapla
     let ilkGun = null, sonGun = null;
     if(dongu==='Aylık'){
+      // Önce bu ayın dönemini hesapla
       ilkGun = new Date(bugun.getFullYear(), bugun.getMonth(), parseInt(bas)||1);
       sonGun = new Date(bugun.getFullYear(), bugun.getMonth(), parseInt(bit)||15);
-      // Ay geçmişse sonraki aya bak
+      ilkGun.setHours(0,0,0,0); sonGun.setHours(0,0,0,0);
+      // Bu ay tamamen geçmiş mi? (sonGun < bugün)
+      // Geçmişse: hem geçmiş dönem bildirimini göster hem de sonraki aya bak
       if(sonGun < bugun){
+        // Geçmiş dönem bildirimi - bu ayı göster
+        const gecmisDonIlk=new Date(ilkGun); const gecmisDonSon=new Date(sonGun);
+        const gecmisDonSonStr=gecmisDonSon.toISOString().slice(0,10);
+        // Bu ay ödendi mi kontrol
+        const buAyOdendi = DB.odemeler.filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
+          const od=new Date(o.odeme_tarihi+'T12:00'); od.setHours(0,0,0,0);
+          return od.getFullYear()===bugun.getFullYear()&&od.getMonth()===bugun.getMonth();
+        });
+        if(!buAyOdendi && !buDonemOdendi){
+          hatirlaticilar.push({
+            evrakId:e.id,
+            mesaj:'⚠️ '+adi+' — '+bugun.toLocaleString('tr-TR',{month:'long'})+' ayı ödenmedi! (Son: '+gecmisDonSonStr+')',
+            tip:'hata', tur:'popup', herGiris:true
+          });
+        }
+        // Sonraki ay için de hesapla
         ilkGun = new Date(bugun.getFullYear(), bugun.getMonth()+1, parseInt(bas)||1);
         sonGun = new Date(bugun.getFullYear(), bugun.getMonth()+1, parseInt(bit)||15);
+        ilkGun.setHours(0,0,0,0); sonGun.setHours(0,0,0,0);
       }
     } else if(dongu==='Yıllık'||dongu==='Sezonluk'){
       const [ba,bg]=bas.split('-'); const [bia,big]=bit.split('-');
       ilkGun = new Date(bugun.getFullYear(), parseInt(ba)-1, parseInt(bg)||1);
       sonGun = new Date(bugun.getFullYear(), parseInt(bia)-1, parseInt(big)||1);
+      ilkGun.setHours(0,0,0,0); sonGun.setHours(0,0,0,0);
       if(sonGun < bugun){
+        // Bu yıl geçmiş - bildirim ver
+        const gecmisSonStr=sonGun.toISOString().slice(0,10);
+        const buYilOdendi=DB.odemeler.filter(o=>String(o.evrak_id)===String(e.id)).some(o=>{
+          const od=new Date(o.odeme_tarihi+'T12:00'); od.setHours(0,0,0,0);
+          return od.getFullYear()===bugun.getFullYear();
+        });
+        if(!buYilOdendi){
+          hatirlaticilar.push({
+            evrakId:e.id,
+            mesaj:'⚠️ '+adi+' — '+bugun.getFullYear()+' yılı ödenmedi! (Son: '+gecmisSonStr+')',
+            tip:'hata', tur:'popup', herGiris:true
+          });
+        }
         ilkGun = new Date(bugun.getFullYear()+1, parseInt(ba)-1, parseInt(bg)||1);
         sonGun = new Date(bugun.getFullYear()+1, parseInt(bia)-1, parseInt(big)||1);
+        ilkGun.setHours(0,0,0,0); sonGun.setHours(0,0,0,0);
       }
     } else continue;
 
@@ -1285,16 +1320,7 @@ async function evrakBildirimKontrol(){try{
     const donemIcinde = bugun >= ilkGun && bugun <= sonGun;
 
     // Bildirim türünü belirle
-    if(tarihGecti){
-      // Son ödeme tarihi geçmiş → HER GİRİŞTE popup (localStorage takibi yok)
-      hatirlaticilar.push({
-        evrakId: e.id,
-        mesaj: '⚠️ '+adi+' — Son ödeme tarihi geçti! ('+sonGunStr+')',
-        tip: 'hata',
-        tur: 'popup',
-        herGiris: true  // localStorage'a yazılmaz, her girişte çıkar
-      });
-    } else if(bugunSonGun){
+    if(bugunSonGun){
       // Son ödeme günü → HER GİRİŞTE popup (localStorage takibi yok)
       hatirlaticilar.push({
         evrakId: e.id,
