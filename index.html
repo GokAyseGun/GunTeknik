@@ -5755,15 +5755,16 @@ function acSearch(prefix){
   const drop=document.getElementById(prefix+'-drop');
   if(!input||!drop)return;
   const ara=input.value.toLowerCase().trim();
-  const list=acGetKisiler(prefix).filter(k=>!ara||(k.isim||'').toLowerCase().includes(ara));
+  const list=acGetKisiler(prefix).filter(k=>!ara||(k.isim||'').toLowerCase().includes(ara)||(k.firmaUnvan||'').toLowerCase().includes(ara)||(k.tel||'').includes(ara));
   drop.innerHTML='';
   if(!list.length){
     drop.innerHTML='<div class="kisi-ac-empty">Sonuç bulunamadı</div>';
   }else{
-    list.slice(0,12).forEach(k=>{
+    list.forEach(k=>{
       const div=document.createElement('div');
       div.className='kisi-ac-item';
-      div.innerHTML=`<div>${k.isim}</div><div class="ac-sub">${k.tip} · ${fmtKId(k.id)}${k.tel?' · '+k.tel:''}</div>`;
+      const altBilgi=[k.tip,fmtKId(k.id),k.firmaUnvan||'',k.tel||''].filter(Boolean);
+      div.innerHTML=`<div style="font-weight:600;">${k.isim||k.firmaUnvan||'—'}</div><div class="ac-sub">${altBilgi.join(' · ')}</div>`;
       div.addEventListener('mousedown',e=>{e.preventDefault();acSelect(prefix,k.id,k.isim,k.tip);});
       drop.appendChild(div);
     });
@@ -5771,7 +5772,7 @@ function acSearch(prefix){
   drop.classList.add('open');
 }
 
-function acFilter(prefix){acSearch(prefix);}
+function acFilter(prefix){const inp=document.getElementById(prefix+'-input');acSearch(prefix);if(inp)setTimeout(()=>inp.focus(),50);}
 
 function acSelect(prefix,id,isim,tip){
   document.getElementById(prefix.replace('-ac','')+'-kisi').value=id;
