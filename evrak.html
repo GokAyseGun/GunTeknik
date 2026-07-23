@@ -564,6 +564,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:8px;">📅 Ödeme Periyodu</div>
           <div id="evrak-periyot-icerik"></div>
         </div>
+        <!-- ERP Kategori -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:10px;">📊 ERP Kategorisi</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <button id="evrak-tip-gider" onclick="evrakTipSec('Gider')" style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--red);background:var(--red-lt);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">📤 Gider</button>
+            <button id="evrak-tip-gelir" onclick="evrakTipSec('Gelir')" style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">📥 Gelir</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="evrak-kapsam-isletme" onclick="evrakKapsamSec('İşletme')" style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--blue);background:var(--blue-lt);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;">🏢 İşletme</button>
+            <button id="evrak-kapsam-sahsi" onclick="evrakKapsamSec('Şahsi')" style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">👤 Şahsi</button>
+          </div>
+          <input type="hidden" id="evrak-erp-tip-yeni" value="Gider">
+          <input type="hidden" id="evrak-erp-kapsam-yeni" value="İşletme">
+        </div>
         <!-- Not -->
         <div class="fi"><label>Not / Açıklama</label>
           <textarea id="evrak-not-input" placeholder="Bu evrak hakkında notlar..." style="min-height:70px;padding:12px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;font-family:inherit;width:100%;resize:vertical;"></textarea>
@@ -665,7 +679,35 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 <div id="toast"></div>
 
-<script>const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
+<script>
+function evrakTipSec(tip){
+  const el=document.getElementById('evrak-erp-tip-yeni');if(el)el.value=tip;
+  const g=document.getElementById('evrak-tip-gider');
+  const gl=document.getElementById('evrak-tip-gelir');
+  if(!g||!gl)return;
+  if(tip==='Gider'){
+    g.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--red);background:var(--red-lt);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;';
+    gl.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }else{
+    gl.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--green);background:var(--green-lt);color:var(--green);font-size:13px;font-weight:700;cursor:pointer;';
+    g.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }
+}
+
+function evrakKapsamSec(kapsam){
+  const el=document.getElementById('evrak-erp-kapsam-yeni');if(el)el.value=kapsam;
+  const is=document.getElementById('evrak-kapsam-isletme');
+  const sh=document.getElementById('evrak-kapsam-sahsi');
+  if(!is||!sh)return;
+  if(kapsam==='İşletme'){
+    is.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--blue);background:var(--blue-lt);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;';
+    sh.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }else{
+    sh.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--amber);background:var(--amber-lt);color:var(--amber);font-size:13px;font-weight:700;cursor:pointer;';
+    is.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }
+}
+const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
 let SB_TOKEN = null, SB_REFRESH_TOKEN = null;
 
@@ -858,8 +900,8 @@ async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih){
     const adi=evrakAdi(evrak);
     const kisi=DB.kisiler.find(k=>String(k.id)===String(evrak.kisi_id));
     // Kullanıcının seçtiği tip ve kapsam
-    const seciliTip=document.getElementById('evrak-erp-tip')?.value||'Gider';
-    const seciliKapsam=document.getElementById('evrak-erp-kapsam')?.value||'İşletme';
+    const seciliTip=document.getElementById('evrak-erp-tip')?.value||evrak.erp_tip||'Gider';
+    const seciliKapsam=document.getElementById('evrak-erp-kapsam')?.value||evrak.erp_kapsam||'İşletme';
     // Kat = tip + kapsam kombinasyonu
     let kat;
     if(seciliTip==='Gelir'){
@@ -1073,6 +1115,7 @@ function evrakYeniAc(){
   ['evrak-kisi-id','evrak-tur-input','evrak-not-input'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('evrak-dongu-input').value='Yok';
   onEvrakTurChange();evrakPeriyotGoster();
+  evrakTipSec('Gider');evrakKapsamSec('İşletme');
   openModal('modal-evrak-ekle');
 }
 
@@ -1153,12 +1196,15 @@ async function evrakKaydet(btn){
     const altTur=tur==='Fatura'?document.getElementById('evrak-alt-tur-input')?.value||'':
                  tur==='Araç'?document.getElementById('evrak-arac-alt-input')?.value||'':'';
     const evrakAdi2=tur==='Fatura'&&altTur?tur+' - '+altTur:tur==='Araç'&&altTur?tur+' - '+altTur:tur;
+    const _eTip=document.getElementById('evrak-erp-tip-yeni')?.value||'Gider';
+    const _eKapsam=document.getElementById('evrak-erp-kapsam-yeni')?.value||'İşletme';
     const payload={
       kisi_id:document.getElementById('evrak-kisi-id')?.value||null,
       tur,alt_tur:altTur,evrak_adi:evrakAdi2,
       odeme_dongusu:document.getElementById('evrak-dongu-input')?.value||'Yok',
       periyot_bas:p.bas,periyot_bit:p.bit,
-      aciklama:document.getElementById('evrak-not-input')?.value||'',aktif:true
+      aciklama:document.getElementById('evrak-not-input')?.value||'',aktif:true,
+      erp_tip:_eTip,erp_kapsam:_eKapsam
     };
     if(editId){await sbFetch('sirket_evraklar?id=eq.'+editId,{method:'PATCH',body:JSON.stringify(payload)});}
     else{await sbFetch('sirket_evraklar',{method:'POST',body:JSON.stringify(payload)});}
