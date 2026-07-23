@@ -665,17 +665,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 <div id="toast"></div>
 
-<script>
-  const _tipHid=document.getElementById('evrak-erp-tip');
-  const _kapHid=document.getElementById('evrak-erp-kapsam');
-  const _secDiv=document.getElementById('evrak-erp-secim');
-  const _chk=document.getElementById('evrak-islem-olarak');
-  if(_tipHid)_tipHid.value='Gider';
-  if(_kapHid)_kapHid.value='İşletme';
-  if(_secDiv)_secDiv.style.display='none';
-  if(_chk)_chk.checked=false;
-  if(typeof evrakErpTipSec==='function'){evrakErpTipSec('Gider');evrakErpKapsamSec('İşletme');}
-const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
+<script>const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
 let SB_TOKEN = null, SB_REFRESH_TOKEN = null;
 
@@ -1201,6 +1191,14 @@ function evrakOdemeEkleAc(){
   document.getElementById('evrak-odeme-pb').value='TRY';
   _geciciEkler=[];renderGeciciEkler();
   const _chk=document.getElementById('evrak-islem-olarak');if(_chk)_chk.checked=false;
+  // ERP seçim sıfırla
+  const _tipHid=document.getElementById('evrak-erp-tip');
+  const _kapHid=document.getElementById('evrak-erp-kapsam');
+  const _secDiv=document.getElementById('evrak-erp-secim');
+  if(_tipHid)_tipHid.value='Gider';
+  if(_kapHid)_kapHid.value='İşletme';
+  if(_secDiv)_secDiv.style.display='none';
+  evrakErpSecimGoster(false);
   openModal('modal-evrak-odeme-ekle');
 }
 
