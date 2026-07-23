@@ -602,14 +602,38 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
           <button onclick="dosyaSec(f=>{_geciciEkler=f.map(x=>({file:x,name:x.name}));renderGeciciEkler();})" style="padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);background:var(--surface2);color:var(--text3);cursor:pointer;width:100%;font-size:13px;">📎 Galeri / Kamera / Dosya</button>
           <div id="ekler-oniz" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
         </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-top:8px;">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-            <input type="checkbox" id="evrak-islem-olarak" style="width:18px;height:18px;accent-color:var(--mg);cursor:pointer;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;">
+            <input type="checkbox" id="evrak-islem-olarak" style="width:18px;height:18px;accent-color:var(--mg);cursor:pointer;" onchange="evrakErpSecimGoster(this.checked)">
             <div>
               <div style="font-size:13px;font-weight:600;color:var(--text);">ERP İşlem Olarak da Kaydet</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Gider işlemi olarak özet ve raporlara yansır</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Özet ve raporlara yansır</div>
             </div>
           </label>
+          <div id="evrak-erp-secim" style="display:none;border-top:1px solid var(--border);padding-top:10px;display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <button id="evrak-erp-tip-gider" onclick="evrakErpTipSec('Gider')"
+                style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--red);background:var(--red-lt);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">
+                📤 Gider
+              </button>
+              <button id="evrak-erp-tip-gelir" onclick="evrakErpTipSec('Gelir')"
+                style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">
+                📥 Gelir
+              </button>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button id="evrak-erp-kapsam-isletme" onclick="evrakErpKapsamSec('İşletme')"
+                style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--blue);background:var(--blue-lt);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;">
+                🏢 İşletme
+              </button>
+              <button id="evrak-erp-kapsam-sahsi" onclick="evrakErpKapsamSec('Şahsi')"
+                style="flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;">
+                👤 Şahsi
+              </button>
+            </div>
+            <input type="hidden" id="evrak-erp-tip" value="Gider">
+            <input type="hidden" id="evrak-erp-kapsam" value="İşletme">
+          </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-evrak-odeme-ekle')" style="flex:1;">Vazgeç</button>
@@ -641,7 +665,17 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
 <div id="toast"></div>
 
-<script>const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
+<script>
+  const _tipHid=document.getElementById('evrak-erp-tip');
+  const _kapHid=document.getElementById('evrak-erp-kapsam');
+  const _secDiv=document.getElementById('evrak-erp-secim');
+  const _chk=document.getElementById('evrak-islem-olarak');
+  if(_tipHid)_tipHid.value='Gider';
+  if(_kapHid)_kapHid.value='İşletme';
+  if(_secDiv)_secDiv.style.display='none';
+  if(_chk)_chk.checked=false;
+  if(typeof evrakErpTipSec==='function'){evrakErpTipSec('Gider');evrakErpKapsamSec('İşletme');}
+const SB_URL = 'https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
 let SB_TOKEN = null, SB_REFRESH_TOKEN = null;
 
@@ -797,19 +831,57 @@ let _filtre='hepsi';
 let _seciliEvrakId=null;
 
 
+async 
+function evrakErpSecimGoster(checked){
+  const div=document.getElementById('evrak-erp-secim');
+  if(div) div.style.display=checked?'block':'none';
+}
+
+function evrakErpTipSec(tip){
+  document.getElementById('evrak-erp-tip').value=tip;
+  const gBtn=document.getElementById('evrak-erp-tip-gider');
+  const glBtn=document.getElementById('evrak-erp-tip-gelir');
+  if(tip==='Gider'){
+    gBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--red);background:var(--red-lt);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;';
+    glBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }else{
+    glBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--green);background:var(--green-lt);color:var(--green);font-size:13px;font-weight:700;cursor:pointer;';
+    gBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }
+}
+
+function evrakErpKapsamSec(kapsam){
+  document.getElementById('evrak-erp-kapsam').value=kapsam;
+  const isBtn=document.getElementById('evrak-erp-kapsam-isletme');
+  const shBtn=document.getElementById('evrak-erp-kapsam-sahsi');
+  if(kapsam==='İşletme'){
+    isBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--blue);background:var(--blue-lt);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;';
+    shBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }else{
+    shBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--amber);background:var(--amber-lt);color:var(--amber);font-size:13px;font-weight:700;cursor:pointer;';
+    isBtn.style.cssText='flex:1;padding:10px;border-radius:var(--r-sm);border:2px solid var(--border2);background:var(--surface);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;';
+  }
+}
+
 async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih){
   try{
     const evrak=DB.evraklar.find(e=>e.id===_seciliEvrakId);if(!evrak)return;
     const adi=evrakAdi(evrak);
     const kisi=DB.kisiler.find(k=>String(k.id)===String(evrak.kisi_id));
-    const katMap={'Fatura':'Giderler','Kira':'Kira & Aidat','Aidat':'Kira & Aidat',
-      'Sigorta':'Sigorta','Vergi & Harçlar':'Vergi & Harçlar',
-      'Araç':'Araç Giderleri','Sözleşme':'Giderler','Personel':'Personel Giderleri'};
-    const kat=katMap[evrak.tur]||'Giderler';
+    // Kullanıcının seçtiği tip ve kapsam
+    const seciliTip=document.getElementById('evrak-erp-tip')?.value||'Gider';
+    const seciliKapsam=document.getElementById('evrak-erp-kapsam')?.value||'İşletme';
+    // Kat = tip + kapsam kombinasyonu
+    let kat;
+    if(seciliTip==='Gelir'){
+      kat=seciliKapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir';
+    }else{
+      kat=seciliKapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider';
+    }
     const odemeNot=[adi,kisi?kisi.isim:'',notlar,pb!=='TRY'?('('+tutar+' '+pb+')'):''
     ].filter(Boolean).join(' — ');
     const payload={
-      tarih:tarih+'T12:00:00.000Z',tip:'Gider',statu:'Tamamlandı',
+      tarih:tarih+'T12:00:00.000Z',tip:seciliTip,statu:'Tamamlandı',
       kisi_id:evrak.kisi_id||null,kat:kat,alt_kat:adi,
       tutar:tutar,malzeme_tutar:0,not:odemeNot,
       odeme_yontemi:'Banka / Havale',personel_ids:[],islem_kaynagi:'Evrak'
