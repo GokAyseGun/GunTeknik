@@ -2267,8 +2267,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
       </div>
 
       <!-- ÖZET -->
-      <div id="mb-ozet" style="background:rgba(126,179,240,0.1);border:1px solid rgba(126,179,240,0.3);border-radius:var(--r-md);padding:10px;display:none;font-size:12px;">
-        <div id="mb-ozet-ic" style="display:flex;flex-direction:column;gap:0;"></div>
+      <div id="mb-ozet" style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-md);padding:10px 14px;display:none;">
+        <div id="mb-ozet-ic"></div>
       </div>
 
       <!-- İlk Taksit Ayı -->
@@ -3029,6 +3029,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <script>
+"use strict";
+// =======================================================
 "use strict";
 // ============================================================ SUPABASE
 const SB_URL='https://zfflnrerdevnflchscqe.supabase.co';
@@ -15605,8 +15607,29 @@ function mbKrediHesapla(){
     const ozetEl=document.getElementById('mb-ozet');
     const ozetIc=document.getElementById('mb-ozet-ic');
     if(ozetEl&&ozetIc){
+      const faizTutar=Math.max(0,Math.round(top)-anapara);
       ozetEl.style.display='';
-      ozetIc.innerHTML=`<div><div style="color:var(--text3);font-size:10px;">Taksit</div><div style="font-weight:700;color:var(--blue);" class="num">${fmt(Math.round(taksit))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Toplam</div><div style="font-weight:700;color:var(--red);" class="num">${fmt(Math.round(top))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Faiz</div><div style="font-weight:700;color:var(--amber);" class="num">${fmt(Math.round(top-anapara))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Vade</div><div style="font-weight:700;">${vade} taksit</div></div>`;
+      ozetIc.innerHTML=`
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text3);">Alınan / Verilen</span>
+          <span class="num" style="font-weight:700;">${fmt(anapara)} ₺</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text3);">Toplam Geri Ödeme</span>
+          <span class="num" style="font-weight:700;color:var(--red);">${fmt(Math.round(top))} ₺</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text3);">Vade</span>
+          <span style="font-weight:700;">${vade} taksit</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--text3);">Taksit (${fmt(Math.round(top))} ÷ ${vade})</span>
+          <span class="num" style="font-weight:700;color:var(--blue);">${fmt(Math.round(taksit))} ₺</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <span style="font-size:12px;color:var(--text3);">Faiz / Maliyet (${fmt(Math.round(top))} − ${fmt(anapara)})</span>
+          <span class="num" style="font-weight:700;color:var(--amber);">${fmt(faizTutar)} ₺</span>
+        </div>`;
     }
   }
 }
@@ -16913,8 +16936,6 @@ try{initBgCircuit();}catch(e){console.error('initBgCircuit hatası:',e);}
 // Garanti: DOM tam yüklendiğinde de tekrar dene (script sırası garantisi için)
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
-}
-</script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+}</script>
 </body>
 </html>
