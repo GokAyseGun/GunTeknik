@@ -6498,7 +6498,7 @@ async function mbKaydet(btn){
     const tur=document.getElementById('mb-finans-turu').value;
     const kapsam=document.getElementById('mb-kapsam').value;
     const dongu=document.getElementById('mb-dongu').value;
-    const anapara=parseFloat(document.getElementById('mb-anapara').value)||0;
+    const anapara=parseTutar(document.getElementById('mb-anapara').value);
     const tarih=document.getElementById('mb-tarih').value||localToday();
     const not_=document.getElementById('mb-not').value||'';
     if(!anapara){showToast('Ana para tutarı girin','red');if(btn)btn.disabled=false;return;}
@@ -15592,13 +15592,13 @@ function mbIlkAyDoldur(){
 }
 
 function mbKrediHesapla(){
-  // type=number inputtan ham sayı oku - asla fmt() string'i parse etme
+  // parseTutar kullan: binlik nokta ayracını temizler (19.500 → 19500)
   const anaEl=document.getElementById('mb-anapara');
-  const anapara=anaEl?parseFloat(anaEl.value)||0:0;
+  const anapara=anaEl?parseTutar(anaEl.value):0;
   const vadeEl=document.getElementById('mb-vade');
   const vade=vadeEl?parseInt(vadeEl.value)||0:0;
   const topEl=document.getElementById('mb-toplamgeri');
-  const toplamGeri=topEl?parseFloat(topEl.value)||0:0;
+  const toplamGeri=topEl?parseTutar(topEl.value):0;
 
   // Taksit hesaplama: SADECE toplamGeri VE vade ikisi de tam girilmişse
   let taksit=0;
@@ -15622,7 +15622,7 @@ function mbKrediHesapla(){
       ozetIc.innerHTML=`
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
           <span style="font-size:12px;color:var(--text3);">Alınan / Verilen</span>
-          <span class="num" style="font-weight:700;">${fmt(anapara)} ₺</span>
+          <span class="num" style="font-weight:700;">${fmt(anapara)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
           <span style="font-size:12px;color:var(--text3);">Toplam Geri Ödeme</span>
@@ -15638,7 +15638,7 @@ function mbKrediHesapla(){
         </div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;">
           <span style="font-size:12px;color:var(--text3);">Faiz / Maliyet (${fmt(Math.round(top))} − ${fmt(anapara)})</span>
-          <span class="num" style="font-weight:700;color:var(--amber);">${fmt(faizTutar)} ₺</span>
+          <span class="num" style="font-weight:700;color:var(--amber);">${fmt(faizTutar)}</span>
         </div>`;
     }
   }
