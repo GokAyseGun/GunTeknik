@@ -806,18 +806,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </select>
         <input type="text" id="f-cari-ara" placeholder="Kişi veya cari no ara..." oninput="renderCari()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
       </div>
-      <!-- Kişi bakiyeleri — üst panel -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">👥 Kişi & Kurum Bakiyeleri</div>
-        <button class="btn btn-secondary btn-sm" onclick="openBorcModal()" style="font-size:11px;">+ Yeni Ekle</button>
-      </div>
-      <div class="stagger-wrap" id="list-cari" style="max-height:40vh;overflow-y:auto;"></div>
-      <!-- Vadeli Hesaplar & Krediler -->
-      <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div id="cari-kredi-baslik" style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">🏦 Vadeli Hesaplar & Krediler</div>
-        <button class="btn btn-secondary btn-sm" onclick="openKrediModal()" style="font-size:11px;">+ Yeni Ekle</button>
-      </div>
-      <div id="list-cari-kredi" style="max-height:40vh;overflow-y:auto;"></div>
+            <div class="stagger-wrap" id="list-cari" style="overflow-y:auto;margin-bottom:8px;"></div>
+      <div id="list-cari-kredi" style="overflow-y:auto;"></div>
     </div>
 
     <!-- PERSONEL -->
@@ -2268,7 +2258,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
             <input type="number" id="mb-vade" inputmode="numeric" placeholder="12" min="1" oninput="mbKrediHesapla()">
           </div>
           <div class="fi" style="flex:1"><label>Taksit Tutarı (₺)</label>
-            <input type="number" id="mb-taksit-tutar" inputmode="numeric" placeholder="Otomatik">
+            <input type="number" id="mb-taksit-tutar" inputmode="numeric" placeholder="Otomatik" readonly tabindex="-1" style="background:var(--bg2);color:var(--text2);cursor:default;">
           </div>
         </div>
         <div class="fi"><label>Toplam Geri Ödenecek (₺)</label>
@@ -15359,17 +15349,8 @@ function showKrediDetay(id){
   // Modal aç - genel detay modalı kullan veya toast ile göster
   // Eğer modal-kredi-detay yoksa oluştur
   let detayModal=document.getElementById('modal-kredi-detay');
-  if(!detayModal){
-    detayModal=document.createElement('div');
-    detayModal.id='modal-kredi-detay';
-    detayModal.className='modal-ov';
-    detayModal.innerHTML=`<div class="modal"><div class="modal-handle"></div>
-      <div class="modal-head"><h3>💰 Hesap Detayı</h3><button class="modal-close" onclick="closeModal('modal-kredi-detay')">✕</button></div>
-      <div class="modal-body" id="kredi-detay-icerik"></div>
-    </div>`;
-    document.body.appendChild(detayModal);
-  }
-  document.getElementById('kredi-detay-icerik').innerHTML=html;
+  if(!detayModal){detayModal=document.createElement('div');detayModal.id='modal-kredi-detay';detayModal.className='modal-ov';document.body.appendChild(detayModal);}
+  detayModal.innerHTML=`<div class="modal"><div class="modal-handle"></div><div class="modal-head"><h3>💰 Hesap Detayı</h3><button class="modal-close" onclick="closeModal('modal-kredi-detay')">✕</button></div><div class="modal-body">${html}</div></div>`;
   openModal('modal-kredi-detay');
 }
 
@@ -15537,27 +15518,26 @@ function onBorcKaynakChange(){
 }
 
 function mbKrediHesapla(){
-  const anapara=parseFloat(document.getElementById('mb-kredi-anapara')?.value)||0;
+  const anapara=parseFloat(document.getElementById('mb-anapara')?.value)||0;
   const faiz=parseFloat(document.getElementById('mb-kredi-faiz')?.value)||0;
-  const vade=parseInt(document.getElementById('mb-kredi-vade')?.value)||0;
-  if(!anapara||!vade)return;
-  let taksit;
-  if(faiz>0){const r=faiz/100/12;taksit=anapara*(r*Math.pow(1+r,vade))/(Math.pow(1+r,vade)-1);}
-  else{taksit=anapara/vade;}
-  const el=document.getElementById('mb-kredi-taksit');
-  if(el&&!el.value)el.value=Math.round(taksit);
-  const bas=document.getElementById('mb-kredi-baslangic')?.value;
-  if(bas){
-    const d=new Date(bas);d.setMonth(d.getMonth()+1);
-    const el2=document.getElementById('mb-kredi-ilk-taksit');
-    if(el2&&!el2.value)el2.value=localDateObjStr(d);
+  const vade=parseInt(document.getElementById('mb-vade')?.value)||0;
+  const toplamGeri=parseFloat(document.getElementById('mb-toplamgeri')?.value)||0;
+  let taksit=0;
+  if(toplamGeri>0&&vade>0){taksit=toplamGeri/vade;}
+  else if(anapara>0&&vade>0){
+    if(faiz>0){const r=faiz/100/12;taksit=anapara*(r*Math.pow(1+r,vade))/(Math.pow(1+r,vade)-1);}
+    else{taksit=anapara/vade;}
   }
-  const toplamGeri=Math.round(taksit)*vade;
-  const ozet=document.getElementById('mb-kredi-ozet');
-  const ic=document.getElementById('mb-kredi-ozet-ic');
-  if(ozet&&ic){
-    ic.innerHTML=`<div>Aylık taksit: <b class="num">${fmt(Math.round(taksit))} ₺</b></div><div>Toplam: <b class="num">${fmt(toplamGeri)} ₺</b></div>`;
-    ozet.style.display='block';
+  if(taksit>0){
+    const el=document.getElementById('mb-taksit-tutar');
+    if(el)el.value=Math.round(taksit);
+    const top=toplamGeri||Math.round(taksit)*vade;
+    const ozetEl=document.getElementById('mb-ozet');
+    const ozetIc=document.getElementById('mb-ozet-ic');
+    if(ozetEl&&ozetIc){
+      ozetEl.style.display='';
+      ozetIc.innerHTML=`<div><div style="color:var(--text3);font-size:10px;">Taksit</div><div style="font-weight:700;color:var(--blue);" class="num">${fmt(Math.round(taksit))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Toplam</div><div style="font-weight:700;color:var(--red);" class="num">${fmt(Math.round(top))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Faiz</div><div style="font-weight:700;color:var(--amber);" class="num">${fmt(Math.round(top-anapara))} ₺</div></div><div><div style="color:var(--text3);font-size:10px;">Vade</div><div style="font-weight:700;">${vade} taksit</div></div>`;
+    }
   }
 }
 
