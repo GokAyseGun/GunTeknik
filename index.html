@@ -3513,10 +3513,7 @@ async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('app').classList.add('active');
-  const fabEl=document.getElementById('fab-container');
-  if(fabEl){
-    fabEl.style.display=USER_ROL==='goruntule'?'none':'block';
-  }
+  // FAB renderAll tarafından yönetiliyor
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
   // Desen butonlarını güncelle
@@ -3961,8 +3958,35 @@ function renderAll(){
     if(pid==='tavsiyeler')renderTavsiyeler();
     // Kredi paneli her zaman güncelle
     if(typeof renderKrediPanel==='function')renderKrediPanel();
+    if(pid==='cari'){renderCariKrediler();}
     renderVergiDash();
     observeStagger();
+    // FAB güncelle
+    (function(){
+      const fabEl=document.getElementById('fab-container');
+      if(!fabEl)return;
+      if(USER_ROL==='goruntule'){fabEl.style.display='none';return;}
+      if(pid==='islemler'||pid==='cari'){
+        fabEl.style.display='';
+        const btn=document.createElement('button');
+        btn.style.cssText='width:52px;height:52px;border-radius:50%;border:none;color:white;font-size:'+(pid==='cari'?'22':'26')+'px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.25s;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+        if(pid==='islemler'){
+          btn.style.background='var(--gmg)';
+          btn.textContent='+';btn.title='İşlem Ekle';
+          btn.onclick=openIslemModal;
+        }else{
+          btn.style.background='linear-gradient(135deg,#1e3a8a,#2563eb)';
+          btn.textContent='🏦';btn.title='Finansman Ekle';
+          btn.onclick=openBorcModal;
+        }
+        btn.onmouseenter=()=>btn.style.transform='scale(1.1)';
+        btn.onmouseleave=()=>btn.style.transform='scale(1)';
+        fabEl.innerHTML='';
+        fabEl.appendChild(btn);
+      }else{
+        fabEl.style.display='none';
+      }
+    })();
   }catch(e){console.error('renderAll:',e);}
 }
 
