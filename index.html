@@ -6532,8 +6532,8 @@ async function mbKaydet(btn){
     // banka_kredileri tablosuna kayıt
     const borcTuru=document.getElementById('mb-borc-turu')?.value||'Ticari';
     const vade=parseInt(document.getElementById('mb-vade').value)||0;
-    const taksitTutar=parseFloat(document.getElementById('mb-taksit-tutar').value)||0;
-    const toplamGeri=parseFloat(document.getElementById('mb-toplamgeri').value)||(dongu==='tek'?parseFloat(document.getElementById('mb-toplamgeri-tek').value)||0:0);
+    const taksitTutar=parseTutar(document.getElementById('mb-taksit-tutar').value);
+    const toplamGeri=parseTutar(document.getElementById('mb-toplamgeri').value)||(dongu==='tek'?parseTutar(document.getElementById('mb-toplamgeri-tek').value):0);
     const ilkGun=document.getElementById('mb-ilk-gun').value||'';
     const sonGun=document.getElementById('mb-son-gun').value||'';
     const tekTarih=document.getElementById('mb-tek-tarih').value||'';
