@@ -2216,7 +2216,7 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
       <!-- 6. ORTAK ALANLAR -->
       <div class="fi"><label>Ana Para (₺)</label>
-        <input type="number" id="mb-anapara" inputmode="numeric" placeholder="0.00" oninput="mbKrediHesapla()">
+        <input type="number" id="mb-anapara" inputmode="numeric" placeholder="0.00">
       </div>
       <div class="fi"><label>Tarih</label>
         <input type="date" id="mb-tarih">
@@ -2255,14 +2255,14 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
         </div>
         <div style="display:flex;gap:8px;">
           <div class="fi" style="flex:1"><label>Vade / Taksit Sayısı</label>
-            <input type="number" id="mb-vade" inputmode="numeric" placeholder="12" min="1" oninput="mbKrediHesapla()">
+            <input type="number" id="mb-vade" inputmode="numeric" placeholder="12" min="1">
           </div>
           <div class="fi" style="flex:1"><label>Taksit Tutarı (₺)</label>
             <input type="number" id="mb-taksit-tutar" inputmode="numeric" placeholder="Otomatik" readonly tabindex="-1" style="background:var(--bg2);color:var(--text2);cursor:default;">
           </div>
         </div>
         <div class="fi"><label>Toplam Geri Ödenecek (₺)</label>
-          <input type="number" id="mb-toplamgeri" inputmode="numeric" placeholder="0.00" oninput="mbKrediHesapla()">
+          <input type="number" id="mb-toplamgeri" inputmode="numeric" placeholder="0.00" oninput="mbKrediHesapla()" onblur="mbKrediHesapla()">
         </div>
       </div>
 
@@ -3029,6 +3029,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 </div>
 
 <script>
+"use strict";
+// ==========
 "use strict";
 // =======================================================
 "use strict";
@@ -6591,7 +6593,7 @@ async function saveBorc(btn){
     const kasaTipi=document.getElementById('mb-kasa-tipi').value;// 'isletme' veya 'sahsi'
     const kisiId=parseInt(document.getElementById('mb-kisi').value)||0;
     if(!kisiId){showToast('Kişi seçin','red');return;}
-    const anaPara=parseTutar(document.getElementById('mb-anapara').value);
+    const anaPara=parseFloat(document.getElementById('mb-anapara').value)||0;
     const toplamGeri=parseTutar(document.getElementById('mb-toplamgeri').value);
     const taksit=parseInt(document.getElementById('mb-taksit').value)||1;
     if(anaPara<=0){showToast('Ana para tutarı girin','red');return;}
@@ -15590,17 +15592,20 @@ function mbIlkAyDoldur(){
 }
 
 function mbKrediHesapla(){
-  // Ham sayıları doğrudan inputtan oku (fmt() string'i değil)
-  const anapara=parseFloat(document.getElementById('mb-anapara')?.value)||0;
-  const vade=parseInt(document.getElementById('mb-vade')?.value)||0;
-  const toplamGeri=parseFloat(document.getElementById('mb-toplamgeri')?.value)||0;
-  // Taksit SADECE toplamGeri VE vade ikisi de girildiyse hesaplanır
-  // Vade tek başına girince hiçbir şey hesaplanmaz
+  // type=number inputtan ham sayı oku - asla fmt() string'i parse etme
+  const anaEl=document.getElementById('mb-anapara');
+  const anapara=anaEl?parseFloat(anaEl.value)||0:0;
+  const vadeEl=document.getElementById('mb-vade');
+  const vade=vadeEl?parseInt(vadeEl.value)||0:0;
+  const topEl=document.getElementById('mb-toplamgeri');
+  const toplamGeri=topEl?parseFloat(topEl.value)||0:0;
+
+  // Taksit hesaplama: SADECE toplamGeri VE vade ikisi de tam girilmişse
   let taksit=0;
   if(toplamGeri>0&&vade>0){
-    taksit=toplamGeri/vade; // Ana formül: Taksit = Toplam / Vade
-  } else if(anapara>0&&vade>0&&toplamGeri===0){
-    // Toplam girilmemiş - özet gösterme, sadece bekle
+    taksit=toplamGeri/vade;
+  } else {
+    // Eksik veri - özet gösterme
     const el=document.getElementById('mb-taksit-tutar');if(el)el.value='';
     const ozetEl=document.getElementById('mb-ozet');if(ozetEl)ozetEl.style.display='none';
     return;
@@ -16941,6 +16946,4 @@ try{initBgCircuit();}catch(e){console.error('initBgCircuit hatası:',e);}
 // Garanti: DOM tam yüklendiğinde de tekrar dene (script sırası garantisi için)
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{try{initBgCircuit();}catch(e){console.error(e);}});
-}</script>
-</body>
-</html>
+}}
