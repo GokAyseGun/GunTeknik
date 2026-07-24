@@ -15590,15 +15590,20 @@ function mbIlkAyDoldur(){
 }
 
 function mbKrediHesapla(){
+  // Ham sayıları doğrudan inputtan oku (fmt() string'i değil)
   const anapara=parseFloat(document.getElementById('mb-anapara')?.value)||0;
-  const faiz=parseFloat(document.getElementById('mb-kredi-faiz')?.value)||0;
   const vade=parseInt(document.getElementById('mb-vade')?.value)||0;
   const toplamGeri=parseFloat(document.getElementById('mb-toplamgeri')?.value)||0;
+  // Taksit SADECE toplamGeri VE vade ikisi de girildiyse hesaplanır
+  // Vade tek başına girince hiçbir şey hesaplanmaz
   let taksit=0;
-  if(toplamGeri>0&&vade>0){taksit=toplamGeri/vade;}
-  else if(anapara>0&&vade>0){
-    if(faiz>0){const r=faiz/100/12;taksit=anapara*(r*Math.pow(1+r,vade))/(Math.pow(1+r,vade)-1);}
-    else{taksit=anapara/vade;}
+  if(toplamGeri>0&&vade>0){
+    taksit=toplamGeri/vade; // Ana formül: Taksit = Toplam / Vade
+  } else if(anapara>0&&vade>0&&toplamGeri===0){
+    // Toplam girilmemiş - özet gösterme, sadece bekle
+    const el=document.getElementById('mb-taksit-tutar');if(el)el.value='';
+    const ozetEl=document.getElementById('mb-ozet');if(ozetEl)ozetEl.style.display='none';
+    return;
   }
   if(taksit>0){
     const el=document.getElementById('mb-taksit-tutar');
