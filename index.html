@@ -2268,9 +2268,15 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 
       <!-- ÖZET -->
       <div id="mb-ozet" style="background:rgba(126,179,240,0.1);border:1px solid rgba(126,179,240,0.3);border-radius:var(--r-md);padding:10px;display:none;font-size:12px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="mb-ozet-ic"></div>
+        <div id="mb-ozet-ic" style="display:flex;flex-direction:column;gap:0;"></div>
       </div>
 
+      <!-- İlk Taksit Ayı -->
+      <div class="fi" id="mb-ilk-ay-wrap">
+        <label>İlk Taksit Ayı</label>
+        <select id="mb-ilk-ay" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;"></select>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Bildirimler bu aydan itibaren başlar</div>
+      </div>
       <div class="fi"><label>Not / Açıklama</label>
         <textarea id="mb-not" rows="2" placeholder="Not ekleyin..."></textarea>
       </div>
@@ -5490,11 +5496,21 @@ async function finansmanBildirimKontrol(){
       const adMap={'borc-alma':'Borç','borc-verme':'Borç Tahsilatı','banka-kredi':'Kredi'};
       const turAdi=adMap[k.finansmanTuru]||'Ödeme';
 
+      // İlk taksit tarihi kontrolü — henüz başlamadıysa bildirim verme
+      const ilkTakTar=k.ilkTaksitTarihi?new Date(k.ilkTaksitTarihi+'T00:00'):null;
+      if(ilkTakTar){ilkTakTar.setHours(0,0,0,0);if(ilkTakTar>bugun)continue;}
+
       let son=null;
       if(dongu==='tek'){
         son=bas?new Date(bas+'T00:00'):null;
       }else if(dongu==='aylik'){
-        son=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||28);
+        // İlk taksit hangi ay başladıysa o ayın döngüsünü kullan
+        const refAy=ilkTakTar||bugun;
+        const refYil=refAy.getFullYear(),refAyNo=refAy.getMonth();
+        // Bu ay mı geçmiş mi kontrol
+        const buAySon=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||28);
+        buAySon.setHours(0,0,0,0);
+        son=buAySon;
       }else if(dongu==='yillik'){
         const [bg,bm]=(bit||'').split('-');
         son=new Date(bugun.getFullYear(),parseInt(bm||1)-1,parseInt(bg||1));
@@ -5504,7 +5520,7 @@ async function finansmanBildirimKontrol(){
       const sonMs=son.getTime(); const nowMs=bugun.getTime();
       const ilk=dongu==='aylik'?new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1):son;
       ilk.setHours(0,0,0,0);
-      const sonStr=son.toISOString().slice(0,10);
+      const sonStr=localDateObjStr(son);
 
       if(nowMs>sonMs){
         hatirlaticilar.push({id:k.id,mesaj:`⚠️ ${ad} ${turAdi} — Ödeme dönemi geçti! (Son: ${sonStr})`,tip:'hata',herGiris:true});
@@ -6407,6 +6423,8 @@ function mbDonguDegis(){
   const tek=d==='tek';
   document.getElementById('mb-tek-wrap').style.display=tek?'':'none';
   document.getElementById('mb-periyot-wrap').style.display=tek?'none':'';
+  const _iaw=document.getElementById('mb-ilk-ay-wrap');
+  if(_iaw)_iaw.style.display=tek?'none':'';
   const ilkLbl=document.getElementById('mb-ilk-gun-label');
   const sonLbl=document.getElementById('mb-son-gun-label');
   if(d==='aylik'||d==='gunluk'){
@@ -6459,6 +6477,11 @@ function openBorcModal(id){
     }
   }
   openModal('modal-borc');
+
+  mbIlkAyDoldur();
+  // ilk-ay-wrap sadece periyotlularda göster
+  const _ilkAyWrap=document.getElementById('mb-ilk-ay-wrap');
+  if(_ilkAyWrap)_ilkAyWrap.style.display='';
 }
 
 // Eski uyumluluk
@@ -6529,7 +6552,12 @@ async function mbKaydet(btn){
       periyot_bas:dongu==='tek'?tekTarih:ilkGun,
       periyot_bit:dongu==='tek'?tekTarih:sonGun,
       baslangic_tarihi:tarih,
-      ilk_taksit_tarihi:dongu!=='tek'&&ilkGun?tarih:tekTarih||null,
+      ilk_taksit_tarihi:(()=>{
+        if(dongu==='tek')return tekTarih||null;
+        const ilkAy=document.getElementById('mb-ilk-ay')?.value||'';
+        if(ilkAy&&ilkGun)return ilkAy+'-'+String(parseInt(ilkGun)||1).padStart(2,'0');
+        return tarih;
+      })(),
       odenen_taksit:0,
       kalan_taksit:dongu==='tek'?1:vade,
       toplam_odenen:0,
@@ -15539,6 +15567,24 @@ function onBorcKaynakChange(){
   document.getElementById('mb-normal-form').style.display=banka?'none':'';
   document.getElementById('mb-banka-form').style.display=banka?'':'none';
   document.getElementById('mb-kaydet-btn').textContent=banka?'Kredi Kaydet':'Oluştur';
+}
+
+
+function mbIlkAyDoldur(){
+  const sel=document.getElementById('mb-ilk-ay');
+  if(!sel)return;
+  const bugun=new Date();
+  const aylar=[];
+  for(let i=0;i<24;i++){
+    const d=new Date(bugun.getFullYear(),bugun.getMonth()+i,1);
+    const yil=d.getFullYear();
+    const ay=d.getMonth();
+    const label=d.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+    aylar.push({value:yil+'-'+String(ay+1).padStart(2,'0'),label:(i===0?'Bu ay: ':i===1?'Gelecek ay: ':'')+label});
+  }
+  sel.innerHTML=aylar.map(a=>`<option value="${a.value}">${a.label}</option>`).join('');
+  // Varsayılan: gelecek ay
+  if(aylar.length>1)sel.value=aylar[1].value;
 }
 
 function mbKrediHesapla(){
