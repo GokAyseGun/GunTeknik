@@ -9716,29 +9716,59 @@ async function yaklaşanUyariGoster(){
     return t<=hafta;
   }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
 
-  // ── 2. Banka kredisi taksitleri (1 hafta içi veya geçmiş) ──
+  // ── 2. Finansman ödemeleri (borç + kredi, 1 hafta içi veya geçmiş) ──
   const krediUyarilari=[];
-  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{
-    if(!k.ilkTaksitTarihi||!k.taksitGunu)return;
-    // Bu ayın taksit tarihi
-    const taksitTarihi=new Date(now.getFullYear(),now.getMonth(),k.taksitGunu);
-    taksitTarihi.setHours(0,0,0,0);
-    // Bu ay ödendi mi? krediOdemeleri'ne bak
-    const buAyOdendi=(DB.krediOdemeleri||[]).some(o=>{
-      if(String(o.krediId)!==String(k.id))return false;
-      const od=new Date(o.odemeTarihi); od.setHours(0,0,0,0);
-      return od.getFullYear()===now.getFullYear()&&od.getMonth()===now.getMonth();
-    });
-    if(buAyOdendi)return;
-    const gecmis=taksitTarihi<now;
-    const yakin=taksitTarihi>=now&&taksitTarihi<=hafta;
-    if(gecmis||yakin){
-      const gunFark=Math.round((taksitTarihi-now)/(24*60*60*1000));
-      krediUyarilari.push({id:'k_'+k.id,tip:'kredi',baslik:k.bankaAdi+' Kredisi',
-        detay:'Taksit: '+k.taksitGunu+'. gün',tutar:k.taksitTutari,
-        tarih:localDateObjStr(taksitTarihi),renk:gecmis?'var(--red)':'var(--amber)',
-        etiket:gecmis?'Geçmiş!':(gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra'),
-        gecmis:gecmis});
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif'&&k.kalanTaksit>0).forEach(k=>{
+    const dongu=k.odemeDongusu||'aylik';
+    const bas=k.periyotBas||'';
+    const bit=k.periyotBit||'';
+
+    // İlk taksit tarihi henüz gelmediyse bildirim verme
+    const ilkTakTar=k.ilkTaksitTarihi?new Date(k.ilkTaksitTarihi+'T00:00'):null;
+    if(ilkTakTar){ilkTakTar.setHours(0,0,0,0);if(ilkTakTar>now)return;}
+
+    // Dönem son gününü hesapla
+    let son=null,ilk=null;
+    if(dongu==='tek'){
+      const tarStr=bit||bas;
+      son=tarStr?new Date(tarStr+'T00:00'):null;
+      ilk=son;
+    }else if(dongu==='aylik'){
+      ilk=new Date(now.getFullYear(),now.getMonth(),parseInt(bas)||1);
+      son=new Date(now.getFullYear(),now.getMonth(),parseInt(bit)||28);
+      // İlk taksit bu ayın son gününden sonraysa bu ayı atla
+      if(ilkTakTar&&ilkTakTar>son)return;
+    }else if(dongu==='yillik'){
+      const [ba,bg]=(bas||'').split('-');
+      const [bia,big]=(bit||'').split('-');
+      ilk=new Date(now.getFullYear(),parseInt(ba||1)-1,parseInt(bg||1));
+      son=new Date(now.getFullYear(),parseInt(bia||1)-1,parseInt(big||1));
+      if(ilkTakTar&&ilkTakTar>son)return;
+    }
+    if(!son)return;
+    ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+
+    // Kişi/kurum adı
+    const kisiK=(DB.kisiler||[]).find(x=>String(x.id)===String(k.kisiId));
+    const adK=kisiK?.firmaUnvan||kisiK?.isim||k.bankaAdi||'';
+    const turK={'borc-alma':'Borç','borc-verme':'Borç Tahsilatı','banka-kredi':'Kredi'}[k.finansmanTuru]||'Ödeme';
+    const baslikK=adK?`${adK} ${turK}`:turK;
+
+    const nowMs=now.getTime(); const sonMs=son.getTime();
+    const gecmis=nowMs>sonMs;
+    const sonGun=nowMs===sonMs;
+    const donemIci=nowMs>=ilk.getTime()&&nowMs<sonMs;
+    const yaklaşan=!gecmis&&!sonGun&&son<=hafta;
+
+    if(gecmis||sonGun||donemIci||yaklaşan){
+      const gunFark=Math.round((sonMs-nowMs)/(24*60*60*1000));
+      let renk,etiket;
+      if(gecmis){renk='var(--red)';etiket='Geçmiş!';}
+      else if(sonGun){renk='#f97316';etiket='Bugün son gün!';}
+      else{renk='var(--amber)';etiket=gunFark===0?'Bugün':gunFark===1?'Yarın':gunFark+' gün sonra';}
+      krediUyarilari.push({id:'k_'+k.id,tip:'kredi',baslik:baslikK,
+        detay:localDateObjStr(son)+' son gün',tutar:k.taksitTutari,
+        tarih:localDateObjStr(son),renk,etiket,gecmis});
     }
   });
 
