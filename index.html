@@ -5496,43 +5496,52 @@ async function finansmanBildirimKontrol(){
       const dongu=k.odemeDongusu||'aylik';
       const bas=k.periyotBas||'';
       const bit=k.periyotBit||'';
-      const ad=k.bankaAdi||((DB.kisiler||[]).find(x=>x.id===k.kisiId)?.isim||'Finansman');
-      const adMap={'borc-alma':'Borç','borc-verme':'Borç Tahsilatı','banka-kredi':'Kredi'};
-      const turAdi=adMap[k.finansmanTuru]||'Ödeme';
+
+      // Ad: isim önce, yoksa banka adı, yoksa tür adı
+      const kisi=(DB.kisiler||[]).find(x=>String(x.id)===String(k.kisiId));
+      const kisiAdi=kisi?.firmaUnvan||kisi?.isim||'';
+      const ad=kisiAdi||k.bankaAdi||'';
+      const turEtiket={'borc-alma':'Borç','borc-verme':'Borç Tahsilatı','banka-kredi':'Kredi'}[k.finansmanTuru]||'Ödeme';
+      // Başlık: "Ahmet Bey Borç" veya "Garanti Bankası Kredi"
+      const baslik=ad?`${ad} ${turEtiket}`:turEtiket;
 
       // İlk taksit tarihi kontrolü — henüz başlamadıysa bildirim verme
       const ilkTakTar=k.ilkTaksitTarihi?new Date(k.ilkTaksitTarihi+'T00:00'):null;
       if(ilkTakTar){ilkTakTar.setHours(0,0,0,0);if(ilkTakTar>bugun)continue;}
 
-      let son=null;
+      // Dönem hesabı: bu ayki ilk ve son ödeme günleri
+      let ilk=null,son=null;
       if(dongu==='tek'){
-        son=bas?new Date(bas+'T00:00'):null;
+        const tarStr=bit||bas;
+        son=tarStr?new Date(tarStr+'T00:00'):null;
+        ilk=son;
       }else if(dongu==='aylik'){
-        // İlk taksit hangi ay başladıysa o ayın döngüsünü kullan
-        const refAy=ilkTakTar||bugun;
-        const refYil=refAy.getFullYear(),refAyNo=refAy.getMonth();
-        // Bu ay mı geçmiş mi kontrol
-        const buAySon=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||28);
-        buAySon.setHours(0,0,0,0);
-        son=buAySon;
+        const basGun=parseInt(bas)||1;
+        const bitGun=parseInt(bit)||28;
+        ilk=new Date(bugun.getFullYear(),bugun.getMonth(),basGun);
+        son=new Date(bugun.getFullYear(),bugun.getMonth(),bitGun);
+        // İlk taksit tarihi bu aydan sonraysa bu ayı atla
+        if(ilkTakTar&&ilkTakTar>son)continue;
       }else if(dongu==='yillik'){
-        const [bg,bm]=(bit||'').split('-');
-        son=new Date(bugun.getFullYear(),parseInt(bm||1)-1,parseInt(bg||1));
-      }
+        const [ba,bg]=(bas||'').split('-');
+        const [bia,big]=(bit||'').split('-');
+        ilk=new Date(bugun.getFullYear(),parseInt(ba||1)-1,parseInt(bg||1));
+        son=new Date(bugun.getFullYear(),parseInt(bia||1)-1,parseInt(big||1));
+        if(ilkTakTar&&ilkTakTar>son)continue;
+      }else continue;
+
       if(!son)continue;
-      son.setHours(0,0,0,0);
-      const sonMs=son.getTime(); const nowMs=bugun.getTime();
-      const ilk=dongu==='aylik'?new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1):son;
-      ilk.setHours(0,0,0,0);
+      ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+      const nowMs=bugun.getTime();
       const sonStr=localDateObjStr(son);
 
-      if(nowMs>sonMs){
-        hatirlaticilar.push({id:k.id,mesaj:`⚠️ ${ad} ${turAdi} — Ödeme dönemi geçti! (Son: ${sonStr})`,tip:'hata',herGiris:true});
-      }else if(nowMs===sonMs){
-        hatirlaticilar.push({id:k.id,mesaj:`🔴 ${ad} ${turAdi} — Bugün son ödeme günü!`,tip:'songun',herGiris:true});
-      }else if(nowMs>=ilk.getTime()&&nowMs<sonMs){
-        const kalanGun=Math.round((sonMs-nowMs)/86400000);
-        hatirlaticilar.push({id:k.id,mesaj:`📅 ${ad} ${turAdi} — ${kalanGun} gün kaldı (son: ${sonStr})`,tip:'uyari',herGiris:false});
+      if(nowMs>son.getTime()){
+        hatirlaticilar.push({id:k.id,mesaj:`⚠️ ${baslik} — Ödeme dönemi geçti! (Son: ${sonStr})`,tip:'hata',herGiris:true});
+      }else if(nowMs===son.getTime()){
+        hatirlaticilar.push({id:k.id,mesaj:`🔴 ${baslik} — Bugün son ödeme günü!`,tip:'songun',herGiris:true});
+      }else if(nowMs>=ilk.getTime()&&nowMs<son.getTime()){
+        const kalanGun=Math.round((son.getTime()-nowMs)/86400000);
+        hatirlaticilar.push({id:k.id,mesaj:`📅 ${baslik} — ${kalanGun} gün kaldı (son: ${sonStr})`,tip:'uyari',herGiris:false});
       }
     }
 
