@@ -457,13 +457,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
             <option value="Otel">🏨 Otel</option>
           </select>
         </div>
-        <div class="fi"><label>Firma / Tesis Adı</label><input type="text" id="ekle-firma" placeholder="Villa Güneş, Otel Mavi..."></div>
-        <div class="fi"><label>Muhatap Adı Soyadı</label><input type="text" id="ekle-muhatap" placeholder="Ahmet Yılmaz"></div>
-        <div class="row2">
-          <div class="fi"><label>Telefon</label><input type="tel" id="ekle-tel" placeholder="+90 5xx..."></div>
-          <div class="fi"><label>E-posta</label><input type="email" id="ekle-email" placeholder="@"></div>
+        <div class="fi"><label>Villa / Tesis Adı</label><input type="text" id="ekle-villa-adi" placeholder="Villa Güneş, Otel Mavi..."></div>
+
+        <div class="fi">
+          <label>Muhatap (Rehberden Seç)</label>
+          <input type="hidden" id="ekle-kisi-id">
+          <div style="position:relative;">
+            <input type="text" id="ekle-muhatap-ara" placeholder="İsim yazarak ara..." autocomplete="off"
+              oninput="villaKisiAra(this.value)" onfocus="villaKisiAra(this.value)">
+            <div id="ekle-muhatap-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="villaYeniKisiAc()" style="margin-top:6px;font-size:11px;">+ Rehberde Yok, Yeni Kişi Ekle</button>
         </div>
-        <div class="fi"><label>Adres</label><input type="text" id="ekle-adres" placeholder="Mahalle, ilçe..."></div>
+
+        <!-- Seçilen kişi bilgi kutusu (salt okunur) -->
+        <div id="ekle-kisi-bilgi" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--text2);"></div>
+
+        <!-- Yeni kişi mini formu -->
+        <div id="ekle-yeni-kisi-form" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;">
+          <div class="fi"><label>Ad Soyad</label><input type="text" id="yk-isim" placeholder="Ahmet Yılmaz"></div>
+          <div class="row2">
+            <div class="fi"><label>Telefon</label><input type="tel" id="yk-tel" placeholder="+90 5xx..."></div>
+            <div class="fi"><label>E-posta</label><input type="email" id="yk-email" placeholder="@"></div>
+          </div>
+          <div class="fi"><label>Adres</label><input type="text" id="yk-adres" placeholder="Mahalle, ilçe..."></div>
+        </div>
+
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button class="btn btn-secondary" onclick="closeModal('modal-villa-ekle')" style="flex:1;">Vazgeç</button>
           <button class="btn btn-primary" onclick="villaEkle(this)" style="flex:2;">Kaydet</button>
@@ -481,13 +500,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="fg">
         <input type="hidden" id="duz-id">
         <div class="fi"><label>Tür</label><select id="duz-tur"><option value="Villa">🏡 Villa</option><option value="Otel">🏨 Otel</option></select></div>
-        <div class="fi"><label>Firma / Tesis Adı</label><input type="text" id="duz-firma"></div>
-        <div class="fi"><label>Muhatap Adı Soyadı</label><input type="text" id="duz-muhatap"></div>
-        <div class="row2">
-          <div class="fi"><label>Telefon</label><input type="tel" id="duz-tel"></div>
-          <div class="fi"><label>E-posta</label><input type="email" id="duz-email"></div>
+        <div class="fi"><label>Villa / Tesis Adı</label><input type="text" id="duz-villa-adi"></div>
+
+        <div class="fi">
+          <label>Muhatap (Rehberden Seç)</label>
+          <input type="hidden" id="duz-kisi-id">
+          <div style="position:relative;">
+            <input type="text" id="duz-muhatap-ara" placeholder="İsim yazarak ara..." autocomplete="off"
+              oninput="villaKisiAraDuz(this.value)" onfocus="villaKisiAraDuz(this.value)">
+            <div id="duz-muhatap-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
+          </div>
         </div>
-        <div class="fi"><label>Adres</label><input type="text" id="duz-adres"></div>
+        <div id="duz-kisi-bilgi" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--text2);"></div>
+
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button class="btn btn-danger btn-sm" onclick="villaSil()">Sil</button>
           <button class="btn btn-secondary" onclick="closeModal('modal-villa-duzenle')" style="flex:1;">Vazgeç</button>
@@ -1345,12 +1370,19 @@ function openModal(id) {
   if (id === 'modal-villa-duzenle' && seciliVilla) {
     document.getElementById('duz-id').value = seciliVilla.id;
     document.getElementById('duz-tur').value = seciliVilla.tur || 'Villa';
-    const k = DB.kisiler.find(k=>k.id===seciliVilla.kisi_id) || {};
-    document.getElementById('duz-firma').value = k.firma_adi || '';
-    document.getElementById('duz-muhatap').value = k.muhatap_adi || '';
-    document.getElementById('duz-tel').value = k.telefon || '';
-    document.getElementById('duz-email').value = k.email || '';
-    document.getElementById('duz-adres').value = k.adres || '';
+    document.getElementById('duz-villa-adi').value = seciliVilla.villa_adi || '';
+    const k = DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id)) || null;
+    document.getElementById('duz-kisi-id').value = k?.id || '';
+    document.getElementById('duz-muhatap-ara').value = k?.isim || k?.firma_unvan || '';
+    const bilgi=document.getElementById('duz-kisi-bilgi');
+    if(bilgi){
+      const parts=[];
+      if(k?.firma_unvan)parts.push('🏢 '+k.firma_unvan);
+      if(k?.tel)parts.push('📞 '+k.tel);
+      if(k?.adres)parts.push('📍 '+k.adres);
+      bilgi.innerHTML=parts.map(p=>`<div>${p}</div>`).join('');
+      bilgi.style.display=parts.length?'block':'none';
+    }
   }
   if (id === 'modal-yeni-hizmet') document.getElementById('hiz-tarih').value = todayStr();
   if (id === 'modal-odenenler') document.getElementById('yeni-odeme-tarih').value = todayStr();
@@ -1602,7 +1634,6 @@ function renderVillaListe() {
   const el = document.getElementById('villa-liste');
   let liste = DB.villalar;
   if(turFiltre !== 'hepsi') liste = liste.filter(v=>v.tur===turFiltre);
-  // kisi bilgisini ekle
   liste = liste.map(v=>({...v, _kisi: DB.kisiler.find(k=>String(k.id)===String(v.kisi_id))||{}}));
   if(!liste.length){
     el.innerHTML='<div class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Kayıt yok</div><div class="empty-sub">Sağ üstten ekleyin</div></div>';
@@ -1612,20 +1643,19 @@ function renderVillaListe() {
     const icon = v.tur==='Villa'?'🏡':'🏨';
     const cls = v.tur==='Villa'?'villa':'otel';
     const k = v._kisi;
-    const isim = k.isim||k.firma_unvan||'—';
-    const muhatap = k.kapsam||'';
+    // Başlık: villanın kendi adı (villa_adi), yoksa kişinin firma unvanı
+    const baslik = v.villa_adi||k.firma_unvan||'—';
+    // Muhatap: kişinin kendi adı
+    const muhatap = k.isim||'';
     const tel = k.tel||k.telefon||'';
     const adres = k.adres||'';
-    const notParts=(k.not||'').split(' · ');
-    const email = notParts.find(p=>p.includes('@'))||'';
     return `<div class="villa-item${seciliVilla?.id===v.id?' selected':''}" onclick="selectVilla(${v.id})">
       <div class="villa-item-tur ${cls}">${icon}</div>
       <div class="villa-item-info" style="flex:1;min-width:0;">
-        <div class="villa-item-firma">${isim}</div>
+        <div class="villa-item-firma">${baslik}</div>
         ${muhatap?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">👤 ${muhatap}</div>`:''}
         ${tel?`<div style="font-size:11px;color:var(--text3);">📞 ${tel}</div>`:''}
         ${adres?`<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${adres}</div>`:''}
-        ${email?`<div style="font-size:11px;color:var(--text3);">✉️ ${email}</div>`:''}
       </div>
       <div style="color:var(--text3);font-size:18px;">›</div>
     </div>`;
@@ -1637,7 +1667,8 @@ async function selectVilla(id) {
   if(!seciliVilla) return;
   const tabSecili = document.getElementById('tab-secili');
   tabSecili.style.display = 'block';
-  tabSecili.textContent = DB.kisiler.find(k=>k.id===seciliVilla.kisi_id)?.firma_adi || 'Detay';
+  const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
+  tabSecili.textContent = seciliVilla.villa_adi || k?.firma_unvan || 'Detay';
   switchTab('secili', null);
   document.querySelectorAll('.tab-btn')[2].classList.add('active');
   await loadVillaDetay(id);
@@ -1647,11 +1678,8 @@ async function selectVilla(id) {
 function renderDetay() {
   if(!seciliVilla) return;
   const k = DB.kisiler.find(k=>String(k.id)===String(seciliVilla.kisi_id))||{};
-  document.getElementById('det-firma').textContent = k.isim||k.firma_unvan||'—';
-  // not alanında "muhatap · email · tur" formatında tutuluyor
-  const notParts=(k.not||'').split(' · ');
-  const emailVal=notParts.find(p=>p.includes('@'))||'';
-  document.getElementById('det-muhatap').textContent = [k.kapsam, k.tel].filter(Boolean).join(' · ') || '—';
+  document.getElementById('det-firma').textContent = seciliVilla.villa_adi||k.firma_unvan||'—';
+  document.getElementById('det-muhatap').textContent = [k.isim, k.tel].filter(Boolean).join(' · ') || '—';
   document.getElementById('det-tur-icon').textContent = seciliVilla.tur==='Villa'?'🏡':'🏨';
   document.getElementById('det-hizmet-sayi').textContent = DB.hizmetler.length;
   document.getElementById('det-dongu').textContent = seciliVilla.hizmet_dongusu||'—';
@@ -1710,56 +1738,165 @@ function renderDetay() {
 }
 
 // ══════════════ VİLLA EKLE/DÜZENLE/SİL ══════════════
+// ── Muhatap arama (rehberden) ──
+function villaKisiAra(val){
+  const drop=document.getElementById('ekle-muhatap-drop');
+  if(!drop)return;
+  if(!val||val.length<1){drop.style.display='none';return;}
+  const q=val.toLowerCase();
+  const sonuc=(DB.kisiler||[]).filter(k=>
+    (k.isim||'').toLowerCase().includes(q)||(k.firma_unvan||'').toLowerCase().includes(q)||(k.tel||'').includes(q)
+  ).slice(0,30);
+  if(!sonuc.length){drop.innerHTML='<div style="padding:10px 12px;color:var(--text3);font-size:12px;">Sonuç yok</div>';drop.style.display='block';return;}
+  drop.innerHTML=sonuc.map(k=>`<div onclick="villaKisiSec(${k.id})"
+    style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;"
+    onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+    <span style="font-weight:600;">${k.isim||'—'}</span>
+    ${k.firma_unvan?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${k.firma_unvan}</span>`:''}
+  </div>`).join('');
+  drop.style.display='block';
+}
+
+function villaKisiSec(id){
+  const k=(DB.kisiler||[]).find(x=>String(x.id)===String(id));
+  if(!k)return;
+  document.getElementById('ekle-kisi-id').value=id;
+  document.getElementById('ekle-muhatap-ara').value=k.isim||k.firma_unvan||'';
+  document.getElementById('ekle-muhatap-drop').style.display='none';
+  const bilgi=document.getElementById('ekle-kisi-bilgi');
+  if(bilgi){
+    const parts=[];
+    if(k.firma_unvan)parts.push('🏢 '+k.firma_unvan);
+    if(k.tel)parts.push('📞 '+k.tel);
+    if(k.adres)parts.push('📍 '+k.adres);
+    bilgi.innerHTML=parts.map(p=>`<div>${p}</div>`).join('')||'<div style="color:var(--text3);">Ek bilgi yok</div>';
+    bilgi.style.display=parts.length?'block':'none';
+  }
+  // Yeni kişi formunu kapat
+  document.getElementById('ekle-yeni-kisi-form').style.display='none';
+}
+
+function villaYeniKisiAc(){
+  document.getElementById('ekle-yeni-kisi-form').style.display='block';
+  document.getElementById('ekle-kisi-bilgi').style.display='none';
+  document.getElementById('ekle-kisi-id').value='';
+  document.getElementById('ekle-muhatap-ara').value='';
+}
+
+document.addEventListener('click',e=>{
+  const drop=document.getElementById('ekle-muhatap-drop');
+  const inp=document.getElementById('ekle-muhatap-ara');
+  if(drop&&inp&&!drop.contains(e.target)&&e.target!==inp)drop.style.display='none';
+});
+
 async function villaEkle(btn) {
   const tur=document.getElementById('ekle-tur').value;
-  const firma=document.getElementById('ekle-firma').value.trim();
-  const muhatap=document.getElementById('ekle-muhatap').value.trim();
-  const tel=document.getElementById('ekle-tel').value.trim();
-  const email=document.getElementById('ekle-email').value.trim();
-  const adres=document.getElementById('ekle-adres').value.trim();
-  if(!firma){showToast('Firma adı girin','red');return;}
+  const villaAdi=document.getElementById('ekle-villa-adi').value.trim();
+  let kisiId=parseInt(document.getElementById('ekle-kisi-id').value)||null;
+
+  if(!villaAdi){showToast('Villa / Tesis adı girin','red');return;}
+
+  // Yeni kişi formu açıksa önce kişiyi oluştur
+  const yeniKisiForm=document.getElementById('ekle-yeni-kisi-form');
+  const yeniKisiAcik=yeniKisiForm&&yeniKisiForm.style.display!=='none';
+  const ykIsim=document.getElementById('yk-isim')?.value.trim()||'';
+
+  if(!kisiId&&!yeniKisiAcik){showToast('Muhatap seçin veya yeni kişi ekleyin','red');return;}
+  if(yeniKisiAcik&&!ykIsim){showToast('Muhatap adını girin','red');return;}
+
   if(btn)btn.disabled=true;
   try{
-    // Villa ekle (rehbere kişi eklenmez - kişi ayrıca rehberden seçilir)
+    if(yeniKisiAcik&&!kisiId){
+      const ykTel=document.getElementById('yk-tel')?.value.trim()||'';
+      const ykEmail=document.getElementById('yk-email')?.value.trim()||'';
+      const ykAdres=document.getElementById('yk-adres')?.value.trim()||'';
+      const notParts=[];
+      if(ykEmail)notParts.push(ykEmail);
+      const yeniKisi=await sbFetch('kisiler',{method:'POST',body:JSON.stringify({
+        isim:ykIsim, tel:ykTel, adres:ykAdres,
+        not:notParts.join(' · '), tip:'Müşteri'
+      })});
+      kisiId=yeniKisi?.[0]?.id||null;
+      if(!kisiId){showToast('Kişi oluşturulamadı','red');if(btn)btn.disabled=false;return;}
+    }
+
     await sbFetch('villa_oteller',{method:'POST',body:JSON.stringify({
-      kisi_id: null,
+      kisi_id: kisiId,
       tur,
-      isim: firma,
-      muhatap,
-      tel,
-      email,
-      adres
+      villa_adi: villaAdi
     })});
     closeModal('modal-villa-ekle');
-    ['ekle-firma','ekle-muhatap','ekle-tel','ekle-email','ekle-adres'].forEach(id=>document.getElementById(id).value='');
+    ['ekle-villa-adi','ekle-muhatap-ara','yk-isim','yk-tel','yk-email','yk-adres'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    document.getElementById('ekle-kisi-id').value='';
+    document.getElementById('ekle-kisi-bilgi').style.display='none';
+    document.getElementById('ekle-yeni-kisi-form').style.display='none';
     showToast('Eklendi','green');
     await loadAll();
-  }catch(e){showToast('Hata: '+e.message,'red');}
+  }catch(e){console.error(e);showToast('Hata: '+e.message,'red');}
   finally{if(btn)btn.disabled=false;}
 }
+
+
+function villaKisiAraDuz(val){
+  const drop=document.getElementById('duz-muhatap-drop');
+  if(!drop)return;
+  if(!val||val.length<1){drop.style.display='none';return;}
+  const q=val.toLowerCase();
+  const sonuc=(DB.kisiler||[]).filter(k=>
+    (k.isim||'').toLowerCase().includes(q)||(k.firma_unvan||'').toLowerCase().includes(q)||(k.tel||'').includes(q)
+  ).slice(0,30);
+  if(!sonuc.length){drop.innerHTML='<div style="padding:10px 12px;color:var(--text3);font-size:12px;">Sonuç yok</div>';drop.style.display='block';return;}
+  drop.innerHTML=sonuc.map(k=>`<div onclick="villaKisiSecDuz(${k.id})"
+    style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;"
+    onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+    <span style="font-weight:600;">${k.isim||'—'}</span>
+    ${k.firma_unvan?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${k.firma_unvan}</span>`:''}
+  </div>`).join('');
+  drop.style.display='block';
+}
+
+function villaKisiSecDuz(id){
+  const k=(DB.kisiler||[]).find(x=>String(x.id)===String(id));
+  if(!k)return;
+  document.getElementById('duz-kisi-id').value=id;
+  document.getElementById('duz-muhatap-ara').value=k.isim||k.firma_unvan||'';
+  document.getElementById('duz-muhatap-drop').style.display='none';
+  const bilgi=document.getElementById('duz-kisi-bilgi');
+  if(bilgi){
+    const parts=[];
+    if(k.firma_unvan)parts.push('🏢 '+k.firma_unvan);
+    if(k.tel)parts.push('📞 '+k.tel);
+    if(k.adres)parts.push('📍 '+k.adres);
+    bilgi.innerHTML=parts.map(p=>`<div>${p}</div>`).join('');
+    bilgi.style.display=parts.length?'block':'none';
+  }
+}
+
+document.addEventListener('click',e=>{
+  const drop=document.getElementById('duz-muhatap-drop');
+  const inp=document.getElementById('duz-muhatap-ara');
+  if(drop&&inp&&!drop.contains(e.target)&&e.target!==inp)drop.style.display='none';
+});
 
 async function villaGuncelle(btn) {
   const id=document.getElementById('duz-id').value;
   const tur=document.getElementById('duz-tur').value;
-  const firma=document.getElementById('duz-firma').value.trim();
-  const muhatap=document.getElementById('duz-muhatap').value.trim();
-  const tel=document.getElementById('duz-tel').value.trim();
-  const email=document.getElementById('duz-email').value.trim();
-  const adres=document.getElementById('duz-adres').value.trim();
-  if(!firma){showToast('Firma adı girin','red');return;}
+  const villaAdi=document.getElementById('duz-villa-adi').value.trim();
+  const kisiId=parseInt(document.getElementById('duz-kisi-id').value)||null;
+  if(!villaAdi){showToast('Villa / Tesis adı girin','red');return;}
+  if(!kisiId){showToast('Muhatap seçin','red');return;}
   if(btn)btn.disabled=true;
   try{
-    const k=DB.kisiler.find(k=>k.id===seciliVilla?.kisi_id);
-    if(k){await sbFetch(`kisiler?id=eq.${k.id}`,{method:'PATCH',body:JSON.stringify({
-      isim:firma,firma_unvan:firma,kapsam:muhatap,tel,adres,
-      'not':[muhatap,email,tur].filter(Boolean).join(' · ')
-    })});}
-    await sbFetch(`villa_oteller?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({tur})});
+    await sbFetch(`villa_oteller?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({
+      tur, villa_adi:villaAdi, kisi_id:kisiId
+    })});
     closeModal('modal-villa-duzenle');
     showToast('Güncellendi','green');
     await loadAll();
-    if(seciliVilla){seciliVilla=DB.villalar.find(v=>v.id===parseInt(id));renderDetay();}
-  }catch(e){showToast('Hata','red');}
+    if(seciliVilla){seciliVilla=DB.villalar.find(v=>v.id===parseInt(id));await loadVillaDetay(id);}
+  }catch(e){console.error(e);showToast('Hata: '+e.message,'red');}
   finally{if(btn)btn.disabled=false;}
 }
 
