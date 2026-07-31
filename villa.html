@@ -2190,6 +2190,7 @@ async function hizmetSil(id) {
     DB.hizmetler=DB.hizmetler.filter(h=>h.id!==id);
     renderHizmetlerModal();
     renderDetay();
+    if(typeof renderVillaIslemler==='function')renderVillaIslemler();
     showToast('Hizmet silindi','amber');
   }catch(e){showToast('Hata','red');}
 }
@@ -2491,7 +2492,7 @@ async function odemeSil(id) {
   try{
     await sbFetch(`villa_odemeler?id=eq.${id}`,{method:'DELETE'});
     DB.odemeler=DB.odemeler.filter(o=>o.id!==id);
-    renderOdenenlerModal();renderDetay();showToast('Silindi','amber');
+    renderOdenenlerModal();renderDetay();if(typeof renderVillaIslemler==='function')renderVillaIslemler();showToast('Silindi','amber');
   }catch(e){showToast('Hata','red');}
 }
 
@@ -2543,6 +2544,7 @@ async function notSil(id) {
     await sbFetch(`villa_notlar?id=eq.${id}`,{method:'DELETE'});
     DB.notlar=DB.notlar.filter(n=>n.id!==id);
     renderNotlarModal();renderDetay();
+    if(typeof renderVillaIslemler==='function')renderVillaIslemler();
     showToast('Silindi','amber');
   }catch(e){showToast('Hata','red');}
 }
@@ -2641,7 +2643,7 @@ async function harcamaSil(id) {
   try{
     await sbFetch(`villa_harcamalar?id=eq.${id}`,{method:'DELETE'});
     DB.harcamalar=DB.harcamalar.filter(h=>h.id!==id);
-    renderHarcamalarModal();renderDetay();showToast('Silindi','amber');
+    renderHarcamalarModal();renderDetay();if(typeof renderVillaIslemler==='function')renderVillaIslemler();showToast('Silindi','amber');
   }catch(e){showToast('Hata','red');}
 }
 
@@ -3005,6 +3007,8 @@ function renderVillaIslemler() {
   const TIP_ICON={hizmet:'🔧',odeme:'💰',not:'📝',evrak:'📄',harcama:'💸'};
   const TIP_AD={hizmet:'Hizmet',odeme:'Ödeme',not:'Not',evrak:'Evrak',harcama:'Harcama'};
 
+  const SIL_FN={hizmet:'hizmetSil',odeme:'odemeSil',not:'notSil',evrak:'evrakSil',harcama:'harcamaSil'};
+
   el.innerHTML=filtered.map(i=>{
     const {tip,obj}=i;
     const renk=TIP_RENK[tip];
@@ -3016,6 +3020,7 @@ function renderVillaIslemler() {
     else if(tip==='harcama'){baslik=`${fmt(obj.tutar)} ${obj.para_birimi}`;alt=obj.aciklama||'';}
     // Ek var mı
     const ekSayisi=(DB.ekler||[]).filter(e=>e.kayit_tip===tip&&String(e.kayit_id)===String(obj.id)).length;
+    const silFn=SIL_FN[tip];
     return `<div onclick="islemDetayAc('${tip}',${obj.id})" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${renk};border-radius:var(--r-md);padding:10px 14px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:18px;">${TIP_ICON[tip]}</span>
@@ -3028,6 +3033,7 @@ function renderVillaIslemler() {
           ${alt?`<div style="font-size:11px;color:var(--text3);">${alt}</div>`:''}
         </div>
         ${ekSayisi?`<span style="font-size:10px;color:var(--text3);">📎${ekSayisi}</span>`:''}
+        <button onclick="event.stopPropagation();${silFn}(${obj.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:2px 4px;flex-shrink:0;">🗑</button>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>`;
@@ -3589,6 +3595,7 @@ async function evrakSil(id) {
     DB.evrakOdemeleri=(DB.evrakOdemeleri||[]).filter(o=>String(o.evrak_id)!==String(id));
     renderEvraklarModal();
     renderDetay();
+    if(typeof renderVillaIslemler==='function')renderVillaIslemler();
     showToast('Silindi','amber');
   }catch(e){showToast('Hata','red');}
 }
