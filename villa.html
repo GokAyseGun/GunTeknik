@@ -1231,19 +1231,184 @@ async function sbFetch(path, opts={}) {
 }
 
 // ══════════════ VERİ YÜKLE ══════════════
+
+// ════════════════════════════════════════════════════════
+// VİLLA BİLDİRİM SİSTEMİ (evrak.html mantığı: dönem içi / son gün / geçmiş)
+// Kaydedildiği tarihten sonraki ilk dönem baz alınır
+// ════════════════════════════════════════════════════════
+const GUN_IDX_HAFTA={'Pazartesi':0,'Sal\u0131':1,'\u00c7ar\u015famba':2,'Per\u015fembe':3,'Cuma':4,'Cumartesi':5,'Pazar':6};
+
+function villaDonemHesapla(tur, bas, bit, olusturmaTarihi){
+  const bugun=new Date(); bugun.setHours(0,0,0,0);
+  const olusma = olusturmaTarihi ? new Date(olusturmaTarihi) : null;
+  if(olusma) olusma.setHours(0,0,0,0);
+
+  if(tur==='Ayl\u0131k'){
+    let ilk=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bas)||1);
+    let son=new Date(bugun.getFullYear(),bugun.getMonth(),parseInt(bit)||15);
+    ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+    if(olusma && son<olusma){
+      ilk=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bas)||1);
+      son=new Date(bugun.getFullYear(),bugun.getMonth()+1,parseInt(bit)||15);
+      ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+    }
+    return {ilk,son};
+  }
+  if(tur==='Haftal\u0131k'){
+    const gunNo = bugun.getDay()===0?7:bugun.getDay();
+    const pztBu = new Date(bugun); pztBu.setDate(bugun.getDate()-(gunNo-1)); pztBu.setHours(0,0,0,0);
+    const basIdx = GUN_IDX_HAFTA[bas]!==undefined?GUN_IDX_HAFTA[bas]:0;
+    const bitIdx = GUN_IDX_HAFTA[bit]!==undefined?GUN_IDX_HAFTA[bit]:4;
+    let ilk = new Date(pztBu); ilk.setDate(pztBu.getDate()+basIdx);
+    let son = new Date(pztBu); son.setDate(pztBu.getDate()+bitIdx);
+    if(olusma && son<olusma){
+      ilk=new Date(ilk); ilk.setDate(ilk.getDate()+7);
+      son=new Date(son); son.setDate(son.getDate()+7);
+    }
+    return {ilk,son};
+  }
+  // Y\u0131ll\u0131k / Sezonluk - "AY-GUN" format\u0131
+  const [ba,bg]=(bas||'1-1').split('-');
+  const [bia,big]=(bit||'1-15').split('-');
+  let ilk=new Date(bugun.getFullYear(),parseInt(ba||1)-1,parseInt(bg||1));
+  let son=new Date(bugun.getFullYear(),parseInt(bia||1)-1,parseInt(big||1));
+  ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+  if(olusma && son<olusma){
+    ilk=new Date(bugun.getFullYear()+1,parseInt(ba||1)-1,parseInt(bg||1));
+    son=new Date(bugun.getFullYear()+1,parseInt(bia||1)-1,parseInt(big||1));
+    ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
+  }
+  return {ilk,son};
+}
+
+async function villaBildirimKontrol(){
+  try{
+    const bugun=new Date(); bugun.setHours(0,0,0,0);
+    const bugunStr=todayStr();
+    const hatirlaticilar=[];
+
+    // 1. Villa hizmet \u00f6deme d\u00f6ng\u00fcs\u00fc
+    (DB.villalar||[]).forEach(vil=>{
+      const tur=vil.odeme_turu||'';
+      if(!tur||tur==='G\u00fcnl\u00fck')return;
+      const bas=vil.odeme_periyot_bas||'';
+      const bit=vil.odeme_periyot_bit||'';
+      if(!bas||!bit)return;
+      const {ilk,son}=villaDonemHesapla(tur,bas,bit,vil.created_at);
+      if(!son)return;
+
+      const odendi=(DB.tumOdemeler||[]).some(o=>{
+        if(String(o.villa_id)!==String(vil.id))return false;
+        const od=new Date(o.tarih); od.setHours(0,0,0,0);
+        return od>=ilk && od<=son;
+      });
+      if(odendi)return;
+
+      const kisi=(DB.kisiler||[]).find(k=>String(k.id)===String(vil.kisi_id));
+      const villaAdi = vil.villa_adi || kisi?.firma_unvan || 'Villa';
+      const nowMs=bugun.getTime(), sonMs=son.getTime(), ilkMs=ilk.getTime();
+      const sonStr=localDateObjStr(son);
+
+      if(nowMs>sonMs){
+        hatirlaticilar.push({id:'h_'+vil.id,villaId:vil.id,mesaj:`\u26a0\ufe0f ${villaAdi} \u2014 Hizmet \u00f6demesi ge\u00e7ti! (Son: ${sonStr})`,tip:'hata',herGiris:true});
+      }else if(nowMs===sonMs){
+        hatirlaticilar.push({id:'h_'+vil.id,villaId:vil.id,mesaj:`\ud83d\udd34 ${villaAdi} \u2014 Bug\u00fcn son \u00f6deme g\u00fcn\u00fc!`,tip:'songun',herGiris:true});
+      }else if(nowMs>=ilkMs&&nowMs<sonMs){
+        const kalanGun=Math.round((sonMs-nowMs)/86400000);
+        hatirlaticilar.push({id:'h_'+vil.id,villaId:vil.id,mesaj:`\ud83d\udcc5 ${villaAdi} \u2014 \u00f6deme d\u00f6nemi i\u00e7i (${kalanGun} g\u00fcn kald\u0131, son: ${sonStr})`,tip:'uyari',herGiris:false});
+      }
+    });
+
+    // 2. Villa evraklar\u0131 \u00f6deme d\u00f6ng\u00fcs\u00fc
+    (DB.tumEvraklar||[]).filter(e=>e.durum==='Aktif').forEach(evrak=>{
+      const dongu=evrak.odeme_dongusu||'Yok';
+      if(dongu==='Yok')return;
+      const bas=evrak.periyot_bas||'';
+      const bit=evrak.periyot_bit||'';
+      if(!bas||!bit)return;
+      const {ilk,son}=villaDonemHesapla(dongu,bas,bit,evrak.created_at);
+      if(!son)return;
+
+      const odendi=(DB.tumEvrakOdemeleri||[]).some(o=>{
+        if(String(o.evrak_id)!==String(evrak.id))return false;
+        const od=new Date(o.odeme_tarihi); od.setHours(0,0,0,0);
+        return od>=ilk && od<=son;
+      });
+      if(odendi)return;
+
+      const vil=(DB.villalar||[]).find(v2=>String(v2.id)===String(evrak.villa_id));
+      const villaAdi = vil?.villa_adi || 'Villa';
+      const evrakAdiStr = evrak.evrak_adi || evrak.tur || 'Evrak';
+      const nowMs=bugun.getTime(), sonMs=son.getTime(), ilkMs=ilk.getTime();
+      const sonStr=localDateObjStr(son);
+
+      if(nowMs>sonMs){
+        hatirlaticilar.push({id:'e_'+evrak.id,villaId:evrak.villa_id,mesaj:`\u26a0\ufe0f ${villaAdi} \u2014 ${evrakAdiStr} \u00f6demesi ge\u00e7ti! (Son: ${sonStr})`,tip:'hata',herGiris:true});
+      }else if(nowMs===sonMs){
+        hatirlaticilar.push({id:'e_'+evrak.id,villaId:evrak.villa_id,mesaj:`\ud83d\udd34 ${villaAdi} \u2014 ${evrakAdiStr} bug\u00fcn son g\u00fcn!`,tip:'songun',herGiris:true});
+      }else if(nowMs>=ilkMs&&nowMs<sonMs){
+        const kalanGun=Math.round((sonMs-nowMs)/86400000);
+        hatirlaticilar.push({id:'e_'+evrak.id,villaId:evrak.villa_id,mesaj:`\ud83d\udcc5 ${villaAdi} \u2014 ${evrakAdiStr} (${kalanGun} g\u00fcn kald\u0131, son: ${sonStr})`,tip:'uyari',herGiris:false});
+      }
+    });
+
+    if(!hatirlaticilar.length)return;
+
+    const gunKey='villa_popup_'+bugunStr;
+    const gosterilmis=JSON.parse(localStorage.getItem(gunKey)||'[]');
+    const gosterilecek=[];
+    for(const h of hatirlaticilar){
+      const key=String(h.id)+'_'+h.tip;
+      if(h.herGiris){gosterilecek.push(h);}
+      else if(!gosterilmis.includes(key)){gosterilmis.push(key);gosterilecek.push(h);}
+    }
+    localStorage.setItem(gunKey,JSON.stringify(gosterilmis));
+    if(!gosterilecek.length)return;
+
+    const eskiBar=document.getElementById('villa-bildirim-bar');
+    if(eskiBar)eskiBar.remove();
+    const bar=document.createElement('div');
+    bar.id='villa-bildirim-bar';
+    bar.style.cssText='padding:8px 12px;display:flex;flex-direction:column;gap:6px;';
+    gosterilecek.forEach(h=>{
+      let renk,bg;
+      if(h.tip==='hata'){renk='var(--red)';bg='var(--red-lt)';}
+      else if(h.tip==='songun'){renk='#f97316';bg='#fff7ed';}
+      else{renk='var(--amber)';bg='var(--amber-lt)';}
+      const s=document.createElement('div');
+      s.style.cssText=`display:flex;align-items:center;gap:10px;background:${bg};border-left:3px solid ${renk};border-radius:var(--r-sm);padding:8px 12px;cursor:pointer;`;
+      s.onclick=()=>{ if(h.villaId) selectVilla(h.villaId); bar.remove(); };
+      s.innerHTML=`<div style="flex:1;font-size:12px;font-weight:600;color:${renk};">${h.mesaj}</div>`;
+      bar.appendChild(s);
+    });
+    const kapat=document.createElement('button');
+    kapat.style.cssText='align-self:flex-end;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 8px;';
+    kapat.textContent='\u2715 Kapat'; kapat.addEventListener('click',()=>bar.remove());
+    bar.appendChild(kapat);
+    const topbar=document.querySelector('.topbar');
+    if(topbar) topbar.insertAdjacentElement('afterend',bar);
+  }catch(e){console.warn('Villa bildirim:',e);}
+}
+
 async function loadAll() {
   try {
     kurYukle(); // Kuru arka planda yükle
-    const [villalar, kisiler, takvim, personeller] = await Promise.all([
+    const [villalar, kisiler, takvim, personeller, tumOdemeler, tumEvraklar, tumEvrakOdemeleri] = await Promise.all([
       sbFetch('villa_oteller?order=created_at.desc'),
       sbFetch('kisiler?order=isim.asc'),
       sbFetch('takvim?order=tarih.asc'),
       sbFetch('personeller?order=isim.asc').catch(()=>[]),
+      sbFetch('villa_odemeler?order=tarih.desc').catch(()=>[]),
+      sbFetch('villa_evraklar?order=created_at.desc').catch(()=>[]),
+      sbFetch('villa_evrak_odemeler?order=odeme_tarihi.desc').catch(()=>[]),
     ]);
     DB.villalar = villalar || [];
     DB.kisiler = kisiler || [];
     DB.takvim = takvim || [];
     DB.personeller = personeller || [];
+    DB.tumOdemeler = tumOdemeler || [];
+    DB.tumEvraklar = tumEvraklar || [];
+    DB.tumEvrakOdemeleri = tumEvrakOdemeleri || [];
     renderVillaListe();
     renderCalendar();
   } catch(e) { console.error('loadAll:', e); showToast('Veri yüklenemedi', 'red'); }
@@ -1276,6 +1441,11 @@ async function loadVillaDetay(villaId) {
 }
 
 // ══════════════ YARDIMCI ══════════════
+function parseTutar(val){
+  if(!val&&val!==0)return 0;
+  const temiz=String(val).replace(/\./g,'').replace(',','.');
+  return parseFloat(temiz)||0;
+}
 function fmt(n, pb='') {
   if (!n && n !== 0) return '—';
   return Number(n).toLocaleString('tr-TR') + (pb ? ' ' + pb : '');
@@ -1284,7 +1454,13 @@ function dtStr(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric'});
 }
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+function todayStr() {
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function localDateObjStr(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function thisWeekRange() {
   const now = new Date();
   const day = now.getDay() || 7;
@@ -2239,7 +2415,7 @@ async function odemeBilgiKaydet(btn) {
     const periyot=periyotDegerAl();
     const data={
       odeme_turu:document.getElementById('odeme-tur-input').value,
-      odeme_tutari:parseFloat(document.getElementById('odeme-tutar-input').value)||0,
+      odeme_tutari:parseTutar(document.getElementById('odeme-tutar-input').value),
       odeme_para_birimi:document.getElementById('odeme-pb-input').value,
       odeme_periyot_bas:periyot.bas,
       odeme_periyot_bit:periyot.bit
@@ -2255,7 +2431,7 @@ async function odemeBilgiKaydet(btn) {
 async function odemeEkle(btn) {
   if(!seciliVilla) return;
   const tarih=document.getElementById('yeni-odeme-tarih').value;
-  const tutar=parseFloat(document.getElementById('yeni-odeme-tutar').value)||0;
+  const tutar=parseTutar(document.getElementById('yeni-odeme-tutar').value);
   if(!tarih||!tutar){showToast('Tarih ve tutar girin','red');return;}
   const editId=btn?.dataset?.editId;
   if(btn)btn.disabled=true;
@@ -2281,8 +2457,11 @@ function renderOdenenlerModal() {
   const el=document.getElementById('odenenler-liste');
   const sorted=[...DB.odemeler].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
   if(!sorted.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;margin-bottom:8px;">Ödeme kaydı yok</div>';return;}
-  const top=sorted.reduce((a,o)=>a+o.tutar,0);
-  el.innerHTML=`<div style="margin-bottom:12px;padding:10px;background:var(--green-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--green);">Toplam: ${fmt(top)}</div>`+
+  // Her para birimini kendi cinsinden topla (birbirine karıştırmadan)
+  const pbToplam={};
+  sorted.forEach(o=>{const pb=o.para_birimi||'TRY';pbToplam[pb]=(pbToplam[pb]||0)+(o.tutar||0);});
+  const toplamStr=Object.entries(pbToplam).map(([pb,t])=>fmt(t)+' '+pb).join(' + ');
+  el.innerHTML=`<div style="margin-bottom:12px;padding:10px;background:var(--green-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--green);">Toplam: ${toplamStr}</div>`+
     sorted.map(o=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <div style="flex:1;">
@@ -2389,7 +2568,7 @@ function notDuzenle(id) {
 async function harcamaEkle(btn) {
   if(!seciliVilla) return;
   const tarih=document.getElementById('harcama-tarih-input').value;
-  const tutar=parseFloat(document.getElementById('harcama-tutar-input').value)||0;
+  const tutar=parseTutar(document.getElementById('harcama-tutar-input').value);
   if(!tarih||!tutar){showToast('Tarih ve tutar girin','red');return;}
   if(btn)btn.disabled=true;
   try{
@@ -2426,8 +2605,10 @@ function renderHarcamalarModal() {
   else if(_harcamaFiltre==='buay') liste=liste.filter(h=>new Date(h.tarih).getMonth()===now.getMonth()&&new Date(h.tarih).getFullYear()===now.getFullYear());
   else if(_harcamaFiltre==='buyil') liste=liste.filter(h=>new Date(h.tarih).getFullYear()===now.getFullYear());
   const sorted=liste.sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
-  const top=sorted.reduce((a,h)=>a+h.tutar,0);
-  el.innerHTML=`<div style="margin-bottom:10px;padding:10px;background:var(--red-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--red);">Toplam: ${fmt(top)} ₺</div>`+
+  const pbToplamH={};
+  sorted.forEach(h=>{const pb=h.para_birimi||'TRY';pbToplamH[pb]=(pbToplamH[pb]||0)+(h.tutar||0);});
+  const toplamHStr=Object.entries(pbToplamH).map(([pb,t])=>fmt(t)+' '+pb).join(' + ');
+  el.innerHTML=`<div style="margin-bottom:10px;padding:10px;background:var(--red-lt);border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--red);">Toplam: ${toplamHStr}</div>`+
     sorted.map(h=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <div style="flex:1;min-width:0;">
@@ -3774,7 +3955,7 @@ function raporHtmlOlustur() {
   const sembol=_raporPb==='EUR'?'€':_raporPb==='USD'?'$':_raporPb==='GBP'?'£':'₺';
   const k=DB.kisiler.find(x=>String(x.id)===String(seciliVilla.kisi_id));
   const isim=k?.isim||k?.firma_unvan||'Villa';
-  const muhatap=k?.kapsam||'';
+  const muhatap=k?.isim||'';
   const tel=k?.tel||'';
   const sel=document.getElementById('rapor-tarih-sec');
   const tarihStr=sel?.options[sel.selectedIndex]?.text||'';
@@ -3931,10 +4112,16 @@ ${gorselSayfasi}
     document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;color:#333;"><h2>Rapor bulunamadı</h2><p>Link geçersiz veya süresi dolmuş olabilir.</p></div>';
     return;
   }
+  // Aktif zaman damgası - ERP'ye dönüşte tekrar desen/parmak izi sormaması için
+  localStorage.setItem('erp_last_active', String(Date.now()));
+  setInterval(()=>localStorage.setItem('erp_last_active', String(Date.now())), 2*60*1000);
+
   const now=new Date();
   calYear=now.getFullYear();calMonth=now.getMonth();
   await loadAll();
   renderCalendar();
+  setTimeout(()=>villaBildirimKontrol().catch(()=>{}),800);
+  setInterval(()=>villaBildirimKontrol().catch(()=>{}),15*60*1000);
 })();
 </script>
 </body>
