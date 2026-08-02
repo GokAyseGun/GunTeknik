@@ -894,35 +894,37 @@ function evrakErpKapsamSec(kapsam){
   }
 }
 
-async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih){
-  try{
-    const evrak=DB.evraklar.find(e=>e.id===_seciliEvrakId);if(!evrak)return;
-    const adi=evrakAdi(evrak);
-    const kisi=DB.kisiler.find(k=>String(k.id)===String(evrak.kisi_id));
-    // Kullanıcının seçtiği tip ve kapsam
-    const seciliTip=document.getElementById('evrak-erp-tip')?.value||evrak.erp_tip||'Gider';
-    const seciliKapsam=document.getElementById('evrak-erp-kapsam')?.value||evrak.erp_kapsam||'İşletme';
-    // Kat = tip + kapsam kombinasyonu
-    let kat;
-    if(seciliTip==='Gelir'){
-      kat=seciliKapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir';
-    }else{
-      kat=seciliKapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider';
-    }
-    const odemeNot=[adi,kisi?kisi.isim:'',notlar,pb!=='TRY'?('('+tutar+' '+pb+')'):''
-    ].filter(Boolean).join(' — ');
-    const payload={
-      tarih:tarih+'T12:00:00.000Z',tip:seciliTip,statu:'Tamamlandı',
-      kisi_id:evrak.kisi_id||null,kat:kat,alt_kat:adi,
-      tutar:tutar,malzeme_tutar:0,not:odemeNot,
-      odeme_yontemi:'Banka / Havale',personel_ids:[],islem_kaynagi:'Evrak'
-    };
-    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
-    console.log('ERP islemi kaydedildi:',adi,tutar);
-  }catch(e){
-    console.error('ERP islem kayit hatasi:',e);
-    showToast('Odeme kaydedildi ama ERP islemi basarisiz: '+e.message,'amber');
+async function evrakOdemeErpIslemKaydet(odemeId,tutar,pb,notlar,tarih,evrakIdParam){
+  // Sessiz başarısızlık noktalarını kaldırıyoruz - her hata açıkça fırlatılır,
+  // çağıran fonksiyon bunu yakalayıp kullanıcıya net şekilde bildirir.
+  const hedefEvrakId = evrakIdParam!=null ? evrakIdParam : _seciliEvrakId;
+  const evrak=DB.evraklar.find(e=>String(e.id)===String(hedefEvrakId));
+  if(!evrak){
+    console.error('ERP islem kayit hatasi: evrak bulunamadi. _seciliEvrakId=',hedefEvrakId,'DB.evraklar.length=',DB.evraklar?.length);
+    throw new Error('Evrak bulunamadı (id:'+hedefEvrakId+') — ERP işlemi oluşturulamadı');
   }
+  const adi=evrakAdi(evrak);
+  const kisi=DB.kisiler.find(k=>String(k.id)===String(evrak.kisi_id));
+  const seciliTip=document.getElementById('evrak-erp-tip')?.value||evrak.erp_tip||'Gider';
+  const seciliKapsam=document.getElementById('evrak-erp-kapsam')?.value||evrak.erp_kapsam||'İşletme';
+  let kat;
+  if(seciliTip==='Gelir'){
+    kat=seciliKapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir';
+  }else{
+    kat=seciliKapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider';
+  }
+  const odemeNot=[adi,kisi?kisi.isim:'',notlar,pb!=='TRY'?('('+tutar+' '+pb+')'):''
+  ].filter(Boolean).join(' — ');
+  const payload={
+    tarih:tarih+'T12:00:00.000Z',tip:seciliTip,statu:'Tamamlandı',
+    kisi_id:evrak.kisi_id||null,kat:kat,alt_kat:adi,
+    tutar:tutar,malzeme_tutar:0,not:odemeNot,
+    odeme_yontemi:'Banka / Havale',personel_ids:[],islem_kaynagi:'Evrak'
+  };
+  console.log('ERP islemi gonderiliyor:',payload);
+  const sonuc=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});
+  console.log('ERP islemi basariyla kaydedildi:',sonuc);
+  return sonuc;
 }
 
 function evrakBildirimBarGoster(bildirimler){
@@ -1296,12 +1298,25 @@ async function evrakOdemeKaydet(btn){
     }
     _geciciEkler=[];
     const _islemOlarak=document.getElementById('evrak-islem-olarak')?.checked;
+    let erpMesaj='';
     if(_islemOlarak&&!editId){
-      await evrakOdemeErpIslemKaydet(kayitId,tutar,
-        document.getElementById('evrak-odeme-pb').value,
-        document.getElementById('evrak-odeme-not').value,tarih);
+      try{
+        await evrakOdemeErpIslemKaydet(kayitId,tutar,
+          document.getElementById('evrak-odeme-pb').value,
+          document.getElementById('evrak-odeme-not').value,tarih,_seciliEvrakId);
+        erpMesaj=' ve ERP işlemi';
+      }catch(erpErr){
+        console.error('ERP islem kayit hatasi (evrakOdemeKaydet icinden):',erpErr);
+        // Ödeme kaydı başarılı oldu ama ERP işlemi başarısız oldu - kullanıcıya AÇIKÇA bildir
+        showToast('⚠️ Ödeme kaydedildi FAKAT ERP işlemi oluşturulamadı: '+(erpErr?.message||erpErr),'red');
+        closeModal('modal-evrak-odeme-ekle');
+        await loadAll();
+        renderEvrakOdemeGecmis(_seciliEvrakId);
+        if(btn)btn.disabled=false;
+        return;
+      }
     }
-    showToast(editId?'Güncellendi':(_islemOlarak?'Ödeme ve ERP işlemi kaydedildi':'Ödeme kaydedildi'),'green');
+    showToast(editId?'Güncellendi':('Ödeme'+erpMesaj+' kaydedildi'),'green');
     closeModal('modal-evrak-odeme-ekle');
     await loadAll();
     renderEvrakOdemeGecmis(_seciliEvrakId);
