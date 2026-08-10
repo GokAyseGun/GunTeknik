@@ -5928,8 +5928,17 @@ function renderKisiSelect(selId,katId,araId,tipId){
 // ============================================================ KİŞİ AUTOCOMPLETE
 // prefix: 'mi-ac' veya 'mb-ac'
 function acGetKisiler(prefix){
+  // Gelir/Gider kapsam filtresi SADECE işlem giriş formlarında (mi-ac, mb-ac) uygulanır.
+  // Diğer tüm formlar (teklif, proje, villa vb.) rehberdeki TÜM kişileri görmeli.
+  const isIslemFormu = prefix==='mi-ac' || prefix==='mb-ac';
   const katSel=prefix==='mi-ac'?document.getElementById('mi-kisi-kat'):null;
   const kat=katSel?.value||'';
+  if(!isIslemFormu){
+    return DB.kisiler.filter(k=>{
+      if(kat&&k.tip!==kat)return false;
+      return true;
+    }).sort((a,b)=>(a.isim||'').localeCompare(b.isim||''));
+  }
   const tipEl=prefix==='mi-ac'?document.getElementById('mi-tip'):document.getElementById('mb-tip');
   const tipVal=tipEl?.value||'';
   const isTip=['Gelir','Alındı'].includes(tipVal)?'Gelir':'Gider';
