@@ -3860,7 +3860,8 @@ function calcFinans(){
     } else if(!pid){
       // Eski format - toplam
     }
-    if(y.tip==='Avans/Ödeme'){kasaTop-=t;kasaNakit-=t;}
+    // Bağlı işlemi olan ödeme kasadan işlem üzerinden düşer; burada yalnızca eski (bağsız) kayıtlar
+    if(y.tip==='Avans/Ödeme'&&!y.islemId){kasaTop-=t;kasaNakit-=t;}
   });
   const topPersonelBakiye=Object.values(personelBakiye).reduce((a,b)=>a+Math.max(0,b),0);
 
@@ -4310,10 +4311,16 @@ function dashVeriHesapla(){
     if(ts<baslangicStr)donemOncesiBakiye+=odemeHareketi(o);
   });
 
+  // Eski (işleme bağlanmamış) personel ödemeleri — calcFinans ile aynı kural
+  const bagsizPersonelOdeme=(DB.yardimciIslemleri||[]).filter(y=>y.tip==='Avans/Ödeme'&&!y.islemId)
+    .map(y=>({tarih:localDateStr(y.tarih),tutar:parseFloat(y.tutar)||0}));
+  bagsizPersonelOdeme.forEach(y=>{if(y.tarih<baslangicStr)donemOncesiBakiye-=y.tutar;});
+
   // Gelecek mod için bugünkü gerçek kasa
   let bugunkuKasa=0;
   DB.islemler.forEach(i=>{bugunkuKasa+=kasaHareketi(i);});
   (DB.odemeler||[]).forEach(o=>{bugunkuKasa+=odemeHareketi(o);});
+  bagsizPersonelOdeme.forEach(y=>{bugunkuKasa-=y.tutar;});
 
   // Her dilim için günlük hareket topla, sonra kümülatif yap
   const tamamlananlar=DB.islemler.filter(i=>i.statu==='Tamamlandı');
@@ -4389,6 +4396,7 @@ function dashVeriHesapla(){
       if(!tariheAit(ts,dilimD))return;
       delta.kasa+=odemeHareketi(o);
     });
+    bagsizPersonelOdeme.forEach(y=>{if(tariheAit(y.tarih,dilimD))delta.kasa-=y.tutar;});
     bekleyenler.forEach(i=>{
       const ts=localDateStr(i.tarih);
       if(!tariheAit(ts,dilimD))return;
@@ -5192,6 +5200,7 @@ async function deleteIslem(id,event){
   showConfirm('İşlemi Sil','Kalıcı silinecek.',async()=>{
     try{
       await eklerTopluSil('islem',id);
+      await sbFetch('yardimci_islemleri?islem_id=eq.'+id+'&tip=eq.'+encodeURIComponent('Avans/Ödeme'),{method:'DELETE'}).catch(()=>{});
       await sbFetch('islemler?id=eq.'+id,{method:'DELETE'});await loadDB();showToast('Silindi','amber');
     }
     catch(e){showToast('Hata!','red');}
@@ -6266,6 +6275,7 @@ async function saveIslem(btn){
   if(USER_ROL==='goruntule')return;if(btn)btn.disabled=true;
   try{
     const eId=document.getElementById('mi-id').value;
+    let _kaydedilenIslemId=null;
     const tutar=getIslemGercekTutar();
     if(tutar<=0){showToast('Geçerli tutar girin','red');if(btn)btn.disabled=false;return;}
     const tip=document.getElementById('mi-tip').value;const kat=document.getElementById('mi-kat').value;
@@ -6303,6 +6313,7 @@ async function saveIslem(btn){
       if(statu==='Bekliyor'){const base=Math.round(tutar/tSayisi);for(let idx=0;idx<tSayisi;idx++){const sT=new Date(vTarih);sT.setMonth(sT.getMonth()+idx);kayitlar.push({group_id:groupId,tarih:localISOString(sT),tip,statu:'Bekliyor',kisi_id:kId,kat,alt_kat:finalAltKat,tutar:base,malzeme_tutar:idx===0?malz:0,"not":(tSayisi>1?'['+(idx+1)+'/'+tSayisi+' Taksit] ':'')+notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,islem_kaynagi:islemKaynagi});}}
       else{kayitlar.push({tarih:localISOString(tarih),tip,statu:'Tamamlandı',kisi_id:kId,kat,alt_kat:finalAltKat,tutar,malzeme_tutar:tip==='Gelir'?malz:0,"not":notDetay,odeme_yontemi:odemeY,personel_ids:personelIds,proje_id:projeId,islem_kaynagi:islemKaynagi});}
       const result=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(kayitlar)});
+      _kaydedilenIslemId=result?.[0]?.id||null;
       // Malzeme/işçilik kalemlerini kaydet (ilk kayıt satırına bağlanır)
       if(tumKalemler.length&&result&&result[0]){
         await sbFetch('islem_kalemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify(
@@ -6370,10 +6381,11 @@ async function saveIslem(btn){
     }
     // Personel Hak Ediş ise yardimci_islemler'e de yaz (bakiyeyi düşür)
     const _hdPid=document.getElementById('mi-hakdis-personel-id')?.value;
-    if(_hdPid&&document.getElementById('mi-altkat')?.value==='Personel Hak Ediş'){
+    if(_hdPid&&!eId&&_kaydedilenIslemId&&document.getElementById('mi-altkat')?.value==='Personel Hak Ediş'){
       try{
         const _hdTarih=dtVal||(localToday());
-        await sbFetch('yardimci_islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+        await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+          islem_id:_kaydedilenIslemId,
           personel_id:parseInt(_hdPid),tip:'Avans/Ödeme',tutar:tutar,
           tarih:_hdTarih,not:'İşlem girişi: Personel Hak Ediş ödemesi'
         })});
@@ -7191,12 +7203,44 @@ function avansModal(){
   openModal('modal-avans');
 }
 
+// Personel hak ediş ödemesi: önce İşletme Gideri işlemi, sonra ona bağlı yardımcı kayıt.
+// Kasa düşüşü işlem üzerinden olur; yardımcı kayıt yalnızca personel bakiyesini düşürür.
+async function personelOdemeKaydet({personelId,tutar,tarih,not,odemeYontemi}){
+  const p=personelId?DB.personeller.find(x=>x.id===personelId):null;
+  const notMetni=not||'Hak ediş ödemesi';
+  const islem=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify({
+    tarih:tarih+'T12:00:00',tip:'Gider',statu:'Tamamlandı',
+    kat:'İşletme Gideri',alt_kat:'Personel Hak Ediş',
+    tutar:tutar,malzeme_tutar:0,
+    not:notMetni+' — '+(p?.isim||'Personel'),
+    odeme_yontemi:odemeYontemi||'Nakit',
+    personel_ids:personelId?[personelId]:[]
+  })});
+  const islemId=Array.isArray(islem)?islem[0]?.id:islem?.id;
+  if(!islemId)throw new Error('İşlem kaydı oluşturulamadı');
+  try{
+    await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      islem_id:islemId,personel_id:personelId||null,tip:'Avans/Ödeme',
+      tutar:tutar,tarih:tarih+'T12:00:00',not:notMetni
+    })});
+  }catch(e){
+    // Yarım kayıt kalmasın: işlemi geri al
+    await sbFetch('islemler?id=eq.'+islemId,{method:'DELETE'}).catch(()=>{});
+    throw e;
+  }
+  return islemId;
+}
+
 async function saveAvans(btn){
   if(btn)btn.disabled=true;
   try{
     const t=parseTutar(document.getElementById('ma-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     const tip=document.getElementById('ma-tip').value;const personelId=parseInt(document.getElementById('ma-personel-sec').value)||null;
-    await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:localISOString(new Date()),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
+    if(tip==='Avans/Ödeme'){
+      await personelOdemeKaydet({personelId,tutar:t,tarih:localToday(),not:document.getElementById('ma-not').value||'Hak ediş ödemesi'});
+    }else{
+      await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:localISOString(new Date()),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
+    }
     await loadDB();closeModal('modal-avans');showToast('Kaydedildi','green');
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -7213,6 +7257,10 @@ async function saveHareketDuzenle(btn){
   try{
     const id=document.getElementById('hd-id').value;const t=parseTutar(document.getElementById('hd-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     await sbFetch('yardimci_islemleri?id=eq.'+id,{method:'PATCH',body:JSON.stringify({tutar:t,"not":document.getElementById('hd-not').value})});
+    const _hy=DB.yardimciIslemleri.find(x=>String(x.id)===String(id));
+    if(_hy&&_hy.tip==='Avans/Ödeme'&&_hy.islemId){
+      await sbFetch('islemler?id=eq.'+_hy.islemId,{method:'PATCH',body:JSON.stringify({tutar:t})});
+    }
     await loadDB();closeModal('modal-hareket-duzenle');showToast('Güncellendi','green');setTimeout(()=>window.animMaas&&animMaas(),200);
   }catch(e){showToast('Hata!','red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -7221,7 +7269,14 @@ async function saveHareketDuzenle(btn){
 async function deleteHareket(id,event){
   if(event)event.stopPropagation();if(USER_ROL!=='admin')return;
   showConfirm('Hareketi Sil','Bu kayıt silinecek.',async()=>{
-    try{await sbFetch('yardimci_islemleri?id=eq.'+id,{method:'DELETE'});await loadDB();showToast('Silindi','amber');}
+    try{
+      const _hy=DB.yardimciIslemleri.find(x=>String(x.id)===String(id));
+      await sbFetch('yardimci_islemleri?id=eq.'+id,{method:'DELETE'});
+      if(_hy&&_hy.tip==='Avans/Ödeme'&&_hy.islemId){
+        await sbFetch('islemler?id=eq.'+_hy.islemId,{method:'DELETE'}).catch(()=>{});
+      }
+      await loadDB();showToast('Silindi','amber');
+    }
     catch(e){showToast('Hata!','red');}
   },'🗑');
 }
@@ -7662,28 +7717,7 @@ async function avansOdemeYap(btn){
   const p=DB.personeller.find(x=>x.id===personelId);
   if(btn)btn.disabled=true;
   try{
-    // 1) islemler tablosuna gider kaydı (kasaya yansısın)
-    await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-      tarih:tarih+'T12:00:00',
-      tip:'Gider',
-      statu:'Tamamlandı',
-      kat:'İşletme Gideri',
-      alt_kat:'Personel Hak Ediş',
-      tutar:tutar,
-      malzeme_tutar:0,
-      not:notMetni+' — '+(p?.isim||'Personel #'+personelId),
-      odeme_yontemi:'Nakit',
-      personel_ids:[personelId]
-    })});
-
-    // 2) yardimci_islemler tablosuna ödeme kaydı (personel bakiyesi düşsün)
-    await sbFetch('yardimci_islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-      personel_id:personelId,
-      tip:'Avans/Ödeme',
-      tutar:tutar,
-      tarih:tarih,
-      not:notMetni
-    })});
+    await personelOdemeKaydet({personelId,tutar,tarih,not:notMetni});
 
     await loadDB();
     closeModal('modal-avans-ode');
