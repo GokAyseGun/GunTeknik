@@ -667,6 +667,29 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .gf-ritim-v{font-size:8.5px;font-weight:700;}.gf-ritim-a{font-size:9px;color:var(--text3);}
 .gf-ritim-lej{display:flex;gap:12px;font-size:10px;color:var(--text3);}
 .gf-ritim-lej i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;}
+.gf-hedef{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:8px;cursor:pointer;}
+.gf-hedef-u{display:flex;justify-content:space-between;align-items:center;font-size:12px;gap:8px;}
+.gf-hedef-u b{font-size:13px;}
+.gf-hedef-iz{position:relative;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin:7px 0 5px;}
+.gf-hedef-iz div{position:absolute;top:0;bottom:0;left:0;border-radius:4px;}
+.gf-hedef-iz .tah{background:rgba(179,136,255,.35);}
+.gf-hedef-a{font-size:11px;color:var(--text3);line-height:1.45;}
+.gf-en{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-top:6px;overflow:hidden;}
+.gf-en summary{list-style:none;cursor:pointer;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.gf-en summary::-webkit-details-marker{display:none;}
+.gf-en-b{font-size:12px;font-weight:600;min-width:0;}
+.gf-en-b small{display:block;font-weight:500;color:var(--text3);font-size:11px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gf-en-v{font-size:13px;font-weight:700;white-space:nowrap;text-align:right;}
+.gf-en-v small{display:block;font-size:10px;font-weight:500;color:var(--text3);}
+.gf-en-liste{padding:2px 11px 8px;border-top:1px solid var(--border);}
+.gf-en-s{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12px;cursor:pointer;}
+.gf-en-s:last-child{border-bottom:none;}
+.gf-en-s .no{color:var(--text3);font-weight:700;text-align:center;}
+.gf-en-s .ad{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gf-en-s .ad small{color:var(--text3);}
+.gf-en-s .v{font-weight:700;white-space:nowrap;text-align:right;}
+.gf-en-s .v small{display:block;font-weight:500;color:var(--text3);font-size:10px;}
+.gf-en-baslik{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin:16px 0 4px;}
 </style>
 </head>
 <body>
@@ -796,10 +819,12 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
           <button class="gf-ab" id="gf-btn-cizim" onclick="gfCizimModu()">✏️ Çizim</button>
           <button class="gf-ab" id="gf-btn-tahmin" onclick="gfTahminToggle()">🔮 Tahmin</button>
           <button class="gf-ab" onclick="gfTahminModalAc()">⚙️ Senaryo</button>
+          <button class="gf-ab" onclick="gfResimPaylas()" title="Grafiği resim olarak paylaş">📷</button>
           <button class="gf-ab" id="gf-btn-tam" onclick="gfTamEkran()">⛶</button>
         </div>
         <div class="gf-cizim-bar" id="gf-cizim-bar" style="display:none;"></div>
         <div class="gf-bilgi" id="gf-bilgi"></div>
+        <div id="gf-hedef-kart"></div>
         <div class="gf-chart-wrap"><div id="gf-chart"></div></div>
         <div class="gf-alt-ipucu">Muma dokun → gün detayı · iki parmakla yakınlaştır · basılı tut → artı imleç</div>
         <div class="gf-tabs" id="gf-tabs"></div>
@@ -3734,6 +3759,7 @@ async function startApp(){
   setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster().catch(()=>{});butceAsimiKontrol();setTimeout(()=>finansmanBildirimKontrol().catch(()=>{}),500);},1500);
   // Sistem bildirim kontrolü
   setTimeout(bildirimKontrol,3000);
+  setTimeout(()=>{try{gfRiskBildirimKontrol();}catch(e){console.warn('gf risk',e);}},7000);
   setInterval(bildirimKontrol,15*60*1000);
 }
 
@@ -4269,6 +4295,7 @@ var GF_METRIK={
   isGelir: {ad:'İşletme Geliri',    grup:'Akış (kümülatif)',renk:'#448AFF',tahmin:'tam'},
   isGider: {ad:'İşletme Gideri',    grup:'Akış (kümülatif)',renk:'#FF5252',tahmin:'tam'},
   isNet:   {ad:'İşletme Net (Kâr)', grup:'Akış (kümülatif)',renk:'#69F0AE',tahmin:'tam'},
+  isBrut:  {ad:'İşletme Brüt Kâr',  grup:'Akış (kümülatif)',renk:'#1DE9B6',tahmin:'tam',acik:'İşletme geliri − o işte kullanılan malzeme maliyeti'},
   shGelir: {ad:'Şahsi Gelir',       grup:'Akış (kümülatif)',renk:'#FFAB40',tahmin:'tam'},
   shGider: {ad:'Şahsi Gider',       grup:'Akış (kümülatif)',renk:'#FF6D00',tahmin:'tam'},
   shNet:   {ad:'Şahsi Net',         grup:'Akış (kümülatif)',renk:'#FFD600',tahmin:'tam'},
@@ -4276,10 +4303,11 @@ var GF_METRIK={
   diger:   {ad:'Standart Dışı',     grup:'Akış (kümülatif)',renk:'#BCAAA4',tahmin:'tam',acik:'İşletme/Şahsi dışındaki ana kategoriler (ör. evrak, vergi modülü)'},
   finans:  {ad:'Finansman Girişi',  grup:'Akış (kümülatif)',renk:'#EA80FC',tahmin:null,acik:'Kredi ve borç alımları'}
 };
-var GF_DEFTER_METRIKLER=['kasa','nakit','kart','iban','isGelir','isGider','isNet','shGelir','shGider','shNet','vergi','diger','finans','alacak','verecek','personel','kredi','netDurum'];
+var GF_DEFTER_METRIKLER=['kasa','nakit','kart','iban','isGelir','isGider','isNet','isBrut','shGelir','shGider','shNet','vergi','diger','finans','alacak','verecek','personel','kredi','netDurum'];
 // İstatistiksel tahmin akışları (kasa hareketinin parçaları). isaret: büyüklüğün kasa yönü
 var GF_AKISLAR={
   isG:{ad:'İşletme geliri',isaret:1,mevsim:true},
+  proj:{ad:'Proje / teklif geliri',isaret:1,mevsim:true},
   isC:{ad:'İşletme gideri',isaret:-1,mevsim:true},
   pers:{ad:'Personel ödemeleri',isaret:-1,mevsim:true},
   shG:{ad:'Şahsi gelir',isaret:1,mevsim:true},
@@ -4333,7 +4361,9 @@ function gfDefterKur(){
       const e={z,gun,kasa:y*t,kol:gfOdemeKolu(i.odemeYontemi),d:{},tur:'islem',ref:i.id,akis:null};
       const kat=i.kat||'',alt=i.altKat||'';
       if(tip==='Gelir'){
-        if(kat==='İşletme Geliri'){e.d.isGelir=t;e.d.isNet=t;e.akis='isG';}
+        if(kat==='İşletme Geliri'){e.d.isGelir=t;e.d.isNet=t;e.d.isBrut=t-(parseFloat(i.malzemeTutar)||0);
+          // proje/teklif kaynaklı gelirler ayrı akış: yakın gelecekleri iş hattından (devam eden proje, bekleyen teklif) gelir
+          e.akis=(i.projeId||alt==='Teklif Onayı'||alt==='Ara Ödeme')?'proj':'isG';}
         else if(kat==='Şahsi Gelir'){e.d.shGelir=t;e.d.shNet=t;e.akis='shG';}
         else if(kat==='Finansman'){e.d.finans=t;e.haric='finans';}
         else{e.d.diger=t;e.akis='diger';}
@@ -4484,8 +4514,8 @@ function gfYuzdelik(sirali,p){if(!sirali.length)return 0;const i=(sirali.length-
 
 // Metrik → akış ağırlıkları (akış değeri: işaretli akışlarda büyüklük, işaretsizlerde net kasa etkisi)
 var GF_AGIRLIK={
-  kasa:{isG:1,isC:-1,pers:-1,shG:1,shC:-1,diger:1,cari:1},
-  isGelir:{isG:1},isGider:{isC:1,pers:1},isNet:{isG:1,isC:-1,pers:-1},
+  kasa:{isG:1,proj:1,isC:-1,pers:-1,shG:1,shC:-1,diger:1,cari:1},
+  isGelir:{isG:1,proj:1},isGider:{isC:1,pers:1},isNet:{isG:1,proj:1,isC:-1,pers:-1},
   shGelir:{shG:1},shGider:{shC:1},shNet:{shG:1,shC:-1},
   diger:{diger:1},vergi:{vergi:1},kredi:{}
 };
@@ -4736,9 +4766,9 @@ function gfTahminHesapla(d,metrik,ay){
   const bugun=d.bugun;const bitis=gfGunEkle(bugun,ufuk);
   const haftalar=gfHaftalar(d);
   const {M}=gfAkisModelleri(d,haftalar);
-  const W=GF_AGIRLIK[metrik]||{};
+  const W=metrik==='isBrut'?gfBrutAgirlik(d):(GF_AGIRLIK[metrik]||{});
   const gp=1+(ay.gelirPct||0)/100,cp=1+(ay.giderPct||0)/100,pT=Math.max(0,Math.min(1,(ay.tahsilatPct??85)/100));
-  const carpan=s=>(s==='isG'||s==='shG')?gp:(s==='isC'||s==='shC'||s==='pers')?cp:1;
+  const carpan=s=>(s==='isG'||s==='shG'||s==='proj')?gp:(s==='isC'||s==='shC'||s==='pers')?cp:1;
   const akislar=Object.keys(W).filter(s=>M[s]&&!M[s].bos);
   const D=ufuk;
   // gün bilgileri
@@ -4748,6 +4778,15 @@ function gfTahminHesapla(d,metrik,ay){
   const haftaSay=haftaNo[D-1]+1;
   // haftalık beklenen değerler
   const hafOrt={};akislar.forEach(s=>{hafOrt[s]=[];for(let h=0;h<haftaSay;h++){const ilkGun=haftaNo.indexOf(h);const ayH=aylar[Math.min(D-1,ilkGun+3)];let v=M[s].ileri(h+1,ayH)*carpan(s);if(M[s].isaret)v=Math.max(0,v);hafOrt[s].push(v);}});
+  const hamHaftalik={};akislar.forEach(s=>{hamHaftalik[s]=hafOrt[s][1]!=null?hafOrt[s][1]:hafOrt[s][0];});
+  // kısa vade düzeltmesi: model son 8 haftada sistematik olarak düşük/yüksek kaldıysa ilk haftalar buna göre düzeltilir
+  // (sadece 10 günlük geri testte gerçekten daha isabetli olduğu kanıtlanırsa devreye girer)
+  const kv=gfKisaVadeKarar(d);
+  if(kv.aktif)akislar.forEach(s=>{if(!M[s].isaret)return;const r=gfKisaVadeOran(M[s]);[1,0.5,0.25].forEach((w,h)=>{if(hafOrt[s][h]!=null)hafOrt[s][h]*=1+w*(r-1);});});
+  // iş hattı: devam eden projelerin kalan tutarı ve onay bekleyen teklifler (olasılıklı)
+  const hat=gfIsHatti(bitis);
+  const projW=[];for(let h=0;h<haftaSay;h++)projW.push(hat.length?(h<6?0:h<12?(h-6)/6:1):1);
+  if(hafOrt.proj)for(let h=0;h<haftaSay;h++)hafOrt.proj[h]*=projW[h];
   // ortak artık havuzu (aynı tarihli hafta → akışlar arası ilişki korunur)
   const n=haftalar.length;const havuz=[];
   for(let t=Math.max(4,n-52);t<n;t++){const r={};let ok=true;akislar.forEach(s=>{const v=M[s].artik[t];if(isNaN(v))ok=false;r[s]=v||0;});if(ok)havuz.push(r);}
@@ -4763,6 +4802,8 @@ function gfTahminHesapla(d,metrik,ay){
   for(let i=0;i<D;i++){akislar.forEach(s=>{const v=hafOrt[s][haftaNo[i]]*M[s].pay[dow[i]];olaganGunluk[i+1]+=W[s]*v;
     const kasaEtki=(M[s].isaret||1)*v*(GF_AGIRLIK.kasa[s]?1:0);if(kasaEtki>0)girisGunluk[i+1]+=kasaEtki;else cikisGunluk[i+1]-=kasaEtki;});}
   kesin.forEach(k=>{const ix=gunIx(k.gun);if(ix>=1&&ix<=D){if(k.tutar>0)girisGunluk[ix]+=k.tutar;else cikisGunluk[ix]-=k.tutar;}});
+  const hatBeklenen=new Float64Array(D+1);
+  hat.forEach(k=>{const ix=gunIx(k.gun);if(ix>=1&&ix<=D){hatBeklenen[ix]+=(k.m[metrik]||0)*k.olasilik;girisGunluk[ix]+=k.tutar*k.olasilik;}});
   for(let i=1;i<=D;i++)hacimGunluk[i]=girisGunluk[i]+cikisGunluk[i];
   // Monte Carlo
   const rng=gfRng(ay.tohum||20261024);
@@ -4784,7 +4825,7 @@ function gfTahminHesapla(d,metrik,ay){
       const r=havuz.length?havuz[Math.min(havuz.length-1,blokBas+h%GF_BLOK)]:null;
       akislar.forEach(s=>{
         const m=M[s];const ayH=aylar[Math.max(0,Math.min(D-1,h*7-bugunDow+3))];
-        let v=hafOrt[s][h]*(1+eps[s]+(epsAy[s]?epsAy[s][ayH]:0))+(r?r[s]*carpan(s):0);if(m.isaret)v=Math.max(0,v);
+        let v=hafOrt[s][h]*(1+eps[s]+(epsAy[s]?epsAy[s][ayH]:0))+(r?r[s]*carpan(s)*(s==='proj'?projW[h]:1):0);if(m.isaret)v=Math.max(0,v);
         for(let i=h*7-bugunDow;i<h*7-bugunDow+7;i++){const ix=i;if(ix<1||ix>D)continue;gunDelta[ix]+=W[s]*v*m.pay[dow[ix-1]];}
       });
     }
@@ -4794,6 +4835,9 @@ function gfTahminHesapla(d,metrik,ay){
       else if(k.belirsiz==='gecikmisAlacak'){if(rng()>pT*0.75)return;ix=1+Math.floor(rng()*60);}
       else if(k.belirsiz==='gecikmisBorc'){ix=1+Math.floor(rng()*14);}
       if(ix>=1&&ix<=D)gunDelta[ix]+=v;
+    });
+    hat.forEach(k=>{const v=k.m[metrik]||0;if(!v||rng()>k.olasilik)return;const ix=gunIx(k.gun)+Math.round(gfNormal(rng)*k.sapma*0.5);
+      if(ix<=D)gunDelta[Math.max(1,ix)]+=v;
     });
     let v=v0,mn=v0;const off=p*D;
     for(let i=1;i<=D;i++){v+=gunDelta[i];yollar[off+i-1]=v;if(v<mn)mn=v;}
@@ -4805,8 +4849,8 @@ function gfTahminHesapla(d,metrik,ay){
   for(let i=0;i<D;i++){for(let p=0;p<N;p++)kol[p]=yollar[p*D+i];const s=Array.from(kol).sort((a,b)=>a-b);
     yuz.p5.push(gfYuzdelik(s,Q[0]));yuz.p10.push(gfYuzdelik(s,Q[1]));yuz.p25.push(gfYuzdelik(s,Q[2]));yuz.p50.push(gfYuzdelik(s,Q[3]));yuz.p75.push(gfYuzdelik(s,Q[4]));yuz.p90.push(gfYuzdelik(s,Q[5]));yuz.p95.push(gfYuzdelik(s,Q[6]));yuz.ort.push(gfOrt(s));}
   // sadece plan çizgisi ve beklenen (olağan+plan) çizgisi
-  const kesinCizgi=[],beklenen=[];let kv=v0,bv=v0;
-  for(let i=1;i<=D;i++){kv+=kesinGunluk[i];bv+=kesinGunluk[i]+olaganGunluk[i];kesinCizgi.push(kv);beklenen.push(bv);}
+  const kesinCizgi=[],beklenen=[];let kv0=v0,bv=v0;
+  for(let i=1;i<=D;i++){kv0+=kesinGunluk[i];bv+=kesinGunluk[i]+olaganGunluk[i]+hatBeklenen[i];kesinCizgi.push(kv0);beklenen.push(bv);}
   // risk: eşik altına düşme olasılıkları
   const riskHesap=(esik)=>{
     let altinda=0;for(let p=0;p<N;p++)if(minDeger[p]<esik)altinda++;
@@ -4818,15 +4862,15 @@ function gfTahminHesapla(d,metrik,ay){
   };
   const riskler=[];
   if(metrik==='kasa'||metrik==='isNet'||metrik==='shNet')riskler.push(Object.assign(riskHesap(0),{ad:'Sıfır'}));
-  (GF.hedefler||[]).forEach(h=>riskler.push(Object.assign(riskHesap(h.deger),{ad:h.ad||('Hedef '+fmt(h.deger))})));
+  (ay.hedeflerOzel||GF.hedefler||[]).forEach(h=>riskler.push(Object.assign(riskHesap(h.deger),{ad:h.ad||('Hedef '+fmt(h.deger))})));
   // model özeti
-  const modeller=akislar.map(s=>({s,ad:(GF_AKISLAR[s]||{ad:'Vergi'}).ad,model:M[s].model,modelAd:GF_MODEL_AD[M[s].model]||'—',param:M[s].param||'',mevsim:!!M[s].mevsimli,haftalik:hafOrt[s][1]||hafOrt[s][0]||0,mae:M[s].mae,mevKatsayi:M[s].mev,pay:M[s].pay}));
-  return {metrik,v0,ufuk:D,gunler,yuz,kesinCizgi,beklenen,kesin,riskler,modeller,haftaSayisi:n,hacimGunluk,girisGunluk,cikisGunluk,olaganGunluk,yetersiz:n<8,mevsimVar:akislar.some(s=>M[s].mev)};
+  const modeller=akislar.map(s=>({s,ad:(GF_AKISLAR[s]||{ad:'Vergi'}).ad,model:M[s].model,modelAd:GF_MODEL_AD[M[s].model]||'—',param:M[s].param||'',mevsim:!!M[s].mevsimli,haftalik:hamHaftalik[s]||0,ishatti:s==='proj'&&hat.length>0,mae:M[s].mae,mevKatsayi:M[s].mev,pay:M[s].pay}));
+  return {metrik,v0,ufuk:D,gunler,yuz,kesinCizgi,beklenen,kesin,hat,kisaVade:kv,riskler,modeller,haftaSayisi:n,hacimGunluk,girisGunluk,cikisGunluk,olaganGunluk,yetersiz:n<8,mevsimVar:akislar.some(s=>M[s].mev)};
 }
 
 // ---------- Katman 4: geri test (sadece istatistiksel akışlar — kesin hareketler o tarihte bilinmediği için)
 function gfGeriTest(d,metrik){
-  const W=GF_AGIRLIK[metrik]||GF_AGIRLIK.kasa;
+  const W=metrik==='isBrut'?gfBrutAgirlik(d):(GF_AGIRLIK[metrik]||GF_AGIRLIK.kasa);
   const haftalar=gfHaftalar(d);const n=haftalar.length;
   if(n<20)return {yeterli:false,haftaSayisi:n};
   const akislar=Object.keys(W);
@@ -4862,6 +4906,57 @@ function gfKayitliTahminDegerlendir(d){
     if(c)out.push({tarih:k.kayit_tarihi,gun:c,mae:gfOrt(hata.map(Math.abs)),yon:gfOrt(hata),isabet:ic/c});
   });
   return out;
+}
+
+// ---------- Kısa vade düzeltmesi ve iş hattı
+// Modelin son 8 haftadaki gerçekleşen / tahmin oranı (sistematik sapma). 0,6–1,6 arasında sınırlanır.
+function gfKisaVadeOran(m){
+  if(!m||!m.isaret||!m.x)return 1;const n=m.x.length;let ax=0,af=0;
+  for(let t=Math.max(0,n-8);t<n;t++){const a=m.artik[t];if(isNaN(a))continue;ax+=m.x[t];af+=m.x[t]-a;}
+  if(!(af>0))return 1;return Math.max(0.6,Math.min(1.6,ax/af));
+}
+// 10 günlük geri test: düzeltmeli ve düzeltmesiz tahmini karşılaştırır, iyi olanı seçer
+function gfKisaVadeKarar(d){
+  if(GF._kvKarar&&GF._kvKarar.imza===d.imza)return GF._kvKarar.v;
+  const W=GF_AGIRLIK.kasa;const haftalar=gfHaftalar(d);const n=haftalar.length;let v={aktif:false,adet:0};
+  if(n>=20){const e0=[],e1=[],ger=[];
+    for(let j=0;j<12;j++){const o=n-2-j;if(o<16)break;
+      const {M}=gfAkisModelleri(d,haftalar,o);let t0=0,t1=0,g=0;
+      Object.keys(W).forEach(s=>{const m=M[s];if(!m||m.bos)return;const seri=gfSeriAl(d,s);const isr=gfIsaret(s);const r=m.isaret?gfKisaVadeOran(m):1;
+        const b0=haftalar[o],b1=haftalar[o+1];let f1=m.ileri(1,gfHaftaAyi(d,b0)),f2=m.ileri(2,gfHaftaAyi(d,b1));if(m.isaret){f1=Math.max(0,f1);f2=Math.max(0,f2);}
+        const p3=m.pay[0]+m.pay[1]+m.pay[2];t0+=W[s]*(f1+f2*p3);t1+=W[s]*(f1*r+f2*p3*(1+0.5*(r-1)));
+        let x=0;for(let q=b0;q<b0+10&&q<d.gunSay;q++)x+=seri[q];g+=W[s]*(isr?isr*x:x);});
+      e0.push(Math.abs(t0-g));e1.push(Math.abs(t1-g));ger.push(g);}
+    if(e0.length){const m0=gfOrt(e0),m1=gfOrt(e1);v={aktif:m1<m0*0.97,mae0:m0,mae1:m1,mae:Math.min(m0,m1),adet:e0.length};}}
+  GF._kvKarar={imza:d.imza,v};return v;
+}
+// Devam eden projelerin kalan tutarı + onay bekleyen teklifler; olasılıklar geçmişten ölçülür
+function gfIsHatti(bitis){
+  const bugun=localToday();const L=[];
+  const proj=DB.projeler||[];
+  const bitti=proj.filter(p=>p.durum==='Tamamlandı').length,iptal=proj.filter(p=>/kapat|iptal/i.test(p.durum||'')).length;
+  const pP=(bitti+iptal)>=3?Math.max(0.3,Math.min(0.98,bitti/(bitti+iptal))):0.9;
+  const oranlar=proj.filter(p=>p.durum==='Tamamlandı'&&p.teklifFiyat>0&&p.gerceklesenTutar>0).map(p=>p.gerceklesenTutar/p.teklifFiyat);
+  const gOran=oranlar.length>=3?Math.max(0.6,Math.min(1.3,gfMedyan(oranlar))):1;
+  proj.filter(p=>p.durum==='Devam Ediyor').forEach(p=>{
+    const hedef=(p.teklifFiyat||p.musteriTeklif||p.enIyiFiyat||0)*gOran;if(!(hedef>0))return;
+    const alinan=(DB.islemler||[]).filter(i=>String(i.projeId)===String(p.id)&&i.tip==='Gelir').reduce((a,i)=>a+(parseFloat(i.tutar)||0),0);
+    const kalan=hedef-alinan;if(kalan<=hedef*0.03)return;
+    const bt=p.bitis?localDateStr(p.bitis):'';const gun=bt&&bt>=bugun?bt:gfGunEkle(bugun,21);
+    L.push({gun,tutar:kalan,olasilik:pP,sapma:14,ad:'Proje: '+p.isim+' (kalan tutar)',tur:'proje',ikon:'🏗️',ref:p.id,m:{kasa:kalan,isGelir:kalan,isNet:kalan},not:'Tamamlanma olasılığı %'+Math.round(pP*100)+(gOran!==1?' · gerçekleşme oranı '+gOran.toFixed(2).replace('.',','):'')});
+  });
+  const tek=DB.teklifler||[];
+  const onay=tek.filter(t=>t.durum==='Onaylandı').length,red=tek.filter(t=>t.durum==='Reddedildi').length;
+  const pT=(onay+red)>=5?Math.max(0.05,Math.min(0.95,onay/(onay+red))):0.35;
+  const gec=tek.filter(t=>t.durum==='Onaylandı'&&t.onayTarihi&&t.tarih).map(t=>gfGunFark(localDateStr(t.tarih),localDateStr(t.onayTarihi))).filter(x=>x>=0&&x<180);
+  const gecikme=gec.length>=3?gfMedyan(gec):10;
+  tek.filter(t=>(t.durum==='Gönderildi'||t.durum==='İletildi')&&t.toplam>0&&!t.projeId).forEach(t=>{
+    if(t.gecerlilikTarihi&&localDateStr(t.gecerlilikTarihi)<bugun)return;
+    let gun=gfGunEkle(localDateStr(t.tarih)||bugun,Math.round(gecikme)+14);if(gun<gfGunEkle(bugun,7))gun=gfGunEkle(bugun,7);
+    const k=getKisi(t.kisiId);
+    L.push({gun,tutar:t.toplam,olasilik:pT,sapma:21,ad:'Teklif: '+(k?.isim||('#'+t.id))+' (onay bekliyor)',tur:'teklif',ikon:'📝',ref:t.id,m:{kasa:t.toplam,isGelir:t.toplam,isNet:t.toplam},not:'Onaylanma olasılığı %'+Math.round(pT*100)+((onay+red)>=5?' (geçmiş tekliflerden)':' (varsayılan)')});
+  });
+  return L.filter(x=>x.gun<=bitis).sort((a,b)=>a.gun.localeCompare(b.gun));
 }
 
 // ============================================================ GELİŞMİŞ FİNANS GRAFİĞİ — ARAYÜZ (KLineChart)
@@ -5091,6 +5186,7 @@ function gfCiz(){
     if(cur)gelecek.push(cur);
     const risk0=T.riskler[0];
     T.kesin.forEach(k=>{const g=gelecek.find(b=>k.gun>=b.gun0&&k.gun<=b.gun1);if(g)g.kesinler.push(k);});
+    (T.hat||[]).forEach(k=>{const g=gelecek.find(b=>k.gun>=b.gun0&&k.gun<=b.gun1);if(g)(g.hatlar=g.hatlar||[]).push(k);});
     gelecek.forEach(b=>{const i=b.ix1;const t={};['p5','p10','p25','p50','p75','p90','p95'].forEach(q=>t[q]=T.yuz[q][i]);t.kesin=T.kesinCizgi[i];t.beklenen=T.beklenen[i];b.t=t;
       b.open=b.high=b.low=b.close=t.p50;
       if(risk0&&risk0.ilk20&&risk0.ilk20>=b.gun0&&risk0.ilk20<=b.gun1)b.riskIsaret=true;
@@ -5139,7 +5235,7 @@ function gfCiz(){
   if(ilkKez){GF._sonGorunum=ay.metrik+'|'+ay.periyot+'|'+ay.tahminAcik+'|'+GF.eksenMod;gfIlkGorunum();}
   else if(eskiSon!=null){try{GF.chart.scrollToDataIndex(eskiSon,0);}catch(e){}}
   gfCizimleriYukle();
-  gfBilgiCiz();gfSekmeCiz();
+  gfBilgiCiz();gfHedefKartCiz();gfSekmeCiz();
 }
 function gfEksenUyari(k,m){GF._eksenUyar=GF._eksenUyar||{};if(GF._eksenUyar[k])return;GF._eksenUyar[k]=1;showToast(m,'amber');}
 function gfIlkGorunum(){
@@ -5312,9 +5408,10 @@ function gfGelecekHtml(b){
   h+=b.kesinler.map(k=>{const tik=(k.tur==='alacak'||k.tur==='verecek')&&k.ref?`onclick="closeModal('modal-gf-gun');showIslemDetay(${k.ref})"`:'';
     const not=k.belirsiz==='alacak'?'Tahsilat güvenine göre gecikebilir':k.belirsiz==='gecikmisAlacak'?'Vadesi geçmiş: tahmini tahsil':k.belirsiz==='gecikmisBorc'?'Vadesi geçmiş: 2 hafta içinde ödeneceği varsayıldı':'';
     return `<div class="gf-islem" ${tik}><div class="gf-islem-ik">${k.ikon}</div><div class="gf-islem-o"><div class="gf-islem-b">${_esc(k.ad)}</div><div class="gf-islem-a">${gfTrTarih(k.gun)}${not?' · '+not:''}</div></div><div class="gf-islem-t num" style="color:${k.tutar>0?up:dn}">${k.tutar>0?'+':'−'}${fmt(k.tutar)}</div></div>`;}).join('');
+  if(b.hatlar&&b.hatlar.length)h+=`<div class="gf-bolum">İş hattı (olasılıklı)</div>`+b.hatlar.map(k=>`<div class="gf-islem"><div class="gf-islem-ik">${k.ikon}</div><div class="gf-islem-o"><div class="gf-islem-b">${_esc(k.ad)}</div><div class="gf-islem-a">${gfTrTarih(k.gun)} civarı · ${_esc(k.not||'')}</div></div><div class="gf-islem-t num" style="color:${up}">+${fmt(k.tutar)}<br><small>%${Math.round(k.olasilik*100)}</small></div></div>`).join('');
   // olağan akış dökümü
   const gunSay=b.ix1-b.ix0+1;
-  h+=`<div class="gf-bolum">Olağan akış tahmini (${gunSay} gün)</div>`+T.modeller.filter(m=>GF_AGIRLIK.kasa[m.s]).map(m=>{const haftalik=m.haftalik;const v=haftalik*gunSay/7;const isr=(GF_AKISLAR[m.s]||{}).isaret;
+  h+=`<div class="gf-bolum">Olağan akış tahmini (${gunSay} gün)</div>`+T.modeller.filter(m=>GF_AGIRLIK.kasa[m.s]&&!m.ishatti).map(m=>{const haftalik=m.haftalik;const v=haftalik*gunSay/7;const isr=(GF_AKISLAR[m.s]||{}).isaret;
     return `<div class="gf-satir"><span>${m.ad} <small>(${m.modelAd}${m.mevsim?', mevsimli':''})</small></span><b class="num" style="color:${isr<0?dn:isr>0?up:'inherit'}">${isr<0?'−':isr>0?'+':''}${gfKisa(Math.abs(v))}</b></div>`;}).join('');
   return h;
 }
@@ -5334,8 +5431,8 @@ function gfSekmeSec(s){GF.ay.sekme=s;gfAyarKaydet();if(s==='tahmin'&&!GF.tahmin)
 function gfSekmeCiz(){
   const tabs=document.getElementById('gf-tabs'),el=document.getElementById('gf-tab-icerik');if(!el||!GF.defter)return;
   const s=GF.ay.sekme;
-  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['isi','🟩 Isı haritası'],['donem','📆 Dönemsel']].map(([k,l])=>`<button class="gf-tab${s===k?' on':''}" onclick="gfSekmeSec('${k}')">${l}</button>`).join('');
-  try{el.innerHTML=s==='tahmin'?gfTahminSekme():s==='isi'?gfIsiSekme():s==='donem'?gfDonemSekme():gfOzetSekme();}catch(e){console.error(e);el.innerHTML='<div class="gf-not">Hesaplanamadı: '+_esc(e.message)+'</div>';}
+  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['isi','🟩 Isı haritası'],['donem','📆 Dönemsel'],['enler','🏆 En\'ler']].map(([k,l])=>`<button class="gf-tab${s===k?' on':''}" onclick="gfSekmeSec('${k}')">${l}</button>`).join('');
+  try{el.innerHTML=s==='tahmin'?gfTahminSekme():s==='isi'?gfIsiSekme():s==='donem'?gfDonemSekme():s==='enler'?gfEnlerSekme():gfOzetSekme();}catch(e){console.error(e);el.innerHTML='<div class="gf-not">Hesaplanamadı: '+_esc(e.message)+'</div>';}
 }
 function gfOzetSekme(){
   const d=GF.defter;const m=GF.ay.metrik;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
@@ -5366,7 +5463,7 @@ function gfTahminSekme(){
   const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
   const nokta=gun=>{const i=Math.min(T.ufuk,gun)-1;return `<div class="gf-tc"><div class="gf-tc-b">${gun} gün sonra <small>${gfTrTarih(T.gunler[i])}</small></div><div class="gf-tahmin-cetvel"><div class="gf-tc-s"><span>Kötü %10</span><b class="num">${gfKisa(T.yuz.p10[i])}</b></div><div class="gf-tc-s orta"><span>En olası</span><b class="num">${gfKisa(T.yuz.p50[i])}</b></div><div class="gf-tc-s"><span>İyi %90</span><b class="num">${gfKisa(T.yuz.p90[i])}</b></div></div><div class="gf-tc-alt">Sadece plan: <b class="num">${gfKisa(T.kesinCizgi[i])}</b></div></div>`;};
   let h=`<div class="gf-not">${T.yetersiz?'⚠️ Geçmiş veri az ('+T.haftaSayisi+' hafta). Tahmin çoğunlukla planlı hareketlere dayanıyor; veri biriktikçe güçlenir.':'Model '+T.haftaSayisi+' haftalık geçmişten öğrendi'+(T.mevsimVar?' (yıllık mevsim etkisi dahil)':' (yıllık mevsim için en az 14 ay gerekir)')+'.'} Bugünkü değer: <b>${gfTL(T.v0)}</b></div>`;
-  h+=nokta(30)+(T.ufuk>=90?nokta(90):'')+(T.ufuk>90?nokta(T.ufuk):'');
+  h+=nokta(10)+nokta(30)+(T.ufuk>=90?nokta(90):'')+(T.ufuk>90?nokta(T.ufuk):'');
   T.riskler.forEach(r=>{const cls=r.olasilik>=0.3?'yuksek':r.olasilik>=0.1?'orta':'';
     h+=`<div class="gf-risk ${cls}"><b>${r.ad==='Sıfır'?'Eksiye düşme riski':'"'+_esc(r.ad)+'" ('+gfKisa(r.esik)+') altına düşme riski'}</b><br>30 gün içinde: %${Math.round(r.olasilik30*100)} · ${T.ufuk} gün içinde: %${Math.round(r.olasilik*100)}${r.ilk20?'<br>Risk %20\'yi ilk aştığı gün: <b>'+gfTrTarih(r.ilk20)+'</b>':''}${r.kesinIlk?'<br>Sadece plana göre ilk düşüş: '+gfTrTarih(r.kesinIlk):''}</div>`;});
   // geri test
@@ -5374,7 +5471,8 @@ function gfTahminSekme(){
   const G=GF.geriTest;
   h+=`<div class="gf-bolum">Model güvenilirliği (geri test)</div>`;
   if(!G||!G.yeterli)h+=`<div class="gf-not">Geri test için en az 20 haftalık geçmiş gerekli (şu an ${G?G.haftaSayisi:0}).</div>`;
-  else{const o=G.ozet4,o2=G.ozet13;
+  else{const o=G.ozet4,o2=G.ozet13;const kv=T.kisaVade;
+    if(kv&&kv.adet)h+=`<div class="gf-satir"><span>10 günlük tahminlerde ort. sapma (${kv.adet} deneme)</span><b class="num">±${gfKisa(kv.mae)}</b></div><div class="gf-not">Kısa vade düzeltmesi <b>${kv.aktif?'aktif':'kapalı'}</b>: son 8 haftanın sapmasına göre ilk haftalar düzeltildiğinde 10 günlük hata ${gfKisa(kv.mae0)} → ${gfKisa(kv.mae1)} ${kv.aktif?'oldu, bu yüzden kullanılıyor.':'oluyor; iyileştirmediği için kullanılmıyor.'}</div>`;
     if(o)h+=`<div class="gf-satir"><span>30 günlük tahminlerde ort. sapma (${o.adet} deneme)</span><b class="num">±${gfKisa(o.mae)} <small>(hacmin %${Math.round(o.oran*100)})</small></b></div>`;
     if(o2)h+=`<div class="gf-satir"><span>90 günlük tahminlerde ort. sapma (${o2.adet} deneme)</span><b class="num">±${gfKisa(o2.mae)} <small>(hacmin %${Math.round(o2.oran*100)})</small></b></div>`;
     if(o&&o.isabet!=null)h+=`<div class="gf-satir"><span>Gerçekleşenin %10–%90 bandına düşme oranı</span><b class="num">%${Math.round(o.isabet*100)} <small>(ideal ≈ %80)</small></b></div>`;
@@ -5382,7 +5480,10 @@ function gfTahminSekme(){
   const kay=gfKayitliTahminDegerlendir(GF.defter);
   if(kay.length){h+=`<div class="gf-bolum">Kayıtlı tahminler ne kadar tuttu?</div>`+kay.map(k=>`<div class="gf-satir"><span>${gfTrTarih(k.tarih)} tahmini (${k.gun} gün gerçekleşti)</span><b class="num">±${gfKisa(k.mae)} · bant %${Math.round(k.isabet*100)}</b></div>`).join('');}
   // model detayları
-  h+=`<div class="gf-bolum">Akış modelleri</div>`+T.modeller.map(x=>`<div class="gf-satir"><span>${x.ad}<br><small>${x.modelAd}${x.param?' · '+x.param:''}${x.mevsim?' · mevsimli':''}</small></span><b class="num">${gfKisa(x.haftalik)}/hafta</b></div>`).join('');
+  h+=`<div class="gf-bolum">Akış modelleri</div>`+T.modeller.map(x=>`<div class="gf-satir"><span>${x.ad}<br><small>${x.modelAd}${x.param?' · '+x.param:''}${x.mevsim?' · mevsimli':''}${x.ishatti?' · ilk 6 hafta iş hattından, sonra kademeli olarak bu ortalama':''}</small></span><b class="num">${gfKisa(x.haftalik)}/hafta</b></div>`).join('');
+  if(T.hat&&T.hat.length){const top=T.hat.reduce((a,k)=>a+(k.m[m]||0)*k.olasilik,0);
+    h+=`<div class="gf-bolum">İş hattı (olasılıklı gelir)</div><div class="gf-not">Devam eden projelerin kalan tutarı ve onay bekleyen teklifler. Olasılıklar geçmiş proje/tekliflerinden hesaplanır. Beklenen katkı: <b>${gfKisa(top)}</b></div>`+
+    T.hat.map(k=>`<div class="gf-satir"><span>${k.ikon} ${_esc(k.ad)}<br><small>${gfTrTarih(k.gun)} civarı · ${_esc(k.not||'')}</small></span><b class="num" style="color:${up}">+${gfKisa(k.tutar)} <small>× %${Math.round(k.olasilik*100)}</small></b></div>`).join('');}
   const yak=T.kesin.slice(0,12);
   h+=`<div class="gf-bolum">Yaklaşan planlı hareketler</div>`+(yak.length?yak.map(k=>`<div class="gf-satir"><span>${k.ikon} ${_esc(k.ad)} <small>${gfTrTarih(k.gun)}</small></span><b class="num" style="color:${k.tutar>0?up:dn}">${k.tutar>0?'+':'−'}${fmt(k.tutar)}</b></div>`).join(''):'<div class="gf-not">Planlı hareket yok.</div>');
   h+=`<button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="gfTahminModalAc()">⚙️ Tahmin ayarları, senaryolar ve hedefler</button>`;
@@ -5468,6 +5569,7 @@ function gfTahminModalCiz(){
      <div class="isf-satir"><div class="fi" style="flex:1"><label>Tekrar</label><select id="gfs-tekrar"><option value="tek">Tek sefer</option><option value="haftalik">Her hafta</option><option value="aylik">Her ay</option><option value="yillik">Her yıl</option></select></div><div class="fi" style="flex:1"><label>Bitiş (ops.)</label><input type="date" id="gfs-bitis"></div></div>
      <div class="fi" style="margin-top:8px;"><label>Açıklama</label><input type="text" id="gfs-aciklama" placeholder="ör. Klima stoğu alımı"></div>
      <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="gfSenaryoEkle()">+ Senaryo kalemi ekle</button></div>`}
+  ${gfHedefModalHtml()}
   <div class="isf-grup-b">Hedef / alarm çizgileri</div>
   ${hedefRows.length?hedefRows.map(r=>`<div class="gf-satir"><span>🎯 ${_esc((r.ek&&r.ek.ad)||'Hedef')} <small>${GF_METRIK[r.metrik]?GF_METRIK[r.metrik].ad:r.metrik}</small></span><span style="display:flex;gap:6px;align-items:center;"><b class="num">${fmt((r.noktalar&&r.noktalar[0]&&r.noktalar[0].value)||0)}</b><button class="ked-b ked-sil" onclick="gfCizimDbSil(${r.id})">🗑</button></span></div>`).join(''):'<div class="gf-not">Hedef yok. Çizim araçlarından "🎯 Hedef / Alarm" ile ekleyebilirsin; tahmin bu seviyenin altına düşme olasılığını hesaplar.</div>'}
   <div class="isf-grup-b">Kayıtlı tahminler (her ay otomatik kaydedilir)</div>
@@ -5553,23 +5655,25 @@ async function gfCizimDbSil(dbId,sessiz){
 }
 function gfSeciliSil(){if(!GF.seciliCizim){showToast('Önce silmek istediğin çizime dokun','amber');return;}GF.chart.removeOverlay({id:GF.seciliCizim});GF.seciliCizim=null;}
 async function gfTumCizimSil(){
-  const rows=(GF.ek.cizimler||[]).filter(r=>r.metrik===GF.ay.metrik);
+  const rows=(GF.ek.cizimler||[]).filter(r=>r.metrik===GF.ay.metrik&&r.ad!=='aylik_hedef');
   if(!confirm(`Bu metrikteki tüm çizimler (${rows.length}) silinsin mi?`))return;
   GF.toplucaSil=true;try{GF.chart.removeOverlay({groupId:'gfc'});}catch(e){}GF.toplucaSil=false;
   for(const r of rows){try{await sbFetch('grafik_cizimler?id=eq.'+r.id,{method:'DELETE'});}catch(e){}}
-  GF.ek.cizimler=(GF.ek.cizimler||[]).filter(r=>r.metrik!==GF.ay.metrik);GF.cizimDb={};GF.tahminAnahtar='';gfCiz();
+  GF.ek.cizimler=(GF.ek.cizimler||[]).filter(r=>r.metrik!==GF.ay.metrik||r.ad==='aylik_hedef');GF.cizimDb={};GF.tahminAnahtar='';gfCiz();
 }
 function gfCizimleriYukle(zorla){
   const imza=GF.ay.metrik+'|'+GF.ay.periyot+'|'+GF.ek.versiyon+'|'+((GF.ek.cizimler||[]).length)+'|'+GF.barlar.length+'|'+GF.eksenMod;
   if(!zorla&&GF._cizimImza===imza)return;GF._cizimImza=imza;
   GF.toplucaSil=true;try{GF.chart.removeOverlay({groupId:'gfc'});}catch(e){}GF.toplucaSil=false;GF.cizimDb={};
   if(GF.eksenMod==='yuzde'){if(((GF.ek.cizimler)||[]).some(r=>r.metrik===GF.ay.metrik))gfEksenUyari('cizimyuzde','Çizimler gerçek tutarlarla kayıtlı olduğu için yüzde ekseninde gizlenir.');return;}
-  ((GF.ek.cizimler)||[]).filter(r=>r.metrik===GF.ay.metrik).forEach(r=>{try{gfOverlayOlustur(r.ad,r.ek,(r.noktalar||[]).map(p=>({timestamp:p.timestamp,value:p.value})),r.id);}catch(e){console.warn('çizim',e);}});
+  ((GF.ek.cizimler)||[]).filter(r=>r.metrik===GF.ay.metrik&&r.ad!=='aylik_hedef').forEach(r=>{try{gfOverlayOlustur(r.ad,r.ek,(r.noktalar||[]).map(p=>({timestamp:p.timestamp,value:p.value})),r.id);}catch(e){console.warn('çizim',e);}});
 }
 
 // ---------- DÖNEMSEL ANALİZ (Gün / Hafta / Ay / Yıl — liste, kıyas, ritim; gelir ve giderler alt kategorileriyle)
 var GF_DONEM_TIP={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
-var GF_DONEM_LISTE_SAY={gun:31,hafta:16,ay:24,yil:20};
+var GF_DONEM_LISTE_SAY={gun:31,hafta:16,ay:24,yil:20}; // kıyas seçim listesi için
+var GF_DONEM_ILK={gun:14,hafta:8,ay:12,yil:5}; // listede ilk gösterilen dönem sayısı (her "daha fazla"da bu kadar eklenir)
+function gfDonemDaha(tip){GF._dnLimit=GF._dnLimit||{};GF._dnLimit[tip]=(GF._dnLimit[tip]||GF_DONEM_ILK[tip])+GF_DONEM_ILK[tip];gfSekmeCiz();}
 var GF_GUN_AD=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
 function gfDonemAralik(k,tip){
   const [y,m]=k.split('-').map(Number);
@@ -5665,8 +5769,9 @@ function gfDonemListe(tip,M){
   const ay=GF.ay;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
   const bugun=localToday();const cur=gfPeriyotAnahtar(bugun,tip);
   let ilkVeri=Object.keys(M).sort()[0]||cur;
-  const N=GF_DONEM_LISTE_SAY[tip];const L=[];let k=cur;
+  const N=(GF._dnLimit&&GF._dnLimit[tip])||GF_DONEM_ILK[tip];const L=[];let k=cur;
   for(let i=0;i<N&&k>=ilkVeri;i++){L.push(k);k=gfDonemKaydir(k,tip,-1);}
+  let kalanDonem=0;{let kk=k;while(kk>=ilkVeri&&kalanDonem<10000){kalanDonem++;kk=gfDonemKaydir(kk,tip,-1);}}
   const V=L.map(k=>({k,v:gfDonemDeger(M[k],ay.donemKat),D:M[k]}));
   const tekSeri=!!ay.donemKat;
   const mx=Math.max(1,...V.map(x=>Math.max(x.v.gelir,x.v.gider)));
@@ -5675,9 +5780,9 @@ function gfDonemListe(tip,M){
   const enIyi=V.length?V[netler.indexOf(Math.max(...netler))]:null,enKotu=V.length?V[netler.indexOf(Math.min(...netler))]:null;
   const birim=GF_DONEM_TIP[tip].toLowerCase();let h;
   if(tekSeri){const gelirMi=ay.donemKat.startsWith('Gelir|');const top=gelirMi?tg:tc;const renk=gelirMi?up:dn;const vals=V.map(x=>gelirMi?x.v.gelir:x.v.gider);const mxV=Math.max(...vals,0);const mxK=V[vals.indexOf(mxV)];
-    h=`<div class="gf-kutular">${gfKutu('Toplam',(gelirMi?'+':'−')+gfKisa(top),renk)}${gfKutu('Ort. / '+birim,gfKisa(V.length?top/V.length:0))}${gfKutu('Dönem sayısı',V.length)}${gfKutu('En yüksek dönem',mxK&&mxV?gfKisa(mxV)+' <small>'+gfDonemEtiket(mxK.k,tip,true)+'</small>':'—')}${gfKutu('Toplamdaki payı',(()=>{const t=gelirMi?Object.values(M).reduce((a,D)=>a,0):0;let G=0;V.forEach(x=>{if(x.D)G+=gelirMi?x.D.gelir.top:x.D.gider.top;});return G?'%'+Math.round(top/G*100):'—';})())}${gfKutu('Son '+birim,gfKisa(vals[0]||0))}</div>`;}
+    h=`<div class="gf-kutular">${gfKutu('Toplam',(gelirMi?'+':'−')+gfKisa(top),renk)}${gfKutu('Ort. / '+birim,gfKisa(V.length?top/V.length:0))}${gfKutu('Gösterilen dönem',V.length)}${gfKutu('En yüksek dönem',mxK&&mxV?gfKisa(mxV)+' <small>'+gfDonemEtiket(mxK.k,tip,true)+'</small>':'—')}${gfKutu('Toplamdaki payı',(()=>{const t=gelirMi?Object.values(M).reduce((a,D)=>a,0):0;let G=0;V.forEach(x=>{if(x.D)G+=gelirMi?x.D.gelir.top:x.D.gider.top;});return G?'%'+Math.round(top/G*100):'—';})())}${gfKutu('Son '+birim,gfKisa(vals[0]||0))}</div>`;}
   else h=`<div class="gf-kutular">${gfKutu('Toplam gelir','+'+gfKisa(tg),up)}${gfKutu('Toplam gider','−'+gfKisa(tc),dn)}${gfKutu('Net',gfKisa(tg-tc),tg-tc>=0?up:dn)}
-    ${gfKutu('Ort. gelir / '+birim,gfKisa(V.length?tg/V.length:0))}${gfKutu('Ort. gider / '+birim,gfKisa(V.length?tc/V.length:0))}${gfKutu('Dönem sayısı',V.length)}</div>`;
+    ${gfKutu('Ort. gelir / '+birim,gfKisa(V.length?tg/V.length:0))}${gfKutu('Ort. gider / '+birim,gfKisa(V.length?tc/V.length:0))}${gfKutu('Gösterilen dönem',V.length)}</div>`;
   if(!tekSeri&&enIyi&&V.length>1)h+=`<div class="gf-not">🏆 En iyi: <b>${gfDonemEtiket(enIyi.k,tip)}</b> (${gfKisa(enIyi.v.gelir-enIyi.v.gider)}) · 📉 En kötü: <b>${gfDonemEtiket(enKotu.k,tip)}</b> (${gfKisa(enKotu.v.gelir-enKotu.v.gider)})</div>`;
   h+=V.map(x=>{
     const net=x.v.gelir-x.v.gider;const devam=x.k===cur&&tip!=='gun';const acik=GF._dnAcik===x.k;
@@ -5689,6 +5794,8 @@ function gfDonemListe(tip,M){
       ${tekSeri?'':`<div class="gf-dn-alt-s"><span style="color:${up}">+${gfKisa(x.v.gelir)}</span><span style="color:${dn}">−${gfKisa(x.v.gider)}</span><span>${x.D?x.D.adet:0} işlem ${acik?'▴':'▾'}</span></div>`}</div>`;
     if(acik){r+=`<div class="gf-dn-detay">${x.D?gfDonemDetayHtml(x.D):'<div class="gf-not">Bu dönemde işlem yok.</div>'}${gi?`<button class="btn btn-secondary btn-full" style="margin-top:8px;padding:10px;font-size:12px;" onclick="gfAralikModal(${gi[0]},${gi[1]},'${gfDonemEtiket(x.k,tip)}')">📅 Bu dönemin tüm hareketleri</button>`:''}</div>`;}
     return r;}).join('');
+  if(kalanDonem>0)h+=`<button class="btn btn-secondary btn-full" style="margin-top:10px;padding:11px;font-size:13px;" onclick="gfDonemDaha('${tip}')">Daha fazla göster (+${Math.min(GF_DONEM_ILK[tip],kalanDonem)} · ${kalanDonem} dönem daha var)</button>`;
+  else if(V.length>GF_DONEM_ILK[tip])h+=`<div class="gf-ipucu" style="text-align:center;">Tüm dönemler gösteriliyor.</div>`;
   return h;
 }
 function gfDonemKiyas(tip,M){
@@ -5751,6 +5858,278 @@ function gfDonemRitim(tip,M){
   h+=`<div class="gf-ritim-lej"><span><i style="background:${up}"></i>Gelir</span><span><i style="background:${dn}"></i>Gider</span><span>Sayı: net</span></div>`;
   if(not)h+=`<div class="gf-ipucu">${not}</div>`;
   h+=poz.map(p=>`<div class="gf-satir"><span>${p.l}</span><span class="num"><span style="color:${up}">+${gfKisa(p.g)}</span> · <span style="color:${dn}">−${gfKisa(p.c)}</span> · <b style="color:${p.g-p.c>=0?up:dn}">${gfKisa(p.g-p.c)}</b>${p.buyume!=null?` <small>(${p.buyume>=0?'+':''}${Math.round(p.buyume)}% gelir)</small>`:''}</span></div>`).join('');
+  return h;
+}
+
+// ---------- AYLIK HEDEF · GRAFİĞİ PAYLAŞ · RİSK BİLDİRİMİ
+// Brüt kâr tahmini: işletme gelir akışları × (1 − son 1 yılın malzeme oranı)
+function gfBrutAgirlik(d){
+  const g1=d.gunSay-1,g0=Math.max(0,d.gunSay-365);
+  const gel=d.C.isGelir[g1]-d.O.isGelir[g0],brut=d.C.isBrut[g1]-d.O.isBrut[g0];
+  const oran=gel>0?Math.max(0,Math.min(1,brut/gel)):1;
+  return {isG:oran,proj:oran};
+}
+function gfAylikHedef(){
+  const r=((GF.ek&&GF.ek.cizimler)||[]).find(x=>x.ad==='aylik_hedef');if(!r)return null;
+  const t=parseFloat((r.ek||{}).tutar)||0;if(!t)return null;return {id:r.id,metrik:r.metrik||'isGelir',tutar:t};
+}
+var GF_HEDEF_METRIK={isGelir:'İşletme geliri',isNet:'İşletme net (kâr)',isBrut:'İşletme brüt kâr'};
+function gfHedefHesap(){
+  const H=gfAylikHedef();const d=GF.defter;if(!H||!d||!d.C[H.metrik])return null;const m=H.metrik;
+  const bugun=d.bugun;const [y,mo]=bugun.split('-').map(Number);const ayBas=bugun.slice(0,8)+'01';const aySon=localDateObjStr(new Date(y,mo,0));
+  const gb=d.gunIdx[ayBas]!=null?d.gunIdx[ayBas]:0;const baslangic=d.gunIdx[ayBas]!=null?d.O[m][gb]:0;
+  const gerceklesen=d.C[m][d.gunSay-1]-baslangic;const kalanGun=gfGunFark(bugun,aySon);
+  const anahtar=[d.imza,m,H.tutar,GF.ek.versiyon].join('|');let tah;
+  if(GF._hedefCache&&GF._hedefCache.k===anahtar)tah=GF._hedefCache.v;
+  else{
+    if(kalanGun>0){
+      const T=gfTahminHesapla(d,m,Object.assign({},GF.ay,{tahminUfuk:kalanGun,gelirPct:0,giderPct:0,mcYol:300,hedeflerOzel:[]}));const i=kalanGun-1;
+      const hedefDeger=baslangic+H.tutar;const q=[[0.05,'p5'],[0.1,'p10'],[0.25,'p25'],[0.5,'p50'],[0.75,'p75'],[0.9,'p90'],[0.95,'p95']].map(([p,k])=>[p,T.yuz[k][i]]);
+      let cdf=0.5;
+      if(hedefDeger<=q[0][1])cdf=0.03;else if(hedefDeger>=q[6][1])cdf=0.97;
+      else for(let j=0;j<6;j++){if(hedefDeger>=q[j][1]&&hedefDeger<=q[j+1][1]){const sp=(q[j+1][1]-q[j][1])||1;cdf=q[j][0]+(q[j+1][0]-q[j][0])*(hedefDeger-q[j][1])/sp;break;}}
+      tah={p50:T.yuz.p50[i]-baslangic,p10:T.yuz.p10[i]-baslangic,p90:T.yuz.p90[i]-baslangic,olasilik:Math.max(0,Math.min(1,1-cdf))};
+    }else tah={p50:gerceklesen,p10:gerceklesen,p90:gerceklesen,olasilik:gerceklesen>=H.tutar?1:0};
+    GF._hedefCache={k:anahtar,v:tah};
+  }
+  return {H,gerceklesen,kalanGun,gunluk:kalanGun>0?Math.max(0,(H.tutar-gerceklesen)/kalanGun):0,tah,ay:GF_AYLAR_UZUN[mo-1]};
+}
+function gfHedefKartCiz(){
+  const el=document.getElementById('gf-hedef-kart');if(!el)return;
+  let R=null;try{R=gfHedefHesap();}catch(e){console.warn('hedef',e);}
+  if(!R){el.innerHTML='';return;}
+  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744'),am=gfCss('--amber','#FFAB00');
+  const t=R.H.tutar;const yz=Math.max(0,R.gerceklesen/t*100);const tz=Math.max(0,Math.min(100,R.tah.p50/t*100));
+  const ol=Math.round(R.tah.olasilik*100);const renk=ol>=60?up:ol>=30?am:dn;
+  const ulasti=R.gerceklesen>=t;
+  el.innerHTML=`<div class="gf-hedef" onclick="gfTahminModalAc()">
+    <div class="gf-hedef-u"><span>🎯 ${R.ay} hedefi · ${GF_HEDEF_METRIK[R.H.metrik]||R.H.metrik}</span><b class="num" style="color:${ulasti?up:'inherit'}">%${Math.round(yz)}</b></div>
+    <div class="gf-hedef-iz"><div class="tah" style="width:${tz}%"></div><div style="width:${Math.min(100,yz)}%;background:${ulasti?up:renk}"></div></div>
+    <div class="gf-hedef-a">${gfKisa(R.gerceklesen)} / ${gfKisa(t)}${ulasti?' · <b style="color:'+up+'">Hedefe ulaşıldı 🎉</b>':(R.kalanGun>0?` · Kalan ${R.kalanGun} günde günlük <b>${gfKisa(R.gunluk)}</b> lazım · Tahmini ay sonu ~${gfKisa(R.tah.p50)} · Ulaşma olasılığı <b style="color:${renk}">%${ol}</b>`:' · Ay bitti')}</div></div>`;
+}
+function gfHedefModalHtml(){
+  const H=gfAylikHedef();
+  if(GF.ek.cizimler===null)return '<div class="isf-grup-b">🎯 Aylık hedef</div><div class="gf-not">Aylık hedef için grafik_cizimler tablosu gerekli (grafik_tablolar.sql).</div>';
+  return `<div class="isf-grup-b">🎯 Aylık hedef</div>
+  <div class="isf-satir" style="margin-top:0;"><div class="fi" style="flex:1"><label>Hedef türü</label><select id="gfh-metrik">${Object.keys(GF_HEDEF_METRIK).map(k=>`<option value="${k}"${H&&H.metrik===k?' selected':''}>${GF_HEDEF_METRIK[k]}</option>`).join('')}</select></div>
+  <div class="fi" style="flex:1"><label>Aylık tutar (₺)</label><input type="text" inputmode="decimal" id="gfh-tutar" placeholder="ör. 250.000" value="${H?formatTutar(H.tutar):''}"></div></div>
+  <div class="isf-chips" style="margin-top:8px;"><button class="isf-chip on" onclick="gfHedefKaydet()">💾 Hedefi kaydet</button>${H?'<button class="isf-chip" onclick="gfHedefSil()">Hedefi kaldır</button>':''}</div>
+  <div class="isf-ipucu">Grafiğin üstünde ilerleme çubuğu olarak görünür: gerçekleşen, kalan günlerde gereken günlük tutar ve tahmine göre ulaşma olasılığı.</div>`;
+}
+async function gfHedefKaydet(){
+  const tutar=parseTutar(document.getElementById('gfh-tutar')?.value);const metrik=document.getElementById('gfh-metrik')?.value||'isGelir';
+  if(!tutar){showToast('Hedef tutarı girin','amber');return;}
+  const H=gfAylikHedef();
+  try{
+    if(H)await sbFetch('grafik_cizimler?id=eq.'+H.id,{method:'PATCH',body:JSON.stringify({metrik,ek:{tutar}})});
+    else await sbFetch('grafik_cizimler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({metrik,ad:'aylik_hedef',noktalar:[],ek:{tutar}})});
+    showToast('Aylık hedef kaydedildi','green');
+  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');return;}
+  await gfEkYukle(true);gfTahminModalCiz();gfHedefKartCiz();
+}
+async function gfHedefSil(){
+  const H=gfAylikHedef();if(!H)return;if(!confirm('Aylık hedef kaldırılsın mı?'))return;
+  try{await sbFetch('grafik_cizimler?id=eq.'+H.id,{method:'DELETE'});}catch(e){showToast('Silinemedi','red');return;}
+  await gfEkYukle(true);gfTahminModalCiz();gfHedefKartCiz();
+}
+
+// Grafiği başlıklı PNG olarak paylaş (telefonda paylaş menüsü, bilgisayarda indirme)
+async function gfResimPaylas(){
+  if(!GF.chart)return;
+  const bg=gfCss('--bg','#060606');let url;
+  try{url=GF.chart.getConvertPictureUrl(true,'png',bg);}catch(e){showToast('Resim oluşturulamadı','red');return;}
+  const img=new Image();img.src=url;
+  try{await new Promise((r,j)=>{img.onload=r;img.onerror=j;});}catch(e){showToast('Resim oluşturulamadı','red');return;}
+  const W=img.width;const fs=Math.max(14,Math.round(W/28));const pad=Math.round(fs*0.9);const ust=Math.round(fs*3.4);
+  const c=document.createElement('canvas');c.width=W;c.height=img.height+ust;const x=c.getContext('2d');
+  x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);
+  const d=GF.defter;const m=GF.ay.metrik;const v=d?d.C[m][d.gunSay-1]:0;
+  x.fillStyle=gfCss('--text','#f0f0f0');x.font=`700 ${fs}px system-ui,sans-serif`;x.fillText('Gün Teknik · '+GF_METRIK[m].ad+'  '+gfTL(v),pad,pad+fs);
+  x.fillStyle=gfCss('--text3','#888');x.font=`500 ${Math.round(fs*0.72)}px system-ui,sans-serif`;
+  const T=GF.tahmin&&GF.ay.tahminAcik&&GF.tahmin.metrik===m?GF.tahmin:null;
+  x.fillText(gfTrTarih(localToday())+' · '+GF_PERIYOT[GF.ay.periyot]+' görünümü'+(T?' · 30 gün tahmini '+gfKisa(T.yuz.p50[Math.min(29,T.ufuk-1)])+' ('+gfKisa(T.yuz.p10[Math.min(29,T.ufuk-1)])+'…'+gfKisa(T.yuz.p90[Math.min(29,T.ufuk-1)])+')':''),pad,pad+fs*2.2);
+  x.drawImage(img,0,ust);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob){showToast('Resim oluşturulamadı','red');return;}
+  const ad='gun-teknik-'+m+'-'+localToday()+'.png';
+  try{const f=new File([blob],ad,{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Gün Teknik · '+GF_METRIK[m].ad});return;}}
+  catch(e){if(e&&e.name==='AbortError')return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=ad;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);showToast('Grafik resmi indirildi','green');
+}
+
+// Açılışta (günde bir kez): kasa eksiye / hedef çizgisinin altına düşme riski ve aylık hedef uyarısı
+async function gfRiskBildirimKontrol(){
+  if(!DB||!DB.islemler||DB.islemler.length<30)return;
+  if(!GF.ekZaman)await gfEkYukle(true);
+  const d=gfDefterKur();if(d.gunSay<45)return;
+  const gun=localToday();
+  const isaretle=k=>{try{if(localStorage.getItem(k))return false;localStorage.setItem(k,'1');}catch(e){}return true;};
+  const hedefler=((GF.ek.cizimler)||[]).filter(r=>r.metrik==='kasa'&&r.ad==='hedef').map(r=>({deger:(r.noktalar&&r.noktalar[0]&&r.noktalar[0].value)||0,ad:(r.ek&&r.ek.ad)||'Hedef'}));
+  const T=gfTahminHesapla(d,'kasa',Object.assign({},GF.ay,{tahminUfuk:90,gelirPct:0,giderPct:0,mcYol:300,hedeflerOzel:hedefler}));
+  T.riskler.forEach(r=>{
+    const yakin=r.ilk20&&gfGunFark(gun,r.ilk20)<=30;
+    if(r.olasilik30<0.2&&!yakin)return;
+    if(!isaretle('gf_risk_'+gun+'_'+r.ad))return;
+    const ne=r.ad==='Sıfır'?'eksiye düşebilir':'"'+r.ad+'" ('+gfKisa(r.esik)+') seviyesinin altına inebilir';
+    aiBildirimGoster('uyari',`🔮 Kasa önümüzdeki 30 gün içinde ${ne}: olasılık %${Math.round(r.olasilik30*100)}${r.ilk20?' · riskin arttığı tarih '+gfTrTarih(r.ilk20):''}. Ayrıntı: Ana sayfa → grafik → Tahmin sekmesi.`,12000);
+  });
+  try{const R=gfHedefHesap();
+    if(R&&R.kalanGun>0&&R.kalanGun<=20&&R.gerceklesen<R.H.tutar&&R.tah.olasilik<0.3&&isaretle('gf_hedef_'+gun.slice(0,7)+'_'+Math.floor(parseInt(gun.slice(8,10))/7)))
+      aiBildirimGoster('bilgi',`🎯 ${R.ay} hedefine ulaşma olasılığı %${Math.round(R.tah.olasilik*100)}. Kalan ${R.kalanGun} günde günlük ${gfKisa(R.gunluk)} gerekiyor (şu an ${gfKisa(R.gerceklesen)} / ${gfKisa(R.H.tutar)}).`,10000);
+  }catch(e){}
+}
+
+// ---------- EN'LER (rekorlar ve sıralamalar — her başlıkta ilk 5, dokununca ilgili yere gider)
+var GF_EN_ZAMAN=[['buay','Bu ay'],['son12','Son 12 ay'],['buyil','Bu yıl'],['tum','Tüm zamanlar']];
+var GF_BOLGELER=['Dalyan','Ortaca','Dalaman','Köyceğiz','Fethiye','Göcek','Sarıgerme','Marmaris','Muğla','Ekincik','Okçular','Eskiköy','Gökbel','Toparlar','Akçapınar','Kemaliye','Mergenli','Dalyan Gülpınar'];
+function gfEnAralik(z){const b=localToday();const y=b.slice(0,4);
+  if(z==='buay')return [b.slice(0,8)+'01',b];if(z==='buyil')return [y+'-01-01',b];if(z==='son12')return [gfGunEkle(b,-364),b];return ['0000-00-00',b];}
+function gfEnReg(fn){GF._enReg=GF._enReg||[];GF._enReg.push(fn);return GF._enReg.length-1;}
+function gfEnTik(i){const f=(GF._enReg||[])[i];if(f)f();}
+// İşlemler sayfasını bu sıralamaya göre filtreleyerek aç
+function gfEnIslemler(alan,deger){
+  const z=GF.ay.enZaman||'son12';const [bas,bit]=gfEnAralik(z);
+  try{ISF=isfBos();if(z==='tum')ISF.tarih='tumu';else{ISF.tarih='ozel';ISF.bas=bas;ISF.bit=bit;}
+    if(Array.isArray(ISF[alan]))ISF[alan]=[String(deger)];isfSonKaydet();_islGoster=150;}catch(e){}
+  const nav=document.querySelector('.nav-item[onclick*="\'islemler\'"]');goPage('islemler',nav||undefined);
+}
+function gfEnGun(gs){const d=GF.defter;if(!d||d.gunIdx[gs]==null)return null;const g=d.gunIdx[gs];return ()=>gfAralikModal(g,g,gfTrTarih(gs));}
+function gfEnAraligi(bas,bit,ad){const gi=gfDonemGunIdx(bas,bit);return gi?()=>gfAralikModal(gi[0],gi[1],ad):null;}
+function gfEnKart(ikon,baslik,L,opt){
+  opt=opt||{};const renk=opt.renk||'inherit';
+  if(!L||!L.length)return `<div class="gf-en"><summary style="cursor:default"><div class="gf-en-b">${ikon} ${baslik}<small>${opt.bos||'Bu aralıkta veri yok'}</small></div></summary></div>`;
+  const v=x=>opt.ham?x.v:(opt.adet?x.v:fmt(x.v));
+  const satir=(x,i)=>{const t=x.tik?`onclick="gfEnTik(${gfEnReg(x.tik)})"`:'';
+    return `<div class="gf-en-s" ${t}><span class="no">${i+1}</span><span class="ad">${_esc(x.ad)}${x.alt?` <small>· ${_esc(x.alt)}</small>`:''}</span><span class="v num" style="color:${x.renk||renk}">${v(x)}${x.vAlt?`<small>${_esc(x.vAlt)}</small>`:''}</span></div>`;};
+  return `<details class="gf-en"><summary><div class="gf-en-b">${ikon} ${baslik}<small>${_esc(L[0].ad)}${L[0].alt?' · '+_esc(L[0].alt):''}</small></div><div class="gf-en-v num" style="color:${L[0].renk||renk}">${v(L[0])}${L[0].vAlt?`<small>${_esc(L[0].vAlt)}</small>`:''}</div></summary>
+    <div class="gf-en-liste">${L.slice(0,5).map(satir).join('')}${opt.not?`<div class="gf-ipucu">${opt.not}</div>`:''}</div></details>`;
+}
+function gfTopla(liste,anahtarFn,degerFn){const M=new Map();liste.forEach(x=>{const k=anahtarFn(x);if(k==null)return;const o=M.get(k)||{k,v:0,n:0,ham:[]};o.v+=degerFn(x);o.n++;o.ham.push(x);M.set(k,o);});return [...M.values()];}
+function gfSirala(a,yon){return a.sort((x,y)=>yon==='artan'?x.v-y.v:y.v-x.v);}
+function gfAyAd(k){const [y,m]=k.split('-').map(Number);return GF_AYLAR_UZUN[m-1]+' '+y;}
+
+function gfEnlerSekme(){
+  GF._enReg=[];
+  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744'),am=gfCss('--amber','#FFAB00');
+  const z=GF.ay.enZaman||'son12';const [bas,bit]=gfEnAralik(z);
+  const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
+  let h=`<div class="isf-chips">${GF_EN_ZAMAN.map(([k,l])=>chip(z===k,l,`GF.ay.enZaman='${k}';gfAyarKaydet();gfSekmeCiz()`)).join('')}</div>
+  <div class="gf-not">Her başlığa dokununca ilk 5 açılır; satıra dokununca ilgili gün, işlem, kişi veya filtrelenmiş işlem listesi açılır.</div>`;
+  const tum=(DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&(parseFloat(i.tutar)||0)>0).map(i=>Object.assign({},i,{_g:localDateStr(i.tarih),_t:parseFloat(i.tutar)||0}));
+  const I=tum.filter(i=>i._g>=bas&&i._g<=bit);
+  const gel=I.filter(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri');
+  const gid=I.filter(i=>i.tip==='Gider');
+  const kisiAd=id=>getKisi(id)?.isim||'Kişisiz';
+  const gunEt=gs=>{const [y,m,dd]=gs.split('-').map(Number);const dt=new Date(y,m-1,dd);return dd+' '+GF_AYLAR[m-1]+' '+y+' '+GF_GUN_AD[(dt.getDay()+6)%7];};
+  const hizmetler=i=>hizParse(i.altKat);
+
+  // ===== GELİR
+  h+=`<div class="gf-en-baslik">💰 Gelir ve kazanç</div>`;
+  const donemTop=(liste,tip,renk)=>gfSirala(gfTopla(liste,i=>gfPeriyotAnahtar(i._g,tip),i=>i._t)).map(o=>{const [b0,b1]=gfDonemAralik(o.k,tip);const ad=gfDonemEtiket(o.k,tip);return {ad,v:o.v,vAlt:o.n+' işlem',tik:gfEnAraligi(b0,b1,ad),renk};});
+  h+=gfEnKart('📅','En yüksek gelirli gün',donemTop(gel,'gun',up),{renk:up});
+  h+=gfEnKart('🗓','En yüksek gelirli hafta',donemTop(gel,'hafta',up),{renk:up});
+  h+=gfEnKart('📆','En yüksek gelirli ay',donemTop(gel,'ay',up),{renk:up});
+  h+=gfEnKart('🏛','En yüksek gelirli yıl',donemTop(tum.filter(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri'),'yil',up),{renk:up,not:'Yıl sıralaması zaman filtresinden bağımsız, tüm yıllar.'});
+  h+=gfEnKart('💎','En büyük tek iş',[...gel].sort((a,b)=>b._t-a._t).map(i=>({ad:kisiAd(i.kisiId),alt:(hizmetler(i).map(x=>x[1]).slice(0,2).join(', ')||i.altKat||'')+' · '+gfTrTarih(i._g),v:i._t,tik:()=>showIslemDetay(i.id)})),{renk:up});
+  // hizmetler (tutar eşit bölünür)
+  const hizG=new Map(),hiz=new Map();
+  gel.forEach(i=>{const p=hizmetler(i);if(!p.length)return;const gr=[...new Set(p.map(x=>x[0]))];const malz=parseFloat(i.malzemeTutar)||0;
+    gr.forEach(g=>{const o=hizG.get(g)||{k:g,v:0,n:0};o.v+=i._t/gr.length;o.n++;hizG.set(g,o);});
+    p.forEach(([g,it])=>{const k=g+'||'+it;const o=hiz.get(k)||{k,g,it,v:0,kar:0,n:0,isTop:0};o.v+=i._t/p.length;o.kar+=(i._t-malz)/p.length;o.n++;o.isTop+=i._t;hiz.set(k,o);});});
+  h+=gfEnKart('🛠','En çok kazandıran hizmet grubu',gfSirala([...hizG.values()]).map(o=>({ad:o.k,v:o.v,vAlt:o.n+' iş',tik:()=>gfEnIslemler('hizGrup',o.k)})),{renk:up});
+  h+=gfEnKart('🔧','En çok kazandıran hizmet',gfSirala([...hiz.values()]).map(o=>({ad:o.it,alt:o.g,v:o.v,vAlt:o.n+' iş',tik:()=>gfEnIslemler('hizmetler',o.k)})),{renk:up,not:'Bir işte birden fazla hizmet varsa tutar hizmetlere eşit bölünür.'});
+  h+=gfEnKart('📈','En kârlı hizmet (gelir − malzeme)',[...hiz.values()].map(o=>({ad:o.it,alt:o.g,v:o.kar,vAlt:'marj %'+(o.v?Math.round(o.kar/o.v*100):0),tik:()=>gfEnIslemler('hizmetler',o.k)})).sort((a,b)=>b.v-a.v),{renk:up});
+  h+=gfEnKart('🏷','En yüksek ortalama iş tutarı (hizmet)',[...hiz.values()].filter(o=>o.n>=3).map(o=>({ad:o.it,alt:o.g,v:o.isTop/o.n,vAlt:o.n+' iş ortalaması',tik:()=>gfEnIslemler('hizmetler',o.k)})).sort((a,b)=>b.v-a.v),{renk:up,bos:'En az 3 iş yapılmış hizmet yok'});
+
+  // ===== MÜŞTERİ
+  h+=`<div class="gf-en-baslik">👤 Müşteri</div>`;
+  const mus=gfTopla(gel.filter(i=>i.kisiId),i=>String(i.kisiId),i=>i._t);
+  h+=gfEnKart('🥇','En çok kazandıran müşteri',gfSirala([...mus]).map(o=>({ad:kisiAd(o.k),v:o.v,vAlt:o.n+' iş',tik:()=>showKisiDetay(Number(o.k)||o.k)})),{renk:up});
+  h+=gfEnKart('🔁','En çok iş yapılan müşteri',[...mus].sort((a,b)=>b.n-a.n||b.v-a.v).map(o=>({ad:kisiAd(o.k),v:o.n+' iş',vAlt:gfKisa(o.v)+' ₺',tik:()=>showKisiDetay(Number(o.k)||o.k)})),{ham:true});
+  h+=gfEnKart('🤝','En sadık müşteri (en çok farklı ayda iş)',mus.map(o=>({o,ay:new Set(o.ham.map(i=>i._g.slice(0,7))).size})).sort((a,b)=>b.ay-a.ay||b.o.v-a.o.v).map(x=>({ad:kisiAd(x.o.k),v:x.ay+' farklı ay',vAlt:x.o.n+' iş · '+gfKisa(x.o.v)+' ₺',tik:()=>showKisiDetay(Number(x.o.k)||x.o.k)})),{ham:true});
+  h+=gfEnKart('💰','En yüksek ortalama iş tutarı (müşteri)',mus.filter(o=>o.n>=3).map(o=>({ad:kisiAd(o.k),v:o.v/o.n,vAlt:o.n+' iş ortalaması',tik:()=>showKisiDetay(Number(o.k)||o.k)})).sort((a,b)=>b.v-a.v),{bos:'En az 3 iş yapılmış müşteri yok'});
+  // uzun süredir gelmeyen değerli müşteriler (zaman filtresinden bağımsız)
+  const tumMus=gfTopla(tum.filter(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri'&&i.kisiId),i=>String(i.kisiId),i=>i._t);
+  const esik=(()=>{const v=tumMus.map(o=>o.v).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length*0.7)]:0;})();
+  const bugun=localToday();
+  const kayip=tumMus.filter(o=>o.n>=2&&o.v>=esik).map(o=>{const son=o.ham.map(i=>i._g).sort().pop();return {o,son,gun:gfGunFark(son,bugun)};}).filter(x=>x.gun>=120).sort((a,b)=>b.o.v-a.o.v);
+  h+=gfEnKart('📞','Uzun süredir gelmeyen değerli müşteriler',kayip.map(x=>({ad:kisiAd(x.o.k),alt:'son iş '+(x.gun>=60?Math.round(x.gun/30)+' ay':x.gun+' gün')+' önce',v:x.o.v,vAlt:x.o.n+' iş (toplam)',tik:()=>showKisiDetay(Number(x.o.k)||x.o.k),renk:am})),{renk:am,bos:'Değerli müşterilerin hepsi son 4 ayda iş vermiş 👍',not:'Toplamda en çok kazandıran %30\'luk dilimdeki, en az 2 iş vermiş ve 4 aydan uzun süredir gelmeyen müşteriler. Aranacaklar listesi olarak kullanılabilir.'});
+  const ilkIs=new Map();tum.filter(i=>i.tip==='Gelir'&&i.kisiId).forEach(i=>{const k=String(i.kisiId);if(!ilkIs.has(k)||i._g<ilkIs.get(k))ilkIs.set(k,i._g);});
+  const yeniAy=gfTopla([...ilkIs.entries()].filter(([k,g])=>g>=bas&&g<=bit),([k,g])=>g.slice(0,7),()=>1);
+  h+=gfEnKart('🌱','Yeni müşterinin en çok geldiği ay',gfSirala(yeniAy).map(o=>({ad:gfAyAd(o.k),v:o.v+' yeni müşteri',tik:gfEnAraligi(o.k+'-01',gfDonemAralik(o.k+'-01','ay')[1],gfAyAd(o.k))})),{ham:true});
+
+  // ===== KAYNAK & BÖLGE
+  h+=`<div class="gf-en-baslik">📣 Kaynak ve bölge</div>`;
+  const kay=gfTopla(gel,i=>i.islemKaynagi||'__yok__',i=>i._t);
+  h+=gfEnKart('📣','En çok iş getiren kaynak',gfSirala([...kay]).map(o=>({ad:o.k==='__yok__'?'Belirtilmemiş':o.k,v:o.v,vAlt:o.n+' iş · ort. '+gfKisa(o.v/o.n),tik:()=>gfEnIslemler('kaynaklar',o.k)})),{renk:up});
+  h+=gfEnKart('🎯','En yüksek ortalama iş tutarı (kaynak)',kay.filter(o=>o.n>=3&&o.k!=='__yok__').map(o=>({ad:o.k,v:o.v/o.n,vAlt:o.n+' iş ortalaması',tik:()=>gfEnIslemler('kaynaklar',o.k)})).sort((a,b)=>b.v-a.v),{bos:'Kaynağı belirtilmiş en az 3 iş yok'});
+  const bolge=i=>{const k=getKisi(i.kisiId);const a=_trk((k&&k.adres)||'');if(!a)return 'Belirtilmemiş';const b=GF_BOLGELER.find(x=>a.includes(_trk(x)));return b||'Diğer';};
+  const bolgeT=gfTopla(gel,bolge,i=>i._t);const belirsizB=bolgeT.find(o=>o.k==='Belirtilmemiş');
+  h+=gfEnKart('📍','En çok iş çıkan bölge',gfSirala(bolgeT.filter(o=>o.k!=='Belirtilmemiş')).map(o=>({ad:o.k,v:o.v,vAlt:o.n+' iş'})),{renk:up,bos:'Rehberde adres bilgisi olan müşteri işi yok',not:'Rehberdeki adres alanından okunur.'+(belirsizB?' Adresi boş '+belirsizB.n+' iş ('+gfKisa(belirsizB.v)+' ₺) sıralamaya alınmadı.':'')});
+
+  // ===== PERSONEL
+  h+=`<div class="gf-en-baslik">👷 Personel</div>`;
+  const pIs=new Map();gel.forEach(i=>(i.personelIds||[]).forEach(p=>{const k=String(p);const o=pIs.get(k)||{k,v:0,n:0};o.v+=i._t;o.n++;pIs.set(k,o);}));
+  h+=gfEnKart('🛠','En çok iş yapan personel',gfSirala([...pIs.values()]).map(o=>({ad:getPersonel(o.k)?.isim||'Personel',v:o.v,vAlt:o.n+' iş (payı olduğu)',tik:()=>gfEnIslemler('personeller',o.k)})),{renk:up});
+  const hak=gfTopla((DB.yardimciIslemleri||[]).filter(y=>y.tip==='Hak Edis'&&y.personelId&&localDateStr(y.tarih)>=bas&&localDateStr(y.tarih)<=bit),y=>String(y.personelId),y=>parseFloat(y.tutar)||0);
+  h+=gfEnKart('💵','En çok hak ediş alan personel',gfSirala(hak).map(o=>({ad:getPersonel(o.k)?.isim||'Personel',v:o.v,vAlt:o.n+' kayıt'})));
+
+  // ===== GİDER
+  h+=`<div class="gf-en-baslik">💸 Gider</div>`;
+  h+=gfEnKart('📅','En yüksek giderli gün',donemTop(gid,'gun',dn),{renk:dn});
+  h+=gfEnKart('📆','En yüksek giderli ay',donemTop(gid,'ay',dn),{renk:dn});
+  h+=gfEnKart('🧾','En büyük tek gider',[...gid].sort((a,b)=>b._t-a._t).map(i=>({ad:(i.altKat&&i.altKat!=='-'?i.altKat:i.kat)||'Gider',alt:(i.kisiId?kisiAd(i.kisiId)+' · ':'')+gfTrTarih(i._g),v:i._t,tik:()=>showIslemDetay(i.id)})),{renk:dn});
+  h+=gfEnKart('🗂','En çok harcanan kategori',gfSirala(gfTopla(gid,i=>(i.kat||'—')+'||'+((i.altKat&&i.altKat!=='-')?i.altKat:'Diğer'),i=>i._t)).map(o=>{const [k,a]=o.k.split('||');return {ad:a,alt:k,v:o.v,vAlt:o.n+' kayıt',tik:()=>gfEnIslemler('altlar',k+'||'+(a==='Diğer'?'':a))};}),{renk:dn});
+  h+=gfEnKart('🏪','En çok ödeme yapılan tedarikçi',gfSirala(gfTopla(gid.filter(i=>i.kisiId),i=>String(i.kisiId),i=>i._t)).map(o=>({ad:kisiAd(o.k),v:o.v,vAlt:o.n+' ödeme',tik:()=>showKisiDetay(Number(o.k)||o.k)})),{renk:dn});
+  const s3=gfGunEkle(bugun,-90),s6=gfGunEkle(bugun,-180);
+  const art=new Map();tum.filter(i=>i.tip==='Gider'&&i._g>s6).forEach(i=>{const k=(i.kat||'—')+'||'+((i.altKat&&i.altKat!=='-')?i.altKat:'Diğer');const o=art.get(k)||{k,yeni:0,eski:0};if(i._g>s3)o.yeni+=i._t;else o.eski+=i._t;art.set(k,o);});
+  h+=gfEnKart('🚀','En hızlı artan gider kalemi',[...art.values()].filter(o=>o.yeni>o.eski&&o.yeni>=500).map(o=>{const [k,a]=o.k.split('||');return {ad:a,alt:k,v:o.yeni-o.eski,vAlt:o.eski?'+%'+Math.round((o.yeni-o.eski)/o.eski*100)+' ('+gfKisa(o.eski)+' → '+gfKisa(o.yeni)+')':'yeni kalem ('+gfKisa(o.yeni)+')',tik:()=>gfEnIslemler('altlar',k+'||'+(a==='Diğer'?'':a))};}).sort((a,b)=>b.v-a.v),{renk:dn,bos:'Son 3 ayda artan gider kalemi yok 👍',not:'Son 3 ay ile önceki 3 ay karşılaştırılır (zaman filtresinden bağımsız).'});
+
+  // ===== KASA REKORLARI (defterden)
+  h+=`<div class="gf-en-baslik">🏦 Kasa rekorları</div>`;
+  const d=GF.defter;
+  if(d){
+    const gi=gfDonemGunIdx(bas<d.ilk?d.ilk:bas,bit);
+    if(gi){const [g0,g1]=gi;const gunler=[];for(let g=g0;g<=g1;g++)gunler.push(g);
+      const gk=g=>({gs:d.gunler[g],tik:gfEnGun(d.gunler[g])});
+      h+=gfEnKart('⛰','Kasanın en yüksek olduğu gün',[...gunler].sort((a,b)=>d.C.kasa[b]-d.C.kasa[a]).map(g=>({ad:gunEt(d.gunler[g]),v:d.C.kasa[g],vAlt:'gün sonu',tik:gk(g).tik})));
+      h+=gfEnKart('🕳','Kasanın en düşük olduğu gün',[...gunler].sort((a,b)=>d.C.kasa[a]-d.C.kasa[b]).map(g=>({ad:gunEt(d.gunler[g]),v:d.C.kasa[g],vAlt:'gün sonu',tik:gk(g).tik,renk:d.C.kasa[g]<0?dn:undefined})));
+      const net=g=>d.giris[g]-d.cikis[g];
+      h+=gfEnKart('🚀','En büyük günlük artış',gunler.filter(g=>net(g)>0).sort((a,b)=>net(b)-net(a)).map(g=>({ad:gunEt(d.gunler[g]),v:net(g),vAlt:d.adet[g]+' hareket',tik:gk(g).tik})),{renk:up});
+      h+=gfEnKart('📉','En büyük günlük düşüş',gunler.filter(g=>net(g)<0).sort((a,b)=>net(a)-net(b)).map(g=>({ad:gunEt(d.gunler[g]),v:-net(g),vAlt:d.adet[g]+' hareket',tik:gk(g).tik})),{renk:dn});
+      const seriler=(kosul)=>{const S=[];let b=null;for(let g=g0;g<=g1+1;g++){const ok=g<=g1&&kosul(g);if(ok&&b===null)b=g;if(!ok&&b!==null){S.push({b,s:g-1,n:g-b});b=null;}}return S.sort((x,y)=>y.n-x.n||(d.C.kasa[y.s]-d.O.kasa[y.b])-(d.C.kasa[x.s]-d.O.kasa[x.b]));};
+      const serKart=(S,renk)=>S.map(x=>({ad:x.n+' gün',alt:gfTrTarih(d.gunler[x.b])+' – '+gfTrTarih(d.gunler[x.s]),v:Math.abs(d.C.kasa[x.s]-d.O.kasa[x.b]),vAlt:'toplam değişim',tik:()=>gfAralikModal(x.b,x.s,gfTrTarih(d.gunler[x.b])+' – '+gfTrTarih(d.gunler[x.s])),renk}));
+      h+=gfEnKart('📈','En uzun artış serisi',serKart(seriler(g=>d.C.kasa[g]>d.O.kasa[g]),up),{not:'Kasanın art arda yükseldiği günler (hareketsiz gün seriyi bozar).'});
+      h+=gfEnKart('📉','En uzun düşüş serisi',serKart(seriler(g=>d.C.kasa[g]<d.O.kasa[g]),dn));
+      const gelirGun=new Set(tum.filter(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri').map(i=>i._g));
+      h+=gfEnKart('😴','En uzun işsiz dönem (hiç işletme geliri yok)',seriler(g=>!gelirGun.has(d.gunler[g])).map(x=>({ad:x.n+' gün',alt:gfTrTarih(d.gunler[x.b])+' – '+gfTrTarih(d.gunler[x.s]),v:x.n+' gün',tik:()=>gfAralikModal(x.b,x.s,gfTrTarih(d.gunler[x.b])+' – '+gfTrTarih(d.gunler[x.s])),renk:am})),{ham:true});
+    }
+  }
+
+  // ===== ALACAK (güncel durum, zaman filtresinden bağımsız)
+  h+=`<div class="gf-en-baslik">⏳ Alacak (güncel)</div>`;
+  const bak=new Map();const kisiVar=new Set((DB.kisiler||[]).map(k=>String(k.id)));
+  (DB.islemler||[]).forEach(i=>{if(i.statu!=='Bekliyor'||!i.kisiId||!kisiVar.has(String(i.kisiId))||i.tip==='Kasa Hareketi')return;const s=(i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak')?1:-1;const k=String(i.kisiId);bak.set(k,(bak.get(k)||0)+s*(parseFloat(i.tutar)||0));});
+  (DB.odemeler||[]).forEach(o=>{const k=String(o.kisiId);if(!kisiVar.has(k))return;bak.set(k,(bak.get(k)||0)+(o.islemTipi==='Tahsilat'?-1:1)*(parseFloat(o.tutar)||0));});
+  h+=gfEnKart('💳','En çok borcu olan müşteri',[...bak.entries()].filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({ad:kisiAd(k),v,tik:()=>showKisiDetay(Number(k)||k)})),{renk:am,bos:'Açık alacak yok'});
+  h+=gfEnKart('⌛','En uzun süredir bekleyen alacak',(DB.islemler||[]).filter(i=>i.statu==='Bekliyor'&&i.tip==='Gelir').map(i=>({i,g:localDateStr(i.tarih)})).filter(x=>x.g<=bugun).sort((a,b)=>a.g.localeCompare(b.g)).map(x=>({ad:kisiAd(x.i.kisiId),alt:gfTrTarih(x.g),v:parseFloat(x.i.tutar)||0,vAlt:gfGunFark(x.g,bugun)+' gündür bekliyor',tik:()=>showIslemDetay(x.i.id)})),{renk:am,bos:'Vadesi geçmiş bekleyen alacak yok'});
+
+  // ===== ZAMAN RİTMİ
+  h+=`<div class="gf-en-baslik">📅 Zaman ritmi</div>`;
+  const gunTop=new Array(7).fill(0),gunSay=new Array(7).fill(0);
+  {let g=bas<(d?d.ilk:bas)?(d?d.ilk:bas):bas;let sayac=0;while(g<=bit&&sayac<4000){const dow=(new Date(gfGunTs(g)).getDay()+6)%7;gunSay[dow]++;g=gfGunEkle(g,1);sayac++;}}
+  gel.forEach(i=>{const dow=(new Date(gfGunTs(i._g)).getDay()+6)%7;gunTop[dow]+=i._t;});
+  const gunOrt=GF_GUN_AD.map((a,i)=>({ad:['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'][i],v:gunSay[i]?gunTop[i]/gunSay[i]:0,vAlt:'günlük ort. gelir'}));
+  h+=gfEnKart('☀️','En iyi haftanın günü',[...gunOrt].sort((a,b)=>b.v-a.v),{renk:up});
+  h+=gfEnKart('🌙','En zayıf haftanın günü',[...gunOrt].sort((a,b)=>a.v-b.v),{renk:dn});
+  const ayT=new Array(12).fill(0).map(()=>({v:0,n:new Set()}));const curAy=bugun.slice(0,7);
+  gel.forEach(i=>{const k=i._g.slice(0,7);if(k===curAy)return;const m=parseInt(k.slice(5,7))-1;ayT[m].v+=i._t;ayT[m].n.add(k);});
+  const ayOrt=ayT.map((o,i)=>({ad:GF_AYLAR_UZUN[i],v:o.n.size?o.v/o.n.size:0,vAlt:o.n.size+' ayın ortalaması',n:o.n.size})).filter(o=>o.n);
+  h+=gfEnKart('🔥','En iyi ay (ortalama gelir)',[...ayOrt].sort((a,b)=>b.v-a.v),{renk:up,bos:'Tamamlanmış ay yok'});
+  h+=gfEnKart('🧊','En zayıf ay (ortalama gelir)',[...ayOrt].sort((a,b)=>a.v-b.v),{renk:dn,bos:'Tamamlanmış ay yok'});
+  h+=gfEnKart('🐝','En yoğun gün (işlem sayısı)',gfTopla(I,i=>i._g,()=>1).sort((a,b)=>b.v-a.v).map(o=>({ad:gunEt(o.k),v:o.v+' işlem',tik:gfEnGun(o.k)})),{ham:true});
+  const oy=gfTopla(I.filter(i=>i.tip==='Gelir'||i.tip==='Gider'),i=>i.odemeYontemi||'Nakit',i=>i._t).sort((a,b)=>b.n-a.n);
+  h+=gfEnKart('💳','En çok kullanılan ödeme yöntemi',oy.map(o=>({ad:o.k,v:o.n+' işlem',vAlt:gfKisa(o.v)+' ₺ hacim',tik:()=>gfEnIslemler('odemeler',o.k)})),{ham:true});
   return h;
 }
 
