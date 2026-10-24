@@ -626,6 +626,47 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik .fab-elkitabi,body.gf-tam-acik .bottom-nav{display:none!important;}
 .gf-alt-ipucu{font-size:10px;color:var(--text3);text-align:center;margin-top:4px;}
 @media(max-width:380px){.gf-kutular{grid-template-columns:repeat(2,1fr);}}
+.gf-param{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;margin-top:8px;}
+.gf-param-b{font-size:12px;font-weight:700;margin-bottom:6px;}.gf-param-b small{color:var(--text3);font-weight:500;}
+.gf-param-s{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.gf-param-t{display:inline-flex;align-items:center;gap:6px;min-width:84px;padding:6px 10px;border-radius:999px;border:1px solid var(--border2);background:var(--surface);color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;text-decoration:line-through;}
+.gf-param-t.on{color:var(--text);text-decoration:none;border-color:var(--text3);}
+.gf-param-r{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.gf-param-s input{width:70px;padding:7px 8px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;outline:none;}
+.gf-param-u{font-size:11px;color:var(--text3);flex:1;}
+.gf-dn-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-top:6px;cursor:pointer;}
+.gf-dn-row.acik{border-color:var(--blue);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.gf-dn-ust{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;}
+.gf-dn-ad{font-weight:600;}.gf-dn-ad small{color:var(--amber);font-weight:500;font-size:10px;}
+.gf-dn-cubuk{display:flex;flex-direction:column;gap:2px;margin:6px 0 4px;}
+.gf-dn-cubuk div{height:5px;border-radius:3px;min-width:2px;}
+.gf-dn-alt-s{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);}
+.gf-dn-detay{border:1px solid var(--blue);border-top:none;border-radius:0 0 var(--r-sm) var(--r-sm);padding:8px 11px 11px;background:var(--surface);}
+.gf-dn-bolum{display:flex;justify-content:space-between;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:10px 0 4px;}
+.gf-dn-kat{display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:5px 0 3px;border-top:1px solid var(--border);}
+.gf-dn-kat small{color:var(--text3);font-weight:500;}
+.gf-dn-alt{display:grid;grid-template-columns:minmax(0,1.4fr) 1fr auto;gap:8px;align-items:center;font-size:11px;color:var(--text2);padding:2px 0 2px 8px;}
+.gf-dn-alt span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gf-kiyas-sec{display:flex;align-items:flex-end;gap:6px;margin-top:8px;}
+.gf-kiyas-sec>div:not(.gf-kiyas-vs){flex:1;min-width:0;}
+.gf-kiyas-sec label{display:block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+.gf-kiyas-sec .gf-sel{width:100%;font-size:12px;}
+.gf-kiyas-vs{font-size:11px;color:var(--text3);padding-bottom:10px;}
+.gf-kiyas-t{margin-top:8px;}
+.gf-kiyas-r{display:grid;grid-template-columns:minmax(0,1.3fr) .8fr .8fr 1.1fr;gap:6px;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);}
+.gf-kiyas-r span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gf-kiyas-r span:not(:first-child){text-align:right;}
+.gf-kiyas-r.bas{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.gf-kiyas-r.ozet{font-weight:700;}.gf-kiyas-r.kat{font-weight:700;}
+.gf-kiyas-r.alt{font-size:11px;color:var(--text2);padding:3px 0 3px 8px;border-bottom:1px dashed var(--border);}
+.gf-kiyas-r small{opacity:.8;}
+.gf-ritim{display:flex;gap:3px;align-items:flex-end;margin:6px 0;overflow-x:auto;}
+.gf-ritim-s{flex:1;min-width:24px;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.gf-ritim-iz{height:90px;width:100%;display:flex;gap:1px;align-items:flex-end;background:var(--bg2);border-radius:3px;overflow:hidden;}
+.gf-ritim-iz div{flex:1;border-radius:2px 2px 0 0;}
+.gf-ritim-v{font-size:8.5px;font-weight:700;}.gf-ritim-a{font-size:9px;color:var(--text3);}
+.gf-ritim-lej{display:flex;gap:12px;font-size:10px;color:var(--text3);}
+.gf-ritim-lej i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;}
 </style>
 </head>
 <body>
@@ -4827,8 +4868,13 @@ function gfKayitliTahminDegerlendir(d){
 var GF={chart:null,defter:null,barlar:[],tahmin:null,tahminAnahtar:'',geriTest:null,geriTestAnahtar:'',ek:{versiyon:0},ekZaman:0,ekYukleniyor:false,
   olusanGostergeler:[],cizimDb:{},toplucaSil:false,seciliCizim:null,cizimModu:false,hedefler:[],gorunur:null,kayitUyari:false,ay:null};
 var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,yEksen:'normal',
-  tahminAcik:true,tahminUfuk:90,gelirPct:0,giderPct:0,tahsilatPct:85,eskiTahmin:false,sekme:'ozet',isiMetrik:'isNet',miknatis:false};
-function gfAyarYukle(){try{const s=JSON.parse(localStorage.getItem('gf_ayar_v1')||'null');GF.ay=Object.assign({},GF_AYAR_VARSAYILAN,s||{});}catch(e){GF.ay=Object.assign({},GF_AYAR_VARSAYILAN);}if(!GF_METRIK[GF.ay.metrik])GF.ay.metrik='kasa';}
+  tahminAcik:true,tahminUfuk:90,gelirPct:0,giderPct:0,tahsilatPct:85,eskiTahmin:false,sekme:'ozet',isiMetrik:'isNet',miknatis:false,
+  maP:[{n:5,on:true},{n:10,on:true},{n:30,on:true},{n:60,on:true}],emaP:[{n:6,on:true},{n:12,on:true},{n:20,on:true}],
+  donemTip:'ay',donemMod:'liste',donemBekleyen:false,donemKat:'',donemEsit:true};
+function gfAyarYukle(){try{const s=JSON.parse(localStorage.getItem('gf_ayar_v1')||'null');GF.ay=Object.assign(JSON.parse(JSON.stringify(GF_AYAR_VARSAYILAN)),s||{});}catch(e){GF.ay=JSON.parse(JSON.stringify(GF_AYAR_VARSAYILAN));}
+  if(!GF_METRIK[GF.ay.metrik])GF.ay.metrik='kasa';if(GF.ay.sekme==='mevsim')GF.ay.sekme='donem';
+  ['maP','emaP'].forEach(k=>{if(!Array.isArray(GF.ay[k])||!GF.ay[k].length)GF.ay[k]=JSON.parse(JSON.stringify(GF_AYAR_VARSAYILAN[k]));});}
+var GF_CIZGI_RENK=['#FF9600','#B388FF','#2196F3','#E11D74','#01C5C4','#8BC34A'];
 function gfAyarKaydet(){try{localStorage.setItem('gf_ayar_v1',JSON.stringify(GF.ay));}catch(e){}}
 gfAyarYukle();
 
@@ -4857,42 +4903,51 @@ function gfStiller(){
   const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
   const mr=(GF_METRIK[GF.ay.metrik]||{}).renk||'#00E5FF';
   const acik=document.documentElement.getAttribute('data-tema')==='acik';
+  // o anki değer çizgisi: eksideyse kırmızı, artıdaysa yeşil
+  const d0=GF.defter;const simdi=d0&&d0.C[GF.ay.metrik]?d0.C[GF.ay.metrik][d0.gunSay-1]:0;const simdiRenk=simdi<0?dn:up;
   const grid=acik?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.05)';
   return {
     grid:{horizontal:{color:grid,style:'dashed',dashedValue:[2,3]},vertical:{color:grid,style:'dashed',dashedValue:[2,3]}},
     candle:{type:GF.ay.tip,
       bar:{upColor:up,downColor:dn,noChangeColor:tx3,upBorderColor:up,downBorderColor:dn,noChangeBorderColor:tx3,upWickColor:up,downWickColor:dn,noChangeWickColor:tx3},
       area:{lineSize:2,lineColor:mr,value:'close',backgroundColor:[{offset:0,color:gfRgba(mr,0.02)},{offset:1,color:gfRgba(mr,0.28)}]},
-      priceMark:{high:{color:tx2,textSize:10},low:{color:tx2,textSize:10},last:{show:!(GF.ay.tahminAcik&&GF_METRIK[GF.ay.metrik]&&GF_METRIK[GF.ay.metrik].tahmin),upColor:up,downColor:dn,noChangeColor:tx3,line:{style:'dashed'},text:{size:10,color:'#000'}}},
+      priceMark:{high:{color:tx2,textSize:10},low:{color:tx2,textSize:10},last:{show:!GF.tahminCizili,upColor:simdiRenk,downColor:simdiRenk,noChangeColor:simdiRenk,line:{style:'dashed'},text:{size:10,color:'#000'}}},
       tooltip:{showRule:'follow_cross',showType:'standard',custom:gfTooltip,text:{size:11,color:tx2,marginLeft:6,marginRight:4,marginTop:3,marginBottom:2}}},
     indicator:{tooltip:{showRule:'follow_cross',text:{size:10,color:tx3,marginTop:2}},lastValueMark:{show:false}},
     xAxis:{axisLine:{color:br},tickLine:{color:br},tickText:{color:tx3,size:10}},
-    yAxis:{type:GF.ay.yEksen,axisLine:{color:br},tickLine:{color:br},tickText:{color:tx3,size:10},inside:false},
+    yAxis:{type:GF.eksenMod==='log'?'log':'normal',axisLine:{color:br},tickLine:{color:br},tickText:{color:tx3,size:10},inside:false},
     separator:{color:br2,activeBackgroundColor:gfRgba(mr,0.15)},
     crosshair:{horizontal:{line:{color:tx3,dashedValue:[3,3]},text:{color:tx,backgroundColor:sf,borderColor:br2,size:10}},vertical:{line:{color:tx3,dashedValue:[3,3]},text:{color:tx,backgroundColor:sf,borderColor:br2,size:10}}},
     overlay:{line:{color:'#FFAB00',size:1.5},point:{color:'#FFAB00',borderColor:gfRgba('#FFAB00',0.3),activeColor:'#FFAB00',activeBorderColor:gfRgba('#FFAB00',0.4)},text:{color:tx},rectText:{color:'#000',backgroundColor:'#FFAB00',borderColor:'#FFAB00'},rect:{color:gfRgba('#FFAB00',0.12),borderColor:'#FFAB00'},polygon:{color:gfRgba('#FFAB00',0.1),borderColor:'#FFAB00'}}
   };
 }
+function gfYuzdeYaz(v){return (v>=0?'+':'')+v.toFixed(1).replace('.',',')+'%';}
 function gfTooltip(data){
   const b=data.current;if(!b)return [];
   const tx2=gfCss('--text2','#b0b0b0'),up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
   const c=(t,r)=>({text:t,color:r||tx2});
-  if(b.gelecek&&b.t){return [{title:'🔮 ',value:c(gfBarEtiket(b),'#B388FF')},{title:'Tahmin: ',value:c(gfKisa(b.t.p50)+' ₺','#B388FF')},{title:'Aralık: ',value:c(gfKisa(b.t.p10)+' … '+gfKisa(b.t.p90))},{title:'Plan: ',value:c(gfKisa(b.t.kesin))}];}
-  const deg=b.close-b.open;const yz=b.open?deg/Math.abs(b.open)*100:0;
-  return [{title:'',value:c(gfBarEtiket(b))},{title:'A ',value:c(gfKisa(b.open))},{title:'Y ',value:c(gfKisa(b.high))},{title:'D ',value:c(gfKisa(b.low))},{title:'K ',value:c(gfKisa(b.close),deg>=0?up:dn)},
-    {title:'Δ ',value:c((deg>=0?'+':'')+gfKisa(deg)+(b.open?' ('+(yz>=0?'+':'')+yz.toFixed(1).replace('.',',')+'%)':''),deg>=0?up:dn)}];
+  const yz=GF.eksenMod==='yuzde';
+  if(b.gelecek&&b.t){const t=b.tHam||b.t;const L=[{title:'🔮 ',value:c(gfBarEtiket(b),'#B388FF')},{title:'Tahmin: ',value:c(gfKisa(t.p50)+' ₺','#B388FF')},{title:'Aralık: ',value:c(gfKisa(t.p10)+' … '+gfKisa(t.p90))},{title:'Plan: ',value:c(gfKisa(t.kesin))}];
+    if(yz)L.push({title:'Bugüne göre: ',value:c(gfYuzdeYaz(b.t.p50),'#B388FF')});return L;}
+  const h=b.ham||b;const deg=h.close-h.open;const oran=h.open?deg/Math.abs(h.open)*100:0;
+  const L=[{title:'',value:c(gfBarEtiket(b))},{title:'A ',value:c(gfKisa(h.open))},{title:'Y ',value:c(gfKisa(h.high))},{title:'D ',value:c(gfKisa(h.low))},{title:'K ',value:c(gfKisa(h.close),h.close<0?dn:(deg>=0?up:dn))},
+    {title:'Δ ',value:c((deg>=0?'+':'')+gfKisa(deg)+(h.open?' ('+gfYuzdeYaz(oran)+')':''),deg>=0?up:dn)}];
+  if(yz)L.push({title:'Bugüne göre: ',value:c(gfYuzdeYaz(b.close),b.close>=0?up:dn)});
+  return L;
 }
 
 // ---------- Özel göstergeler
 function gfGostergeKaydet(){
   if(GF.kayitli||typeof klinecharts==='undefined')return;GF.kayitli=true;
+  // yüzde modu: eksen etiketlerine % ekle (değerler zaten bugüne göre % olarak dönüştürülüyor)
+  try{klinecharts.registerYAxis({name:'gf_yuzde',createTicks:({defaultTicks})=>defaultTicks.map(t=>Object.assign({},t,{text:(Number(t.value)>0?'+':'')+String(t.text).replace(/^\+/,'')+'%'}))});}catch(e){}
   klinecharts.registerLocale('tr-TR',{time:'Tarih: ',open:'Açılış: ',high:'Yüksek: ',low:'Düşük: ',close:'Kapanış: ',volume:'Hacim: ',change:'Değişim: ',turnover:'Net: '});
   // Tahmin bandı + bugün çizgisi + plan çizgisi
   klinecharts.registerIndicator({name:'GF_TAHMIN',shortName:'Tahmin',precision:0,shouldFormatBigNumber:true,
     figures:[{key:'ust',title:'P90: ',type:'line'},{key:'orta',title:'P50: ',type:'line'},{key:'alt',title:'P10: ',type:'line'},{key:'plan',title:'Plan: ',type:'line'}],
     calc:list=>list.map((b,i)=>{if(b.gelecek&&b.t)return {ust:b.t.p90,orta:b.t.p50,alt:b.t.p10,plan:b.t.kesin};const n=list[i+1];if(n&&n.gelecek)return {ust:b.close,orta:b.close,alt:b.close,plan:b.close};return {};}),
-    createTooltipDataSource:({kLineDataList,crosshair})=>{const b=kLineDataList[crosshair.dataIndex];if(!b||!b.gelecek||!b.t)return {name:'',calcParamsText:'',icons:[],values:[]};
-      return {name:'🔮 Tahmin',calcParamsText:'',icons:[],values:[{title:'%10–%90: ',value:{text:gfKisa(b.t.p10)+' … '+gfKisa(b.t.p90),color:'#B388FF'}},{title:'Plan: ',value:{text:gfKisa(b.t.kesin),color:'#FFAB00'}}]};},
+    createTooltipDataSource:({kLineDataList,crosshair})=>{const b=kLineDataList[crosshair.dataIndex];if(!b||!b.gelecek||!b.t)return {name:'',calcParamsText:'',icons:[],values:[]};const t=b.tHam||b.t;
+      return {name:'🔮 Tahmin',calcParamsText:'',icons:[],values:[{title:'%10–%90: ',value:{text:gfKisa(t.p10)+' … '+gfKisa(t.p90),color:'#B388FF'}},{title:'Plan: ',value:{text:gfKisa(t.kesin),color:'#FFAB00'}}]};},
     draw:({ctx,kLineDataList,visibleRange,bounding,barSpace,xAxis,yAxis})=>{
       let fi=-1;for(let i=0;i<kLineDataList.length;i++)if(kLineDataList[i].gelecek){fi=i;break;}
       if(fi<1)return true;
@@ -4911,6 +4966,12 @@ function gfGostergeKaydet(){
       // bugün çizgisi
       ctx.setLineDash([3,3]);ctx.strokeStyle=gfRgba(mr,0.7);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0,bounding.height);ctx.stroke();
       ctx.setLineDash([]);ctx.font='600 10px system-ui';ctx.fillStyle=mr;ctx.textAlign='left';ctx.fillText('BUGÜN ▸ TAHMİN',x0+4,bounding.height-12);
+      // o anki değer çizgisi (eksideyse kırmızı, artıdaysa yeşil)
+      const sv=kLineDataList[fi-1].close;const ys=Y(sv);
+      if(ys>=0&&ys<=bounding.height){const sr=(GF.simdiDeger||0)<0?gfCss('--red','#FF1744'):gfCss('--green','#00E676');
+        ctx.setLineDash([4,3]);ctx.strokeStyle=sr;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,ys);ctx.lineTo(bounding.width,ys);ctx.stroke();ctx.setLineDash([]);
+        const txt='Şimdi '+gfKisa(GF.simdiDeger||0);ctx.font='600 10px system-ui';const tw=ctx.measureText(txt).width+10;
+        ctx.fillStyle=sr;ctx.fillRect(bounding.width-tw-2,ys-8,tw,16);ctx.fillStyle='#000';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(txt,bounding.width-tw+3,ys);ctx.textBaseline='alphabetic';}
       // risk işaretleri
       for(let i=Math.max(fi,from);i<to;i++){const b=kLineDataList[i];if(b&&b.riskIsaret){ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('⚠️',X(i),Y(b.t.p10)+14);}}
       ctx.restore();return true;
@@ -4973,6 +5034,8 @@ function renderDashGrafik(){
   if(!GF.chart){
     GF.chart=klinecharts.init(el,{locale:'tr-TR',timezone:'Europe/Istanbul',styles:gfStiller(),thousandsSeparator:'.',customApi:{formatBigNumber:v=>gfKisa(Number(v)),formatDate:gfTarihFormat}});
     GF.chart.setPriceVolumePrecision(0,0);
+    // verinin bittiği yerden öteye boşluğa kaydırılmasın
+    try{GF.chart.setMaxOffsetRightDistance(60);GF.chart.setMaxOffsetLeftDistance(60);}catch(e){}
     GF.chart.subscribeAction('onVisibleRangeChange',()=>{clearTimeout(GF._vrT);GF._vrT=setTimeout(()=>{if(GF.ay.sekme==='ozet')gfSekmeCiz();},250);});
     gfTiklamaBagla(el);
     window.addEventListener('resize',()=>{clearTimeout(GF._rzT);GF._rzT=setTimeout(()=>GF.chart&&GF.chart.resize(),150);});
@@ -5015,7 +5078,7 @@ function gfCiz(){
   });
   // tahmin
   const T=ay.tahminAcik?gfTahminAl(d):(ay.sekme==='tahmin'?gfTahminAl(d):null);
-  const tum=bars.slice();
+  let tum=bars.slice();
   if(T&&ay.tahminAcik){
     const sonAnahtar=bars.length?bars[bars.length-1].anahtar:'';
     let cur=null;const gelecek=[];
@@ -5035,18 +5098,50 @@ function gfCiz(){
     });
     tum.push(...gelecek);
   }
-  GF.barlar=tum;GF.histSay=bars.length;
+  // ---- değer ekseni: yüzde ve logaritmik modlar veriyi kendimiz dönüştürerek uygulanır
+  // (kütüphanenin yüzde ekseni ekrandaki ilk çubuğu taban aldığı için kaydırırken sıçrıyor, sıfıra yakın tabanda bozuluyordu;
+  //  log ekseni de sıfır/eksi değerde NaN veriyordu)
+  let histSay=bars.length;let veri=tum;GF.eksenMod='normal';GF.tahminCizili=!!(T&&ay.tahminAcik);
+  GF.simdiDeger=bars.length?bars[bars.length-1].close:0;
+  if(ay.yEksen==='percentage'){
+    const taban=GF.simdiDeger;
+    if(taban>0){
+      GF.eksenMod='yuzde';const f=v=>v==null?null:(v/taban-1)*100;
+      const karsTaban=kars.map(k=>d.C[k][d.gunSay-1]);
+      veri.forEach(b=>{b.ham={open:b.open,high:b.high,low:b.low,close:b.close};b.open=f(b.open);b.high=f(b.high);b.low=f(b.low);b.close=f(b.close);
+        if(b.t){b.tHam=Object.assign({},b.t);Object.keys(b.t).forEach(k=>b.t[k]=f(b.t[k]));}
+        if(b.gy!=null)b.gy=f(b.gy);if(b.eski)b.eski=b.eski.map(f);
+        if(b.kars)b.kars=b.kars.map((v,i)=>karsTaban[i]>0&&v!=null?(v/karsTaban[i]-1)*100:null);});
+    }else gfEksenUyari('yuzde','Yüzde ekseni için bugünkü değer sıfırdan büyük olmalı. Normal eksen gösteriliyor.');
+  }else if(ay.yEksen==='log'){
+    let son=-1;for(let i=0;i<bars.length;i++)if(!(bars[i].low>0))son=i;
+    if(son>=bars.length-1||!bars.length)gfEksenUyari('log','Logaritmik eksen sadece sıfırdan büyük değerlerde çalışır; bu metrik şu an sıfır/eksi. Normal eksen gösteriliyor.');
+    else{
+      GF.eksenMod='log';
+      if(son>=0){veri=tum.slice(son+1);histSay=bars.length-son-1;gfEksenUyari('logkes','Logaritmik eksende değerin sıfır/eksi olduğu ilk '+(son+1)+' çubuk gizlendi.');}
+      let minPoz=Infinity;veri.forEach(b=>{if(!b.gelecek&&b.low>0&&b.low<minPoz)minPoz=b.low;});const taban=minPoz*0.5;
+      const k=v=>v==null?null:(v>0?v:taban);
+      veri.forEach(b=>{if(b.t){b.tHam=Object.assign({},b.t);Object.keys(b.t).forEach(q=>b.t[q]=k(b.t[q]));if(b.gelecek){b.open=b.high=b.low=b.close=b.t.p50;}}
+        if(b.gy!=null&&!(b.gy>0))b.gy=null;if(b.eski)b.eski=b.eski.map(v=>v>0?v:null);if(b.kars)b.kars=b.kars.map(v=>v>0?v:null);});
+    }
+  }
+  tum=veri;
+  GF.barlar=tum;GF.histSay=histSay;
+  GF.chart.setPriceVolumePrecision(GF.eksenMod==='yuzde'?1:0,0);
+  const eksenAd=GF.eksenMod==='yuzde'?'gf_yuzde':'default';
+  if(GF._eksenAd!==eksenAd){try{GF.chart.setPaneOptions({id:'candle_pane',axisOptions:{name:eksenAd}});}catch(e){}GF._eksenAd=eksenAd;}
   GF.chart.setStyles(gfStiller());
-  const ilkKez=!GF._veriVar||GF._sonGorunum!==ay.metrik+'|'+ay.periyot+'|'+ay.tahminAcik;
+  const ilkKez=!GF._veriVar||GF._sonGorunum!==ay.metrik+'|'+ay.periyot+'|'+ay.tahminAcik+'|'+GF.eksenMod;
   // yeniden çizimde kullanıcının baktığı yeri koru (veri yüklemesi grafiği en sona atlatır)
   let eskiSon=null;if(!ilkKez){try{const vr=GF.chart.getVisibleRange();eskiSon=Math.min(tum.length-1,Math.max(0,vr.to-1));}catch(e){}}
   GF.chart.applyNewData(tum);GF._veriVar=true;
   gfGostergeleriKur(kars,!!T&&ay.tahminAcik,eskiler.length>0);
-  if(ilkKez){GF._sonGorunum=ay.metrik+'|'+ay.periyot+'|'+ay.tahminAcik;gfIlkGorunum();}
+  if(ilkKez){GF._sonGorunum=ay.metrik+'|'+ay.periyot+'|'+ay.tahminAcik+'|'+GF.eksenMod;gfIlkGorunum();}
   else if(eskiSon!=null){try{GF.chart.scrollToDataIndex(eskiSon,0);}catch(e){}}
   gfCizimleriYukle();
   gfBilgiCiz();gfSekmeCiz();
 }
+function gfEksenUyari(k,m){GF._eksenUyar=GF._eksenUyar||{};if(GF._eksenUyar[k])return;GF._eksenUyar[k]=1;showToast(m,'amber');}
 function gfIlkGorunum(){
   const c=GF.chart;const w=(document.getElementById('gf-chart')||{}).clientWidth||360;
   const hedefBar={gun:75,hafta:40,ay:24,ceyrek:16,yil:10}[GF.ay.periyot]||60;
@@ -5063,7 +5158,11 @@ function gfGostergeleriKur(kars,tahmin,eski){
   GF.olusanGostergeler.forEach(g=>{try{c.removeIndicator(g.pane,g.ad);}catch(e){}});GF.olusanGostergeler=[];
   const ana=(ad,opt)=>{try{c.createIndicator(opt?Object.assign({name:ad},opt):ad,true,{id:'candle_pane'});GF.olusanGostergeler.push({pane:'candle_pane',ad});}catch(e){console.warn(ad,e);}};
   const alt=(ad,opt,h)=>{try{const pid=c.createIndicator(opt?Object.assign({name:ad},opt):ad,false,{id:'gf_'+ad,height:h||72,minHeight:40,dragEnabled:true});GF.olusanGostergeler.push({pane:pid||('gf_'+ad),ad});}catch(e){console.warn(ad,e);}};
-  ay.anaGosterge.forEach(g=>ana(g));
+  ay.anaGosterge.forEach(g=>{
+    // MA / EMA: kullanıcının seçtiği periyotlar, her çizgi sabit renkli
+    if(g==='MA'||g==='EMA'){const P=ay[g==='MA'?'maP':'emaP'];const acik=P.map((p,i)=>({n:p.n,on:p.on,i})).filter(p=>p.on&&p.n>0);if(!acik.length)return;
+      const ofs=g==='EMA'?3:0;ana(g,{calcParams:acik.map(p=>p.n),precision:0,styles:{lines:acik.map(p=>({color:GF_CIZGI_RENK[(p.i+ofs)%GF_CIZGI_RENK.length],size:g==='MA'?1.2:1.4,style:g==='MA'?'solid':'dashed',smooth:false,dashedValue:[4,2]}))}});return;}
+    ana(g);});
   if(ay.gecenYil)ana('GF_GECENYIL');
   if(eski)ana('GF_ESKI');
   if(kars.length){const opt={calcParams:kars,styles:{lines:kars.map(k=>({color:GF_METRIK[k].renk,size:1.4,style:'solid',smooth:false,dashedValue:[2,2]}))}};if(ay.karsAyri)alt('GF_KARSI',opt,90);else ana('GF_KARSI',opt);}
@@ -5198,7 +5297,7 @@ function gfGecmisHtml(g0,g1,b){
 }
 function gfGelecekHtml(b){
   const T=GF.tahmin;if(!T||!b.t)return '<div class="gf-not">Tahmin verisi yok.</div>';
-  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');const t=b.t;
+  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');const t=b.tHam||b.t;
   let h=`<div class="gf-not">${GF_METRIK[T.metrik].ad} — ${gfTrTarih(b.gun1)} itibarıyla tahmin. Bant, 500 farklı olası senaryonun dağılımıdır.</div>
   <div class="gf-tahmin-cetvel">
     <div class="gf-tc-s"><span>Kötü (%10)</span><b class="num">${gfTL(t.p10)}</b></div>
@@ -5235,8 +5334,8 @@ function gfSekmeSec(s){GF.ay.sekme=s;gfAyarKaydet();if(s==='tahmin'&&!GF.tahmin)
 function gfSekmeCiz(){
   const tabs=document.getElementById('gf-tabs'),el=document.getElementById('gf-tab-icerik');if(!el||!GF.defter)return;
   const s=GF.ay.sekme;
-  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['isi','🟩 Isı haritası'],['mevsim','📆 Mevsim']].map(([k,l])=>`<button class="gf-tab${s===k?' on':''}" onclick="gfSekmeSec('${k}')">${l}</button>`).join('');
-  try{el.innerHTML=s==='tahmin'?gfTahminSekme():s==='isi'?gfIsiSekme():s==='mevsim'?gfMevsimSekme():gfOzetSekme();}catch(e){console.error(e);el.innerHTML='<div class="gf-not">Hesaplanamadı: '+_esc(e.message)+'</div>';}
+  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['isi','🟩 Isı haritası'],['donem','📆 Dönemsel']].map(([k,l])=>`<button class="gf-tab${s===k?' on':''}" onclick="gfSekmeSec('${k}')">${l}</button>`).join('');
+  try{el.innerHTML=s==='tahmin'?gfTahminSekme():s==='isi'?gfIsiSekme():s==='donem'?gfDonemSekme():gfOzetSekme();}catch(e){console.error(e);el.innerHTML='<div class="gf-not">Hesaplanamadı: '+_esc(e.message)+'</div>';}
 }
 function gfOzetSekme(){
   const d=GF.defter;const m=GF.ay.metrik;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
@@ -5315,38 +5414,39 @@ function gfIsiSekme(){
     h+=`<div class="gf-satir"><span>${GF_AYLAR_UZUN[a-1]}</span><span class="num">${v0!=null?gfKisa(v0):'—'} → <b>${v1!=null?gfKisa(v1):'—'}</b> ${yz!=null&&v1!=null?`<small style="color:${f>=0?up:dn}">${f>=0?'+':''}${Math.round(yz)}%</small>`:''}</span></div>`;}
   return h;
 }
-function gfMevsimSekme(){
-  const d=GF.defter;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
-  const satir=(s,ad,renk)=>{
-    const mev=gfMevsim(d,s);const pay=gfHaftaGunu(d,s);
-    let h=`<div class="gf-bolum">${ad}</div>`;
-    if(mev){const mx=Math.max(...mev);h+=`<div class="gf-mev">${mev.map((v,i)=>`<div class="gf-mev-s"><div class="gf-mev-iz"><div style="height:${v/mx*100}%;background:${v>=1?renk:gfRgba(renk,0.45)}"></div></div><div class="gf-mev-v">${v.toFixed(2).replace('.',',')}</div><div class="gf-mev-a">${GF_AYLAR[i]}</div></div>`).join('')}</div><div class="gf-ipucu">1,00 = ortalama ay. 1,40 = ortalamadan %40 fazla.</div>`;}
-    else h+='<div class="gf-not">Yıllık mevsim katsayısı için en az 14 aylık veri gerekli.</div>';
-    const gunAd=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];const mx2=Math.max(...pay);
-    h+=`<div class="gf-mev kucuk">${pay.map((v,i)=>`<div class="gf-mev-s"><div class="gf-mev-iz"><div style="height:${v/mx2*100}%;background:${gfRgba(renk,0.7)}"></div></div><div class="gf-mev-v">%${Math.round(v*100)}</div><div class="gf-mev-a">${gunAd[i]}</div></div>`).join('')}</div>`;
-    return h;
-  };
-  return `<div class="gf-not">Mevsim katsayıları tahmin motorunun kullandığı değerlerdir: hangi ayların ve haftanın hangi günlerinin güçlü olduğunu gösterir.</div>`+satir('isG','İşletme geliri — aylara göre',up)+satir('isC','İşletme gideri — aylara göre',dn)+satir('shC','Şahsi gider — aylara göre','#FF6D00');
-}
-
 // ---------- Göstergeler & görünüm modalı
 function gfGostergeModalAc(){gfGostergeModalCiz();openModal('modal-gf-gosterge');}
 function gfGostergeModalCiz(){
   const ay=GF.ay;const el=document.getElementById('gf-gosterge-body');if(!el)return;
   const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
   el.innerHTML=`<div class="isf-grup-b">Ana grafik üzerinde</div><div class="isf-chips">${GF_ANA_GOSTERGE.map(([k,l])=>chip(ay.anaGosterge.includes(k),l,`gfGostergeTik('anaGosterge','${k}')`)).join('')}</div>
+  ${ay.anaGosterge.includes('MA')?gfParamHtml('MA'):''}${ay.anaGosterge.includes('EMA')?gfParamHtml('EMA'):''}
   <div class="isf-grup-b">Alt paneller</div><div class="isf-chips">${GF_ALT_GOSTERGE.map(([k,l])=>chip(ay.altGosterge.includes(k),l,`gfGostergeTik('altGosterge','${k}')`)).join('')}</div>
   <div class="isf-grup-b">Karşılaştır (en fazla 4 metrik)</div><div class="isf-chips">${Object.keys(GF_METRIK).filter(k=>k!==ay.metrik).map(k=>chip(ay.karsilastir.includes(k),GF_METRIK[k].ad,`gfGostergeTik('karsilastir','${k}')`)).join('')}</div>
   <div class="isf-chips" style="margin-top:6px;">${chip(ay.karsAyri,'Karşılaştırmayı ayrı panelde göster',"GF.ay.karsAyri=!GF.ay.karsAyri;gfGostergeUygula()")}</div>
   <div class="isf-grup-b">Görünüm</div><div class="isf-chips">${chip(ay.gecenYil,'📅 Geçen yılın aynı dönemi',"GF.ay.gecenYil=!GF.ay.gecenYil;gfGostergeUygula()")}${chip(ay.olaylar,'⭐ Olay işaretleri',"GF.ay.olaylar=!GF.ay.olaylar;gfGostergeUygula()")}${chip(ay.eskiTahmin,'🕘 Kayıtlı eski tahminler',"GF.ay.eskiTahmin=!GF.ay.eskiTahmin;gfGostergeUygula()")}</div>
-  <div class="isf-grup-b">Değer ekseni</div><div class="isf-chips">${[['normal','Normal'],['percentage','Yüzde değişim'],['log','Logaritmik']].map(([k,l])=>chip(ay.yEksen===k,l,`GF.ay.yEksen='${k}';gfGostergeUygula()`)).join('')}</div>
+  <div class="isf-grup-b">Değer ekseni</div><div class="isf-chips">${[['normal','Normal'],['percentage','Yüzde (bugüne göre)'],['log','Logaritmik']].map(([k,l])=>chip(ay.yEksen===k,l,`GF.ay.yEksen='${k}';gfGostergeUygula()`)).join('')}</div>
   <div class="isf-grup-b">Grafik türü</div><div class="isf-chips">${[['candle_solid','🕯 Mum'],['candle_stroke','🕯 Boş mum'],['ohlc','┤ Çubuk (OHLC)'],['area','📈 Alan']].map(([k,l])=>chip(ay.tip===k,l,`GF.ay.tip='${k}';gfGostergeUygula()`)).join('')}</div>
   <div class="isf-ipucu">Gösterge değerleri mum başlığının altında görünür. Alt panellerin yüksekliğini aradaki çizgiyi sürükleyerek değiştirebilirsin.</div>
   <button class="btn btn-secondary btn-full" style="margin-top:12px;" onclick="gfGorunumSifirla()">↺ Varsayılan görünüme dön</button>`;
 }
+// MA / EMA çizgi periyotları: her çizgi açılıp kapatılabilir, periyodu değiştirilebilir
+function gfParamHtml(g){
+  const P=GF.ay[g==='MA'?'maP':'emaP'];const ofs=g==='EMA'?3:0;const alan=g==='MA'?'maP':'emaP';
+  const birim={gun:'gün',hafta:'hafta',ay:'ay',ceyrek:'çeyrek',yil:'yıl'}[GF.ay.periyot]||'çubuk';
+  return `<div class="gf-param"><div class="gf-param-b">${g==='MA'?'Hareketli Ortalama (MA)':'Üstel Ortalama (EMA)'} çizgileri <small>(1 = 1 ${birim})</small></div>`+
+    P.map((p,i)=>`<div class="gf-param-s"><button class="gf-param-t${p.on?' on':''}" onclick="gfParamTik('${alan}',${i})"><span class="gf-param-r" style="background:${GF_CIZGI_RENK[(i+ofs)%GF_CIZGI_RENK.length]}"></span>${g}${p.n}</button>
+      <input type="number" min="1" max="500" inputmode="numeric" value="${p.n}" onchange="gfParamDeg('${alan}',${i},this.value)"><span class="gf-param-u">${birim}</span>
+      ${P.length>1?`<button class="ked-b ked-sil" onclick="gfParamSil('${alan}',${i})">✕</button>`:''}</div>`).join('')+
+    (P.length<6?`<button class="isf-chip" style="margin-top:6px;" onclick="gfParamEkle('${alan}')">+ Çizgi ekle</button>`:'')+'</div>';
+}
+function gfParamTik(alan,i){const p=GF.ay[alan][i];if(!p)return;p.on=!p.on;gfGostergeUygula();}
+function gfParamDeg(alan,i,v){const n=Math.round(Number(v));if(!(n>=1&&n<=500)){showToast('1 ile 500 arasında bir sayı girin','amber');gfGostergeModalCiz();return;}GF.ay[alan][i].n=n;gfGostergeUygula();}
+function gfParamEkle(alan){const P=GF.ay[alan];const son=P[P.length-1];P.push({n:Math.min(500,(son?son.n:10)*2),on:true});gfGostergeUygula();}
+function gfParamSil(alan,i){GF.ay[alan].splice(i,1);gfGostergeUygula();}
 function gfGostergeTik(alan,k){const a=GF.ay[alan];const i=a.indexOf(k);if(i>=0)a.splice(i,1);else{if(alan==='karsilastir'&&a.length>=4){showToast('En fazla 4 metrik','amber');return;}a.push(k);}gfGostergeUygula();}
 function gfGostergeUygula(){gfAyarKaydet();gfGostergeModalCiz();gfAracCiz();gfCiz();}
-function gfGorunumSifirla(){const m=GF.ay.metrik;GF.ay=Object.assign({},GF_AYAR_VARSAYILAN,{metrik:m});gfAyarKaydet();gfGostergeModalCiz();gfAracCiz();GF._sonGorunum='';gfCiz();}
+function gfGorunumSifirla(){const m=GF.ay.metrik;GF.ay=Object.assign(JSON.parse(JSON.stringify(GF_AYAR_VARSAYILAN)),{metrik:m,sekme:GF.ay.sekme});gfAyarKaydet();gfGostergeModalCiz();gfAracCiz();GF._sonGorunum='';gfCiz();}
 
 // ---------- Tahmin ayarları modalı
 function gfTahminModalAc(){gfTahminModalCiz();openModal('modal-gf-tahmin');}
@@ -5418,11 +5518,13 @@ function gfOverlayOlustur(ad,ek,noktalar,dbId){
   const id=c.createOverlay(opt);if(dbId&&id)GF.cizimDb[id]=dbId;return id;
 }
 function gfCizimBasla(ad){
+  if(GF.eksenMod==='yuzde'){showToast('Çizim için değer eksenini Normal veya Logaritmik yap','amber');return;}
   let ek=null;
   if(ad==='simpleAnnotation'||ad==='simpleTag'){const t=prompt(ad==='simpleAnnotation'?'Not metni:':'Etiket metni:','');if(t===null)return;ek={metin:t};}
   gfOverlayOlustur(ad,ek,null,null);showToast('Grafikte noktaları işaretle','blue');
 }
 function gfHedefEkle(){
+  if(GF.eksenMod==='yuzde'){showToast('Hedef çizgisi için değer eksenini Normal veya Logaritmik yap','amber');return;}
   const d=GF.defter;const v0=d?d.C[GF.ay.metrik][d.gunSay-1]:0;
   const s=prompt('Hedef / alarm seviyesi (₺):\nTahmin, bu seviyenin altına düşme olasılığını hesaplar.',String(Math.round(Math.max(0,v0*0.5))));if(s===null)return;
   const v=parseTutar(s);const ad=prompt('Bu hedefe bir ad ver:','Kasa alt sınırı')||'Hedef';
@@ -5458,10 +5560,198 @@ async function gfTumCizimSil(){
   GF.ek.cizimler=(GF.ek.cizimler||[]).filter(r=>r.metrik!==GF.ay.metrik);GF.cizimDb={};GF.tahminAnahtar='';gfCiz();
 }
 function gfCizimleriYukle(zorla){
-  const imza=GF.ay.metrik+'|'+GF.ay.periyot+'|'+GF.ek.versiyon+'|'+((GF.ek.cizimler||[]).length)+'|'+GF.barlar.length;
+  const imza=GF.ay.metrik+'|'+GF.ay.periyot+'|'+GF.ek.versiyon+'|'+((GF.ek.cizimler||[]).length)+'|'+GF.barlar.length+'|'+GF.eksenMod;
   if(!zorla&&GF._cizimImza===imza)return;GF._cizimImza=imza;
   GF.toplucaSil=true;try{GF.chart.removeOverlay({groupId:'gfc'});}catch(e){}GF.toplucaSil=false;GF.cizimDb={};
+  if(GF.eksenMod==='yuzde'){if(((GF.ek.cizimler)||[]).some(r=>r.metrik===GF.ay.metrik))gfEksenUyari('cizimyuzde','Çizimler gerçek tutarlarla kayıtlı olduğu için yüzde ekseninde gizlenir.');return;}
   ((GF.ek.cizimler)||[]).filter(r=>r.metrik===GF.ay.metrik).forEach(r=>{try{gfOverlayOlustur(r.ad,r.ek,(r.noktalar||[]).map(p=>({timestamp:p.timestamp,value:p.value})),r.id);}catch(e){console.warn('çizim',e);}});
+}
+
+// ---------- DÖNEMSEL ANALİZ (Gün / Hafta / Ay / Yıl — liste, kıyas, ritim; gelir ve giderler alt kategorileriyle)
+var GF_DONEM_TIP={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
+var GF_DONEM_LISTE_SAY={gun:31,hafta:16,ay:24,yil:20};
+var GF_GUN_AD=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+function gfDonemAralik(k,tip){
+  const [y,m]=k.split('-').map(Number);
+  if(tip==='gun')return [k,k];
+  if(tip==='hafta')return [k,gfGunEkle(k,6)];
+  if(tip==='ay')return [k,localDateObjStr(new Date(y,m,0))];
+  return [k,y+'-12-31'];
+}
+function gfDonemKaydir(k,tip,n){
+  const [y,m,d]=k.split('-').map(Number);
+  if(tip==='gun')return gfGunEkle(k,n);
+  if(tip==='hafta')return gfGunEkle(k,7*n);
+  if(tip==='ay')return localDateObjStr(new Date(y,m-1+n,1));
+  return (y+n)+'-01-01';
+}
+function gfDonemGecenYil(k,tip){
+  const [y,m,d]=k.split('-').map(Number);
+  if(tip==='hafta')return gfGunEkle(k,-364);
+  if(tip==='gun')return localDateObjStr(new Date(y-1,m-1,d));
+  return gfPeriyotAnahtar(localDateObjStr(new Date(y-1,m-1,d)),tip);
+}
+function gfDonemEtiket(k,tip,kisa){
+  const [y,m,d]=k.split('-').map(Number);
+  if(tip==='gun'){const dt=new Date(y,m-1,d);return d+' '+GF_AYLAR[m-1]+(kisa?'':' '+y)+' '+GF_GUN_AD[(dt.getDay()+6)%7];}
+  if(tip==='hafta'){const s=gfGunEkle(k,6).split('-').map(Number);return d+(s[1]!==m?' '+GF_AYLAR[m-1]:'')+'–'+s[2]+' '+GF_AYLAR[s[1]-1]+(kisa?'':' '+s[0]);}
+  if(tip==='ay')return (kisa?GF_AYLAR[m-1]:GF_AYLAR_UZUN[m-1])+' '+y;
+  return String(y);
+}
+function gfDonemBos(){return {gelir:{top:0,kat:{}},gider:{top:0,kat:{}},adet:0};}
+function gfDonemEkle(D,i,t){
+  const grp=i.tip==='Gelir'?D.gelir:D.gider;const kat=i.kat||'(Kategorisiz)';
+  const ekle=(alt,v)=>{const k=grp.kat[kat]||(grp.kat[kat]={top:0,alt:{}});k.top+=v;k.alt[alt]=(k.alt[alt]||0)+v;grp.top+=v;};
+  if(i.tip==='Gelir'&&kat==='İşletme Geliri'){const g=[...new Set(hizParse(i.altKat).map(x=>x[0]))];if(!g.length)ekle('Hizmet belirtilmemiş',t);else g.forEach(x=>ekle(x,t/g.length));}
+  else ekle((i.altKat&&i.altKat!=='-')?i.altKat:'Diğer',t);
+  D.adet++;
+}
+function gfDonemUygun(i,bekleyen){return (i.tip==='Gelir'||i.tip==='Gider')&&(i.statu==='Tamamlandı'||(bekleyen&&i.statu==='Bekliyor'))&&(parseFloat(i.tutar)||0)>0;}
+// tüm dönemler (önbellekli)
+function gfDonemVeri(tip,bekleyen){
+  const anahtar=gfDbImza()+'|'+tip+'|'+bekleyen;
+  if(GF._donemCache&&GF._donemCache.k===anahtar)return GF._donemCache.v;
+  const M={};
+  (DB.islemler||[]).forEach(i=>{if(!gfDonemUygun(i,bekleyen))return;const gs=localDateStr(i.tarih);if(!gs)return;const k=gfPeriyotAnahtar(gs,tip);gfDonemEkle(M[k]||(M[k]=gfDonemBos()),i,parseFloat(i.tutar));});
+  GF._donemCache={k:anahtar,v:M};return M;
+}
+// tarih aralığı toplamı (eşit süreli kıyas için)
+function gfDonemTopla(bas,bit,bekleyen){
+  const D=gfDonemBos();
+  (DB.islemler||[]).forEach(i=>{if(!gfDonemUygun(i,bekleyen))return;const gs=localDateStr(i.tarih);if(!gs||gs<bas||gs>bit)return;gfDonemEkle(D,i,parseFloat(i.tutar));});
+  return D;
+}
+// kategori filtresine göre değer
+function gfDonemDeger(D,filtre){
+  if(!D)return {gelir:0,gider:0};
+  if(!filtre)return {gelir:D.gelir.top,gider:D.gider.top};
+  const [grp,kat,alt]=filtre.split('|');const G=grp==='Gelir'?D.gelir:D.gider;const K=G.kat[kat];
+  const v=K?(alt!=null?(K.alt[alt]||0):K.top):0;
+  return grp==='Gelir'?{gelir:v,gider:0}:{gelir:0,gider:v};
+}
+function gfDonemSec(alan,v){GF.ay[alan]=v;if(alan==='donemTip'){GF._dnA=null;GF._dnB=null;GF._dnAcik=null;}gfAyarKaydet();gfSekmeCiz();}
+
+function gfDonemSekme(){
+  const ay=GF.ay;const tip=ay.donemTip||'ay';const M=gfDonemVeri(tip,ay.donemBekleyen);
+  const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
+  // kategori seçenekleri
+  const kats={Gelir:{},Gider:{}};
+  Object.values(M).forEach(D=>['gelir','gider'].forEach(g=>{const G=g==='gelir'?'Gelir':'Gider';Object.entries(D[g].kat).forEach(([k,v])=>{kats[G][k]=kats[G][k]||new Set();Object.keys(v.alt).forEach(a=>kats[G][k].add(a));});}));
+  let sec='<option value="">Tümü (gelir ve gider)</option>';
+  ['Gelir','Gider'].forEach(G=>{const ks=Object.keys(kats[G]).sort((a,b)=>a.localeCompare(b,'tr'));if(!ks.length)return;sec+=`<optgroup label="${G==='Gelir'?'Gelirler':'Giderler'}">`;
+    ks.forEach(k=>{sec+=`<option value="${_esc(G+'|'+k)}">${_esc(k)} (tümü)</option>`;[...kats[G][k]].sort((a,b)=>a.localeCompare(b,'tr')).forEach(a=>{sec+=`<option value="${_esc(G+'|'+k+'|'+a)}">   ${_esc(k)} › ${_esc(a)}</option>`;});});sec+='</optgroup>';});
+  let h=`<div class="isf-chips">${Object.keys(GF_DONEM_TIP).map(k=>chip(tip===k,GF_DONEM_TIP[k],`gfDonemSec('donemTip','${k}')`)).join('')}</div>
+  <div class="isf-chips" style="margin-top:6px;">${[['liste','📋 Liste'],['kiyas','⚖️ Kıyas'],['ritim','〰 Ritim']].map(([k,l])=>chip(ay.donemMod===k,l,`gfDonemSec('donemMod','${k}')`)).join('')}${chip(ay.donemBekleyen,'⏳ Bekleyenler dahil',`gfDonemSec('donemBekleyen',${!ay.donemBekleyen})`)}</div>`;
+  if(ay.donemMod!=='kiyas')h+=`<select class="gf-sel" id="gf-dn-kat" style="width:100%;margin-top:8px;" onchange="gfDonemSec('donemKat',this.value)">${sec}</select>`;
+  h+=`<div class="gf-not">${ay.donemBekleyen?'Tamamlanan ve bekleyen':'Tamamlanan'} gelir/gider işlemleri, işlem tarihine göre. İşletme gelirinde alt kırılım hizmet grubudur (birden fazla grup varsa tutar eşit bölünür). Finansman (kredi/borç) gelirleri ayrı kategori olarak görünür.</div>`;
+  const html=ay.donemMod==='kiyas'?gfDonemKiyas(tip,M):ay.donemMod==='ritim'?gfDonemRitim(tip,M):gfDonemListe(tip,M);
+  // seçili kategori select'e yansısın
+  setTimeout(()=>{const s=document.getElementById('gf-dn-kat');if(s)s.value=ay.donemKat||'';},0);
+  return h+html;
+}
+function gfDonemDetayHtml(D,B){
+  // D: dönem verisi, B: (ops.) kıyas dönemi
+  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
+  const bolum=(g,ad,renk)=>{const G=D[g];const ks=Object.entries(G.kat).sort((a,b)=>b[1].top-a[1].top);if(!ks.length)return `<div class="gf-dn-bolum">${ad}<b class="num" style="color:${renk}">0</b></div>`;
+    return `<div class="gf-dn-bolum">${ad}<b class="num" style="color:${renk}">${fmt(G.top)}</b></div>`+ks.map(([k,v])=>{
+      const alt=Object.entries(v.alt).sort((a,b)=>b[1]-a[1]);const pay=G.top?v.top/G.top*100:0;
+      return `<div class="gf-dn-kat"><span>${_esc(k)}</span><span class="num">${fmt(v.top)} <small>%${Math.round(pay)}</small></span></div>`+
+        alt.map(([a,x])=>`<div class="gf-dn-alt"><span>↳ ${_esc(a)}</span><div class="gf-bar-iz"><div style="width:${Math.max(2,v.top?x/v.top*100:0)}%;background:${renk}"></div></div><span class="num">${gfKisa(x)}</span></div>`).join('');}).join('');};
+  return bolum('gelir','Gelirler',up)+bolum('gider','Giderler',dn);
+}
+function gfDonemGunIdx(bas,bit){const d=GF.defter;if(!d)return null;const b=bas<d.ilk?d.ilk:bas,s=bit>d.bugun?d.bugun:bit;if(b>s)return null;return [d.gunIdx[b],d.gunIdx[s]];}
+function gfDonemAc(k){GF._dnAcik=GF._dnAcik===k?null:k;gfSekmeCiz();}
+function gfDonemListe(tip,M){
+  const ay=GF.ay;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
+  const bugun=localToday();const cur=gfPeriyotAnahtar(bugun,tip);
+  let ilkVeri=Object.keys(M).sort()[0]||cur;
+  const N=GF_DONEM_LISTE_SAY[tip];const L=[];let k=cur;
+  for(let i=0;i<N&&k>=ilkVeri;i++){L.push(k);k=gfDonemKaydir(k,tip,-1);}
+  const V=L.map(k=>({k,v:gfDonemDeger(M[k],ay.donemKat),D:M[k]}));
+  const tekSeri=!!ay.donemKat;
+  const mx=Math.max(1,...V.map(x=>Math.max(x.v.gelir,x.v.gider)));
+  let tg=0,tc=0;V.forEach(x=>{tg+=x.v.gelir;tc+=x.v.gider;});
+  const netler=V.map(x=>x.v.gelir-x.v.gider);
+  const enIyi=V.length?V[netler.indexOf(Math.max(...netler))]:null,enKotu=V.length?V[netler.indexOf(Math.min(...netler))]:null;
+  const birim=GF_DONEM_TIP[tip].toLowerCase();let h;
+  if(tekSeri){const gelirMi=ay.donemKat.startsWith('Gelir|');const top=gelirMi?tg:tc;const renk=gelirMi?up:dn;const vals=V.map(x=>gelirMi?x.v.gelir:x.v.gider);const mxV=Math.max(...vals,0);const mxK=V[vals.indexOf(mxV)];
+    h=`<div class="gf-kutular">${gfKutu('Toplam',(gelirMi?'+':'−')+gfKisa(top),renk)}${gfKutu('Ort. / '+birim,gfKisa(V.length?top/V.length:0))}${gfKutu('Dönem sayısı',V.length)}${gfKutu('En yüksek dönem',mxK&&mxV?gfKisa(mxV)+' <small>'+gfDonemEtiket(mxK.k,tip,true)+'</small>':'—')}${gfKutu('Toplamdaki payı',(()=>{const t=gelirMi?Object.values(M).reduce((a,D)=>a,0):0;let G=0;V.forEach(x=>{if(x.D)G+=gelirMi?x.D.gelir.top:x.D.gider.top;});return G?'%'+Math.round(top/G*100):'—';})())}${gfKutu('Son '+birim,gfKisa(vals[0]||0))}</div>`;}
+  else h=`<div class="gf-kutular">${gfKutu('Toplam gelir','+'+gfKisa(tg),up)}${gfKutu('Toplam gider','−'+gfKisa(tc),dn)}${gfKutu('Net',gfKisa(tg-tc),tg-tc>=0?up:dn)}
+    ${gfKutu('Ort. gelir / '+birim,gfKisa(V.length?tg/V.length:0))}${gfKutu('Ort. gider / '+birim,gfKisa(V.length?tc/V.length:0))}${gfKutu('Dönem sayısı',V.length)}</div>`;
+  if(!tekSeri&&enIyi&&V.length>1)h+=`<div class="gf-not">🏆 En iyi: <b>${gfDonemEtiket(enIyi.k,tip)}</b> (${gfKisa(enIyi.v.gelir-enIyi.v.gider)}) · 📉 En kötü: <b>${gfDonemEtiket(enKotu.k,tip)}</b> (${gfKisa(enKotu.v.gelir-enKotu.v.gider)})</div>`;
+  h+=V.map(x=>{
+    const net=x.v.gelir-x.v.gider;const devam=x.k===cur&&tip!=='gun';const acik=GF._dnAcik===x.k;
+    const [bas,bit]=gfDonemAralik(x.k,tip);const gi=gfDonemGunIdx(bas,bit);
+    let r=`<div class="gf-dn-row${acik?' acik':''}" onclick="gfDonemAc('${x.k}')">
+      <div class="gf-dn-ust"><span class="gf-dn-ad">${gfDonemEtiket(x.k,tip)}${devam?' <small>devam ediyor</small>':''}</span>
+      <span class="num">${tekSeri?`<b style="color:${x.v.gelir?up:dn}">${x.v.gelir?'+'+fmt(x.v.gelir):'−'+fmt(x.v.gider)}</b>`:`<b style="color:${net>=0?up:dn}">${net>=0?'+':'−'}${fmt(net)}</b>`}</span></div>
+      <div class="gf-dn-cubuk">${x.v.gelir?`<div style="width:${x.v.gelir/mx*100}%;background:${up}"></div>`:''}${x.v.gider?`<div style="width:${x.v.gider/mx*100}%;background:${dn}"></div>`:''}</div>
+      ${tekSeri?'':`<div class="gf-dn-alt-s"><span style="color:${up}">+${gfKisa(x.v.gelir)}</span><span style="color:${dn}">−${gfKisa(x.v.gider)}</span><span>${x.D?x.D.adet:0} işlem ${acik?'▴':'▾'}</span></div>`}</div>`;
+    if(acik){r+=`<div class="gf-dn-detay">${x.D?gfDonemDetayHtml(x.D):'<div class="gf-not">Bu dönemde işlem yok.</div>'}${gi?`<button class="btn btn-secondary btn-full" style="margin-top:8px;padding:10px;font-size:12px;" onclick="gfAralikModal(${gi[0]},${gi[1]},'${gfDonemEtiket(x.k,tip)}')">📅 Bu dönemin tüm hareketleri</button>`:''}</div>`;}
+    return r;}).join('');
+  return h;
+}
+function gfDonemKiyas(tip,M){
+  const ay=GF.ay;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');
+  const bugun=localToday();const cur=gfPeriyotAnahtar(bugun,tip);
+  const keys=new Set(Object.keys(M));let k=cur;for(let i=0;i<GF_DONEM_LISTE_SAY[tip]*2;i++){keys.add(k);k=gfDonemKaydir(k,tip,-1);}
+  const liste=[...keys].filter(x=>x<=cur).sort().reverse();
+  const A=GF._dnA&&keys.has(GF._dnA)?GF._dnA:cur;const B=GF._dnB&&keys.has(GF._dnB)?GF._dnB:gfDonemKaydir(A,tip,-1);
+  let [aBas,aBit]=gfDonemAralik(A,tip),[bBas,bBit]=gfDonemAralik(B,tip);
+  // eşit süre: devam eden dönem varsa diğeri aynı gün sayısına kısaltılır
+  let esitNot='';
+  if(ay.donemEsit&&tip!=='gun'){
+    if(aBit>bugun){const gs=gfGunFark(aBas,bugun)+1;aBit=bugun;bBit=gfGunEkle(bBas,gs-1)<bBit?gfGunEkle(bBas,gs-1):bBit;esitNot=`Devam eden dönem olduğu için her iki dönemin ilk <b>${gs} günü</b> kıyaslanıyor.`;}
+    else if(bBit>bugun){const gs=gfGunFark(bBas,bugun)+1;bBit=bugun;aBit=gfGunEkle(aBas,gs-1)<aBit?gfGunEkle(aBas,gs-1):aBit;esitNot=`Devam eden dönem olduğu için her iki dönemin ilk <b>${gs} günü</b> kıyaslanıyor.`;}
+  }
+  const DA=gfDonemTopla(aBas,aBit,ay.donemBekleyen),DB_=gfDonemTopla(bBas,bBit,ay.donemBekleyen);
+  const opt=sel=>liste.map(x=>`<option value="${x}"${x===sel?' selected':''}>${gfDonemEtiket(x,tip)}${x===cur?' (şimdiki)':''}</option>`).join('');
+  const fark=(a,b,iyiArtis)=>{const f=a-b;const yz=b?f/Math.abs(b)*100:null;const iyi=iyiArtis?f>=0:f<=0;return `<span class="num" style="color:${f===0?'inherit':iyi?up:dn}">${f>=0?'+':'−'}${gfKisa(Math.abs(f))}${yz!=null?' <small>('+(yz>=0?'+':'')+Math.round(yz)+'%)</small>':''}</span>`;};
+  let h=`<div class="gf-kiyas-sec"><div><label>A dönemi</label><select class="gf-sel" onchange="GF._dnA=this.value;gfSekmeCiz()">${opt(A)}</select></div><div class="gf-kiyas-vs">vs</div><div><label>B dönemi</label><select class="gf-sel" onchange="GF._dnB=this.value;gfSekmeCiz()">${opt(B)}</select></div></div>
+  <div class="isf-chips" style="margin-top:6px;"><button class="isf-chip" onclick="GF._dnB=gfDonemKaydir('${A}','${tip}',-1);gfSekmeCiz()">← Önceki dönem</button><button class="isf-chip" onclick="GF._dnB=gfDonemGecenYil('${A}','${tip}');gfSekmeCiz()">📅 Geçen yıl aynı dönem</button>${tip!=='gun'?`<button class="isf-chip${ay.donemEsit?' on':''}" onclick="gfDonemSec('donemEsit',${!ay.donemEsit})">⏱ Eşit süreyle</button>`:''}</div>
+  ${esitNot?`<div class="gf-not">${esitNot}</div>`:''}
+  <div class="gf-kiyas-t"><div class="gf-kiyas-r bas"><span></span><span>A</span><span>B</span><span>Fark (A−B)</span></div>
+    ${[['Gelir',DA.gelir.top,DB_.gelir.top,true],['Gider',DA.gider.top,DB_.gider.top,false],['Net',DA.gelir.top-DA.gider.top,DB_.gelir.top-DB_.gider.top,true],['İşlem adedi',DA.adet,DB_.adet,true]].map(([l,a,b,iyi])=>`<div class="gf-kiyas-r ozet"><span>${l}</span><span class="num">${l==='İşlem adedi'?a:gfKisa(a)}</span><span class="num">${l==='İşlem adedi'?b:gfKisa(b)}</span>${l==='İşlem adedi'?`<span class="num">${a-b>=0?'+':''}${a-b}</span>`:fark(a,b,iyi)}</div>`).join('')}</div>`;
+  ['gelir','gider'].forEach(g=>{
+    const iyi=g==='gelir';const ka=DA[g].kat,kb=DB_[g].kat;const ks=[...new Set([...Object.keys(ka),...Object.keys(kb)])].sort((x,y)=>Math.max((ka[y]||{}).top||0,(kb[y]||{}).top||0)-Math.max((ka[x]||{}).top||0,(kb[x]||{}).top||0));
+    h+=`<div class="gf-bolum">${g==='gelir'?'Gelirler':'Giderler'}</div><div class="gf-kiyas-t">`;
+    if(!ks.length)h+='<div class="gf-not">Her iki dönemde de kayıt yok.</div>';
+    ks.forEach(k=>{const a=ka[k]||{top:0,alt:{}},b=kb[k]||{top:0,alt:{}};
+      h+=`<div class="gf-kiyas-r kat"><span>${_esc(k)}</span><span class="num">${gfKisa(a.top)}</span><span class="num">${gfKisa(b.top)}</span>${fark(a.top,b.top,iyi)}</div>`;
+      const alts=[...new Set([...Object.keys(a.alt),...Object.keys(b.alt)])].sort((x,y)=>Math.max(a.alt[y]||0,b.alt[y]||0)-Math.max(a.alt[x]||0,b.alt[x]||0));
+      alts.forEach(al=>{h+=`<div class="gf-kiyas-r alt"><span>↳ ${_esc(al)}</span><span class="num">${gfKisa(a.alt[al]||0)}</span><span class="num">${gfKisa(b.alt[al]||0)}</span>${fark(a.alt[al]||0,b.alt[al]||0,iyi)}</div>`;});});
+    h+='</div>';});
+  h+=`<div class="gf-ipucu">Gelirde artış yeşil, giderde artış kırmızı gösterilir. A: ${gfTrTarih(aBas)}–${gfTrTarih(aBit)} · B: ${gfTrTarih(bBas)}–${gfTrTarih(bBit)}</div>`;
+  return h;
+}
+function gfDonemRitim(tip,M){
+  const ay=GF.ay;const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744');const f=ay.donemKat;
+  const bugun=localToday();let poz=[],baslik='',not='';
+  if(tip==='gun'||tip==='hafta'){
+    // günlük veriden: son 1 yıl
+    const G=gfDonemVeri('gun',ay.donemBekleyen);const bas=gfGunEkle(bugun,-364);
+    const n=tip==='gun'?7:5;const top=new Array(n).fill(0).map(()=>({g:0,c:0,say:0}));
+    if(tip==='gun'){for(let i=1;i<=364;i++){const gs=gfGunEkle(bas,i-1);if(gs>=bugun)break;const dow=(new Date(gfGunTs(gs)).getDay()+6)%7;const v=gfDonemDeger(G[gs],f);top[dow].g+=v.gelir;top[dow].c+=v.gider;top[dow].say++;}
+      poz=top.map((t,i)=>({l:GF_GUN_AD[i],g:t.say?t.g/t.say:0,c:t.say?t.c/t.say:0}));baslik='Haftanın günlerine göre ortalama (son 1 yıl, günlük)';}
+    else{const H=gfDonemVeri('hafta',ay.donemBekleyen);let k=gfPeriyotAnahtar(bugun,'hafta');k=gfDonemKaydir(k,'hafta',-1);
+      for(let i=0;i<52;i++){const d=parseInt(k.slice(8,10));const ix=Math.min(4,Math.floor((d-1)/7));const v=gfDonemDeger(H[k],f);top[ix].g+=v.gelir;top[ix].c+=v.gider;top[ix].say++;k=gfDonemKaydir(k,'hafta',-1);}
+      poz=top.map((t,i)=>({l:(i+1)+'. hafta',g:t.say?t.g/t.say:0,c:t.say?t.c/t.say:0}));baslik='Ayın haftalarına göre ortalama (son 52 hafta, haftalık)';not='Hafta, pazartesisinin ayın kaçıncı gününe düştüğüne göre sayılır (1–7 → 1. hafta).';}
+  }else if(tip==='ay'){
+    const A=gfDonemVeri('ay',ay.donemBekleyen);const cur=gfPeriyotAnahtar(bugun,'ay');const top=new Array(12).fill(0).map(()=>({g:0,c:0,say:0}));
+    Object.keys(A).forEach(k=>{if(k===cur)return;const m=parseInt(k.slice(5,7))-1;const v=gfDonemDeger(A[k],f);top[m].g+=v.gelir;top[m].c+=v.gider;top[m].say++;});
+    poz=top.map((t,i)=>({l:GF_AYLAR[i],g:t.say?t.g/t.say:0,c:t.say?t.c/t.say:0,say:t.say}));baslik='Yılın aylarına göre ortalama (tamamlanan aylar)';
+    const ortG=gfOrt(poz.filter(p=>p.say).map(p=>p.g));if(ortG>0)not='Mevsim katsayısı: '+poz.filter(p=>p.say).map(p=>p.l+' '+(p.g/ortG).toFixed(2).replace('.',',')).join(' · ');
+  }else{
+    const Y=gfDonemVeri('yil',ay.donemBekleyen);poz=Object.keys(Y).sort().map(k=>{const v=gfDonemDeger(Y[k],f);return {l:k.slice(0,4)+(k.slice(0,4)===bugun.slice(0,4)?'*':''),g:v.gelir,c:v.gider};});
+    baslik='Yıllık toplamlar';not='* içinde bulunulan yıl, devam ediyor.';
+    for(let i=1;i<poz.length;i++){const a=poz[i-1],b=poz[i];b.buyume=a.g?((b.g-a.g)/a.g*100):null;}
+  }
+  const mx=Math.max(1,...poz.map(p=>Math.max(p.g,p.c)));
+  let h=`<div class="gf-bolum">${baslik}</div><div class="gf-ritim">${poz.map(p=>`<div class="gf-ritim-s"><div class="gf-ritim-iz">${p.g?`<div style="height:${p.g/mx*100}%;background:${up}"></div>`:''}${p.c?`<div style="height:${p.c/mx*100}%;background:${dn}"></div>`:''}</div><div class="gf-ritim-v" style="color:${p.g-p.c>=0?up:dn}">${gfKisa(p.g-p.c)}</div><div class="gf-ritim-a">${p.l}</div></div>`).join('')}</div>`;
+  h+=`<div class="gf-ritim-lej"><span><i style="background:${up}"></i>Gelir</span><span><i style="background:${dn}"></i>Gider</span><span>Sayı: net</span></div>`;
+  if(not)h+=`<div class="gf-ipucu">${not}</div>`;
+  h+=poz.map(p=>`<div class="gf-satir"><span>${p.l}</span><span class="num"><span style="color:${up}">+${gfKisa(p.g)}</span> · <span style="color:${dn}">−${gfKisa(p.c)}</span> · <b style="color:${p.g-p.c>=0?up:dn}">${gfKisa(p.g-p.c)}</b>${p.buyume!=null?` <small>(${p.buyume>=0?'+':''}${Math.round(p.buyume)}% gelir)</small>`:''}</span></div>`).join('');
+  return h;
 }
 
 
