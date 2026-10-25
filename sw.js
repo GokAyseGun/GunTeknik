@@ -1,5 +1,5 @@
 // Gün Teknik ERP — Service Worker
-const CACHE = 'gunteknik-v2';
+const CACHE = 'gunteknik-v3';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -26,6 +26,8 @@ self.addEventListener('fetch', e => {
   if (e.request.url.includes('supabase.co')) return;
   // Chrome extension isteklerini atla
   if (e.request.url.startsWith('chrome-extension://')) return;
+  // Google Haritalar ve hava servisi: tarayıcı kendi önbelleğini kullanır (harita döşemeleri burada birikmesin)
+  if (/googleapis\.com|gstatic\.com|google\.com\/maps|open-meteo\.com/.test(e.request.url)) return;
 
   e.respondWith(
     fetch(e.request)
