@@ -692,16 +692,9 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .gf-en-baslik{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin:16px 0 4px;}
 
 /* ── ÖZET SAYFASI MASAÜSTÜ ── */
-.dash-serit{display:none;}
 .gf-tutamak{display:none;}
 @media(min-width:900px){
   #page-dashboard.page{max-width:none;padding:14px 18px;}
-  .dash-serit{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:12px;}
-  .dash-serit-k{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 12px;cursor:pointer;min-width:0;transition:border-color .2s;}
-  .dash-serit-k:hover{border-color:var(--border2);}
-  .dash-serit-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .dash-serit-v{font-size:17px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .dash-serit-a{font-size:10px;color:var(--text3);margin-top:1px;}
   .gf-kart .gf-ust{flex-wrap:nowrap;}
   .gf-kart .gf-ust .gf-sel{max-width:320px;}
   .gf-kart .gf-ust,.gf-kart .gf-arac{display:inline-flex;vertical-align:middle;margin-right:8px;}
@@ -732,7 +725,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   .gf-en-kolon .gf-en-baslik{column-span:all;}
   .gf-en-kolon .gf-en{break-inside:avoid;display:block;}
 }
-@media(min-width:900px) and (max-height:860px){.dash-serit-a{display:none;}.dash-serit-k{padding:7px 11px;}.dash-serit-v{font-size:15px;}.dash-serit{margin-bottom:8px;}.gf-kart .gf-bilgi-ad{display:none;}.gf-kart .gf-bilgi-v{font-size:16px;}.gf-alt-ipucu{display:none;}}
+@media(min-width:900px) and (max-height:860px){.gf-kart .gf-bilgi-ad{display:none;}.gf-kart .gf-bilgi-v{font-size:16px;}.gf-alt-ipucu{display:none;}}
 @media(min-width:1700px){.gf-en-kolon{column-count:3;}#gf-tab-icerik .gf-kutular{grid-template-columns:repeat(9,minmax(0,1fr));}}
 .dash-izgara.listeler .dash-kredi-blok:not(:has(#dash-kredi-panel[style*="block"])){display:none;}
 /* ── İŞLEMLER ARAMA ── */
@@ -868,7 +861,6 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <!-- FİNANSAL GRAFİK PANELİ -->
-      <div class="dash-serit" id="dash-serit"></div>
       <div class="card gf-kart" style="margin-bottom:14px;" id="dash-grafik-kart">
         <div class="gf-ust">
           <select id="gf-metrik" class="gf-sel" onchange="gfMetrikSec(this.value)"></select>
@@ -5205,7 +5197,7 @@ function renderDashGrafik(){
   if(typeof klinecharts==='undefined'){el.innerHTML='<div class="gf-bos">Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.</div>';return;}
   gfGostergeKaydet();
   gfAracCiz();
-  try{dashSeritCiz();gfYukseklikAyarla();gfTutamakBagla();}catch(e){console.warn('masaüstü',e);}
+  try{gfYukseklikAyarla();gfTutamakBagla();}catch(e){console.warn('masaüstü',e);}
   if(!GF.chart){
     GF.chart=klinecharts.init(el,{locale:'tr-TR',timezone:'Europe/Istanbul',styles:gfStiller(),thousandsSeparator:'.',customApi:{formatBigNumber:v=>gfKisa(Number(v)),formatDate:gfTarihFormat}});
     GF.chart.setPriceVolumePrecision(0,0);
@@ -5213,7 +5205,7 @@ function renderDashGrafik(){
     try{GF.chart.setMaxOffsetRightDistance(60);GF.chart.setMaxOffsetLeftDistance(60);}catch(e){}
     GF.chart.subscribeAction('onVisibleRangeChange',()=>{clearTimeout(GF._vrT);GF._vrT=setTimeout(()=>{if(GF.ay.sekme==='ozet')gfSekmeCiz();},250);});
     gfTiklamaBagla(el);
-    window.addEventListener('resize',()=>{clearTimeout(GF._rzT);GF._rzT=setTimeout(()=>{try{gfYukseklikAyarla();dashSeritCiz();}catch(e){}GF.chart&&GF.chart.resize();},150);});
+    window.addEventListener('resize',()=>{clearTimeout(GF._rzT);GF._rzT=setTimeout(()=>{try{gfYukseklikAyarla();}catch(e){}GF.chart&&GF.chart.resize();},150);});
   }else GF.chart.resize();
   gfCiz();
   gfEkYukle();
@@ -15418,7 +15410,7 @@ function islAraYaz(v){
 function islAraTemizle(){const i=document.getElementById('isl-ara');if(i){i.value='';i.focus();}ISA.q='';ISA.tok=[];ISA.eslesme=null;const x=document.getElementById('isl-ara-x');if(x)x.style.display='none';_islGoster=150;renderIslemler();}
 
 
-// ---------- ÖZET SAYFASI MASAÜSTÜ DÜZENİ: gösterge şeridi + ekranı dolduran grafik + yükseklik tutamağı
+// ---------- ÖZET SAYFASI MASAÜSTÜ DÜZENİ: ekranı dolduran grafik + yükseklik tutamağı
 var GF_MASAUSTU_PX=900;
 function gfMasaustuMu(){return window.innerWidth>=GF_MASAUSTU_PX;}
 function gfYukseklikAyarla(){
@@ -15444,22 +15436,6 @@ function gfTutamakBagla(){
   const bit=e=>{if(!bas)return;const wrap=document.querySelector('#dash-grafik-kart .gf-chart-wrap');try{localStorage.setItem('gf_yukseklik',String(Math.round(wrap.getBoundingClientRect().height)));}catch(er){}bas=null;t.classList.remove('aktif');GF.chart&&GF.chart.resize();};
   t.addEventListener('pointerup',bit);t.addEventListener('pointercancel',bit);
   t.addEventListener('dblclick',()=>{try{localStorage.removeItem('gf_yukseklik');}catch(e){}gfYukseklikAyarla();GF.chart&&GF.chart.resize();showToast('Grafik yüksekliği ekrana göre otomatik','blue');});
-}
-// Gösterge şeridi: en önemli rakamlar tek satırda (kartlarla aynı hesap)
-function dashSeritCiz(){
-  const el=document.getElementById('dash-serit');if(!el)return;
-  if(!gfMasaustuMu()){el.innerHTML='';return;}
-  let c;try{c=calcFinans();}catch(e){return;}
-  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744'),am=gfCss('--amber','#FFAB00'),bl=gfCss('--blue','#00E5FF');
-  const donem=getMonth()?isfAyAdi(getMonth()):'Tüm dönemler';
-  const k=(l,v,r,tik,alt)=>`<div class="dash-serit-k" ${tik?`onclick="${tik}"`:''}><div class="dash-serit-l">${l}</div><div class="dash-serit-v num" style="color:${r}">${v}</div>${alt?`<div class="dash-serit-a">${alt}</div>`:''}</div>`;
-  el.innerHTML=k('💰 Kasa',gfTL(c.kasa||0),(c.kasa||0)<0?dn:bl,"showDashDetay('kasa')")+
-    k('📈 İşl. gelir',fmt(c.isGelir||0),up,"showDashDetay('isGelir')",donem)+
-    k('📉 İşl. gider',fmt(c.isGider||0),dn,"showDashDetay('isGider')",donem)+
-    k('🏆 İşl. kâr',gfTL(c.isKar||0),(c.isKar||0)>=0?up:dn,"showDashDetay('isKar')",donem)+
-    k('📥 Alacak',fmt(c.alacakTop||0),up,"showDashDetay('alacak')")+
-    k('📤 Verecek',fmt(c.borcTop||0),dn,"showDashDetay('verecek')")+
-    k('👷 Personel',fmt(c.topPersonelBakiye||0),am,"goPage('personel')");
 }
 
 
