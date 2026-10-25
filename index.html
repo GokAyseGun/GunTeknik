@@ -857,6 +857,8 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .hr-secim{font-size:12px;padding:8px 12px;color:var(--text2);line-height:1.45;}
 .hr-secim small{color:var(--text3);}
 .hr-hf{padding:6px 12px;display:flex;flex-direction:column;gap:6px;}
+.hr-lej{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--text2);}.hr-lej span{display:inline-flex;align-items:center;gap:5px;}
+.hr-lej-n{display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid #000;}
 .hr-iw{color:#111;font-size:13px;line-height:1.4;max-width:260px;}.hr-iw small{color:#444;}
 .hr-iw-b{display:flex;gap:10px;margin-top:6px;}.hr-iw-b a{color:#1a73e8;font-weight:600;text-decoration:none;}
 .hr-rota{background:var(--blue-lt);border:1px solid rgba(68,138,255,.3);border-radius:var(--r-sm);padding:10px;display:flex;flex-direction:column;gap:8px;}
@@ -16758,7 +16760,7 @@ function gfTutamakBagla(){
 function ozKartSayi(el,v){if(!el)return;animateCount(el,v);el.style.color=v<0?'var(--red)':v>0?'var(--green)':'var(--text3)';}
 
 // ============================================================ REHBER: YAPILANDIRILMIŞ ADRES · KONUM · GOOGLE MAPS
-var HR={veri:null,yukleniyor:null,form:[],formKisi:null,gm:null,gmHata:null,secici:null,harita:null,mod:'kisi',filtre:'tumu',isaretler:[],daireler:[],bilgi:null};
+var HR={veri:null,yukleniyor:null,form:[],formKisi:null,gm:null,gmHata:null,secici:null,harita:null,katman:{musteri:true,firma:false},bolge:null,isaretler:[],daireler:[],bilgi:null};
 var HR_ETIKET=['Ev','İş','Villa','Yazlık','Depo','Diğer'];
 var HR_ILLER=['Adana','Adıyaman','Afyonkarahisar','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kilis','Kırıkkale','Kırklareli','Kırşehir','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Şanlıurfa','Siirt','Sinop','Şırnak','Sivas','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'];
 var HR_VARSAYILAN_IL='Muğla';
@@ -17028,14 +17030,17 @@ function hrRotaAc(ds,mod){
 }
 
 // ---------- rehber haritası
+// Katmanlar: Müşteri / Şahıs (yeşil) · Firma / Kurum (mavi) · diğer kayıt türleri (turuncu)
+// Bize borçlu olan her kayıt kırmızı; bu ay iş yapılanlar sarı çerçeveli yeşil. Bölge modları mahalle dairesi çizer.
+var HR_RENK={musteri:'#00E676',firma:'#448AFF',diger:'#FF9100',alacak:'#FF1744',buay:'#00E676',cerceve:'#FFD600'};
+var HR_DURUM_AD={alacak:'Bize borçlu',buay:'Bu ay iş yapıldı',musteri:'Müşteri / Şahıs',firma:'Firma / Kurum',diger:'Diğer kayıt'};
+function hrKisiGrup(k){const t=k.tip||'';return (t==='Müşteri'||t==='Şahıs')?'musteri':(t==='Firma'||t==='Kurum')?'firma':'diger';}
 function hrKisiDurum(){
-  const c=calcFinans();const bugun=localToday();const ay=bugun.slice(0,7);const yilOnce=gfGunEkle(bugun,-365);const son={},top={},buAy=new Set();
-  (DB.islemler||[]).forEach(i=>{if(!i.kisiId||i.statu!=='Tamamlandı'||i.kat!=='İşletme Geliri')return;const g=localDateStr(i.tarih);const k=String(i.kisiId);if(!son[k]||g>son[k])son[k]=g;top[k]=(top[k]||0)+i.tutar;if(g.slice(0,7)===ay)buAy.add(k);});
-  return k=>{const id=String(k.id);const bak=c.cD&&c.cD[k.id]?c.cD[k.id].bakiyeAll:0;
-    const d=bak>0.5?'alacak':buAy.has(id)?'buay':(son[id]&&son[id]<yilOnce)?'uzun':'diger';return {d,bak,son:son[id]||null,top:top[id]||0};};
+  const c=calcFinans();const bugun=localToday();const ay=bugun.slice(0,7);const son={},top={},buAy=new Set();
+  (DB.islemler||[]).forEach(i=>{if(!i.kisiId||i.statu!=='Tamamlandı'||i.tip!=='Gelir')return;const g=localDateStr(i.tarih);const k=String(i.kisiId);if(!son[k]||g>son[k])son[k]=g;top[k]=(top[k]||0)+i.tutar;if(g.slice(0,7)===ay)buAy.add(k);});
+  return k=>{const id=String(k.id);const bak=c.cD&&c.cD[k.id]?c.cD[k.id].bakiyeAll:0;const grup=hrKisiGrup(k);
+    const d=bak>0.5?'alacak':buAy.has(id)?'buay':grup;return {d,grup,bak,son:son[id]||null,top:top[id]||0,buAy:buAy.has(id)};};
 }
-var HR_RENK={alacak:'#FF1744',buay:'#00E676',uzun:'#FFAB00',diger:'#448AFF'};
-var HR_DURUM_AD={alacak:'Alacağı var',buay:'Bu ay iş yapıldı',uzun:'1 yıldır iş yok',diger:'Diğer'};
 async function hrRehberHaritaAc(){
   let gm;try{gm=await hrGmYukle();}catch(e){hrGmHataGoster(e);return;}
   let m=document.getElementById('modal-hr-harita');
@@ -17047,52 +17052,66 @@ async function hrRehberHaritaAc(){
   if(!HR.harita){HR.harita=new gm.Map(document.getElementById('hr-rehber-harita'),{center:HR_MERKEZ,zoom:11,mapTypeId:'roadmap',gestureHandling:'greedy',streetViewControl:false,fullscreenControl:false,mapTypeControl:false,clickableIcons:false});HR.bilgi=new gm.InfoWindow();}
   hrHaritaCiz(true);
 }
+// HR.katman: {musteri:bool, firma:bool}  ·  HR.bolge: null | 'ciro' | 'is'
+function hrKatmanSec(k){
+  HR.katman=HR.katman||{musteri:true,firma:false};
+  if(k==='ciro'||k==='is'){HR.bolge=HR.bolge===k?null:k;if(!HR.bolge&&!HR.katman.musteri&&!HR.katman.firma)HR.katman.musteri=true;}
+  else{HR.bolge=null;HR.katman[k]=!HR.katman[k];if(!HR.katman.musteri&&!HR.katman.firma)HR.katman[k]=true;}
+  hrHaritaCiz(true);
+}
 function hrHaritaFiltreCiz(say){
-  const el=document.getElementById('hr-hf');if(!el)return;const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
-  el.innerHTML=`<div class="isf-chips">${chip(HR.mod==='kisi','👤 Müşteriler',"HR.mod='kisi';hrHaritaCiz(true)")}${chip(HR.mod==='ciro','🔥 Bölge ciro yoğunluğu',"HR.mod='ciro';hrHaritaCiz(true)")}</div>`+
-    (HR.mod==='kisi'?`<div class="isf-chips">${[['tumu','Tümü'],['alacak','🔴 Alacaklı'],['buay','🟢 Bu ay iş'],['uzun','🟠 1 yıldır gelmeyen'],['diger','🔵 Diğer']].map(([k,l])=>chip(HR.filtre===k,l+(say&&say[k]!=null?' ('+say[k]+')':''),`HR.filtre='${k}';hrHaritaCiz(true)`)).join('')}</div>`:
-    `<div class="hr-not">Daire büyüklüğü son 12 ayın işletme geliri; renk son 6 ayın önceki 6 aya göre gidişi (🟢 büyüyor · 🟠 yatay · 🔴 küçülüyor). Dokununca ayrıntı.</div>`);
+  const el=document.getElementById('hr-hf');if(!el)return;HR.katman=HR.katman||{musteri:true,firma:false};
+  const K=HR.katman,B=HR.bolge;const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
+  const n=k=>say&&say[k]!=null?' ('+say[k]+')':'';
+  const nokta=(r,cer)=>`<i class="hr-lej-n" style="background:${r};${cer?'box-shadow:0 0 0 2px '+HR_RENK.cerceve+';':''}"></i>`;
+  el.innerHTML=`<div class="isf-chips">${chip(!B&&K.musteri,'👤 Müşteri / Şahıs'+n('musteri'),"hrKatmanSec('musteri')")}${chip(!B&&K.firma,'🏢 Firma / Kurum'+n('firma'),"hrKatmanSec('firma')")}${chip(B==='ciro','🔥 Bölge Ciro Yoğunluğu',"hrKatmanSec('ciro')")}${chip(B==='is','🛠️ Bölge İş Yoğunluğu',"hrKatmanSec('is')")}</div>`+
+    (B?`<div class="hr-not">Daire büyüklüğü son 12 ayın ${B==='ciro'?'işletme geliri':'iş adedi'}; renk son 6 ayın önceki 6 aya göre gidişi (🟢 artıyor · 🟠 yatay · 🔴 azalıyor). Dokununca ayrıntı.</div>`:
+    `<div class="hr-lej">${K.musteri?`<span>${nokta(HR_RENK.musteri)}Müşteri / Şahıs</span>`:''}${K.firma?`<span>${nokta(HR_RENK.firma)}Firma / Kurum</span><span>${nokta(HR_RENK.diger)}Diğer</span>`:''}<span>${nokta(HR_RENK.alacak)}Bize borçlu${n('alacak')}</span><span>${nokta(HR_RENK.buay,true)}Bu ay iş yapıldı${n('buay')}</span></div>`);
 }
 function hrHaritaTemizle(){HR.isaretler.forEach(x=>x.setMap(null));HR.isaretler=[];HR.daireler.forEach(x=>x.setMap(null));HR.daireler=[];if(HR.bilgi)HR.bilgi.close();}
 function hrHaritaTip(){const h=HR.harita;if(h)h.setMapTypeId(h.getMapTypeId()==='hybrid'?'roadmap':'hybrid');}
 function hrHaritaSigdir(){const h=HR.harita;if(!h)return;const b=new google.maps.LatLngBounds();let n=0;HR.isaretler.forEach(x=>{b.extend(x.getPosition());n++;});HR.daireler.forEach(x=>{b.extend(x.getCenter());n++;});if(n)h.fitBounds(b,40);}
 async function hrHaritaCiz(sigdir){
-  const gm=google.maps;hrHaritaTemizle();
-  if(HR.mod==='ciro'){await hrCiroCiz();hrHaritaFiltreCiz();if(sigdir)hrHaritaSigdir();return;}
-  const durum=hrKisiDurum();const say={tumu:0,alacak:0,buay:0,uzun:0,diger:0};let konumsuz=0;
-  (DB.kisiler||[]).forEach(k=>{const L=hrKisiAdresleri(k.id).filter(hrKonumVar);if(!L.length){if(k.tip==='Müşteri'||k.tip==='Şahıs')konumsuz++;return;}
-    const D=durum(k);say.tumu++;say[D.d]++;if(HR.filtre!=='tumu'&&HR.filtre!==D.d)return;
-    L.forEach(a=>{const mk=new gm.Marker({map:HR.harita,position:{lat:a.enlem,lng:a.boylam},title:k.isim,
-      icon:{path:gm.SymbolPath.CIRCLE,scale:8,fillColor:HR_RENK[D.d],fillOpacity:1,strokeColor:'#000',strokeWeight:1.5}});
-      mk.addListener('click',()=>{HR.bilgi.setContent(`<div class="hr-iw"><b>${_esc(k.isim)}</b><br><small>${_esc(a.etiket||'')} · ${_esc(hrAdresSatir(a))}</small>${a.adresTarifi?`<br><small>🧭 ${_esc(a.adresTarifi)}</small>`:''}
-        <br><small>${HR_DURUM_AD[D.d]}${D.bak>0.5?' · alacak '+fmt(D.bak):''}${D.son?' · son iş '+gfTrTarih(D.son):''}${D.top?' · toplam '+fmt(D.top):''}</small>
+  const gm=google.maps;hrHaritaTemizle();HR.katman=HR.katman||{musteri:true,firma:false};
+  if(HR.bolge){await hrBolgeCiz(HR.bolge);hrHaritaFiltreCiz();if(sigdir)hrHaritaSigdir();return;}
+  const durum=hrKisiDurum();const say={musteri:0,firma:0,alacak:0,buay:0};let konumsuz=0;
+  (DB.kisiler||[]).forEach(k=>{const grup=hrKisiGrup(k);const gor=grup==='musteri'?HR.katman.musteri:HR.katman.firma;
+    const L=hrKisiAdresleri(k.id).filter(hrKonumVar);if(!L.length){if(gor)konumsuz++;return;}
+    say[grup==='musteri'?'musteri':'firma']++;if(!gor)return;
+    const D=durum(k);if(D.d==='alacak')say.alacak++;else if(D.d==='buay')say.buay++;
+    const dolgu=D.d==='alacak'?HR_RENK.alacak:D.d==='buay'?HR_RENK.buay:HR_RENK[grup];const cer=D.d==='buay';
+    L.forEach(a=>{const mk=new gm.Marker({map:HR.harita,position:{lat:a.enlem,lng:a.boylam},title:k.isim,zIndex:D.d==='alacak'?3:D.d==='buay'?2:1,
+      icon:{path:gm.SymbolPath.CIRCLE,scale:cer?9:8,fillColor:dolgu,fillOpacity:1,strokeColor:cer?HR_RENK.cerceve:'#000',strokeWeight:cer?3.5:1.5}});
+      mk.addListener('click',()=>{HR.bilgi.setContent(`<div class="hr-iw"><b>${_esc(k.isim)}</b> <small>${_esc(k.tip||'')}</small><br><small>${_esc(a.etiket||'')} · ${_esc(hrAdresSatir(a))}</small>${a.adresTarifi?`<br><small>🧭 ${_esc(a.adresTarifi)}</small>`:''}
+        <br><small>${D.bak>0.5?'🔴 Bize borçlu '+fmt(D.bak):D.bak<-0.5?'Biz borçluyuz '+fmt(-D.bak):'Hesap kapalı'}${D.buAy?' · 🟢 bu ay iş yapıldı':''}${D.son?' · son gelir '+gfTrTarih(D.son):''}${D.top?' · toplam '+fmt(D.top):''}</small>
         <div class="hr-iw-b"><a href="#" onclick="closeModal('modal-hr-harita');showKisiDetay(${k.id});return false;">👤 Kişi</a><a href="${hrYolUrl(a)}" target="_blank" rel="noopener">🧭 Yol tarifi</a></div></div>`);HR.bilgi.open({map:HR.harita,anchor:mk});});
       HR.isaretler.push(mk);});});
   hrHaritaFiltreCiz(say);
-  const alt=document.getElementById('hr-harita-alt');if(alt)alt.innerHTML=`${HR.isaretler.length} konum gösteriliyor${konumsuz?` · <a href="#" onclick="closeModal('modal-hr-harita');hrKonumEksikAc();return false;">${konumsuz} müşterinin konumu yok →</a>`:''}`;
+  const alt=document.getElementById('hr-harita-alt');if(alt)alt.innerHTML=`${HR.isaretler.length} konum gösteriliyor${konumsuz?` · <a href="#" onclick="closeModal('modal-hr-harita');hrKonumEksikAc();return false;">${konumsuz} kaydın konumu yok →</a>`:''}`;
   if(sigdir)hrHaritaSigdir();
 }
 // mahalle merkezleri: konumlu adreslerin ortalaması, yoksa Google'dan bir kez bulunur ve saklanır
 function hrMahalleCache(){try{return JSON.parse(localStorage.getItem('hr_mahalle_konum_v1')||'{}');}catch(e){return {};}}
-async function hrCiroCiz(){
-  const gm=google.maps;await hrVeriYukle().catch(()=>{});
+async function hrBolgeCiz(tur){
+  const gm=google.maps;await hrVeriYukle().catch(()=>{});const ciro=tur!=='is';
   const bugun=localToday();const s6=gfGunEkle(bugun,-182),s12=gfGunEkle(bugun,-365);const B={};
   const bolgeAl=k=>{const a=hrKisiAnaAdres(k);if(a&&a.mahalle&&a.ilce)return {il:a.il,ilce:a.ilce,mahalle:a.mahalle};if(k.adres&&HR.veri){const p=hrAyristir(k.adres);if(p.mahalle&&p.ilce)return {il:p.il,ilce:p.ilce,mahalle:p.mahalle};}return null;};
   const kb={};(DB.kisiler||[]).forEach(k=>{kb[k.id]=bolgeAl(k);});
   (DB.islemler||[]).forEach(i=>{if(i.statu!=='Tamamlandı'||i.kat!=='İşletme Geliri'||!i.kisiId)return;const g=localDateStr(i.tarih);if(g<s12)return;const b=kb[i.kisiId];if(!b)return;
-    const key=b.il+'|'+b.ilce+'|'+b.mahalle;const o=B[key]=B[key]||Object.assign({son6:0,once6:0,is:0,kisi:new Set()},b);if(g>=s6)o.son6+=i.tutar;else o.once6+=i.tutar;o.is++;o.kisi.add(i.kisiId);});
-  // merkezler
+    const key=b.il+'|'+b.ilce+'|'+b.mahalle;const o=B[key]=B[key]||Object.assign({son6:0,once6:0,isSon6:0,isOnce6:0,is:0,kisi:new Set()},b);
+    if(g>=s6){o.son6+=i.tutar;o.isSon6++;}else{o.once6+=i.tutar;o.isOnce6++;}o.is++;o.kisi.add(i.kisiId);});
   const toplam={};(DB.kisiAdresleri||[]).filter(hrKonumVar).forEach(a=>{if(!a.mahalle)return;const key=a.il+'|'+a.ilce+'|'+a.mahalle;const t=toplam[key]=toplam[key]||{lat:0,lng:0,n:0};t.lat+=a.enlem;t.lng+=a.boylam;t.n++;});
   const C=hrMahalleCache();const geoc=new gm.Geocoder();let yeni=false;
-  const keys=Object.keys(B);
-  for(const key of keys){if(toplam[key]){B[key].pos={lat:toplam[key].lat/toplam[key].n,lng:toplam[key].lng/toplam[key].n};continue;}
+  for(const key of Object.keys(B)){if(toplam[key]){B[key].pos={lat:toplam[key].lat/toplam[key].n,lng:toplam[key].lng/toplam[key].n};continue;}
     if(C[key]){B[key].pos=C[key];continue;}
     try{const b=B[key];const r=await geoc.geocode({address:b.mahalle+' Mahallesi, '+b.ilce+', '+b.il+', Türkiye',region:'TR'});const g=(r.results||r)[0];if(g){const l=g.geometry.location;C[key]={lat:l.lat(),lng:l.lng()};B[key].pos=C[key];yeni=true;}}catch(e){}}
   if(yeni)try{localStorage.setItem('hr_mahalle_konum_v1',JSON.stringify(C));}catch(e){}
-  const L=Object.values(B).filter(b=>b.pos);const mx=Math.max(1,...L.map(b=>b.son6+b.once6));
-  L.forEach(b=>{const top=b.son6+b.once6;const tr=b.once6>0?b.son6/b.once6-1:(b.son6>0?1:0);const renk=tr>0.15?'#00E676':tr<-0.15?'#FF1744':'#FFAB00';
-    const c=new gm.Circle({map:HR.harita,center:b.pos,radius:Math.max(150,Math.sqrt(top/mx)*1800),fillColor:renk,fillOpacity:0.35,strokeColor:renk,strokeOpacity:0.9,strokeWeight:1.5,clickable:true});
-    c.addListener('click',()=>{HR.bilgi.setContent(`<div class="hr-iw"><b>${_esc(b.mahalle)}</b> <small>${_esc(b.ilce)}</small><br><small>Son 12 ay işletme geliri <b>${fmt(top)}</b> · ${b.is} iş · ${b.kisi.size} müşteri<br>Son 6 ay ${fmt(b.son6)} · önceki 6 ay ${fmt(b.once6)} (${b.once6?((tr>=0?'+':'')+Math.round(tr*100)+'%'):'yeni'})</small></div>`);HR.bilgi.setPosition(b.pos);HR.bilgi.open({map:HR.harita});});
+  const deger=b=>ciro?b.son6+b.once6:b.is;
+  const L=Object.values(B).filter(b=>b.pos);const mx=Math.max(1,...L.map(deger));
+  L.forEach(b=>{const v=deger(b);const a1=ciro?b.son6:b.isSon6,a0=ciro?b.once6:b.isOnce6;const tr=a0>0?a1/a0-1:(a1>0?1:0);const renk=tr>0.15?'#00E676':tr<-0.15?'#FF1744':'#FFAB00';
+    const c=new gm.Circle({map:HR.harita,center:b.pos,radius:Math.max(150,Math.sqrt(v/mx)*1800),fillColor:renk,fillOpacity:0.35,strokeColor:renk,strokeOpacity:0.9,strokeWeight:1.5,clickable:true});
+    c.addListener('click',()=>{HR.bilgi.setContent(`<div class="hr-iw"><b>${_esc(b.mahalle)}</b> <small>${_esc(b.ilce)}</small><br><small>Son 12 ay: <b>${b.is} iş</b> · ${fmt(b.son6+b.once6)} · ${b.kisi.size} müşteri<br>
+      Son 6 ay ${ciro?fmt(b.son6):b.isSon6+' iş'} · önceki 6 ay ${ciro?fmt(b.once6):b.isOnce6+' iş'} (${a0?((tr>=0?'+':'')+Math.round(tr*100)+'%'):'yeni'})</small></div>`);HR.bilgi.setPosition(b.pos);HR.bilgi.open({map:HR.harita});});
     HR.daireler.push(c);});
   const alt=document.getElementById('hr-harita-alt');const bilinmez=(DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&i.kat==='İşletme Geliri'&&localDateStr(i.tarih)>=s12&&(!i.kisiId||!kb[i.kisiId])).length;
   if(alt)alt.innerHTML=`${L.length} mahalle · son 12 ayın ${bilinmez} işi adres/mahalle bilinmediği için haritada yok`;
