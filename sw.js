@@ -1,5 +1,5 @@
 // Gün Teknik ERP — Service Worker
-const CACHE = 'gunteknik-v3';
+const CACHE = 'gunteknik-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(
