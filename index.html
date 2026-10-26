@@ -1003,6 +1003,70 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .stagger-wrap .stagger-item{content-visibility:auto;contain-intrinsic-size:auto 64px;}
 /* hareket azaltma tercihi olan cihazlarda animasyonları kapat */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}}
+
+/* ── EVRAK TAKİBİ ── */
+@media(min-width:1100px){#page-evrak.page{max-width:1200px;}}
+.tk-bugun .ev-k{grid-template-columns:repeat(4,minmax(0,1fr));}
+@media(max-width:700px){.tk-bugun .ev-k{grid-template-columns:repeat(2,minmax(0,1fr));}.tk-bugun .ev-k>div.aj,.tk-bugun .ev-k>div.pa{grid-column:auto;}}
+.ev-arac{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.ev-arac input{width:100%;padding:11px 13px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;}
+.ev-filtre{display:flex;gap:6px;flex-wrap:wrap;}
+.ev-filtre small{opacity:.7;margin-left:2px;}
+.ev-izgara{display:grid;grid-template-columns:1fr;gap:8px;}
+@media(min-width:1100px){.ev-izgara{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.ev-kart{display:flex;gap:10px;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--text3);border-radius:var(--r-md);padding:12px 12px 12px 14px;cursor:pointer;}
+.ev-kart:hover{border-color:var(--border2);}
+.ev-kart.r-kirmizi{border-left-color:var(--red);background:linear-gradient(90deg,rgba(255,23,68,.07),var(--surface) 40%);}
+.ev-kart.r-sari{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(255,171,0,.06),var(--surface) 40%);}
+.ev-kart.r-yesil{border-left-color:var(--green);}
+.ev-kart.r-pasif{border-left-color:var(--text3);opacity:.6;}
+.ev-kart-a{flex:1;min-width:0;}
+.ev-kart-b{font-weight:700;font-size:14px;overflow-wrap:anywhere;}
+.ev-kart-d{font-size:12px;font-weight:700;margin-top:3px;}
+.ev-kart-d.r-kirmizi{color:var(--red);}.ev-kart-d.r-sari{color:var(--amber);}.ev-kart-d.r-yesil{color:var(--green);}.ev-kart-d.r-pasif{color:var(--text3);}
+.ev-kart-k{font-size:11px;color:var(--text3);margin-top:2px;overflow-wrap:anywhere;}
+.ev-kart-s{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px;flex-shrink:0;}
+.ev-kart-t{font-size:15px;font-weight:700;text-align:right;white-space:nowrap;}
+.ev-kart-t small{display:block;font-size:10px;font-weight:500;color:var(--text3);}
+.ev-ode{padding:7px 14px;border-radius:999px;border:1px solid rgba(0,230,118,.5);background:var(--green-lt);color:var(--green);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;}
+.ev-ode.kucuk{padding:4px 10px;font-size:11px;flex-shrink:0;}
+.ev-modal .modal-body{display:flex;flex-direction:column;gap:6px;}
+.ev-modal .modal-body>*{flex-shrink:0;}
+#modal-ev-form .modal-body,#modal-ev-odeme .modal-body{gap:10px;}
+#modal-ev-form .fi,#modal-ev-odeme .fi{margin:0;}
+#modal-ev-form .isf-chips,#modal-ev-odeme .isf-chips,.ev-modal .tk-gp-b .isf-chip{display:flex;gap:6px;flex-wrap:wrap;}
+.ev-modal .modal-foot{display:flex;gap:8px;}
+.ev-modal .fi input[type=text],.ev-modal .fi input[type=date],.ev-modal .fi select{width:100%;box-sizing:border-box;}
+.ev-durum{border-radius:var(--r-sm);padding:10px 12px;border-left:4px solid var(--text3);background:var(--surface2);font-size:12px;color:var(--text2);}
+.ev-durum b{display:block;font-size:14px;margin-bottom:2px;}
+.ev-durum.r-kirmizi{border-left-color:var(--red);background:var(--red-lt);}.ev-durum.r-kirmizi b{color:var(--red);}
+.ev-durum.r-sari{border-left-color:var(--amber);background:var(--amber-lt);}.ev-durum.r-sari b{color:var(--amber);}
+.ev-durum.r-yesil{border-left-color:var(--green);background:var(--green-lt);}.ev-durum.r-yesil b{color:var(--green);}
+.ev-kop{cursor:pointer;}
+.ev-ekler{display:flex;flex-direction:column;gap:6px;margin-bottom:6px;}
+.ev-ek{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 8px;font-size:12px;}
+.ev-ek a{display:flex;align-items:center;gap:8px;flex:1;min-width:0;color:var(--text);text-decoration:none;}
+.ev-ek a span:last-child,.ev-ek>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.ev-ek img{width:42px;height:42px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+.ev-ek button{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--red);cursor:pointer;flex-shrink:0;}
+.ev-ek.yeni{border-style:dashed;}
+.ev-grafik{width:100%;height:120px;display:block;}
+.ev-tl{padding:13px 15px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);font-weight:700;}
+.ev-erp{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.ev-erp-u{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.ev-erp-u input{width:18px;height:18px;accent-color:var(--mg);}
+/* takvimde evrak */
+.tk-ev-btn{flex-shrink:0;}
+.tk-o-k.ev{border-left:2px dashed var(--amber);background:transparent;border-top:1px dashed var(--border2);border-right:1px dashed var(--border2);border-bottom:1px dashed var(--border2);}
+.tk-o-k.ev.gec{border-left-color:var(--red);color:var(--red);}
+.tk-evi{display:inline-flex;align-items:center;font-size:10px;line-height:1;padding:1px 3px;border-radius:5px;border:1px dashed var(--amber);color:var(--amber);font-weight:700;}
+.tk-evi.gec{border-color:var(--red);color:var(--red);}
+@media(min-width:700px){.tk-g-i .tk-evi{display:none;}}
+.tk-ev{display:flex;gap:6px;align-items:stretch;background:transparent;border:1px dashed var(--border2);border-left:3px dashed var(--amber);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;}
+.tk-ev.gec{border-left-color:var(--red);background:var(--red-lt);}
+.tk-ev-a{flex:1;min-width:0;padding:8px 10px;}
+.tk-ev.kucuk .tk-ev-a{padding:6px 7px;}.tk-ev.kucuk .tk-oge-b{font-size:12px;}
+.tk-h-g .tk-ev{margin-bottom:0;}
 </style>
 </head>
 <body>
@@ -1252,6 +1316,14 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
         <div class="tk-sag"><div class="tk-kart tk-gun-panel" id="tk-gun-panel"></div></div>
       </div>
       <div id="tk-aktar"></div>
+    </div>
+
+    <!-- EVRAK TAKİBİ -->
+    <div class="page" id="page-evrak">
+      <button class="btn btn-primary btn-full tk-ekle-btn" onclick="evFormAc()">＋ Yeni Evrak</button>
+      <div id="ev-ozet"></div>
+      <div class="ev-arac"><input type="search" id="ev-ara" placeholder="Ara: firma, abone no, plaka, not…" oninput="EV.ara=this.value;evListeCiz()"><div class="ev-filtre" id="ev-filtre"></div></div>
+      <div id="ev-liste"></div>
     </div>
 
     <!-- REHBER -->
@@ -1655,7 +1727,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       <span>Takvim</span>
     </div>
-    <div class="nav-item" onclick="window.location.href='evrak.html'">
+    <div class="nav-item" onclick="goPage('evrak',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
       <span>Evrak</span>
     </div>
@@ -3077,7 +3149,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
     <div class="modal-foot" style="flex-wrap:wrap;gap:8px;">
       <button class="btn btn-secondary" onclick="closeModal('modal-yaklasan')" style="flex:1;min-width:100px;">✕ Kapat</button>
       <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('takvim')" style="flex:1;min-width:100px;">📅 Takvim</button>
-      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');window.location.href='evrak.html'" style="flex:1;min-width:100px;">📄 Evraklar</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('evrak')" style="flex:1;min-width:100px;">📄 Evraklar</button>
       <button class="btn btn-primary" onclick="closeModal('modal-yaklasan');goPage('banka')" style="flex:1;min-width:100px;">🏦 Hesaplar</button>
     </div>
   </div>
@@ -4007,7 +4079,7 @@ let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[
 async function loadDB(){
   showLoading(true);
   try{
-    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri,tavsiyeler,kisiAdresRaw]=await Promise.all([
+    const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri,tavsiyeler,kisiAdresRaw,evrakRaw,evrakOdRaw,evrakEkRaw]=await Promise.all([
       sbFetch('kisiler?order=isim.asc&select=*'),
       sbFetchAll('islemler?order=tarih.desc,id.desc&select=*'),
       sbFetch('odemeler?order=tarih.desc&select=*'),
@@ -4024,8 +4096,13 @@ async function loadDB(){
       sbFetch('banka_kredileri?order=created_at.desc&select=*').catch(()=>[]),
       sbFetch('kredi_odemeleri?order=odeme_tarihi.desc&select=*').catch(()=>[]),
       sbFetch('tavsiyeler?order=created_at.desc&select=*').catch(()=>[]),
-      sbFetch('kisi_adresler?select=*&order=sira.asc,id.asc').catch(()=>null)
+      sbFetch('kisi_adresler?select=*&order=sira.asc,id.asc').catch(()=>null),
+      sbFetch('sirket_evraklar?select=*&order=created_at.asc').catch(()=>null),
+      sbFetch('sirket_evrak_odemeler?select=*&order=odeme_tarihi.asc').catch(()=>null),
+      sbFetch('sirket_ekler?select=*&order=id.asc').catch(()=>null)
     ]);
+    DB.evrakTablo=Array.isArray(evrakRaw);DB.evraklar=evrakRaw||[];DB.evrakOdemeler=(evrakOdRaw||[]).map(evOdemeNorm);DB.evrakEkler=evrakEkRaw||[];DB._evVer=(DB._evVer||0)+1;if(typeof EV!=='undefined')EV._c=null;
+    setTimeout(()=>{try{evBildirimEsitle();}catch(e){}},4000);
     DB.kisiAdresTablo=Array.isArray(kisiAdresRaw);
     DB.kisiAdresleri=(kisiAdresRaw||[]).map(a=>({id:a.id,kisiId:a.kisi_id,etiket:a.etiket||'Ev',il:a.il||'',ilce:a.ilce||'',mahalle:a.mahalle||'',caddeSokak:a.cadde_sokak||'',binaNo:a.bina_no||'',daireNo:a.daire_no||'',siteAdi:a.site_adi||'',adresTarifi:a.adres_tarifi||'',postaKodu:a.posta_kodu||'',
       enlem:a.enlem!=null?parseFloat(a.enlem):null,boylam:a.boylam!=null?parseFloat(a.boylam):null,plusCode:a.plus_code||'',konumKaynagi:a.konum_kaynagi||'',konumHassasiyet:a.konum_hassasiyet!=null?parseFloat(a.konum_hassasiyet):null,sira:a.sira||0}));
@@ -4185,7 +4262,7 @@ function observeStagger(){
 }
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',evrak:'📄 Evrak Takibi',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',raporlar:'📈 Raporlar',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı'};
 
 let _goPageBusy=false;
 function goPage(id,navEl){
@@ -4409,6 +4486,7 @@ function renderAll(){
     const pid=active.id.replace('page-','');
     if(pid==='islemler')renderIslemler();
     if(pid==='takvim')renderCalendar();
+    if(pid==='evrak')evCiz();
     if(pid==='rehber')renderRehber();
     if(pid==='cari'){renderCari(c);try{cariTahsilAsistanCiz();}catch(e){console.warn('tahsil asistanı',e);}}
     if(pid==='personel')renderPersonel(c);
@@ -4432,7 +4510,7 @@ function renderAll(){
       const fabEl=document.getElementById('fab-container');
       if(!fabEl)return;
       if(USER_ROL==='goruntule'){fabEl.style.display='none';return;}
-      if(pid==='islemler'||pid==='cari'||pid==='takvim'){
+      if(pid==='islemler'||pid==='cari'||pid==='takvim'||pid==='evrak'){
         fabEl.style.display='';
         const btn=document.createElement('button');
         btn.style.cssText='width:52px;height:52px;border-radius:50%;border:none;color:white;font-size:'+(pid==='cari'?'22':'26')+'px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.25s;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
@@ -4440,6 +4518,10 @@ function renderAll(){
           btn.style.background='var(--gmg)';
           btn.textContent='+';btn.title='İşlem Ekle';
           btn.onclick=openIslemModal;
+        }else if(pid==='evrak'){
+          btn.style.background='var(--gmg)';
+          btn.textContent='+';btn.title='Yeni Evrak';
+          btn.onclick=()=>evFormAc();
         }else if(pid==='takvim'){
           btn.style.background='var(--gmg)';
           btn.textContent='+';btn.title='Randevu / Ajanda Ekle';
@@ -5144,7 +5226,7 @@ function gfKesinHareketler(bitis){
       if(!od.length)return;
       const erpde=od.some(o=>erpEvrak.some(i=>localDateStr(i.tarih)===o.odeme_tarihi&&Math.abs((i.tutar||0)-(parseFloat(o.tutar)||0))<0.01));
       if(!erpde)return;
-      const tutar=gfOrt(od.slice(-3).map(o=>parseFloat(o.tutar)||0));if(!tutar)return;
+      const tutar=(typeof evBeklenen==='function'&&evBeklenen(e))||gfOrt(od.slice(-3).map(o=>parseFloat(o.tutar)||0));if(!tutar)return;
       const tip=e.erp_tip||'Gider';const kapsam=e.erp_kapsam||'İşletme';
       const kat=tip==='Gelir'?(kapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir'):(kapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider');
       const y=tip==='Gelir'?1:-1;const ad='Evrak: '+(e.baslik||e.evrak_adi||e.ad||e.tur||('#'+e.id));
@@ -5163,6 +5245,8 @@ function gfKesinHareketler(bitis){
         let dt=new Date(t.getFullYear(),t.getMonth(),t.getDate());while(dt.getDay()!==hedef)dt.setDate(dt.getDate()+1);
         for(let a=0;a<60;a++){const due=localDateObjStr(dt);if(!(a===0&&odendi(gfGunEkle(bugun,-6),bugun)))tarihler.push(due);dt.setDate(dt.getDate()+7);}
       }
+      // evrak sayfasının dönem hesabı varsa onu kullan (ödenmemiş geçmiş dönemler + gelecek son günler)
+      if(typeof evVadeler==='function'){try{const V=evVadeler(e,730);tarihler.length=0;V.gecmis.concat(V.gelecek).forEach(g=>tarihler.push(g));}catch(er){}}
       let gecikme=0;
       tarihler.forEach(due=>{let gun=due,not='';if(gun<bugun){gun=gfGunEkle(bugun,3+gecikme);gecikme++;not=' (dönemi geçti)';}ekle(gun,y*tutar,ad+not,'evrak','📄',gfKatMetrik(tip,kat,tutar),null,e.id);});
     });
@@ -12599,62 +12683,9 @@ async function yaklaşanUyariGoster(){
     }
   });
 
-  // ── 3. Evrak ödemeleri (Supabase, 3 durum) ──
+  // ── 3. Evrak ödemeleri (evrak sayfasının dönem hesabı) ──
   const evrakUyarilari=[];
-  try{
-    const [evraklar,evrakOdemeler]=await Promise.all([
-      sbFetch('sirket_evraklar?select=id,tur,alt_tur,kisi_id,odeme_dongusu,periyot_bas,periyot_bit&order=created_at.desc').catch(()=>[]),
-      sbFetch('sirket_evrak_odemeler?select=evrak_id,odeme_tarihi&order=odeme_tarihi.desc').catch(()=>[])
-    ]);
-    (evraklar||[]).forEach(e=>{
-      const dongu=e.odeme_dongusu||'Yok';
-      const bas=e.periyot_bas||'';
-      const bit=e.periyot_bit||'';
-      if(dongu==='Yok'||!bas||!bit)return;
-      const buDonemOdendi=(evrakOdemeler||[]).some(o=>{
-        if(String(o.evrak_id)!==String(e.id))return false;
-        const od=new Date(o.odeme_tarihi); od.setHours(0,0,0,0);
-        if(dongu==='Aylık') return od.getFullYear()===now.getFullYear()&&od.getMonth()===now.getMonth();
-        if(dongu==='Yıllık'||dongu==='Sezonluk') return od.getFullYear()===now.getFullYear();
-        return false;
-      });
-      if(buDonemOdendi)return;
-      // Dönem başı ve sonu
-      let ilk=null,son=null;
-      if(dongu==='Aylık'){
-        ilk=new Date(now.getFullYear(),now.getMonth(),parseInt(bas)||1);
-        son=new Date(now.getFullYear(),now.getMonth(),parseInt(bit)||15);
-      }else if(dongu==='Yıllık'||dongu==='Sezonluk'){
-        const [ba,bg]=(bas||'').split('-');
-        const [bia,big]=(bit||'').split('-');
-        ilk=new Date(now.getFullYear(),parseInt(ba||1)-1,parseInt(bg||1));
-        son=new Date(now.getFullYear(),parseInt(bia||1)-1,parseInt(big||1));
-      }else return;
-      ilk.setHours(0,0,0,0); son.setHours(0,0,0,0);
-      const sonMs=son.getTime(); const ilkMs=ilk.getTime(); const nowMs=now.getTime();
-      const sonStr=localDateObjStr(son);
-      const k=DB.kisiler.find(k2=>String(k2.id)===String(e.kisi_id));
-      const kAdi=k?.firmaUnvan||k?.isim||'';
-      const baslik=(kAdi?kAdi+' — ':'')+( e.tur||'Evrak')+(e.alt_tur?' ('+e.alt_tur+')':'');
-      if(nowMs>sonMs){
-        // GEÇMİŞ - kırmızı
-        evrakUyarilari.push({id:'e_'+e.id,tip:'evrak',baslik:baslik,
-          detay:'Son: '+sonStr,tutar:0,tarih:sonStr,
-          renk:'var(--red)',etiket:'Vadesi geçti!',gecmis:true});
-      }else if(nowMs===sonMs){
-        // SON GÜN - turuncu
-        evrakUyarilari.push({id:'e_'+e.id,tip:'evrak',baslik:baslik,
-          detay:'Bugün son ödeme günü!',tutar:0,tarih:sonStr,
-          renk:'#f97316',etiket:'Son gün!',gecmis:false});
-      }else if(nowMs>=ilkMs && nowMs<sonMs){
-        // DÖNEM İÇİ - sarı
-        const kalanGun=Math.round((sonMs-nowMs)/86400000);
-        evrakUyarilari.push({id:'e_'+e.id,tip:'evrak',baslik:baslik,
-          detay:kalanGun+' gün kaldı, son: '+sonStr,tutar:0,tarih:sonStr,
-          renk:'var(--amber)',etiket:kalanGun+' gün kaldı',gecmis:false});
-      }
-    });
-  }catch(e2){console.warn('Evrak bildirim:',e2);}
+  try{if(typeof evUyariListesi==='function')evUyariListesi().forEach(x=>evrakUyarilari.push(x));}catch(e2){console.warn('Evrak bildirim:',e2);}
 
   // ── Tüm uyarıları birleştir ──
   const islemGecmis=yaklasanIslemler.filter(i=>new Date(i.tarih)<now);
@@ -12693,7 +12724,7 @@ async function yaklaşanUyariGoster(){
       </div>`;
     }else{
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${r2};border-radius:var(--r-sm);cursor:pointer;gap:8px;"
-        onclick="closeModal('modal-yaklasan');${type==='kredi'?"goPage('banka')":"window.location.href='evrak.html'"}">
+        onclick="closeModal('modal-yaklasan');${type==='kredi'?"goPage('banka')":"goPage('evrak');setTimeout(()=>evDetayAc("+(data.evId||0)+"),250)"}">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:13px;">${data.baslik}</div>
           <div style="font-size:11px;color:var(--text2);">${data.tarih} · ${data.detay}</div>
@@ -15806,6 +15837,10 @@ function hrGoogleAdresler(k){
 // ============================================================ TAKVİM 2: ay/hafta/liste · günün özeti · hava · durum · tekrar · Google Takvim
 var TK={gorunum:'ay',ay:new Date().getMonth(),yil:new Date().getFullYear(),secili:null,haftaBas:null,form:null,eskiUyari:false,_idx:null};
 try{TK.gorunum=localStorage.getItem('tk_gorunum')||'ay';}catch(e){}
+TK.evrak=true;try{TK.evrak=localStorage.getItem('tk_evrak')!=='0';}catch(e){}
+function tkEvrakDegistir(){TK.evrak=!TK.evrak;try{localStorage.setItem('tk_evrak',TK.evrak?'1':'0');}catch(e){}tkCiz();}
+function tkEvOlay(bas,bit){if(!TK.evrak||typeof evTakvimOlaylari!=='function')return [];try{return evTakvimOlaylari(bas,bit);}catch(e){console.warn('takvim evrak',e);return [];}}
+function tkEvOgeHtml(x,kucuk,tarihli){const e=x.e;return `<div class="tk-ev${x.gecikmis?' gec':''}${kucuk?' kucuk':''}" onclick="evDetayAc(${e.id})"><div class="tk-ev-a"><div class="tk-oge-u"><span class="tk-oge-s">${tarihli?gfTrTarih(x.gun).slice(0,5)+' ':''}Son gün</span><span>📄 Evrak</span>${x.gecikmis?'<span class="tk-oge-d gec">⚠️ Gecikti</span>':''}</div><div class="tk-oge-b">${evIk(e)} ${_esc(evAd(e))}</div><div class="tk-oge-k">${_esc(x.p.ad)}${x.tutar?' · <b class="num">'+evPara(x.tutar)+'</b>':''}</div></div>${kucuk||USER_ROL==='goruntule'?'':`<div class="tk-oge-e"><button title="Öde" onclick="event.stopPropagation();evOdemeAc(${e.id},'${x.p.k}')">💳</button></div>`}</div>`;}
 var TK_TIP={'İş':{ik:'🛠️',renk:'var(--amber)',ad:'İş'},'Alacak':{ik:'📥',renk:'var(--green)',ad:'Alacak'},'Verecek':{ik:'📤',renk:'var(--red)',ad:'Verecek'},'Bilgi':{ik:'📝',renk:'var(--text3)',ad:'Not'}};
 var TK_DURUM={planlandi:{ad:'Planlandı',ik:'🕘'},yapildi:{ad:'Yapıldı',ik:'✅'},ertelendi:{ad:'Ertelendi',ik:'⏭'},iptal:{ad:'İptal',ik:'✖️'}};
 var TK_GUN=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
@@ -15861,7 +15896,7 @@ function tkUstCiz(){
   if(TK.gorunum==='ay')baslik=`${AYLAR[TK.ay]} <select onchange="TK.yil=parseInt(this.value);tkCiz()">${Array.from({length:9},(_,i)=>new Date().getFullYear()-5+i).map(y=>`<option${y===TK.yil?' selected':''}>${y}</option>`).join('')}</select>`;
   else if(TK.gorunum==='hafta'){const b=tkHaftaBas();const s=gfGunEkle(b,6);baslik=`${gfTrTarih(b).slice(0,5)} – ${gfTrTarih(s)}`;}
   else baslik='Gecikmiş ve yaklaşan';
-  el.innerHTML=`<div class="gf-seg">${chip('ay','Ay')}${chip('hafta','Hafta')}${chip('liste','Liste')}</div>
+  el.innerHTML=`<div class="gf-seg">${chip('ay','Ay')}${chip('hafta','Hafta')}${chip('liste','Liste')}</div><button class="isf-chip tk-ev-btn${TK.evrak?' on':''}" onclick="tkEvrakDegistir()" title="Evrak son ödeme günlerini göster / gizle">📄 Evraklar</button>
     ${TK.gorunum!=='liste'?`<div class="tk-nav"><button class="icon-btn" onclick="tkGit(-1)">❮</button><div class="tk-nav-b">${baslik}</div><button class="icon-btn" onclick="tkGit(1)">❯</button><button class="btn btn-secondary btn-sm" onclick="tkBugune()">Bugün</button></div>`:`<div class="tk-nav"><div class="tk-nav-b">${baslik}</div></div>`}`;
 }
 function tkGorunum(k){TK.gorunum=k;try{localStorage.setItem('tk_gorunum',k);}catch(e){}tkCiz();}
@@ -15875,6 +15910,7 @@ function tkGunSec(gs){TK.secili=gs;const [y,m]=gs.split('-').map(Number);if(TK.g
 function tkAyHtml(){
   const ilk=new Date(TK.yil,TK.ay,1);const ofs=(ilk.getDay()+6)%7;const bas=gfGunEkle(tkGs(ilk),-ofs);const bit=gfGunEkle(bas,41);
   const O=tkOlaylar(bas,bit);const byG={};O.forEach(o=>(byG[o.gun]=byG[o.gun]||[]).push(o));const IX=tkIslemIdx().m;const bugun=localToday();
+  const EVG={};tkEvOlay(bas,bit).forEach(x=>(EVG[x.gun]=EVG[x.gun]||[]).push(x));
   let h=`<div class="tk-ay-bas">${TK_GUN_KISA.map(x=>`<div>${x}</div>`).join('')}</div><div class="tk-ay">`;
   for(let i=0;i<42;i++){const gs=gfGunEkle(bas,i);const d=tkDt(gs);const dis=d.getMonth()!==TK.ay;const L=byG[gs]||[];const x=IX[gs];const hv=tkHava(gs);const tt=tkTatil(gs);
     const acik=L.filter(o=>o.durum==='planlandi');const gec=acik.some(tkGecikmis);const yap=L.filter(o=>o.durum==='yapildi').length;
@@ -15882,24 +15918,25 @@ function tkAyHtml(){
     const isr=[];
     if(acik.length)isr.push(`<span class="tk-p${gec?' gec':''}" title="${acik.length} açık kayıt">${acik.length}</span>`);
     else if(yap)isr.push(`<span class="tk-p ok" title="Hepsi yapıldı">✓</span>`);
+    const EVL=EVG[gs]||[];if(EVL.length)isr.push(`<span class="tk-evi${EVL.some(z=>z.gecikmis)?' gec':''}" title="${EVL.length} evrak son ödeme günü">📄${EVL.length>1?EVL.length:''}</span>`);
     if(x){if(x.gel)isr.push('<i class="tk-d gel" title="Gerçekleşen giriş"></i>');if(x.gelB)isr.push('<i class="tk-d gel bek" title="Beklenen tahsilat"></i>');if(x.gid)isr.push('<i class="tk-d gid" title="Gerçekleşen çıkış"></i>');if(x.gidB)isr.push('<i class="tk-d gid bek" title="Beklenen ödeme"></i>');}
     h+=`<div class="${cls}" onclick="tkGunSec('${gs}')" ondblclick="tkFormAc(null,'${gs}')">
       <div class="tk-g-u"><span class="tk-g-n">${d.getDate()}</span>${hv?`<span class="tk-g-h" title="${_esc(hv.ad)}${hv.yag!=null?' · yağış %'+hv.yag:''}">${hv.ik}<small>${Math.round(hv.max)}°</small></span>`:''}</div>
       ${tt?`<div class="tk-g-t" title="${_esc(tt.ad)}">${_esc(tt.ad.replace(' Bayramı',' B.').replace(/ \d\. gün/,''))}</div>`:''}
-      <div class="tk-g-o">${L.slice(0,3).map(o=>`<div class="tk-o-k d-${o.durum}${tkGecikmis(o)?' gec':''}" style="--r:${(TK_TIP[o.t.tip]||{}).renk||'var(--blue)'}">${o.durum==='yapildi'?'✓ ':''}${o.t.saat?o.t.saat.slice(0,5)+' ':''}${_esc(o.t.baslik||'')}</div>`).join('')}${L.length>3?`<div class="tk-o-k daha">+${L.length-3}</div>`:''}</div>
+      <div class="tk-g-o">${L.slice(0,3).map(o=>`<div class="tk-o-k d-${o.durum}${tkGecikmis(o)?' gec':''}" style="--r:${(TK_TIP[o.t.tip]||{}).renk||'var(--blue)'}">${o.durum==='yapildi'?'✓ ':''}${o.t.saat?o.t.saat.slice(0,5)+' ':''}${_esc(o.t.baslik||'')}</div>`).join('')}${L.length>3?`<div class="tk-o-k daha">+${L.length-3}</div>`:''}${EVL.slice(0,Math.max(1,3-Math.min(3,L.length))).map(z=>`<div class="tk-o-k ev${z.gecikmis?' gec':''}" title="${_esc(evAd(z.e))} · son ödeme günü">📄 ${_esc(z.e.alt_tur||z.e.tur||'Evrak')}</div>`).join('')}</div>
       <div class="tk-g-i">${isr.join('')}</div></div>`;}
-  h+='</div><div class="tk-lej"><span><span class="tk-p">2</span> açık ajanda</span><span><span class="tk-p gec">1</span> gecikmiş</span><span><i class="tk-d gel"></i>giriş</span><span><i class="tk-d gel bek"></i>beklenen tahsilat</span><span><i class="tk-d gid"></i>çıkış</span><span><i class="tk-d gid bek"></i>beklenen ödeme</span><span>Çift dokun: o güne ekle</span></div>';
+  h+='</div><div class="tk-lej"><span><span class="tk-p">2</span> açık ajanda</span><span><span class="tk-p gec">1</span> gecikmiş</span><span><i class="tk-d gel"></i>giriş</span><span><i class="tk-d gel bek"></i>beklenen tahsilat</span><span><i class="tk-d gid"></i>çıkış</span><span><i class="tk-d gid bek"></i>beklenen ödeme</span>'+(TK.evrak?'<span><span class="tk-evi">📄</span>evrak son günü</span>':'')+'<span>Çift dokun: o güne ekle</span></div>';
   return h;
 }
 // ---------- hafta görünümü
 function tkHaftaHtml(){
-  const bas=tkHaftaBas();const O=tkOlaylar(bas,gfGunEkle(bas,6));const IX=tkIslemIdx().m;const bugun=localToday();
+  const bas=tkHaftaBas();const O=tkOlaylar(bas,gfGunEkle(bas,6));const IX=tkIslemIdx().m;const bugun=localToday();const EVH=tkEvOlay(bas,gfGunEkle(bas,6));
   let h='<div class="tk-hafta">';
   for(let i=0;i<7;i++){const gs=gfGunEkle(bas,i);const L=O.filter(o=>o.gun===gs);const x=IX[gs];const hv=tkHava(gs);const tt=tkTatil(gs);
     h+=`<div class="tk-h-g${gs===bugun?' bugun':''}${gs===TK.secili?' secili':''}">
       <div class="tk-h-u" onclick="tkGunSec('${gs}')"><b>${TK_GUN[tkDt(gs).getDay()]}</b> <span>${gfTrTarih(gs).slice(0,5)}</span>${hv?`<span class="tk-g-h">${hv.ik}<small>${Math.round(hv.max)}°/${Math.round(hv.min)}°</small></span>`:''}</div>
       ${tt?`<div class="tk-g-t">${_esc(tt.ad)}</div>`:''}
-      ${L.map(o=>tkOgeHtml(o,true)).join('')||'<div class="tk-bos">—</div>'}
+      ${L.map(o=>tkOgeHtml(o,true)).join('')+EVH.filter(z=>z.gun===gs).map(z=>tkEvOgeHtml(z,true)).join('')||'<div class="tk-bos">—</div>'}
       ${x&&(x.gelB||x.gidB)?`<div class="tk-h-para">${x.gelB?`<span class="num" style="color:var(--green)">+${fmt(x.gelB)}</span>`:''}${x.gidB?`<span class="num" style="color:var(--red)">−${fmt(x.gidB)}</span>`:''} <small>beklenen</small></div>`:''}
       <button class="tk-h-ekle" onclick="tkFormAc(null,'${gs}')">＋</button></div>`;}
   return h+'</div>';
@@ -15910,7 +15947,8 @@ function tkListeHtml(){
   const gec=O.filter(tkGecikmis),bg=O.filter(o=>o.gun===bugun&&o.durum!=='iptal'),yr=O.filter(o=>o.gun===gfGunEkle(bugun,1)&&o.durum!=='iptal');
   const hs=O.filter(o=>o.gun>gfGunEkle(bugun,1)&&o.gun<=gfGunEkle(bugun,7)&&o.durum!=='iptal'),sonra=O.filter(o=>o.gun>gfGunEkle(bugun,7)&&o.durum!=='iptal');
   const blok=(ad,L,cls)=>L.length?`<div class="tk-l-b ${cls||''}">${ad} <small>(${L.length})</small></div>`+L.map(o=>tkOgeHtml(o,false,true)).join(''):'';
-  const h=blok('⚠️ Gecikmiş',gec,'gec')+blok('Bugün',bg)+blok('Yarın',yr)+blok('Bu hafta',hs)+blok('Sonraki 60 gün',sonra);
+  const EVL=tkEvOlay(gfGunEkle(bugun,-730),gfGunEkle(bugun,30));const evB=EVL.length?`<div class="tk-l-b">📄 Evrak ödemeleri <small>(gecikmiş + 30 gün · ${EVL.length})</small></div>`+EVL.map(z=>tkEvOgeHtml(z,false,true)).join(''):'';
+  const h=blok('⚠️ Gecikmiş',gec,'gec')+blok('Bugün',bg)+blok('Yarın',yr)+blok('Bu hafta',hs)+blok('Sonraki 60 gün',sonra)+evB;
   return h||'<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Gecikmiş ya da yaklaşan kayıt yok</div></div>';
 }
 // tek ajanda satırı (eylem butonlarıyla)
@@ -15938,6 +15976,7 @@ function tkGunHtml(gs){
   try{const r=hrRotaHtml(gs);if(r)h+=r;}catch(e){}
   h+=`<div class="tk-gp-b">Ajanda (${O.length})</div>`+(O.map(o=>tkOgeHtml(o)).join('')||'<div class="tk-bos">Bu güne ait ajanda yok.</div>');
   if(USER_ROL!=='goruntule')h+=`<button class="btn btn-secondary btn-full" style="margin-top:6px;" onclick="tkFormAc(null,'${gs}')">＋ Bu güne ekle</button>`;
+  const EVD=tkEvOlay(gs,gs);if(EVD.length)h+=`<div class="tk-gp-b">📄 Evrak son ödeme günü (${EVD.length})</div>`+EVD.map(z=>tkEvOgeHtml(z)).join('');
   const bek=x.islem.filter(i=>i.statu==='Bekliyor');const ger=x.islem.filter(i=>i.statu!=='Bekliyor');
   const sat=(i)=>{const k=getKisi(i.kisiId);const y=kasaYon(i);return `<div class="tk-is" onclick="showIslemDetay(${i.id})"><span>${_esc(k?.isim||i.kat||i.tip)}<small> · ${_esc(i.kat||i.tip)}</small></span><b class="num" style="color:${y>0?'var(--green)':y<0?'var(--red)':'var(--text3)'}">${y>0?'+':y<0?'−':''}${fmt(i.tutar)}</b></div>`;};
   if(bek.length)h+=`<div class="tk-gp-b">Vadesi bu gün olan (${bek.length})</div>`+bek.map(sat).join('');
@@ -15968,6 +16007,7 @@ function tkPanelVeri(){
     const k=getKisi(i.kisiId);(y>0?al:ver).push({gun:g,tutar:t,ad:k?.isim||i.kat||i.tip,alt:(i.altKat&&i.altKat!=='-'?i.altKat:i.kat)||'',kaynak:'Vadeli işlem',islemId:i.id});});
   gelecek.filter(o=>o.durum==='planlandi'&&(o.t.tip==='Alacak'||o.t.tip==='Verecek')).forEach(o=>{const k=o.t.kisiId?getKisi(o.t.kisiId):null;
     (o.t.tip==='Alacak'?al:ver).push({gun:o.gun,tutar:o.t.tutar||0,ad:k?k.isim:(o.t.baslik||''),alt:k?(o.t.baslik||''):'',kaynak:'Ajanda',tkId:o.t.id});});
+  tkEvOlay(bg,gfGunEkle(bg,365)).forEach(z=>{(z.gider?ver:al).push({gun:z.gun,tutar:z.tutar||0,ad:evAd(z.e),alt:z.p.ad,kaynak:'Evrak',evId:z.e.id});});
   const sirala=L=>L.sort((a,b)=>a.gun.localeCompare(b.gun));sirala(al);sirala(ver);
   const top=L=>L.reduce((s,x)=>s+(x.tutar||0),0);
   return {bg,gecmis,gecAcik:gecmis.filter(tkGecikmis),yaklasan,gelecek,al,ver,alTop:top(al),verTop:top(ver)};
@@ -15998,7 +16038,7 @@ function tkPanelListeCiz(){
     h+=`<div class="tkl-ozet"><span>${L.length} kayıt · bugünden itibaren</span><b class="num" style="color:${renk}">${top?isr+fmt(top):'—'}</b></div>`;
     if(!L.length)h+='<div class="tk-bos">Kayıt yok.</div>';
     let ay='';L.slice(0,SINIR).forEach(x=>{const a=x.gun.slice(0,7);if(a!==ay){ay=a;const at=L.filter(y=>y.gun.slice(0,7)===a).reduce((s,y)=>s+(y.tutar||0),0);h+=`<div class="tk-gp-b">${AYLAR[parseInt(a.slice(5))-1]} ${a.slice(0,4)} <small class="num" style="color:${renk}">${at?isr+fmt(at):''}</small></div>`;}
-      h+=`<div class="tk-is" onclick="${x.islemId?`showIslemDetay(${x.islemId})`:`tkFormAc(${x.tkId},'${x.gun}')`}"><span><b class="tkl-g">${gfTrTarih(x.gun).slice(0,5)}</b> ${_esc(x.ad)}<small> · ${x.kaynak==='Ajanda'?'📅 ajanda':'💳 vadeli'}${x.alt?' · '+_esc(String(x.alt).slice(0,40)):''}</small></span><b class="num" style="color:${x.tutar?renk:'var(--text3)'}">${x.tutar?isr+fmt(x.tutar):'tutar yok'}</b></div>`;});
+      h+=`<div class="tk-is" onclick="${x.islemId?`showIslemDetay(${x.islemId})`:x.evId?`evDetayAc(${x.evId})`:`tkFormAc(${x.tkId},'${x.gun}')`}"><span><b class="tkl-g">${gfTrTarih(x.gun).slice(0,5)}</b> ${_esc(x.ad)}<small> · ${x.kaynak==='Ajanda'?'📅 ajanda':x.kaynak==='Evrak'?'📄 evrak':'💳 vadeli'}${x.alt?' · '+_esc(String(x.alt).slice(0,40)):''}</small></span><b class="num" style="color:${x.tutar?renk:'var(--text3)'}">${x.tutar?isr+fmt(x.tutar):'tutar yok'}</b></div>`;});
   }else{
     const L=tur==='gecmis'?P.gecmis:tur==='yaklasan'?P.yaklasan:P.gelecek;
     const acik=L.filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi').length;
@@ -16288,6 +16328,483 @@ function perfScriptYukle(url){if(_perfBetik[url])return _perfBetik[url];
   return _perfBetik[url];}
 // grafik kütüphanesi sayfayı bekletmeden arka planda iner
 try{perfScriptYukle('https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js').catch(()=>{});}catch(e){}
+
+// ============================================================ EVRAK TAKİBİ (ERP içinde) — dönem tabanlı
+var EV={filtre:'hepsi',ara:'',form:null,od:null,secili:null,kur:{},eskiUyari:false,_c:null};
+var EV_TUR=['Fatura','Kira','Aidat','Sigorta','Vergi & Harçlar','Araç','Sözleşme','Personel','Diğer'];
+var EV_ALT={'Fatura':['Elektrik','Su','İnternet','Doğalgaz','Telefon'],'Araç':['Muayene','Ruhsat','Trafik Sigortası','Kasko']};
+var EV_IK={'Fatura':'🧾','Kira':'🏠','Aidat':'🏢','Sigorta':'🛡️','Vergi & Harçlar':'🏛️','Araç':'🚗','Sözleşme':'📑','Personel':'👷','Diğer':'📄'};
+var EV_ALT_IK={'Elektrik':'⚡','Su':'💧','İnternet':'🌐','Doğalgaz':'🔥','Telefon':'📞','Muayene':'🔧','Ruhsat':'🪪','Trafik Sigortası':'🛡️','Kasko':'🛡️'};
+var EV_PB={TRY:'₺',EUR:'€',USD:'$',GBP:'£'};
+var EV_HG=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+var EV_RENK={kirmizi:'var(--red)',sari:'var(--amber)',yesil:'var(--green)',pasif:'var(--text3)'};
+var EV_DONGU=['Yok','Haftalık','Aylık','Sezonluk','Yıllık'];
+
+// ---------- yardımcılar
+function evPad(n){return String(n).padStart(2,'0');}
+function evGun(y,m,d){const dt=new Date(y,m,1);const son=new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate();return localDateObjStr(new Date(dt.getFullYear(),dt.getMonth(),Math.min(Math.max(1,d||1),son)));}
+function evSayi(v){if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;const s=String(v).trim();if(!s)return null;
+  const n=/,/.test(s)?parseFloat(s.replace(/\./g,'').replace(',','.')):parseFloat(s);return isFinite(n)?n:null;}
+function evPara(n,pb){if(n==null||!isFinite(n))return '—';const k=Math.abs(n)%1>0.004;return Math.abs(n).toLocaleString('tr-TR',{minimumFractionDigits:k?2:0,maximumFractionDigits:2})+' '+(EV_PB[pb||'TRY']||pb);}
+function evTarih(gs){return gs?gfTrTarih(gs):'—';}
+function evKisa(gs){return gs?gfTrTarih(gs).slice(0,5):'—';}
+function evGunFark(a,b){return Math.round((tkDt(b)-tkDt(a))/864e5);}
+function evAd(e){
+  const temel=(e.tur==='Fatura'||e.tur==='Araç')&&e.alt_tur?e.tur+' · '+e.alt_tur:(e.tur||'Evrak');
+  const k=e.kisi_id?getKisi(e.kisi_id):null;const kAd=k?(k.firmaUnvan||k.isim||''):'';
+  return kAd?kAd+' — '+temel:temel;
+}
+function evIk(e){return (e.alt_tur&&EV_ALT_IK[e.alt_tur])||EV_IK[e.tur]||'📄';}
+function evAktif(e){return e.aktif!==false;}
+function evGider(e){return (e.erp_tip||'Gider')!=='Gelir';}
+function evOdemeNorm(o){
+  const tutar=parseFloat(o.tutar)||0;const pb=o.para_birimi||'TRY';const kur=o.kur!=null?parseFloat(o.kur):null;
+  const tl=o.tl_tutar!=null?parseFloat(o.tl_tutar):(pb==='TRY'?tutar:(kur?tutar*kur:null));
+  return {id:o.id,evrakId:o.evrak_id,tarih:String(o.odeme_tarihi||'').slice(0,10),tutar,pb,kur,tl,not:o.notlar||'',donemAnahtar:o.donem_anahtar||null,islemId:o.islem_id||null,yontem:o.odeme_yontemi||null,ham:o};
+}
+function evOdemeleri(id){return (DB.evrakOdemeler||[]).filter(o=>String(o.evrakId)===String(id)).sort((a,b)=>a.tarih.localeCompare(b.tarih));}
+function evEkleri(tip,id){return (DB.evrakEkler||[]).filter(x=>x.kayit_tip===tip&&String(x.kayit_id)===String(id));}
+function evBul(id){return (DB.evraklar||[]).find(e=>String(e.id)===String(id));}
+
+// ---------- dönemler
+// Her dönem: {k: anahtar, ad, bas: ödeme penceresinin başı, son: son ödeme günü}
+function evDonemler(e,aBas,aBit){
+  const d=e.odeme_dongusu||'Yok';const L=[];const pb=String(e.periyot_bas||''),pt=String(e.periyot_bit||'');
+  if(d==='Aylık'){
+    const b=parseInt(pb)||1,s=parseInt(pt)||b;const [y0,m0]=aBas.split('-').map(Number);const [y1,m1]=aBit.split('-').map(Number);
+    for(let i=(y0*12+m0-1)-2;i<=(y1*12+m1-1)+1;i++){const y=Math.floor(i/12),m=i%12;
+      const bas=evGun(y,m,b),son=s>=b?evGun(y,m,s):evGun(y,m+1,s);L.push({k:y+'-'+evPad(m+1),ad:AYLAR[m]+' '+y,bas,son});}
+  }else if(d==='Haftalık'){
+    const b=Math.max(1,EV_HG.indexOf(pb)+1)||1,s=Math.max(1,EV_HG.indexOf(pt)+1)||7;
+    let pz=tkDt(aBas);pz.setDate(pz.getDate()-((pz.getDay()+6)%7)-14);const bitDt=tkDt(gfGunEkle(aBit,14));
+    for(;pz<=bitDt;pz.setDate(pz.getDate()+7)){const p=localDateObjStr(pz);const bas=gfGunEkle(p,b-1),son=gfGunEkle(p,s-1+(s<b?7:0));L.push({k:'H'+p,ad:p.slice(8,10)+' '+AYLAR[parseInt(p.slice(5,7))-1].slice(0,3)+' haftası',bas,son});}
+  }else if(d==='Yıllık'||d==='Sezonluk'){
+    const [bm,bd]=pb.split('-').map(Number),[sm,sd]=pt.split('-').map(Number);const ters=((sm||1)*100+(sd||1))<((bm||1)*100+(bd||1));
+    for(let y=parseInt(aBas)-1;y<=parseInt(aBit)+1;y++){const bas=evGun(y,(bm||1)-1,bd||1),son=evGun(y+(ters?1:0),(sm||1)-1,sd||1);L.push({k:String(y),ad:(d==='Sezonluk'?y+' sezonu':String(y)),bas,son});}
+  }else if(e.bitis_tarihi){
+    const bt=String(e.bitis_tarihi).slice(0,10);L.push({k:'T'+bt,ad:'Bitiş '+evTarih(bt),bas:gfGunEkle(bt,-30),son:bt,tek:true});
+  }
+  return L.filter(p=>p.son>=aBas&&p.bas<=aBit);
+}
+var EV_TOL={'Aylık':25,'Haftalık':4,'Yıllık':150,'Sezonluk':150,'Yok':400};
+// Takip başlangıcı: kayıtta varsa o; yoksa (eski evraklar) eklenme/ilk ödeme tarihi, ama en fazla 90 gün geriye —
+// böylece eski sistemde her ay kaydedilmemiş ödemeler bir anda "gecikmiş" yağmuruna dönüşmez.
+function evTakipBas(e){
+  if(e.takip_baslangic)return String(e.takip_baslangic).slice(0,10);
+  const c=e.created_at?localDateStr(e.created_at):localToday();const O=evOdemeleri(e.id);const ilk=O.length&&O[0].tarih<c?O[0].tarih:c;
+  const sinir=gfGunEkle(localToday(),-90);return ilk>sinir?ilk:sinir;
+}
+// Ödemeleri dönemlere dağıt, durumu hesapla
+function evDurum(e){
+  const C=EV._c||(EV._c={});const anah=(DB._evVer||0)+'|'+(DB.islemler||[]).length+'|'+localToday();if(C._a!==anah){for(const k in C)delete C[k];C._a=anah;}
+  if(C[e.id])return C[e.id];
+  const bg=localToday();const d=e.odeme_dongusu||'Yok';const O=evOdemeleri(e.id);const takip=evTakipBas(e);
+  const ilkOd=O.length?O[0].tarih:bg;const aBas=ilkOd<takip?ilkOd:takip;const aBit=gfGunEkle(bg,d==='Yıllık'||d==='Sezonluk'?400:d==='Yok'?3650:62);
+  const D=evDonemler(e,aBas,aBit);const odeme={};D.forEach(p=>odeme[p.k]=[]);
+  const serbest=[];
+  O.forEach(o=>{if(o.donemAnahtar&&odeme[o.donemAnahtar]){odeme[o.donemAnahtar].push(o);}else serbest.push(o);});
+  const tol=EV_TOL[d]||25;
+  serbest.forEach(o=>{ // eski kayıtlar: en eski ödenmemiş ve başlamış (ya da başlamak üzere) döneme
+    const p=D.find(p=>!odeme[p.k].length&&o.tarih>=gfGunEkle(p.bas,-tol)&&(p.son>=o.tarih||o.tarih<=gfGunEkle(p.son,tol*3)));
+    if(p)odeme[p.k].push(o);else{const y=D.filter(p=>o.tarih>=gfGunEkle(p.bas,-tol)).pop();if(y)odeme[y.k].push(o);}
+  });
+  const sayilir=p=>p.son>=takip;
+  const gecikmis=D.filter(p=>sayilir(p)&&p.son<bg&&!odeme[p.k].length);
+  const simdiki=D.find(p=>p.bas<=bg&&bg<=p.son)||null;
+  const simdikiOdendi=simdiki?!!odeme[simdiki.k].length:false;
+  const sonraki=D.find(p=>p.son>=bg&&!odeme[p.k].length)||null;
+  let renk='yesil',metin='',alt='';
+  if(!evAktif(e)){renk='pasif';metin='Pasif (takip edilmiyor)';}
+  else if(d==='Yok'&&!e.bitis_tarihi){metin='Tek seferlik';}
+  else if(gecikmis.length){renk='kirmizi';metin=gecikmis.length===1?gecikmis[0].ad+' ödenmedi':gecikmis.length+' dönem ödenmedi';alt='Son ödeme günü geçti · '+evTarih(gecikmis[0].son);}
+  else if(simdiki&&!simdikiOdendi&&sayilir(simdiki)){renk='sari';const kg=evGunFark(bg,simdiki.son);metin=kg===0?'Bugün son ödeme günü!':'Dönem içi · '+kg+' gün kaldı';alt=simdiki.ad+' · son gün '+evTarih(simdiki.son);}
+  else{metin=simdikiOdendi?(d==='Yok'?'Ödendi / yenilendi':'Bu dönem ödendi'):'Dönem dışı';alt=sonraki?('Sonraki: '+sonraki.ad+' · '+evKisa(sonraki.bas)+' – '+evKisa(sonraki.son)):'';}
+  const R={e,donemler:D,odeme,gecikmis,simdiki,simdikiOdendi,sonraki,renk,metin,alt,takip,O};
+  C[e.id]=R;return R;
+}
+// Beklenen tutar (TL): sabit ya da son 3 ödemenin ortalaması
+function evBeklenen(e){
+  if(e.tutar_tipi==='sabit'&&parseFloat(e.beklenen_tutar)>0)return parseFloat(e.beklenen_tutar);
+  const L=evOdemeleri(e.id).filter(o=>o.tl!=null&&o.tl>0).slice(-3);if(!L.length)return parseFloat(e.beklenen_tutar)>0?parseFloat(e.beklenen_tutar):null;
+  return L.reduce((s,o)=>s+o.tl,0)/L.length;
+}
+function evAylikKarsilik(e){const b=evBeklenen(e);if(!b)return 0;const d=e.odeme_dongusu||'Yok';return d==='Aylık'?b:d==='Haftalık'?b*52/12:(d==='Yıllık'||d==='Sezonluk')?b/12:0;}
+function evPeriyotMetin(e){
+  const d=e.odeme_dongusu||'Yok',b=String(e.periyot_bas||''),s=String(e.periyot_bit||'');
+  if(d==='Aylık')return 'Her ayın '+b+'.–'+s+'. günü'+((parseInt(s)<parseInt(b))?' (ertesi ay)':'');
+  if(d==='Haftalık')return 'Her hafta '+b+' – '+s;
+  if(d==='Yıllık'||d==='Sezonluk'){const f=x=>{const [m,g]=x.split('-').map(Number);return (g||1)+' '+(AYLAR[(m||1)-1]||'');};return (d==='Sezonluk'?'Sezon: ':'Her yıl ')+f(b)+' – '+f(s);}
+  return e.bitis_tarihi?'Bitiş tarihi '+evTarih(String(e.bitis_tarihi).slice(0,10)):'Tek seferlik';
+}
+// Takvim / tahmin / uyarı için: ödenmemiş dönemler
+function evVadeler(e,gun){const R=evDurum(e);if(!evAktif(e))return {gecmis:[],gelecek:[]};const bg=localToday(),sinir=gfGunEkle(bg,gun||365);
+  return {gecmis:R.gecikmis.map(p=>p.son),gelecek:R.donemler.filter(p=>p.son>=bg&&p.son<=sinir&&!R.odeme[p.k].length&&p.son>=R.takip).map(p=>p.son)};}
+function evTakvimOlaylari(bas,bit){
+  const L=[];(DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e);
+    R.donemler.forEach(p=>{if(p.son<bas||p.son>bit||R.odeme[p.k].length||p.son<R.takip)return;L.push({e,p,gun:p.son,gecikmis:p.son<localToday(),tutar:bt,gider:evGider(e)});});});
+  return L.sort((a,b)=>a.gun.localeCompare(b.gun));
+}
+// Açılış uyarısı ("yaklaşan" penceresi) için
+function evUyariListesi(){
+  const bg=localToday();const L=[];
+  (DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e)||0;const ad=evIk(e)+' '+evAd(e);
+    if(R.gecikmis.length){L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:R.gecikmis.length+' dönem · '+R.gecikmis.map(p=>p.ad).slice(0,3).join(', '),tutar:bt*R.gecikmis.length,tarih:evTarih(R.gecikmis[0].son),renk:'var(--red)',etiket:'Gecikti!',gecmis:true});return;}
+    const p=R.simdiki;if(p&&!R.simdikiOdendi&&p.son>=R.takip){const kg=evGunFark(bg,p.son);
+      L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:kg===0?'Bugün son ödeme günü!':kg+' gün kaldı · '+p.ad,tutar:bt,tarih:evTarih(p.son),renk:kg===0?'#f97316':'var(--amber)',etiket:kg===0?'Son gün!':kg+' gün kaldı',gecmis:false});}});
+  return L;
+}
+
+// ---------- sayfa
+function evCiz(){
+  const sayfa=document.getElementById('page-evrak');if(!sayfa)return;
+  evOzetCiz();evFiltreCiz();evListeCiz();
+}
+function evOzetVeri(){
+  const bg=localToday(),ay=bg.slice(0,7);let gecT=0,gecN=0,buT=0,buN=0,odT=0,odN=0,sabit=0,tahminsiz=0;
+  (DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e);if(!evGider(e))return;
+    gecN+=R.gecikmis.length;gecT+=(bt||0)*R.gecikmis.length;if(R.gecikmis.length&&!bt)tahminsiz++;
+    R.donemler.forEach(p=>{if(p.son.slice(0,7)===ay&&p.son>=bg&&!R.odeme[p.k].length&&p.son>=R.takip){buN++;buT+=bt||0;}});
+    sabit+=evAylikKarsilik(e);});
+  (DB.evrakOdemeler||[]).forEach(o=>{const e=evBul(o.evrakId);if(!e||!evGider(e))return;if(o.tarih.slice(0,7)===ay){odN++;odT+=o.tl||0;}});
+  return {gecT,gecN,buT,buN,odT,odN,sabit,tahminsiz};
+}
+function evOzetCiz(){
+  const el=document.getElementById('ev-ozet');if(!el)return;const V=evOzetVeri();const d=new Date();
+  const kart=(cls,lbl,deger,alt,fn)=>`<div class="${cls}"${fn?` onclick="${fn}"`:''}><span>${lbl}</span><b class="num">${deger}</b><small>${alt}</small></div>`;
+  el.innerHTML=`<div class="tk-bugun ev-ozet"><div class="tk-bg-u"><div><b>Evraklar</b> · ${AYLAR[d.getMonth()]} ${d.getFullYear()}</div><div class="gf-ipucu" style="margin:0">${(DB.evraklar||[]).length} evrak</div></div>
+    <div class="tk-bg-k ev-k">
+      ${kart('aj'+(V.gecN?' kirmizi':''),'Gecikmiş',V.gecN?'−'+fmt(V.gecT):'—',V.gecN+' dönem'+(V.tahminsiz?' · '+V.tahminsiz+' tutarsız':''),"evFiltre('kirmizi')")}
+      ${kart('aj','Bu ay ödenecek',V.buN?'−'+fmt(V.buT):'—',V.buN+' ödeme kaldı',"evFiltre('sari')")}
+      ${kart('aj','Bu ay ödenen',V.odN?fmt(V.odT):'—',V.odN+' ödeme','')}
+      ${kart('pa','Aylık sabit gider',V.sabit?'−'+fmt(V.sabit):'—','yıllıklar aya bölünerek','')}
+    </div></div>`;
+  el.querySelectorAll('.kirmizi b').forEach(b=>b.style.color='var(--red)');
+}
+function evFiltre(f){EV.filtre=f;evFiltreCiz();evListeCiz();}
+function evFiltreCiz(){
+  const el=document.getElementById('ev-filtre');if(!el)return;const say={kirmizi:0,sari:0,yesil:0,pasif:0};
+  (DB.evraklar||[]).forEach(e=>{say[evDurum(e).renk]++;});
+  const b=(k,l,n)=>`<button class="isf-chip${EV.filtre===k?' on':''}" onclick="evFiltre('${k}')">${l}${n!=null?` <small>${n}</small>`:''}</button>`;
+  el.innerHTML=b('hepsi','Tümü',(DB.evraklar||[]).length)+b('kirmizi','🔴 Gecikmiş',say.kirmizi)+b('sari','🟡 Dönem içi',say.sari)+b('yesil','🟢 Dönem dışı',say.yesil)+(say.pasif?b('pasif','⚪ Pasif',say.pasif):'');
+}
+function evListeCiz(){
+  const el=document.getElementById('ev-liste');if(!el)return;
+  if(DB.evrakTablo===false){el.innerHTML='<div class="gf-risk orta">Evrak tabloları okunamadı. İnternet bağlantısını kontrol edin.</div>';return;}
+  const q=trNorm(EV.ara||'').trim();const sira={kirmizi:0,sari:1,yesil:2,pasif:3};
+  let L=(DB.evraklar||[]).map(e=>evDurum(e));
+  if(EV.filtre!=='hepsi')L=L.filter(R=>R.renk===EV.filtre);
+  if(q)L=L.filter(R=>{const e=R.e;const k=e.kisi_id?getKisi(e.kisi_id):null;return trNorm([evAd(e),e.abone_no,e.tesisat_no,e.referans_no,e.aciklama,k&&k.tel,e.tur,e.alt_tur].filter(Boolean).join(' ')).includes(q);});
+  L.sort((a,b)=>(sira[a.renk]-sira[b.renk])||String((a.gecikmis[0]||a.sonraki||{}).son||'9999').localeCompare(String((b.gecikmis[0]||b.sonraki||{}).son||'9999'))||evAd(a.e).localeCompare(evAd(b.e),'tr'));
+  if(!L.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-title">${(DB.evraklar||[]).length?'Bu filtrede evrak yok':'Henüz evrak yok'}</div>${(DB.evraklar||[]).length?'':'<div class="gf-ipucu">Üstteki "＋ Yeni Evrak" ile fatura, kira, sigorta gibi düzenli ödemelerini ekle.</div>'}</div>`;return;}
+  el.innerHTML='<div class="ev-izgara">'+L.map(evKartHtml).join('')+'</div>';
+}
+function evKartHtml(R){
+  const e=R.e;const bt=evBeklenen(e);const son=R.O[R.O.length-1];const ro=USER_ROL==='goruntule';
+  const bilgi=[e.abone_no?'Abone '+_esc(e.abone_no):'',e.referans_no?_esc(e.referans_no):'',e.otomatik_odeme?'🔁 Otomatik ödeme':''].filter(Boolean).join(' · ');
+  return `<div class="ev-kart r-${R.renk}" onclick="evDetayAc(${e.id})">
+    <div class="ev-kart-a">
+      <div class="ev-kart-b">${evIk(e)} ${_esc(evAd(e))}</div>
+      <div class="ev-kart-d r-${R.renk}">${_esc(R.metin)}</div>
+      ${R.alt?`<div class="ev-kart-k">${_esc(R.alt)}</div>`:''}
+      <div class="ev-kart-k">${_esc(evPeriyotMetin(e))}${son?' · son ödeme '+evKisa(son.tarih)+' '+evPara(son.tutar,son.pb):''}</div>
+      ${bilgi?`<div class="ev-kart-k">${bilgi}</div>`:''}
+    </div>
+    <div class="ev-kart-s">
+      <div class="ev-kart-t num">${bt?evPara(bt):'—'}<small>${e.tutar_tipi==='sabit'&&bt?'sabit':bt?'ortalama':'tutar yok'}</small></div>
+      ${ro||R.renk==='pasif'||((e.odeme_dongusu||'Yok')==='Yok'&&!e.bitis_tarihi&&R.O.length)?'':`<button class="ev-ode" onclick="event.stopPropagation();evOdemeAc(${e.id})">Öde</button>`}
+    </div></div>`;
+}
+
+// ---------- detay
+function evDetayAc(id){
+  const e=evBul(id);if(!e){showToast('Evrak bulunamadı','red');return;}EV.secili=e.id;
+  let m=document.getElementById('modal-ev-detay');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-detay';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evd-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-detay')">✕</button></div><div class="modal-body" id="evd-body"></div><div class="modal-foot" id="evd-foot"></div></div>`;document.body.appendChild(m);}
+  evDetayCiz();openModal('modal-ev-detay');
+}
+function evDetayCiz(){
+  const e=evBul(EV.secili);const b=document.getElementById('evd-body');if(!e||!b)return;const R=evDurum(e);const bt=evBeklenen(e);const ro=USER_ROL==='goruntule';
+  document.getElementById('evd-baslik').textContent=evIk(e)+' '+evAd(e);
+  const k=e.kisi_id?getKisi(e.kisi_id):null;
+  const satir=(l,v,kop)=>v?`<div class="gf-satir"><span>${l}</span><b${kop?` class="ev-kop" title="Kopyala" data-v="${_esc(String(v))}" onclick="evKopyala(this.dataset.v)"`:''}>${_esc(String(v))}${kop?' ⧉':''}</b></div>`:'';
+  let h=`<div class="ev-durum r-${R.renk}"><b>${_esc(R.metin)}</b>${R.alt?`<div>${_esc(R.alt)}</div>`:''}</div>`;
+  if(R.gecikmis.length&&!ro){
+    h+=`<div class="tk-gp-b">Ödenmemiş dönemler (${R.gecikmis.length})</div>`+R.gecikmis.map(p=>`<div class="tk-is"><span>${_esc(p.ad)}<small> · son ${evTarih(p.son)} · ${evGunFark(p.son,localToday())} gün geçti</small></span><button class="ev-ode kucuk" onclick="evOdemeAc(${e.id},'${p.k}')">Öde</button></div>`).join('')+
+      `<div class="gf-ipucu">Bu dönemleri ödediysen ama kaydetmediysen: <a href="#" onclick="event.preventDefault();evGecmisKapat(${e.id})">bugüne kadarki dönemleri takipten çıkar</a>.</div>`;
+  }
+  h+=`<div class="tk-gp-b">Bilgiler</div>`+satir('Firma / kurum',k?(k.firmaUnvan||k.isim):'')+(k&&k.tel?`<div class="gf-satir"><span>Telefon</span><a href="tel:${_esc(k.tel)}">📞 ${_esc(k.tel)}</a></div>`:'')+
+    satir('Ödeme düzeni',evPeriyotMetin(e))+satir('Beklenen tutar',bt?evPara(bt)+(e.tutar_tipi==='sabit'?' (sabit)':' (son ödemelerin ortalaması)'):'')+
+    satir('Abone no',e.abone_no,true)+satir('Tesisat no',e.tesisat_no,true)+satir('Plaka / poliçe / referans',e.referans_no,true)+
+    satir('Otomatik ödeme',e.otomatik_odeme?'Evet (talimatlı)':'')+satir('ERP kategorisi',(e.erp_tip||'Gider')+' · '+(e.erp_kapsam||'İşletme'))+satir('Not',e.aciklama);
+  h+=evGrafikHtml(e);
+  const O=R.O.slice().reverse();const islemVar=o=>!!evIslemBul(o);
+  const donemAd={};R.donemler.forEach(p=>{(R.odeme[p.k]||[]).forEach(o=>donemAd[o.id]=p.ad);});
+  h+=`<div class="tk-gp-b">Ödeme geçmişi (${O.length}) <small class="num">${O.length?'toplam '+fmt(O.reduce((s,o)=>s+(o.tl||0),0)):''}</small></div>`+
+    (O.map(o=>{const ek=evEkleri('evrak_odeme',o.id).length;return `<div class="tk-is" onclick="${ro?'':`evOdemeAc(${e.id},null,${o.id})`}"><span><b class="tkl-g">${evTarih(o.tarih)}</b> ${_esc(donemAd[o.id]||'—')}<small>${islemVar(o)?' · 🔗 ERP':''}${ek?' · 📎'+ek:''}${o.not?' · '+_esc(o.not.slice(0,40)):''}</small></span><b class="num">${evPara(o.tutar,o.pb)}${o.pb!=='TRY'&&o.tl?` <small>≈ ${fmt(o.tl)}</small>`:''}</b></div>`;}).join('')||'<div class="tk-bos">Henüz ödeme kaydı yok.</div>');
+  const belge=evEkleri('evrak',e.id);
+  h+=`<div class="tk-gp-b">Belgeler (${belge.length})${ro?'':` <button class="isf-chip" onclick="evBelgeEkle(${e.id})">＋ Belge ekle</button>`}</div>`+
+    (belge.map(x=>evEkHtml(x,!ro)).join('')||'<div class="tk-bos">Ruhsat, poliçe, sözleşme gibi belgeleri buraya ekleyebilirsin.</div>');
+  b.innerHTML=h;
+  document.getElementById('evd-foot').innerHTML=ro?`<button class="btn btn-secondary btn-full" onclick="closeModal('modal-ev-detay')">Kapat</button>`:
+    `<button class="btn btn-danger" onclick="evSil(${e.id})">🗑</button><button class="btn btn-secondary" style="flex:1" onclick="evFormAc(${e.id})">✏️ Düzenle</button>${R.renk==='pasif'?'':`<button class="btn btn-primary" style="flex:2" onclick="evOdemeAc(${e.id})">💳 Öde</button>`}`;
+}
+function evEkHtml(x,sil){const img=/\.(jpe?g|png|gif|webp|heic)$/i.test(x.dosya_adi||'')||/^image\//.test(x.dosya_tipi||'');
+  return `<div class="ev-ek"><a href="${_esc(x.url)}" target="_blank" rel="noopener">${img?`<img src="${_esc(x.url)}" loading="lazy" alt="">`:'<span>📄</span>'}<span>${_esc(x.dosya_adi||'Dosya')}</span></a>${sil?`<button onclick="evEkSil(${x.id})" title="Sil">✕</button>`:''}</div>`;}
+function evKopyala(v){try{navigator.clipboard.writeText(v);showToast('Kopyalandı','green');}catch(e){}}
+// geçmiş ödemeler grafiği (aylık düzende son 12 ay + geçen yılın aynı ayları; yıllıkta yıllar)
+function evGrafikHtml(e){
+  const O=evOdemeleri(e.id).filter(o=>o.tl>0);if(O.length<2)return '';
+  const d=e.odeme_dongusu||'Yok';let B=[];
+  if(d==='Yıllık'||d==='Sezonluk'||d==='Yok'){const yil=new Date().getFullYear();for(let y=yil-5;y<=yil;y++)B.push({ad:String(y),v:O.filter(o=>o.tarih.startsWith(String(y))).reduce((s,o)=>s+o.tl,0),g:null});}
+  else{const t=new Date();for(let i=11;i>=0;i--){const dt=new Date(t.getFullYear(),t.getMonth()-i,1);const a=dt.getFullYear()+'-'+evPad(dt.getMonth()+1);const ga=(dt.getFullYear()-1)+'-'+evPad(dt.getMonth()+1);
+    B.push({ad:AYLAR[dt.getMonth()].slice(0,3),v:O.filter(o=>o.tarih.startsWith(a)).reduce((s,o)=>s+o.tl,0),g:O.filter(o=>o.tarih.startsWith(ga)).reduce((s,o)=>s+o.tl,0)});}}
+  const mx=Math.max(1,...B.map(x=>Math.max(x.v,x.g||0)));const W=320,H=120,n=B.length,bw=W/n;
+  const gy=B.some(x=>x.g>0);
+  const bars=B.map((x,i)=>{const h=x.v/mx*(H-22),gh=(x.g||0)/mx*(H-22);return `${gy&&x.g?`<rect x="${(i*bw+bw*0.18).toFixed(1)}" y="${(H-16-gh).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${gh.toFixed(1)}" rx="2" style="fill:var(--text3);opacity:.3"><title>Geçen yıl ${fmt(x.g)}</title></rect>`:''}<rect x="${(i*bw+bw*0.3).toFixed(1)}" y="${(H-16-h).toFixed(1)}" width="${(bw*0.4).toFixed(1)}" height="${h.toFixed(1)}" rx="2" style="fill:var(--amber)"><title>${x.ad}: ${fmt(x.v)}</title></rect><text x="${(i*bw+bw/2).toFixed(1)}" y="${H-3}" font-size="9" text-anchor="middle" style="fill:var(--text3)">${x.ad}</text>`;}).join('');
+  const son=B[B.length-1],onc=B.filter(x=>x.v>0);const ort=onc.length?onc.reduce((s,x)=>s+x.v,0)/onc.length:0;
+  return `<div class="tk-gp-b">Ödeme geçmişi grafiği <small>${gy?'<span style="color:var(--amber)">■</span> bu yıl <span style="opacity:.5">■</span> geçen yıl':''}</small></div>
+    <svg class="ev-grafik" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${bars}</svg><div class="gf-ipucu" style="margin-top:2px">Dönem ortalaması ${fmt(ort)}${son.v&&ort?` · son dönem ortalamanın ${son.v>ort?'%'+Math.round((son.v/ort-1)*100)+' üstünde':'%'+Math.round((1-son.v/ort)*100)+' altında'}`:''}</div>`;
+}
+
+// ---------- evrak formu
+function evFormAc(id){
+  if(USER_ROL==='goruntule')return;const e=id?evBul(id):null;
+  EV.form=e?{id:e.id,kisiId:e.kisi_id||null,tur:e.tur||'Fatura',alt:e.alt_tur||'',dongu:e.odeme_dongusu||'Yok',bas:String(e.periyot_bas||''),bit:String(e.periyot_bit||''),bitis:e.bitis_tarihi?String(e.bitis_tarihi).slice(0,10):'',
+      tutarTipi:e.tutar_tipi==='sabit'?'sabit':'ortalama',beklenen:e.beklenen_tutar!=null?String(e.beklenen_tutar):'',abone:e.abone_no||'',tesisat:e.tesisat_no||'',ref:e.referans_no||'',oto:!!e.otomatik_odeme,aktif:e.aktif!==false,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',not:e.aciklama||''}
+    :{id:null,kisiId:null,tur:'Fatura',alt:'Elektrik',dongu:'Aylık',bas:'1',bit:'15',bitis:'',tutarTipi:'ortalama',beklenen:'',abone:'',tesisat:'',ref:'',oto:false,aktif:true,tip:'Gider',kapsam:'İşletme',not:''};
+  let m=document.getElementById('modal-ev-form');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-form';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evf-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-form')">✕</button></div><div class="modal-body" id="evf-body"></div><div class="modal-foot" id="evf-foot"></div></div>`;document.body.appendChild(m);}
+  evFormCiz();openModal('modal-ev-form');
+}
+function evFormCiz(){
+  const F=EV.form;const k=F.kisiId?getKisi(F.kisiId):null;
+  document.getElementById('evf-baslik').textContent=F.id?'📄 Evrak düzenle':'📄 Yeni evrak';
+  const chip=(on,l,fn)=>`<button type="button" class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
+  const sel=(id,ops,v,fn)=>`<select id="${id}" onchange="${fn}">${ops.map(o=>{const [val,lbl]=Array.isArray(o)?o:[o,o];return `<option value="${_esc(val)}"${String(v)===String(val)?' selected':''}>${_esc(lbl)}</option>`;}).join('')}</select>`;
+  let per='';
+  if(F.dongu==='Aylık'){const g=Array.from({length:31},(_,i)=>String(i+1));per=`<div class="hr-satir"><div class="fi"><label>Ödeme penceresi başı</label>${sel('evf-bas',g.map(x=>[x,'Ayın '+x+'. günü']),F.bas||'1',"EV.form.bas=this.value;evFormOzet()")}</div><div class="fi"><label>Son ödeme günü</label>${sel('evf-bit',g.map(x=>[x,'Ayın '+x+'. günü']),F.bit||'15',"EV.form.bit=this.value;evFormOzet()")}</div></div>`;}
+  else if(F.dongu==='Haftalık')per=`<div class="hr-satir"><div class="fi"><label>Pencere başı</label>${sel('evf-bas',EV_HG,F.bas||'Pazartesi',"EV.form.bas=this.value;evFormOzet()")}</div><div class="fi"><label>Son gün</label>${sel('evf-bit',EV_HG,F.bit||'Cuma',"EV.form.bit=this.value;evFormOzet()")}</div></div>`;
+  else if(F.dongu==='Yıllık'||F.dongu==='Sezonluk'){const ay=AYLAR.map((a,i)=>[String(i+1),a]),g=Array.from({length:31},(_,i)=>String(i+1));const [ba,bgn]=(F.bas||'1-1').split('-'),[sa,sg]=(F.bit||'1-15').split('-');
+    per=`<div class="fi"><label>Pencere başı</label><div class="hr-satir">${sel('evf-ba',ay,ba||'1',"evFormYil()")}${sel('evf-bg',g,bgn||'1',"evFormYil()")}</div></div><div class="fi"><label>Son ödeme günü</label><div class="hr-satir">${sel('evf-sa',ay,sa||'1',"evFormYil()")}${sel('evf-sg',g,sg||'15',"evFormYil()")}</div></div>`;}
+  else per=`<div class="fi"><label>Bitiş / yenileme tarihi <small>(muayene, poliçe, sözleşme — boşsa hatırlatma yok)</small></label><input type="date" value="${_esc(F.bitis)}" onchange="EV.form.bitis=this.value;evFormOzet()"></div>`;
+  document.getElementById('evf-body').innerHTML=`
+    <div class="fi"><label>Firma / kurum</label>${k?`<div class="tkf-kisi"><div><b>${_esc(k.firmaUnvan||k.isim)}</b> <small>${_esc(k.tip||'')}</small></div><button type="button" onclick="EV.form.kisiId=null;evFormCiz()">✕</button></div>`
+      :`<div style="position:relative;"><input type="text" id="evf-kisi" placeholder="Firma ya da kurum ara (TEDAŞ, Muski, sigorta…)" autocomplete="off" oninput="evKisiAra(this.value)" onfocus="evKisiAra(this.value)"><div class="tkf-dd" id="evf-dd"></div></div>`}</div>
+    <div class="fi"><label>Evrak türü</label><div class="isf-chips">${EV_TUR.map(t=>chip(F.tur===t,(EV_IK[t]||'')+' '+t,`EV.form.tur='${t}';EV.form.alt=(EV_ALT['${t}']||[''])[0];evFormCiz()`)).join('')}</div></div>
+    ${EV_ALT[F.tur]?`<div class="fi"><label>${F.tur==='Fatura'?'Fatura türü':'Araç belgesi'}</label><div class="isf-chips">${EV_ALT[F.tur].map(a=>chip(F.alt===a,(EV_ALT_IK[a]||'')+' '+a,`EV.form.alt='${a}';evFormCiz()`)).join('')}</div></div>`:''}
+    <div class="fi"><label>Ödeme düzeni</label><div class="isf-chips">${EV_DONGU.map(d=>chip(F.dongu===d,d==='Yok'?'Tek seferlik':d,`evFormDongu('${d}')`)).join('')}</div></div>
+    ${per}<div class="gf-ipucu" id="evf-ozet"></div>
+    <div class="fi"><label>Beklenen tutar</label><div class="isf-chips">${chip(F.tutarTipi==='ortalama','Son ödemelerin ortalaması',"EV.form.tutarTipi='ortalama';evFormCiz()")}${chip(F.tutarTipi==='sabit','Sabit tutar',"EV.form.tutarTipi='sabit';evFormCiz()")}</div>
+      ${F.tutarTipi==='sabit'?`<input type="text" inputmode="decimal" placeholder="₺" value="${_esc(F.beklenen)}" oninput="EV.form.beklenen=this.value" style="margin-top:6px">`:`<div class="gf-ipucu" style="margin:4px 0 0">${F.id&&evBeklenen(evBul(F.id))?'Şu an: '+evPara(evBeklenen(evBul(F.id))):'İlk ödemeden sonra otomatik hesaplanır.'}</div>`}</div>
+    <div class="hr-satir"><div class="fi"><label>Abone no</label><input type="text" value="${_esc(F.abone)}" oninput="EV.form.abone=this.value"></div><div class="fi"><label>Tesisat no</label><input type="text" value="${_esc(F.tesisat)}" oninput="EV.form.tesisat=this.value"></div></div>
+    <div class="fi"><label>Plaka / poliçe no / referans</label><input type="text" value="${_esc(F.ref)}" oninput="EV.form.ref=this.value"></div>
+    <div class="isf-chips">${chip(F.oto,'🔁 Otomatik ödeme talimatı var',"EV.form.oto=!EV.form.oto;evFormCiz()")}${chip(F.aktif,F.aktif?'✅ Takip ediliyor':'⏸ Pasif',"EV.form.aktif=!EV.form.aktif;evFormCiz()")}</div>
+    <div class="fi"><label>ERP kategorisi <small>(ödemeler ERP'ye bu kategoriyle işlenir)</small></label><div class="isf-chips">${chip(F.tip==='Gider','📤 Gider',"EV.form.tip='Gider';evFormCiz()")}${chip(F.tip==='Gelir','📥 Gelir',"EV.form.tip='Gelir';evFormCiz()")}${chip(F.kapsam==='İşletme','🏢 İşletme',"EV.form.kapsam='İşletme';evFormCiz()")}${chip(F.kapsam==='Şahsi','👤 Şahsi',"EV.form.kapsam='Şahsi';evFormCiz()")}</div></div>
+    <div class="fi"><label>Not</label><textarea rows="2" oninput="EV.form.not=this.value">${_esc(F.not)}</textarea></div>`;
+  document.getElementById('evf-foot').innerHTML=`<button class="btn btn-secondary" style="flex:1" onclick="closeModal('modal-ev-form')">Vazgeç</button><button class="btn btn-primary" style="flex:2" onclick="evKaydet(this)">${F.id?'Güncelle':'Kaydet'}</button>`;
+  evFormOzet();
+}
+function evFormDongu(d){const F=EV.form;F.dongu=d;if(d==='Aylık'){F.bas='1';F.bit='15';}else if(d==='Haftalık'){F.bas='Pazartesi';F.bit='Cuma';}else if(d==='Yıllık'||d==='Sezonluk'){const t=new Date();F.bas=(t.getMonth()+1)+'-1';F.bit=(t.getMonth()+1)+'-28';}evFormCiz();}
+function evFormYil(){const v=id=>document.getElementById(id).value;EV.form.bas=v('evf-ba')+'-'+v('evf-bg');EV.form.bit=v('evf-sa')+'-'+v('evf-sg');evFormOzet();}
+function evFormOzet(){const el=document.getElementById('evf-ozet');if(!el)return;const F=EV.form;
+  const e={odeme_dongusu:F.dongu,periyot_bas:F.bas,periyot_bit:F.bit,bitis_tarihi:F.bitis};const bg=localToday();
+  const D=evDonemler(e,bg,gfGunEkle(bg,F.dongu==='Yok'?3650:400)).filter(p=>p.son>=bg).slice(0,2);
+  el.innerHTML=D.length?'📅 '+_esc(evPeriyotMetin(e))+' · sıradaki: '+D.map(p=>_esc(p.ad)+' ('+evKisa(p.bas)+' – '+evKisa(p.son)+')').join(', '):(F.dongu==='Yok'?'Bitiş tarihi girilmezse hatırlatma yapılmaz.':'');}
+function evKisiAra(v){const dd=document.getElementById('evf-dd');if(!dd)return;const q=trNorm(v||'').trim();
+  const L=(DB.kisiler||[]).filter(k=>!q||trNorm((k.isim||'')+' '+(k.firmaUnvan||'')).includes(q)).sort((a,b)=>((b.tip==='Firma'||b.tip==='Kurum')-(a.tip==='Firma'||a.tip==='Kurum'))).slice(0,12);
+  dd.innerHTML=L.map(k=>`<div onclick="EV.form.kisiId=${JSON.stringify(k.id)};evFormCiz()"><b>${_esc(k.firmaUnvan||k.isim)}</b> <small>${_esc(k.tip||'')}</small></div>`).join('')||'<div class="tkf-dd-not">Bulunamadı — önce Rehber\'e ekle</div>';dd.style.display='block';}
+var EV_ESKI_EVRAK=['kisi_id','tur','alt_tur','evrak_adi','odeme_dongusu','periyot_bas','periyot_bit','aciklama','aktif','erp_tip','erp_kapsam'];
+var EV_ESKI_ODEME=['evrak_id','odeme_tarihi','tutar','para_birimi','notlar','donem'];
+async function evYaz(yol,yontem,satir,eskiAlan,temsil){
+  try{return await sbFetch(yol,{method:yontem,prefer:temsil?'return=representation':'return=minimal',body:JSON.stringify(satir)});}
+  catch(err){if(!/column|schema|could not find/i.test(String(err.message||err)))throw err;
+    const eski={};eskiAlan.forEach(k=>{if(k in satir)eski[k]=satir[k];});
+    if(!EV.eskiUyari){EV.eskiUyari=true;showToast('Yeni evrak alanları için evrak_gelistirme.sql çalıştırılmalı; temel bilgiler kaydedildi','amber');}
+    return await sbFetch(yol,{method:yontem,prefer:temsil?'return=representation':'return=minimal',body:JSON.stringify(eski)});}
+}
+async function evKaydet(btn){
+  const F=EV.form;if(!F)return;if(!F.tur){showToast('Evrak türünü seç','red');return;}
+  if(F.tutarTipi==='sabit'&&!(evSayi(F.beklenen)>0)){showToast('Sabit tutarı gir','red');return;}
+  const alt=EV_ALT[F.tur]?F.alt:'';
+  const satir={kisi_id:F.kisiId||null,tur:F.tur,alt_tur:alt||null,evrak_adi:alt?F.tur+' - '+alt:F.tur,odeme_dongusu:F.dongu,periyot_bas:F.dongu==='Yok'?'':F.bas,periyot_bit:F.dongu==='Yok'?'':F.bit,
+    aciklama:F.not||'',aktif:F.aktif,erp_tip:F.tip,erp_kapsam:F.kapsam,bitis_tarihi:F.dongu==='Yok'&&F.bitis?F.bitis:null,tutar_tipi:F.tutarTipi,beklenen_tutar:F.tutarTipi==='sabit'?evSayi(F.beklenen):null,
+    abone_no:F.abone.trim()||null,tesisat_no:F.tesisat.trim()||null,referans_no:F.ref.trim()||null,otomatik_odeme:F.oto};
+  if(!F.id)satir.takip_baslangic=localToday();
+  if(btn)btn.disabled=true;
+  try{let id=F.id;
+    if(F.id)await evYaz('sirket_evraklar?id=eq.'+F.id,'PATCH',satir,EV_ESKI_EVRAK);
+    else{const r=await evYaz('sirket_evraklar','POST',satir,EV_ESKI_EVRAK,true);id=r&&r[0]&&r[0].id;}
+    await loadDB();closeModal('modal-ev-form');showToast(F.id?'Evrak güncellendi':'Evrak eklendi','green');evYenile();
+    if(id&&document.getElementById('modal-ev-detay')?.classList.contains('open'))evDetayAc(id);
+  }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,70),'red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,600);}
+}
+function evGecmisKapat(id){const e=evBul(id);if(!e)return;
+  showConfirm('Geçmişi takipten çıkar','"'+evAd(e)+'" için bugüne kadarki ödenmemiş görünen dönemler bir daha gecikmiş sayılmayacak. Ödeme kayıtlarına dokunulmaz.',async()=>{
+    try{await sbFetch('sirket_evraklar?id=eq.'+id,{method:'PATCH',body:JSON.stringify({takip_baslangic:localToday()})});await loadDB();evYenile();evDetayCiz();showToast('Geçmiş dönemler takipten çıkarıldı','green');}
+    catch(err){showToast('Bunun için evrak_gelistirme.sql çalıştırılmalı','amber');}},'🧹');}
+// seçenekli onay penceresi
+function evSecim(baslik,metin,secenekler){
+  let m=document.getElementById('modal-ev-secim');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-secim';m.innerHTML=`<div class="modal" style="max-width:420px"><div class="modal-head"><h3 class="modal-title" id="evs-b"></h3><button class="modal-close" onclick="closeModal('modal-ev-secim')">✕</button></div><div class="modal-body"><div id="evs-m" style="font-size:13px;color:var(--text2);line-height:1.5"></div></div><div class="modal-foot" id="evs-f" style="flex-wrap:wrap"></div></div>`;document.body.appendChild(m);}
+  document.getElementById('evs-b').textContent=baslik;document.getElementById('evs-m').textContent=metin;
+  EV._secim=secenekler;document.getElementById('evs-f').innerHTML=secenekler.map((s,i)=>`<button class="btn ${s.cls||'btn-secondary'}" style="flex:1;min-width:120px" onclick="closeModal('modal-ev-secim');EV._secim[${i}].fn&&EV._secim[${i}].fn()">${s.l}</button>`).join('');
+  document.body.appendChild(m);openModal('modal-ev-secim');
+}
+function evSil(id){
+  const e=evBul(id);if(!e)return;const O=evOdemeleri(id);const bagli=O.map(evIslemBul).filter(Boolean);
+  const sil=async(islemlerDe)=>{try{
+      for(const o of O){await evOdemeEkSil(o.id);}
+      await evEkTopluSil('evrak',id);
+      if(islemlerDe)for(const i of bagli){await sbFetch('islemler?id=eq.'+i.id,{method:'DELETE'}).catch(()=>{});}
+      await sbFetch('sirket_evrak_odemeler?evrak_id=eq.'+id,{method:'DELETE'});
+      await sbFetch('sirket_evraklar?id=eq.'+id,{method:'DELETE'});
+      closeModal('modal-ev-detay');await loadDB();evYenile();showToast('Evrak silindi','amber');
+    }catch(err){showToast('Silinemedi: '+String(err.message||err).slice(0,60),'red');}};
+  const s=[{l:'Vazgeç'}];
+  if(bagli.length)s.push({l:'Evrakı sil, ERP işlemleri kalsın',fn:()=>sil(false)},{l:'ERP işlemleriyle birlikte sil',cls:'btn-danger',fn:()=>sil(true)});
+  else s.push({l:'Sil',cls:'btn-danger',fn:()=>sil(false)});
+  evSecim('Evrak silinsin mi?','"'+evAd(e)+'" ve '+O.length+' ödeme kaydı, ekleriyle birlikte silinecek.'+(bagli.length?' Bu ödemelerden '+bagli.length+' tanesi ERP\'de işlem olarak da kayıtlı.':''),s);
+}
+
+// ---------- ödeme
+function evIslemBul(o){
+  if(!o)return null;if(o.islemId){const i=(DB.islemler||[]).find(x=>String(x.id)===String(o.islemId));if(i)return i;}
+  const tl=o.tl!=null?o.tl:o.tutar;return (DB.islemler||[]).find(i=>i.islemKaynagi==='Evrak'&&localDateStr(i.tarih)===o.tarih&&Math.abs((i.tutar||0)-tl)<0.01)||null;
+}
+function evOdemeAc(evrakId,donemK,odemeId){
+  if(USER_ROL==='goruntule')return;const e=evBul(evrakId);if(!e)return;const R=evDurum(e);
+  const o=odemeId?(DB.evrakOdemeler||[]).find(x=>String(x.id)===String(odemeId)):null;
+  let dk=donemK;if(!o&&!dk){const p=R.gecikmis[0]||(R.simdiki&&!R.simdikiOdendi?R.simdiki:null)||R.sonraki;dk=p?p.k:'';}
+  if(o){dk='';R.donemler.forEach(p=>{if((R.odeme[p.k]||[]).some(x=>x.id===o.id))dk=p.k;});}
+  const bt=evBeklenen(e);const isl=o?evIslemBul(o):null;
+  const yeniBitis=(e.odeme_dongusu||'Yok')==='Yok'&&e.bitis_tarihi?(()=>{const d=tkDt(String(e.bitis_tarihi).slice(0,10));d.setFullYear(d.getFullYear()+1);return localDateObjStr(d);})():'';
+  EV.od=o?{id:o.id,evrakId,donem:dk,tarih:o.tarih,tutar:String(o.tutar).replace('.',','),pb:o.pb,kur:o.kur?String(o.kur).replace('.',','):'',not:o.not,yontem:o.yontem||(isl&&isl.odemeYontemi)||'İBAN',erp:!!isl,erpVar:!!isl,islemId:isl?isl.id:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis:''}
+    :{id:null,evrakId,donem:dk,tarih:localToday(),tutar:bt?String(Math.round(bt*100)/100).replace('.',','):'',pb:'TRY',kur:'',not:'',yontem:e.otomatik_odeme?'Kart':'İBAN',erp:true,erpVar:false,islemId:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis};
+  let m=document.getElementById('modal-ev-odeme');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-odeme';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evo-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-odeme')">✕</button></div><div class="modal-body" id="evo-body"></div><div class="modal-foot" id="evo-foot"></div></div>`;document.body.appendChild(m);}
+  document.body.appendChild(m);evOdemeCiz();openModal('modal-ev-odeme');
+}
+function evOdemeCiz(){
+  const P=EV.od;const e=evBul(P.evrakId);const R=evDurum(e);const bg=localToday();
+  document.getElementById('evo-baslik').textContent=(P.id?'💳 Ödemeyi düzenle':'💳 Ödeme')+' · '+evAd(e);
+  const chip=(on,l,fn)=>`<button type="button" class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
+  // dönem seçenekleri: ödenmemiş geçmiş + şimdiki + sonraki 2 + (düzenlemede) mevcut
+  const acik=R.donemler.filter(p=>(!R.odeme[p.k].length||p.k===P.donem)&&(p.son<bg?p.son>=R.takip:true));
+  const gec=acik.filter(p=>p.son<bg),ileri=acik.filter(p=>p.son>=bg).slice(0,3);let ops=gec.concat(ileri);
+  if(P.donem&&!ops.some(p=>p.k===P.donem)){const p=R.donemler.find(x=>x.k===P.donem);if(p)ops.unshift(p);}
+  const tl=evOdemeTl();const yabanci=P.pb!=='TRY';
+  const ekler=P.id?evEkleri('evrak_odeme',P.id):[];
+  document.getElementById('evo-body').innerHTML=`
+    ${ops.length?`<div class="fi"><label>Hangi dönemin ödemesi?</label><select onchange="EV.od.donem=this.value">${ops.map(p=>`<option value="${p.k}"${p.k===P.donem?' selected':''}>${_esc(p.ad)} · son ${evKisa(p.son)}${p.son<bg?' (gecikmiş)':''}</option>`).join('')}<option value=""${!P.donem?' selected':''}>Döneme bağlama</option></select></div>`:''}
+    <div class="hr-satir"><div class="fi"><label>Ödeme tarihi</label><input type="date" value="${_esc(P.tarih)}" onchange="EV.od.tarih=this.value;evKurGetir()"></div>
+      <div class="fi"><label>Tutar</label><input type="text" inputmode="decimal" value="${_esc(P.tutar)}" placeholder="0,00" oninput="EV.od.tutar=this.value;evTlGuncelle()"></div></div>
+    <div class="fi"><label>Para birimi</label><div class="isf-chips">${Object.keys(EV_PB).map(pb=>chip(P.pb===pb,pb+' '+EV_PB[pb],`EV.od.pb='${pb}';EV.od.kur='';evOdemeCiz();evKurGetir()`)).join('')}</div></div>
+    ${yabanci?`<div class="hr-satir"><div class="fi"><label>Kur (1 ${P.pb} = ? ₺)</label><input type="text" inputmode="decimal" id="evo-kur" value="${_esc(P.kur)}" placeholder="yükleniyor…" oninput="EV.od.kur=this.value;evTlGuncelle()"></div><div class="fi"><label>TL karşılığı</label><div class="ev-tl num" id="evo-tl">${tl?fmt(tl):'—'}</div></div></div>`:''}
+    <div class="fi"><label>Ödeme yöntemi</label><div class="isf-chips">${[['Nakit','💵 Nakit'],['Kart','💳 Kart'],['İBAN','🏦 Banka / İBAN']].map(([v,l])=>chip(P.yontem===v,l,`EV.od.yontem='${v}';evOdemeCiz()`)).join('')}</div></div>
+    <div class="fi"><label>Not</label><input type="text" value="${_esc(P.not)}" placeholder="Fatura no, açıklama…" oninput="EV.od.not=this.value"></div>
+    ${P.yeniBitis!==undefined&&(e.odeme_dongusu||'Yok')==='Yok'&&e.bitis_tarihi&&!P.id?`<div class="fi"><label>Yeni bitiş / yenileme tarihi <small>(boş bırakılırsa takip biter)</small></label><input type="date" value="${_esc(P.yeniBitis)}" onchange="EV.od.yeniBitis=this.value"></div>`:''}
+    <div class="fi"><label>Fatura / makbuz</label>
+      ${ekler.length?`<div class="ev-ekler">${ekler.map(x=>evEkHtml(x,true)).join('')}</div>`:''}
+      <div class="ev-ekler">${P.dosyalar.map((d,i)=>`<div class="ev-ek yeni"><span>${/^image\//.test(d.type)?'🖼️':'📄'}</span><span>${_esc(d.name)}</span><button onclick="EV.od.dosyalar.splice(${i},1);evOdemeCiz()">✕</button></div>`).join('')}</div>
+      <button type="button" class="hr-ekle" onclick="evDosyaSec()">📎 Fotoğraf çek / dosya ekle</button></div>
+    <div class="ev-erp">
+      <label class="ev-erp-u"><input type="checkbox" ${P.erp?'checked':''} onchange="EV.od.erp=this.checked;evOdemeCiz()"> <span>${P.erpVar?'Bağlı ERP işlemini de güncelle':'ERP\'ye işlem olarak da kaydet'}</span></label>
+      ${P.erp?`<div class="isf-chips">${chip(P.tip==='Gider','📤 Gider',"EV.od.tip='Gider';evOdemeCiz()")}${chip(P.tip==='Gelir','📥 Gelir',"EV.od.tip='Gelir';evOdemeCiz()")}${chip(P.kapsam==='İşletme','🏢 İşletme',"EV.od.kapsam='İşletme';evOdemeCiz()")}${chip(P.kapsam==='Şahsi','👤 Şahsi',"EV.od.kapsam='Şahsi';evOdemeCiz()")}</div>
+        <div class="gf-ipucu" style="margin:4px 0 0">${yabanci?'ERP\'ye TL karşılığı işlenir. ':''}${P.erpVar?'ERP işlemi #'+fmtId(P.islemId)+' güncellenecek.':'Özet ve raporlara yansır.'}</div>`:''}
+    </div>`;
+  document.getElementById('evo-foot').innerHTML=`${P.id?`<button class="btn btn-danger" onclick="evOdemeSil(${P.id})">🗑</button>`:''}<button class="btn btn-secondary" style="flex:1" onclick="closeModal('modal-ev-odeme')">Vazgeç</button><button class="btn btn-primary" style="flex:2" onclick="evOdemeKaydet(this)">${P.id?'Güncelle':'Kaydet'}</button>`;
+  if(yabanci&&!P.kur)evKurGetir();
+}
+function evOdemeTl(){const P=EV.od;const t=evSayi(P.tutar);if(!(t>0))return null;if(P.pb==='TRY')return t;const k=evSayi(P.kur);return k>0?Math.round(t*k*100)/100:null;}
+function evTlGuncelle(){const el=document.getElementById('evo-tl');if(el){const tl=evOdemeTl();el.textContent=tl?fmt(tl):'—';}}
+async function evKurAl(pb,tarih){
+  if(pb==='TRY')return 1;const anah=pb+'|'+(tarih||localToday());if(EV.kur[anah])return EV.kur[anah];
+  try{const c=JSON.parse(localStorage.getItem('ev_kur_v1')||'{}');if(c[anah]){EV.kur[anah]=c[anah];return c[anah];}}catch(e){}
+  let k=null;const gecmis=tarih&&tarih<localToday();
+  try{const r=await fetch('https://api.frankfurter.app/'+(gecmis?tarih:'latest')+'?from='+pb+'&to=TRY');const j=await r.json();k=j&&j.rates&&j.rates.TRY;}catch(e){}
+  if(!k){try{const r=await fetch('https://open.er-api.com/v6/latest/'+pb);const j=await r.json();k=j&&j.rates&&j.rates.TRY;}catch(e){}}
+  if(k){EV.kur[anah]=k;try{const c=JSON.parse(localStorage.getItem('ev_kur_v1')||'{}');c[anah]=k;localStorage.setItem('ev_kur_v1',JSON.stringify(c));}catch(e){}}
+  return k;
+}
+async function evKurGetir(){const P=EV.od;if(!P||P.pb==='TRY')return;const pb=P.pb;const k=await evKurAl(pb,P.tarih);
+  if(!EV.od||EV.od.pb!==pb)return;const inp=document.getElementById('evo-kur');
+  if(k){if(!EV.od.kur||EV.od._kurOto){EV.od.kur=String(Math.round(k*10000)/10000).replace('.',',');EV.od._kurOto=true;if(inp)inp.value=EV.od.kur;}evTlGuncelle();}
+  else if(inp&&!inp.value)inp.placeholder='kuru elle gir';}
+function evDosyaSec(){const inp=document.createElement('input');inp.type='file';inp.accept='image/*,application/pdf';inp.multiple=true;
+  inp.onchange=()=>{EV.od.dosyalar.push(...inp.files);evOdemeCiz();};inp.click();}
+async function evDosyaYukle(dosyalar,kayitTip,kayitId){
+  let hata=0;
+  for(const f of dosyalar){try{let d=f;if(/^image\//.test(f.type))d=await gorselSikistir(f,1600,0.8).catch(()=>f);
+      const url=await sbStorage('ekler',d,'evrak-ekler');
+      await sbFetch('sirket_ekler',{method:'POST',prefer:'return=minimal',body:JSON.stringify({evrak_odeme_id:kayitTip==='evrak_odeme'?kayitId:null,kayit_tip:kayitTip,kayit_id:kayitId,url,dosya_adi:f.name,dosya_tipi:f.type||d.type,dosya_boyut:d.size})});
+    }catch(err){hata++;console.warn('evrak eki',err);}}
+  return hata;
+}
+async function evOdemeKaydet(btn){
+  const P=EV.od;const e=evBul(P.evrakId);if(!e)return;const tutar=evSayi(P.tutar);
+  if(!P.tarih){showToast('Tarih gir','red');return;}if(!(tutar>0)){showToast('Tutarı gir','red');return;}
+  const kur=P.pb==='TRY'?null:evSayi(P.kur);const tl=evOdemeTl();
+  if(P.pb!=='TRY'&&!(kur>0)){showToast('Kuru gir (1 '+P.pb+' kaç ₺?)','red');return;}
+  const satir={evrak_id:e.id,odeme_tarihi:P.tarih,tutar,para_birimi:P.pb,notlar:P.not||'',donem:P.tarih.slice(0,7),donem_anahtar:P.donem||null,kur,tl_tutar:tl,odeme_yontemi:P.yontem};
+  if(btn)btn.disabled=true;
+  try{
+    let id=P.id;
+    if(P.id)await evYaz('sirket_evrak_odemeler?id=eq.'+P.id,'PATCH',satir,EV_ESKI_ODEME);
+    else{const r=await evYaz('sirket_evrak_odemeler','POST',satir,EV_ESKI_ODEME,true);id=Array.isArray(r)?r[0]&&r[0].id:r&&r.id;}
+    let mesaj=P.id?'Ödeme güncellendi':'Ödeme kaydedildi';
+    // ERP işlemi
+    if(P.erp){
+      const kat=P.tip==='Gelir'?(P.kapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir'):(P.kapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider');
+      const ad=evAd(e);const R=evDurum(e);const dp=R.donemler.find(p=>p.k===P.donem);
+      const not=[ad,dp?dp.ad:'',P.not,P.pb!=='TRY'?'('+evPara(tutar,P.pb)+' × '+String(kur).replace('.',',')+')':''].filter(Boolean).join(' — ');
+      const isl={tarih:localISOString(new Date(P.tarih+'T12:00:00')),tip:P.tip,kat,alt_kat:ad,tutar:tl,not,odeme_yontemi:P.yontem,kisi_id:e.kisi_id||null};
+      try{
+        if(P.erpVar&&P.islemId){await sbFetch('islemler?id=eq.'+P.islemId,{method:'PATCH',body:JSON.stringify(isl)});mesaj+=' · ERP işlemi güncellendi';}
+        else if(!P.erpVar){const r=await sbFetch('islemler',{method:'POST',prefer:'return=representation',body:JSON.stringify(Object.assign({statu:'Tamamlandı',malzeme_tutar:0,personel_ids:[],islem_kaynagi:'Evrak'},isl))});
+          const iid=r&&r[0]&&r[0].id;if(iid&&id)await sbFetch('sirket_evrak_odemeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({islem_id:iid})}).catch(()=>{});mesaj+=' · ERP\'ye işlendi';}
+      }catch(err){console.error('evrak→ERP',err);showToast('⚠️ Ödeme kaydedildi ama ERP işlemi oluşturulamadı: '+String(err.message||err).slice(0,60),'red');mesaj='';}
+    }
+    if(P.dosyalar.length&&id){const h=await evDosyaYukle(P.dosyalar,'evrak_odeme',id);if(h)showToast(h+' dosya yüklenemedi','amber');}
+    if(!P.id&&P.yeniBitis&&(e.odeme_dongusu||'Yok')==='Yok')await sbFetch('sirket_evraklar?id=eq.'+e.id,{method:'PATCH',body:JSON.stringify({bitis_tarihi:P.yeniBitis})}).catch(()=>{});
+    await loadDB();closeModal('modal-ev-odeme');if(mesaj)showToast(mesaj,'green');evYenile();
+    if(document.getElementById('modal-ev-detay')?.classList.contains('open'))evDetayCiz();
+  }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,70),'red');}
+  finally{if(btn)setTimeout(()=>btn.disabled=false,600);}
+}
+function evOdemeSil(id){
+  const o=(DB.evrakOdemeler||[]).find(x=>String(x.id)===String(id));if(!o)return;const isl=evIslemBul(o);
+  const sil=async(islemDe)=>{try{await evOdemeEkSil(o.id);if(islemDe&&isl)await sbFetch('islemler?id=eq.'+isl.id,{method:'DELETE'});
+      await sbFetch('sirket_evrak_odemeler?id=eq.'+o.id,{method:'DELETE'});closeModal('modal-ev-odeme');await loadDB();evYenile();
+      if(document.getElementById('modal-ev-detay')?.classList.contains('open'))evDetayCiz();showToast('Ödeme silindi','amber');}
+    catch(err){showToast('Silinemedi','red');}};
+  const s=[{l:'Vazgeç'}];
+  if(isl)s.push({l:'Sadece ödemeyi sil',fn:()=>sil(false)},{l:'ERP işlemiyle birlikte sil',cls:'btn-danger',fn:()=>sil(true)});else s.push({l:'Sil',cls:'btn-danger',fn:()=>sil(false)});
+  evSecim('Ödeme silinsin mi?',evTarih(o.tarih)+' tarihli '+evPara(o.tutar,o.pb)+' ödeme'+(isl?' ve ERP\'deki bağlı işlem ('+fmt(isl.tutar)+')':'')+' silinecek.',s);
+}
+function evStorageYol(url){const i=String(url||'').indexOf('/storage/v1/object/public/');return i<0?null:url.slice(i+'/storage/v1/object/public/'.length);}
+async function evEkSilKayit(x){try{const y=evStorageYol(x.url);if(y)await fetch(SB_URL+'/storage/v1/object/'+y,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}}).catch(()=>{});}catch(e){}
+  await sbFetch('sirket_ekler?id=eq.'+x.id,{method:'DELETE'}).catch(()=>{});}
+async function evOdemeEkSil(odemeId){for(const x of evEkleri('evrak_odeme',odemeId))await evEkSilKayit(x);}
+async function evEkTopluSil(tip,id){for(const x of evEkleri(tip,id))await evEkSilKayit(x);}
+function evEkSil(id){const x=(DB.evrakEkler||[]).find(z=>String(z.id)===String(id));if(!x)return;
+  showConfirm('Dosya silinsin mi?','"'+(x.dosya_adi||'Dosya')+'" silinecek.',async()=>{await evEkSilKayit(x);await loadDB();if(document.getElementById('modal-ev-odeme')?.classList.contains('open'))evOdemeCiz();if(document.getElementById('modal-ev-detay')?.classList.contains('open'))evDetayCiz();showToast('Dosya silindi','amber');},'🗑');}
+function evBelgeEkle(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*,application/pdf';inp.multiple=true;
+  inp.onchange=async()=>{if(!inp.files.length)return;showToast('Yükleniyor…','blue');const h=await evDosyaYukle([...inp.files],'evrak',id);await loadDB();evDetayCiz();showToast(h?h+' dosya yüklenemedi':'Belge eklendi',h?'amber':'green');};inp.click();}
+
+// ---------- ortak yenileme + günlük bildirim (her evrakın her dönemi için tek kayıt)
+function evYenile(){EV._c=null;if(document.querySelector('#page-evrak.active'))evCiz();if(document.querySelector('#page-takvim.active')&&typeof tkCiz==='function')tkCiz();}
+async function evBildirimEsitle(){
+  const anah='ev_bildirim_'+localToday();try{if(localStorage.getItem(anah))return;}catch(e){}
+  const M=[];(DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);R.gecikmis.forEach(p=>M.push('📄 '+evAd(e)+' — '+p.ad+' ödemesi gecikti (son gün '+evTarih(p.son)+')'));});
+  try{
+    if(M.length){const var_=await sbFetch('sistem_bildirimleri?select=mesaj&mesaj=like.'+encodeURIComponent('📄*')+'&limit=2000').catch(()=>null);if(!Array.isArray(var_))return;
+      const S=new Set(var_.map(x=>x.mesaj));const yeni=M.filter(m=>!S.has(m));
+      if(yeni.length)await sbFetch('sistem_bildirimleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify(yeni.map(m=>({baslik:m.slice(0,60),mesaj:m,tip:'uyari'})))});}
+    try{localStorage.setItem(anah,'1');}catch(e){}
+  }catch(e){console.warn('evrak bildirim',e);}
+}
+
 
 // ============================================================ VERİ YEDEKLEME
 
