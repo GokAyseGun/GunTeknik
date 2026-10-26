@@ -953,8 +953,13 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 /* bugün kartı */
 .tk-bugun{background:linear-gradient(135deg,rgba(0,229,255,.07),rgba(232,25,122,.06));border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;}
 .tk-bg-u{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;}
-.tk-bg-k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
-@media(max-width:560px){.tk-bg-k{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.tk-bg-k{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+@media(max-width:700px){.tk-bg-k{grid-template-columns:repeat(6,minmax(0,1fr));}.tk-bg-k>div.aj{grid-column:span 2;}.tk-bg-k>div.pa{grid-column:span 3;}.tk-bg-k b{font-size:16px;}.tk-bugun .tk-bg-k span{font-size:9px;letter-spacing:.3px;white-space:normal;line-height:1.25;text-overflow:clip;min-height:2.5em;}.tk-bugun .tk-bg-k>div{padding:8px;}.tk-bugun .tk-bg-k b{font-size:16px;}}
+.tk-bg-k>div:hover{border-color:var(--border2);}
+.tkl-ozet{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--text2);padding:4px 2px 8px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.tkl-ozet b{font-size:16px;}
+.tkl-g{font-family:var(--fm);font-size:11px;color:var(--text2);margin-right:4px;}
+#modal-tk-liste .tk-gp-b{margin-top:14px;}
 .tk-bg-k>div{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;gap:1px;cursor:pointer;min-width:0;}
 .tk-bg-k>div.kirmizi{border-color:rgba(255,23,68,.5);background:var(--red-lt);}
 .tk-bg-k span{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -17339,6 +17344,7 @@ function tkCiz(){
   const g=document.getElementById('tk-govde');
   try{g.innerHTML=TK.gorunum==='hafta'?tkHaftaHtml():TK.gorunum==='liste'?tkListeHtml():tkAyHtml();}catch(e){console.error('takvim',e);g.innerHTML='<div class="gf-not">Takvim çizilemedi: '+_esc(e.message)+'</div>';}
   tkGunPanelCiz();tkAktarCiz();
+  if(document.getElementById('modal-tk-liste')?.classList.contains('open'))tkPanelListeCiz();
 }
 function tkUstCiz(){
   const el=document.getElementById('tk-ust');if(!el)return;const chip=(k,l)=>`<button class="gf-seg-b${TK.gorunum===k?' on':''}" onclick="tkGorunum('${k}')">${l}</button>`;
@@ -17437,25 +17443,64 @@ function tkGunModal(ds){
   const c=document.getElementById('gun-detay-content');if(c)c.innerHTML=tkGunHtml(ds);openModal('modal-gun-detay');
 }
 
-// ---------- günün özeti
-function tkBugunHtmlIc(){
-  const bg=localToday();const O=tkOlaylar(gfGunEkle(bg,-30),bg);const bugunO=O.filter(o=>o.gun===bg&&o.durum!=='iptal');const gec=O.filter(tkGecikmis);
-  const x=tkIslemIdx().m[bg]||{gelB:0,gidB:0};const hv=tkHava(bg);const sim=new Date();const ss=String(sim.getHours()).padStart(2,'0')+':'+String(sim.getMinutes()).padStart(2,'0');
-  const sira=bugunO.filter(o=>o.durum==='planlandi').sort((a,b)=>String(a.t.saat||'99').localeCompare(String(b.t.saat||'99')));const sonraki=sira.find(o=>!o.t.saat||o.t.saat>=ss)||sira[0];
-  const yap=bugunO.filter(o=>o.durum==='yapildi').length;let rota=0;try{rota=hrRotaDuraklari(bg).length;}catch(e){}
-  return {bg,bugunO,gec,x,hv,sonraki,yap,rota};
+// ---------- üst panel: geçmiş / yaklaşan / gelecek ajanda · beklenen alacak / verecek
+var TK_YAKLASAN_GUN=3; // bugün dahil
+function tkPanelVeri(){
+  const bg=localToday();const ilk=(DB.takvim||[]).reduce((m,t)=>t.tarih&&t.tarih<m?t.tarih:m,bg);
+  const say=o=>o.durum!=='iptal'&&o.durum!=='ertelendi';
+  const gecmis=tkOlaylar(ilk,gfGunEkle(bg,-1)).filter(say).reverse();
+  const gelecek=tkOlaylar(bg,gfGunEkle(bg,365)).filter(say);
+  const yaklasan=gelecek.filter(o=>o.gun<=gfGunEkle(bg,TK_YAKLASAN_GUN-1));
+  // alacak / verecek: vadeli (bekleyen) işlemler + ajandadaki Alacak / Verecek kayıtları — bugünden itibaren
+  let kalan={};try{const TM=gfTahsilModeli();if(TM)TM.acik.forEach(a=>{kalan[a.id]=a.kalan;});}catch(e){kalan=null;}
+  const al=[],ver=[];
+  (DB.islemler||[]).filter(i=>i.statu==='Bekliyor').forEach(i=>{const g=localDateStr(i.tarih);if(!g||g<bg)return;const y=kasaYon(i);let t=parseFloat(i.tutar)||0;if(!y||!t)return;
+    if(y>0&&kalan&&i.tip!=='Kasa Hareketi'){if(kalan[i.id]==null)return;t=kalan[i.id];if(!(t>0.5))return;}
+    const k=getKisi(i.kisiId);(y>0?al:ver).push({gun:g,tutar:t,ad:k?.isim||i.kat||i.tip,alt:(i.altKat&&i.altKat!=='-'?i.altKat:i.kat)||'',kaynak:'Vadeli işlem',islemId:i.id});});
+  gelecek.filter(o=>o.durum==='planlandi'&&(o.t.tip==='Alacak'||o.t.tip==='Verecek')).forEach(o=>{const k=o.t.kisiId?getKisi(o.t.kisiId):null;
+    (o.t.tip==='Alacak'?al:ver).push({gun:o.gun,tutar:o.t.tutar||0,ad:k?k.isim:(o.t.baslik||''),alt:k?(o.t.baslik||''):'',kaynak:'Ajanda',tkId:o.t.id});});
+  const sirala=L=>L.sort((a,b)=>a.gun.localeCompare(b.gun));sirala(al);sirala(ver);
+  const top=L=>L.reduce((s,x)=>s+(x.tutar||0),0);
+  return {bg,gecmis,gecAcik:gecmis.filter(tkGecikmis),yaklasan,gelecek,al,ver,alTop:top(al),verTop:top(ver)};
 }
 function tkBugunCiz(){
-  const el=document.getElementById('tk-bugun');if(!el)return;const B=tkBugunHtmlIc();const d=new Date();
-  const k=B.sonraki&&B.sonraki.t.kisiId?getKisi(B.sonraki.t.kisiId):null;
-  el.innerHTML=`<div class="tk-bugun"><div class="tk-bg-u"><div><b>Bugün</b> · ${d.getDate()} ${AYLAR[d.getMonth()]} ${TK_GUN[d.getDay()]}</div>${B.hv?`<div class="tk-gp-h">${B.hv.ik} ${Math.round(B.hv.max)}°/${Math.round(B.hv.min)}°${B.hv.yag!=null?' · ☔ %'+B.hv.yag:''}</div>`:''}</div>
+  const el=document.getElementById('tk-bugun');if(!el)return;const P=tkPanelVeri();TK.panel=P;const d=new Date();const hv=tkHava(P.bg);
+  const yk=P.yaklasan.filter(o=>o.durum==='planlandi').length;
+  el.innerHTML=`<div class="tk-bugun"><div class="tk-bg-u"><div><b>Bugün</b> · ${d.getDate()} ${AYLAR[d.getMonth()]} ${d.getFullYear()} ${TK_GUN[d.getDay()]}</div>${hv?`<div class="tk-gp-h" title="${_esc(hv.ad)}">${hv.ik} ${Math.round(hv.max)}°/${Math.round(hv.min)}°${hv.yag!=null?' · ☔ %'+hv.yag:''} <small>${_esc(hv.ad)}</small></div>`:''}</div>
     <div class="tk-bg-k">
-      <div onclick="tkGunSec('${B.bg}')"><span>Ajanda</span><b>${B.bugunO.length}</b><small>${B.yap?B.yap+' yapıldı':'kayıt'}</small></div>
-      <div class="${B.gec.length?'kirmizi':''}" onclick="tkGorunum('liste')"><span>Gecikmiş</span><b>${B.gec.length}</b><small>son 30 gün</small></div>
-      <div><span>Beklenen tahsilat</span><b class="num" style="color:${B.x.gelB?'var(--green)':'inherit'}">${B.x.gelB?'+'+fmt(B.x.gelB):'—'}</b><small>vadesi bugün</small></div>
-      <div><span>Beklenen ödeme</span><b class="num" style="color:${B.x.gidB?'var(--red)':'inherit'}">${B.x.gidB?'−'+fmt(B.x.gidB):'—'}</b><small>vadesi bugün</small></div></div>
-    ${B.sonraki?`<div class="tk-bg-s">Sıradaki: <b>${B.sonraki.t.saat?B.sonraki.t.saat.slice(0,5)+' ':''}${_esc(B.sonraki.t.baslik||'')}</b>${k?' · '+_esc(k.isim):''}</div>`:''}
-    ${B.rota?`<div class="hr-konum-btn"><button onclick="hrRotaAc('${B.bg}','kisa')">🗺️ Günün rotası (${B.rota} durak)</button><button onclick="tkGunSec('${B.bg}')">📋 Bugünü aç</button></div>`:''}</div>`;
+      <div class="aj${P.gecAcik.length?' kirmizi':''}" onclick="tkPanelListe('gecmis')"><span>Geçmiş Ajanda</span><b>${P.gecmis.length}</b><small>${P.gecAcik.length?P.gecAcik.length+' açık kaldı':'hepsi kapandı'}</small></div>
+      <div class="aj" onclick="tkPanelListe('yaklasan')"><span>Yaklaşan Ajanda</span><b>${P.yaklasan.length}</b><small>bugün dahil ${TK_YAKLASAN_GUN} gün${yk!==P.yaklasan.length?' · '+yk+' açık':''}</small></div>
+      <div class="aj" onclick="tkPanelListe('gelecek')"><span>Gelecek Ajanda</span><b>${P.gelecek.length}</b><small>tüm gelecek</small></div>
+      <div class="pa" onclick="tkPanelListe('alacak')"><span>Beklenen Alacak</span><b class="num" style="color:${P.alTop?'var(--green)':'inherit'}">${P.alTop?'+'+fmt(P.alTop):'—'}</b><small>${P.al.length} kayıt</small></div>
+      <div class="pa" onclick="tkPanelListe('verecek')"><span>Beklenen Verecek</span><b class="num" style="color:${P.verTop?'var(--red)':'inherit'}">${P.verTop?'−'+fmt(P.verTop):'—'}</b><small>${P.ver.length} kayıt</small></div></div></div>`;
+}
+var TK_LISTE_AD={gecmis:'Geçmiş Ajanda',yaklasan:'Yaklaşan Ajanda',gelecek:'Gelecek Ajanda',alacak:'Beklenen Alacak',verecek:'Beklenen Verecek'};
+function tkPanelListe(tur){
+  TK.listeTur=tur;let m=document.getElementById('modal-tk-liste');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-tk-liste';m.innerHTML=`<div class="modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="tkl-baslik"></h3><button class="modal-close" onclick="closeModal('modal-tk-liste')">✕</button></div><div class="modal-body" id="tkl-body"></div></div>`;document.body.prepend(m);} // başa: üstüne açılan form / işlem detayı önde kalsın
+  tkPanelListeCiz();openModal('modal-tk-liste');
+}
+function tkPanelListeCiz(){
+  const tur=TK.listeTur;const P=TK.panel||tkPanelVeri();const b=document.getElementById('tkl-body');if(!b)return;const SINIR=300;
+  document.getElementById('tkl-baslik').textContent=TK_LISTE_AD[tur]||'';
+  let h='';
+  if(tur==='alacak'||tur==='verecek'){
+    const L=tur==='alacak'?P.al:P.ver;const top=tur==='alacak'?P.alTop:P.verTop;const renk=tur==='alacak'?'var(--green)':'var(--red)';const isr=tur==='alacak'?'+':'−';
+    h+=`<div class="tkl-ozet"><span>${L.length} kayıt · bugünden itibaren</span><b class="num" style="color:${renk}">${top?isr+fmt(top):'—'}</b></div>`;
+    if(!L.length)h+='<div class="tk-bos">Kayıt yok.</div>';
+    let ay='';L.slice(0,SINIR).forEach(x=>{const a=x.gun.slice(0,7);if(a!==ay){ay=a;const at=L.filter(y=>y.gun.slice(0,7)===a).reduce((s,y)=>s+(y.tutar||0),0);h+=`<div class="tk-gp-b">${AYLAR[parseInt(a.slice(5))-1]} ${a.slice(0,4)} <small class="num" style="color:${renk}">${at?isr+fmt(at):''}</small></div>`;}
+      h+=`<div class="tk-is" onclick="${x.islemId?`showIslemDetay(${x.islemId})`:`tkFormAc(${x.tkId},'${x.gun}')`}"><span><b class="tkl-g">${gfTrTarih(x.gun).slice(0,5)}</b> ${_esc(x.ad)}<small> · ${x.kaynak==='Ajanda'?'📅 ajanda':'💳 vadeli'}${x.alt?' · '+_esc(String(x.alt).slice(0,40)):''}</small></span><b class="num" style="color:${x.tutar?renk:'var(--text3)'}">${x.tutar?isr+fmt(x.tutar):'tutar yok'}</b></div>`;});
+  }else{
+    const L=tur==='gecmis'?P.gecmis:tur==='yaklasan'?P.yaklasan:P.gelecek;
+    const acik=L.filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi').length;
+    h+=`<div class="tkl-ozet"><span>${L.length} kayıt${tur==='gecmis'?' · yeniden eskiye':''}</span><span>${tur==='gecmis'?`<b style="color:${acik?'var(--red)':'var(--green)'}">${acik} açık</b>`:`${acik} açık`}</span></div>`;
+    if(tur==='gecmis'&&acik){const A=L.filter(tkGecikmis);h+=`<div class="tk-l-b gec">⚠️ Açık kalanlar (${A.length})</div>`+A.map(o=>tkOgeHtml(o,false,true)).join('')+`<div class="tk-l-b">Tümü</div>`;}
+    if(!L.length)h+='<div class="tk-bos">Kayıt yok.</div>';
+    let gun='';L.slice(0,SINIR).forEach(o=>{if(o.gun!==gun){gun=o.gun;const d=tkDt(gun);h+=`<div class="tk-gp-b">${d.getDate()} ${AYLAR[d.getMonth()]} ${d.getFullYear()} ${TK_GUN[d.getDay()]}${gun===localToday()?' · bugün':''}</div>`;}h+=tkOgeHtml(o);});
+  }
+  if((tur==='alacak'?P.al:tur==='verecek'?P.ver:tur==='gecmis'?P.gecmis:tur==='yaklasan'?P.yaklasan:P.gelecek).length>SINIR)h+=`<div class="gf-ipucu">İlk ${SINIR} kayıt gösteriliyor.</div>`;
+  if(tur==='gelecek')h+='<div class="gf-ipucu">Tekrarlayan kayıtlar önümüzdeki 1 yıl için sayılır.</div>';
+  b.innerHTML=h;
 }
 // açılış uyarısı için
 function tkBugunAjanda(){const bg=localToday();return tkOlaylar(gfGunEkle(bg,-14),bg).filter(o=>(o.gun===bg&&o.durum==='planlandi')||tkGecikmis(o));}
