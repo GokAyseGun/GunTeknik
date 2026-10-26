@@ -5760,7 +5760,7 @@ async function islemTamamlaPatch(id){
 // ============================================================ GELİŞMİŞ FİNANS GRAFİĞİ — ARAYÜZ (KLineChart)
 var GF={chart:null,defter:null,barlar:[],tahmin:null,tahminAnahtar:'',geriTest:null,geriTestAnahtar:'',ek:{versiyon:0},ekZaman:0,ekYukleniyor:false,
   olusanGostergeler:[],cizimDb:{},toplucaSil:false,seciliCizim:null,cizimModu:false,hedefler:[],gorunur:null,kayitUyari:false,ay:null};
-var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,yEksen:'normal',
+var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,sifir:true,yEksen:'normal',
   tahminAcik:true,tahminUfuk:90,gelirPct:0,giderPct:0,tahsilatPct:85,eskiTahmin:false,sekme:'ozet',isiMetrik:'isNet',miknatis:false,
   maP:[{n:5,on:true},{n:10,on:true},{n:30,on:true},{n:60,on:true}],emaP:[{n:6,on:true},{n:12,on:true},{n:20,on:true}],
   donemTip:'ay',donemMod:'liste',donemBekleyen:false,donemKat:'',donemEsit:true};
@@ -5897,6 +5897,11 @@ function gfGostergeKaydet(){
     styles:{lines:[{color:'#EA80FC',size:1.4,style:'dashed',smooth:false,dashedValue:[5,3]},{color:'#CE93D8',size:1.1,style:'dashed',smooth:false,dashedValue:[5,3]},{color:'#9575CD',size:1,style:'dashed',smooth:false,dashedValue:[5,3]}]},
     calc:list=>list.map(b=>{const o={};(b.eski||[]).forEach((v,i)=>{if(v!=null)o['e'+i]=v;});return o;})});
   // Olay işaretleri (geçmiş: kredi, büyük hareket — gelecek: planlı hareketler)
+  // Sıfır çizgisi: düz, kalın; değer eksenini sıfırı da kapsayacak şekilde genişletir
+  klinecharts.registerIndicator({name:'GF_SIFIR',shortName:'Sıfır',precision:0,figures:[{key:'s',type:'line'}],
+    styles:{lines:[{color:'rgba(158,158,158,0.85)',size:2,style:'solid',smooth:false,dashedValue:[2,2]}]},
+    createTooltipDataSource:()=>({name:'',calcParamsText:'',icons:[],values:[]}),
+    calc:list=>list.map(()=>({s:0}))});
   klinecharts.registerIndicator({name:'GF_OLAY',shortName:'Olaylar',figures:[],calc:list=>list.map(()=>({})),
     createTooltipDataSource:()=>({name:'',calcParamsText:'',icons:[],values:[]}),
     draw:({ctx,kLineDataList,visibleRange,barSpace,xAxis,yAxis})=>{
@@ -6109,6 +6114,7 @@ function gfGostergeleriKur(kars,tahmin,eski){
   GF.olusanGostergeler.forEach(g=>{try{c.removeIndicator(g.pane,g.ad);}catch(e){}});GF.olusanGostergeler=[];
   const ana=(ad,opt)=>{try{c.createIndicator(opt?Object.assign({name:ad},opt):ad,true,{id:'candle_pane'});GF.olusanGostergeler.push({pane:'candle_pane',ad});}catch(e){console.warn(ad,e);}};
   const alt=(ad,opt,h)=>{try{const pid=c.createIndicator(opt?Object.assign({name:ad},opt):ad,false,{id:'gf_'+ad,height:h||72,minHeight:40,dragEnabled:true});GF.olusanGostergeler.push({pane:pid||('gf_'+ad),ad});}catch(e){console.warn(ad,e);}};
+  if(ay.sifir!==false&&(ay.yEksen||'normal')==='normal')ana('GF_SIFIR');
   ay.anaGosterge.forEach(g=>{
     // MA / EMA: kullanıcının seçtiği periyotlar, her çizgi sabit renkli
     if(g==='MA'||g==='EMA'){const P=ay[g==='MA'?'maP':'emaP'];const acik=P.map((p,i)=>({n:p.n,on:p.on,i})).filter(p=>p.on&&p.n>0);if(!acik.length)return;
@@ -6393,7 +6399,7 @@ function gfGostergeModalCiz(){
   <div class="isf-grup-b">Alt paneller</div><div class="isf-chips">${GF_ALT_GOSTERGE.map(([k,l])=>chip(ay.altGosterge.includes(k),l,`gfGostergeTik('altGosterge','${k}')`)).join('')}</div>
   <div class="isf-grup-b">Karşılaştır (en fazla 4 metrik)</div><div class="isf-chips">${Object.keys(GF_METRIK).filter(k=>k!==ay.metrik&&!GF_METRIK[k].gizli).map(k=>chip(ay.karsilastir.includes(k),GF_METRIK[k].ad,`gfGostergeTik('karsilastir','${k}')`)).join('')}</div>
   <div class="isf-chips" style="margin-top:6px;">${chip(ay.karsAyri,'Karşılaştırmayı ayrı panelde göster',"GF.ay.karsAyri=!GF.ay.karsAyri;gfGostergeUygula()")}</div>
-  <div class="isf-grup-b">Görünüm</div><div class="isf-chips">${chip(ay.gecenYil,'📅 Geçen yılın aynı dönemi',"GF.ay.gecenYil=!GF.ay.gecenYil;gfGostergeUygula()")}${chip(ay.olaylar,'⭐ Olay işaretleri',"GF.ay.olaylar=!GF.ay.olaylar;gfGostergeUygula()")}${chip(ay.eskiTahmin,'🕘 Kayıtlı eski tahminler',"GF.ay.eskiTahmin=!GF.ay.eskiTahmin;gfGostergeUygula()")}${chip(ay.reel,'💱 Reel (enflasyondan arındırılmış, bugünün TL\'si)',"GF.ay.reel=!GF.ay.reel;gfGostergeUygula()")}</div>
+  <div class="isf-grup-b">Görünüm</div><div class="isf-chips">${chip(ay.gecenYil,'📅 Geçen yılın aynı dönemi',"GF.ay.gecenYil=!GF.ay.gecenYil;gfGostergeUygula()")}${chip(ay.sifir!==false,'0️⃣ Sıfır çizgisi (eksen sıfırı da gösterir)',"GF.ay.sifir=GF.ay.sifir===false;gfGostergeUygula()")}${chip(ay.olaylar,'⭐ Olay işaretleri',"GF.ay.olaylar=!GF.ay.olaylar;gfGostergeUygula()")}${chip(ay.eskiTahmin,'🕘 Kayıtlı eski tahminler',"GF.ay.eskiTahmin=!GF.ay.eskiTahmin;gfGostergeUygula()")}${chip(ay.reel,'💱 Reel (enflasyondan arındırılmış, bugünün TL\'si)',"GF.ay.reel=!GF.ay.reel;gfGostergeUygula()")}</div>
   <div class="isf-grup-b">Değer ekseni</div><div class="isf-chips">${[['normal','Normal'],['percentage','Yüzde (bugüne göre)'],['log','Logaritmik']].map(([k,l])=>chip(ay.yEksen===k,l,`GF.ay.yEksen='${k}';gfGostergeUygula()`)).join('')}</div>
   <div class="isf-grup-b">Grafik türü</div><div class="isf-chips">${[['candle_solid','🕯 Mum'],['candle_stroke','🕯 Boş mum'],['ohlc','┤ Çubuk (OHLC)'],['area','📈 Alan']].map(([k,l])=>chip(ay.tip===k,l,`GF.ay.tip='${k}';gfGostergeUygula()`)).join('')}</div>
   <div class="isf-ipucu">Gösterge değerleri mum başlığının altında görünür. Alt panellerin yüksekliğini aradaki çizgiyi sürükleyerek değiştirebilirsin.</div>
