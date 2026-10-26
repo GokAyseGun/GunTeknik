@@ -1161,6 +1161,11 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .ps-ay b{color:var(--red);font-size:11px;}
 .ps-lejant{display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--text3);margin:6px 0 2px;}
 .ps-lejant i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+
+.hr-yok{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.hr-yok small{font-size:11px;color:var(--text3);}
+.hr-eksik-s{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.hr-eksik-s .isf-chip{padding:4px 9px;font-size:11px;}
 </style>
 </head>
 <body>
@@ -4236,7 +4241,7 @@ async function loadDB(){
       faizKismi:parseFloat(o.faiz_kismi)||0, toplamTutar:parseFloat(o.toplam_tutar)||0,
       odemeYontemi:o.odeme_yontemi||'Nakit', islemId:o.islem_id, notlar:o.notlar||''
     }));
-    DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',vergiDairesi:k.vergi_dairesi||'',firmaUnvan:k.firma_unvan||'',iban:k.iban||'',eFatura:k.e_fatura||false,tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false}));
+    DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',vergiDairesi:k.vergi_dairesi||'',firmaUnvan:k.firma_unvan||'',iban:k.iban||'',eFatura:k.e_fatura||false,tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false,adresYok:!!k.adres_yok}));
     DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,islemKaynagi:i.islem_kaynagi||'',baglam:i.baglam||'',degdi:('degdi' in i)?(i.degdi==null?null:Number(i.degdi)):undefined,tahsilTarihi:i.tahsil_tarihi||null,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
     DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
@@ -15695,7 +15700,7 @@ function gfTutamakBagla(){
 function ozKartSayi(el,v){if(!el)return;animateCount(el,v);el.style.color=v<0?'var(--red)':v>0?'var(--green)':'var(--text3)';}
 
 // ============================================================ REHBER: YAPILANDIRILMIŞ ADRES · KONUM · GOOGLE MAPS
-var HR={veri:null,yukleniyor:null,form:[],formKisi:null,gm:null,gmHata:null,secici:null,harita:null,katman:{musteri:true,firma:false},bolge:null,isaretler:[],daireler:[],bilgi:null};
+var HR={adresYok:false,veri:null,yukleniyor:null,form:[],formKisi:null,gm:null,gmHata:null,secici:null,harita:null,katman:{musteri:true,firma:false},bolge:null,isaretler:[],daireler:[],bilgi:null};
 var HR_ETIKET=['Ev','İş','Villa','Yazlık','Depo','Diğer'];
 var HR_ILLER=['Adana','Adıyaman','Afyonkarahisar','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kilis','Kırıkkale','Kırklareli','Kırşehir','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Şanlıurfa','Siirt','Sinop','Şırnak','Sivas','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'];
 var HR_VARSAYILAN_IL='Muğla';
@@ -15763,7 +15768,7 @@ function hrAyristir(metin){
 // ---------- kişi formu: çoklu adres kartları
 function hrBosAdres(){return {id:null,etiket:'Ev',il:HR_VARSAYILAN_IL,ilce:'',mahalle:'',caddeSokak:'',binaNo:'',daireNo:'',siteAdi:'',adresTarifi:'',postaKodu:'',enlem:null,boylam:null,plusCode:'',konumKaynagi:'',konumHassasiyet:null,oneri:null};}
 function hrFormAc(kisiId){
-  HR.formKisi=kisiId||null;const k=kisiId?getKisi(kisiId):null;
+  HR.formKisi=kisiId||null;const k=kisiId?getKisi(kisiId):null;HR.adresYok=!!(k&&k.adresYok);
   const mevcut=kisiId?hrKisiAdresleri(kisiId):[];
   if(mevcut.length)HR.form=mevcut.map(a=>Object.assign(hrBosAdres(),JSON.parse(JSON.stringify(a)),{oneri:null}));
   else{const a=hrBosAdres();HR.form=[a];if(k&&k.adres){a._eski=k.adres;a.caddeSokak='';}}
@@ -15775,7 +15780,10 @@ function hrFormAc(kisiId){
 function hrFormCiz(){
   const el=document.getElementById('mk-adresler');if(!el)return;
   const veriYok=!HR.veri;
-  el.innerHTML=HR.form.map((a,i)=>{
+  const ekleBtn=el.parentNode&&el.parentNode.querySelector('.hr-ekle');if(ekleBtn)ekleBtn.style.display=HR.adresYok?'none':'';
+  const yokBtn=`<div class="hr-yok"><button type="button" class="isf-chip${HR.adresYok?' on':''}" onclick="hrAdresYokDegistir()">🚫 Adresi yok</button><small>${HR.adresYok?'':'Kurum, uzaktaki kişi gibi adresi olmayan kayıtlar için'}</small></div>`;
+  if(HR.adresYok){el.innerHTML=yokBtn+`<div class="hr-not">Bu kayıt için adres tutulmuyor. "Konumu eksik" listesinde ve haritanın eksik sayısında görünmez. Adres eklemek için düğmeyi kapat.</div>`;hrOzetGuncelle();return;}
+  el.innerHTML=yokBtn+HR.form.map((a,i)=>{
     const ilceler=hrIlceler(a.il);
     const sik=hrSikIlceler(a.il).filter(x=>ilceler.includes(x));
     const ilceSec=veriYok?`<input type="text" value="${_esc(a.ilce)}" placeholder="İlçe" oninput="hrAlan(${i},'ilce',this.value,true)">`:
@@ -15809,12 +15817,15 @@ function hrAlan(i,k,v,sessiz){const a=HR.form[i];if(!a)return;a[k]=v;
   if(!sessiz)hrFormCiz();else hrOzetGuncelle();}
 function hrMahalleDogrula(i){const a=HR.form[i];if(!a)return;const m=hrMahalleBul(a.il,a.ilce,a.mahalle);if(m&&m.ad!==a.mahalle){a.mahalle=m.ad;a.postaKodu=m.pk;hrFormCiz();}}
 function hrAdresEkle(){HR.form.push(hrBosAdres());const a=HR.form[HR.form.length-1];const ilk=HR.form[0];if(ilk){a.il=ilk.il;}a.etiket=HR.form.length===2?'Villa':'Diğer';hrFormCiz();setTimeout(()=>document.getElementById('hr-kart-'+(HR.form.length-1))?.scrollIntoView({behavior:'smooth',block:'center'}),50);}
+function hrAdresYokDegistir(){
+  if(!HR.adresYok&&HR.form.some(a=>hrAdresDolu(a)||a._eski)&&!confirm('Bu kayıt "adresi yok" olarak işaretlenecek ve kaydedince girilmiş adres bilgileri silinecek. Devam edilsin mi?'))return;
+  HR.adresYok=!HR.adresYok;if(!HR.adresYok&&!HR.form.length)HR.form=[hrBosAdres()];hrFormCiz();}
 function hrAdresSil(i){if(HR.form.length<=1)return;const a=HR.form[i];if(hrAdresDolu(a)&&!confirm('Bu adres silinsin mi?'))return;HR.form.splice(i,1);hrFormCiz();}
 function hrKonumSil(i){const a=HR.form[i];a.enlem=null;a.boylam=null;a.plusCode='';a.konumKaynagi='';a.konumHassasiyet=null;hrFormCiz();}
 // kişinin "adres" metin alanı (eski ekranlar, arama ve raporlar için): ilk dolu adresin tek satırı
-function hrOzetGuncelle(){const h=document.getElementById('mk-adres');if(!h)return;const a=HR.form.find(hrAdresDolu);h.value=a?(hrAdresSatir(a)||a._eski||''):((HR.form[0]&&HR.form[0]._eski)||'');}
+function hrOzetGuncelle(){const h=document.getElementById('mk-adres');if(!h)return;if(HR.adresYok){h.value='';return;}const a=HR.form.find(hrAdresDolu);h.value=a?(hrAdresSatir(a)||a._eski||''):((HR.form[0]&&HR.form[0]._eski)||'');}
 async function hrAdresleriKaydet(kisiId){
-  if(!kisiId)return;const form=HR.form.filter(hrAdresDolu);
+  if(!kisiId)return;await hrAdresYokKaydet(kisiId,HR.adresYok);const form=HR.adresYok?[]:HR.form.filter(hrAdresDolu);
   const eski=hrKisiAdresleri(kisiId);const kalan=new Set(form.filter(a=>a.id).map(a=>String(a.id)));
   const sat=(a,i)=>({kisi_id:Number(kisiId),etiket:a.etiket||'Ev',il:a.il||null,ilce:a.ilce||null,mahalle:a.mahalle||null,cadde_sokak:a.caddeSokak||null,bina_no:a.binaNo||null,daire_no:a.daireNo||null,
     site_adi:a.siteAdi||null,adres_tarifi:a.adresTarifi||null,posta_kodu:a.postaKodu||null,enlem:hrKonumVar(a)?a.enlem:null,boylam:hrKonumVar(a)?a.boylam:null,
@@ -15826,6 +15837,21 @@ async function hrAdresleriKaydet(kisiId){
       else await sbFetch('kisi_adresler',{method:'POST',prefer:'return=minimal',body:JSON.stringify(sat(a,i))});}
   }catch(e){console.warn('adres kaydı',e);showToast('Adres ayrıntıları kaydedilemedi (kisi_adresler tablosu: rehber_adres.sql). Adres metin olarak kaydedildi.','amber');}
 }
+
+async function hrAdresYokKaydet(kisiId,yok){
+  const k=getKisi(kisiId);if(!!(k&&k.adresYok)===!!yok)return true;
+  try{await sbFetch('kisiler?id=eq.'+kisiId,{method:'PATCH',body:JSON.stringify({adres_yok:!!yok})});if(k)k.adresYok=!!yok;return true;}
+  catch(e){console.warn('adres yok',e);showToast('"Adresi yok" kaydedilemedi — Supabase\'de rehber_adres.sql tekrar çalıştırılmalı','amber');return false;}
+}
+// konumu eksik listesinden tek dokunuşla "adresi yok"
+async function hrAdresYokIsaretle(id){
+  const k=getKisi(id);if(!k)return;
+  if(hrKisiAdresleri(id).length&&!confirm(k.isim+' için kayıtlı adres bilgileri silinecek. Devam edilsin mi?'))return;
+  if(!await hrAdresYokKaydet(id,true))return;
+  try{for(const a of hrKisiAdresleri(id))await sbFetch('kisi_adresler?id=eq.'+a.id,{method:'DELETE'});DB.kisiAdresleri=(DB.kisiAdresleri||[]).filter(a=>String(a.kisiId)!==String(id));}catch(e){console.warn(e);}
+  showToast(k.isim+' → adresi yok','green');hrKonumEksikAc();try{hrRehberUstCiz();}catch(e){}
+}
+function hrKonumBekleniyor(k){return !k.adresYok&&!hrKisiAdresleri(k.id).some(hrKonumVar);}
 
 // ---------- Google Maps yükleme
 function hrAnahtar(){const a=(PS.ayar&&PS.ayar.harita)||{};if(a.key)return a.key;try{return localStorage.getItem('hr_gm_key')||'';}catch(e){return '';}}
@@ -16040,7 +16066,7 @@ async function hrHaritaCiz(sigdir){
   if(HR.bolge){await hrBolgeCiz(HR.bolge);hrHaritaFiltreCiz();if(sigdir)hrHaritaSigdir();return;}
   const durum=hrKisiDurum();const say={musteri:0,firma:0,alacak:0,buay:0};let konumsuz=0;
   (DB.kisiler||[]).forEach(k=>{const grup=hrKisiGrup(k);const gor=grup==='musteri'?HR.katman.musteri:HR.katman.firma;
-    const L=hrKisiAdresleri(k.id).filter(hrKonumVar);if(!L.length){if(gor)konumsuz++;return;}
+    const L=hrKisiAdresleri(k.id).filter(hrKonumVar);if(!L.length){if(gor&&!k.adresYok)konumsuz++;return;}
     say[grup==='musteri'?'musteri':'firma']++;if(!gor)return;
     const D=durum(k);if(D.d==='alacak')say.alacak++;else if(D.d==='buay')say.buay++;
     const dolgu=D.d==='alacak'?HR_RENK.alacak:D.d==='buay'?HR_RENK.buay:HR_RENK[grup];const cer=D.d==='buay';
@@ -16086,15 +16112,15 @@ function hrKonumEksikAc(){
   let m=document.getElementById('modal-hr-eksik');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-hr-eksik';m.innerHTML=`<div class="modal"><div class="modal-handle"></div><div class="modal-head"><h3>📍 Konumu eksik kişiler</h3><button class="modal-close" onclick="closeModal('modal-hr-eksik')">✕</button></div><div class="modal-body" id="hr-eksik-body"></div></div>`;document.body.appendChild(m);}
   const son={};(DB.islemler||[]).forEach(i=>{if(!i.kisiId)return;const g=localDateStr(i.tarih);if(!son[i.kisiId]||g>son[i.kisiId])son[i.kisiId]=g;});
-  const L=(DB.kisiler||[]).filter(k=>k.tip==='Müşteri'||k.tip==='Şahıs'||k.tip==='Firma').filter(k=>!hrKisiAdresleri(k.id).some(hrKonumVar))
+  const L=(DB.kisiler||[]).filter(k=>k.tip==='Müşteri'||k.tip==='Şahıs'||k.tip==='Firma').filter(hrKonumBekleniyor)
     .map(k=>({k,son:son[k.id]||'',yapi:hrKisiAdresleri(k.id).length>0})).sort((a,b)=>b.son.localeCompare(a.son));
-  document.getElementById('hr-eksik-body').innerHTML=`<div class="gf-not">${L.length} kişinin haritada konumu yok. Son iş tarihine göre sıralı; en çok iş yaptığın müşterilerden başlamak mantıklı. Müşterinin yanındayken "📡 Buradayım" en kesin yoldur.</div>`+
-    L.slice(0,300).map(x=>`<div class="gf-satir tik" onclick="closeModal('modal-hr-eksik');editKisi(${x.k.id})"><span>${_esc(x.k.isim)}<br><small>${x.k.adres?_esc(x.k.adres):'adres yok'}${x.son?' · son işlem '+gfTrTarih(x.son):''}</small></span><small>${x.yapi?'konum ekle':'adres + konum'} →</small></div>`).join('');
+  document.getElementById('hr-eksik-body').innerHTML=`<div class="gf-not">${L.length} kişinin haritada konumu yok. Son iş tarihine göre sıralı; en çok iş yaptığın müşterilerden başlamak mantıklı. Müşterinin yanındayken "📡 Buradayım" en kesin yoldur. Adresi olmayan kayıtları "🚫 Adresi yok" ile listeden çıkarabilirsin.${(()=>{const n=(DB.kisiler||[]).filter(k=>k.adresYok).length;return n?` <small>(${n} kayıt "adresi yok" olarak işaretli)</small>`:'';})()}</div>`+
+    L.slice(0,300).map(x=>`<div class="gf-satir tik" onclick="closeModal('modal-hr-eksik');editKisi(${x.k.id})"><span>${_esc(x.k.isim)}<br><small>${x.k.adres?_esc(x.k.adres):'adres girilmemiş'}${x.son?' · son işlem '+gfTrTarih(x.son):''}</small></span><span class="hr-eksik-s">${USER_ROL!=='goruntule'?`<button type="button" class="isf-chip" title="Bu kaydın adresi yok; listeden çıkar" onclick="event.stopPropagation();hrAdresYokIsaretle(${x.k.id})">🚫 Adresi yok</button>`:''}<small>${x.yapi?'konum ekle':'adres + konum'} →</small></span></div>`).join('');
   openModal('modal-hr-eksik');
 }
 function hrRehberUstCiz(){
   const el=document.getElementById('rh-ust');if(!el)return;
-  const eksik=(DB.kisiler||[]).filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&!hrKisiAdresleri(k.id).some(hrKonumVar)).length;
+  const eksik=(DB.kisiler||[]).filter(k=>(k.tip==='Müşteri'||k.tip==='Şahıs')&&hrKonumBekleniyor(k)).length;
   el.innerHTML=`<button class="btn btn-secondary btn-sm" onclick="hrRehberHaritaAc()">🗺️ Harita</button><button class="btn btn-secondary btn-sm" onclick="hrKonumEksikAc()">📍 Konumu eksik: ${eksik}</button>`;
 }
 
