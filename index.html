@@ -1113,8 +1113,9 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   #page-dashboard.dash-kucuk #dash-grafik-kart .gf-cizim-bar,
   #page-dashboard.dash-kucuk #dash-grafik-kart .gf-tutamak,
   #page-dashboard.dash-kucuk #dash-grafik-kart .gf-alt-ipucu,
-  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-tabs,
-  #page-dashboard.dash-kucuk #dash-grafik-kart #gf-tab-icerik{display:none!important;}
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-xx{display:none!important;}
+  #page-dashboard.dash-kucuk.active>#dash-grafik-kart,#page-dashboard.dash-kucuk.active>#dash-bakis{grid-row:1;}
+  #page-dashboard.dash-kucuk.active>#gf-panel{grid-row:2;}
   #page-dashboard.dash-buyuk>#dash-bakis{grid-template-columns:repeat(4,minmax(0,1fr));}
   /* büyük hâl: küçült düğmesi kartın sağ üst köşesinde */
   #page-dashboard.dash-buyuk #dash-grafik-kart{position:relative;}
@@ -1124,6 +1125,26 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   #dash-grafik-kart.gf-gecis{animation:gfGecis .25s ease-out;}
   @keyframes gfGecis{from{opacity:.55;}to{opacity:1;}}
 }
+
+/* alt panel: başlık satırı her zaman, içerik dokununca açılır */
+.gf-panel{padding:8px 10px;margin-bottom:14px;}
+.gf-panel .gf-tabs{margin-top:0;}
+.gf-panel #gf-tab-icerik{margin-top:0;}
+.gf-panel.acik #gf-tab-icerik{margin-top:10px;}
+.gf-panel:not(.acik) #gf-tab-icerik{display:none;}
+#gf-tab-icerik.gf-acil{animation:gfPanelAc .22s ease-out;}
+@keyframes gfPanelAc{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.gf-panel .gf-tab{position:relative;}
+.gf-panel:not(.acik) .gf-tab::after{content:'▾';margin-left:4px;opacity:.5;}
+.gf-panel.acik .gf-tab.on::after{content:'▴';margin-left:4px;}
+.db-k.r-turuncu{border-left:4px solid #f97316;background:linear-gradient(90deg,rgba(249,115,22,.08),var(--surface) 55%);}
+.ev-ort{font-size:9px;font-weight:600;color:var(--text3);letter-spacing:.2px;white-space:nowrap;}
+.ev-oneri{margin:-4px 0 0;color:var(--amber);}
+.gf-ozet-btn{white-space:nowrap;}
+@media(max-width:899px){.gf-ozet-btn .oz-yazi{display:none;}}
+.ust-harita-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;}
+.ust-harita-btn:hover{border-color:var(--blue);color:var(--blue);}
+@media(max-width:700px){.ust-harita-btn{width:36px;padding:0;justify-content:center;}.ust-harita-btn .oz-yazi{display:none;}}
 </style>
 </head>
 <body>
@@ -1226,7 +1247,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   <div class="topbar">
     <div class="topbar-title" id="page-title">Genel Özet</div>
     <div class="topbar-actions">
-      <button class="ozet-cikar-btn" onclick="ozetCikarAc()" title="Yapay zekâ için özet çıkart"><span class="oz-ik">📋</span><span class="oz-yazi">Özet Çıkart</span></button>
+      <button class="ust-harita-btn" onclick="hrRehberHaritaAc()" title="Rehber haritası"><span class="oz-ik">🗺️</span><span class="oz-yazi">Harita</span></button>
       <input type="month" class="month-input" id="global-month" onchange="onMonthChange()" title="Dönem filtresi">
       <button class="icon-btn" onclick="clearMonth()" title="Temizle">✕</button>
       <button class="icon-btn" id="bildirim-btn" onclick="openModal('modal-bildirimler')" title="Bildirimler" style="position:relative;">
@@ -1247,6 +1268,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
         <div class="gf-ust">
           <select id="gf-metrik" class="gf-sel" onchange="gfMetrikSec(this.value)"></select>
           <div class="gf-seg" id="gf-periyot"></div>
+          <button class="gf-ab gf-ozet-btn" onclick="ozetCikarAc()" title="Claude'a yapıştırmak için özet çıkart">📋<span class="oz-yazi"> Özet Çıkart</span></button>
           <button class="gf-ab gf-buyut-btn" id="gf-btn-buyut" onclick="gfBuyutDegistir()">⤢ Büyüt</button>
         </div>
         <div class="gf-arac">
@@ -1264,9 +1286,9 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
         <div class="gf-chart-wrap"><div id="gf-chart"></div></div>
         <div class="gf-tutamak" id="gf-tutamak" title="Sürükle: grafik yüksekliği · Çift tıkla: ekrana göre otomatik"><span></span></div>
         <div class="gf-alt-ipucu">Muma dokun → gün detayı · iki parmakla yakınlaştır · basılı tut → artı imleç</div>
-        <div class="gf-tabs" id="gf-tabs"></div>
-        <div id="gf-tab-icerik"></div>
       </div>
+
+      <div class="card gf-panel" id="gf-panel"><div class="gf-tabs" id="gf-tabs"></div><div id="gf-tab-icerik"></div></div>
 
       <div class="dash-bakis" id="dash-bakis"></div>
 
@@ -6262,11 +6284,17 @@ function gfBilgiCiz(){
   el.innerHTML=`<div><div class="gf-bilgi-ad">${GF_METRIK[m].ad}</div><div class="gf-bilgi-v num" data-isr-yok style="color:${Math.abs(v)<0.5?tx3:v<0?dn:up}">${birim?(v<0?'−':'')+Math.round(Math.abs(v)).toLocaleString('tr-TR')+' '+birim:gfTL(v)}</div></div>
     <div class="gf-bilgi-sag"><div>Dün ${fark(v,dun)}</div><div>30 gün ${fark(v,ay30)}</div>${t}</div>`;
 }
-function gfSekmeSec(s){GF.ay.sekme=s;gfAyarKaydet();if(s==='tahmin'&&!GF.tahmin)gfTahminAl(GF.defter);gfSekmeCiz();}
+// alt panel (Özet / Tahmin / Davranış …): normalde kapalı, başlığa dokununca açılır, aynı başlığa tekrar dokununca kapanır
+var GF_PANEL_ACIK=false;
+function gfSekmeSec(s){GF.ay.sekme=s;GF_PANEL_ACIK=true;gfAyarKaydet();if(s==='tahmin'&&!GF.tahmin)gfTahminAl(GF.defter);gfSekmeCiz();}
+function gfPanelTik(s){if(GF_PANEL_ACIK&&GF.ay.sekme===s){GF_PANEL_ACIK=false;gfSekmeCiz();return;}gfSekmeSec(s);
+  const el=document.getElementById('gf-tab-icerik');if(el){el.classList.remove('gf-acil');void el.offsetWidth;el.classList.add('gf-acil');}}
 function gfSekmeCiz(){
   const tabs=document.getElementById('gf-tabs'),el=document.getElementById('gf-tab-icerik');if(!el||!GF.defter)return;
   const s=GF.ay.sekme;
-  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['davranis','🧠 Davranış'],['isi','🟩 Isı haritası'],['donem','📆 Dönemsel'],['enler','🏆 En\'ler']].map(([k,l])=>`<button class="gf-tab${s===k?' on':''}" onclick="gfSekmeSec('${k}')">${l}</button>`).join('');
+  if(tabs)tabs.innerHTML=[['ozet','📊 Özet'],['tahmin','🔮 Tahmin'],['davranis','🧠 Davranış'],['isi','🟩 Isı haritası'],['donem','📆 Dönemsel'],['enler','🏆 En\'ler']].map(([k,l])=>`<button class="gf-tab${GF_PANEL_ACIK&&s===k?' on':''}" onclick="gfPanelTik('${k}')">${l}</button>`).join('');
+  const pn=document.getElementById('gf-panel');if(pn)pn.classList.toggle('acik',GF_PANEL_ACIK);
+  if(!GF_PANEL_ACIK){el.innerHTML='';return;}
   try{el.innerHTML=s==='tahmin'?gfTahminSekme():s==='davranis'?gfDavranisSekme():s==='isi'?gfIsiSekme():s==='donem'?gfDonemSekme():s==='enler'?gfEnlerSekme():gfOzetSekme();}catch(e){console.error(e);el.innerHTML='<div class="gf-not">Hesaplanamadı: '+_esc(e.message)+'</div>';}
   ozIsaretUygula(el);
 }
@@ -15637,7 +15665,8 @@ function hrGmYukle(){
     await hrAyarHazir();const key=hrAnahtar();
     if(!key)throw new Error('anahtar');
     await new Promise((res,rej)=>{
-      window.__hrGmHazir=()=>res();window.gm_authFailure=()=>{HR.gmHata='yetki';showToast('Google Maps anahtarı reddetti: anahtar kısıtlamalarını ve faturalandırmayı kontrol et','red');};
+      window.__hrGmHazir=()=>res();window.gm_authFailure=()=>{HR.gmHata='yetki';setTimeout(hrGmHataModal,400);};
+      hrGmKonsolDinle();
       const s=document.createElement('script');s.async=true;s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&v=weekly&language=tr&region=TR&loading=async&callback=__hrGmHazir';
       s.onerror=()=>rej(new Error('yükleme'));document.head.appendChild(s);setTimeout(()=>rej(new Error('zaman aşımı')),20000);});
     if(google.maps.importLibrary)await Promise.all(['maps','geocoding','marker'].map(l=>google.maps.importLibrary(l)));
@@ -15645,6 +15674,34 @@ function hrGmYukle(){
   })();
   HR.gm.catch(e=>{HR.gm=null;});
   return HR.gm;
+}
+// Google Maps hatasının asıl sebebini (konsola yazdığı hata kodunu) yakala ve ekranda anlaşılır göster
+function hrGmKonsolDinle(){
+  if(window.__hrKonsol)return;window.__hrKonsol=true;const asil=console.error.bind(console);
+  console.error=function(...a){try{const m=a.map(x=>String(x&&x.message||x)).join(' ');
+      if(/Google Maps JavaScript API|MapError/i.test(m)){const k=m.match(/([A-Za-z]+MapError)/);if(k)HR.gmHataKod=k[1];const u=m.match(/authorized:\s*(\S+)/i);if(u)HR.gmHataUrl=u[1];HR.gmHataHam=m.slice(0,400);}}catch(e){}
+    return asil(...a);};
+}
+var HR_GM_HATA={
+  RefererNotAllowedMapError:['Bu adres anahtarın izin listesinde yok','Google Cloud → API ve Hizmetler → Kimlik bilgileri → harita anahtarı → <b>Web sitesi kısıtlamaları</b> bölümüne şu satırı ekle: <code>https://gokaysegun.github.io/*</code> (sonunda * olsun; yalnızca <code>/GunTeknik/</code> yazılıysa telefonun açtığı <code>index.html</code> gibi adresler reddedilir). Kaydettikten sonra 5 dakika kadar bekleyip sayfayı yenile.'],
+  ApiNotActivatedMapError:['Maps JavaScript API bu projede açık değil','Google Cloud → API ve Hizmetler → Kitaplık → "Maps JavaScript API" → Etkinleştir.'],
+  ApiTargetBlockedMapError:['Anahtarın API kısıtlaması Maps JavaScript API\'ye izin vermiyor','Anahtar ayarlarında <b>API kısıtlamaları</b> listesine "Maps JavaScript API", "Geocoding API" ve "Places API" ekle.'],
+  BillingNotEnabledMapError:['Projede faturalandırma açık değil','Google Cloud → Faturalandırma → projeye bir ödeme hesabı bağla (aylık ücretsiz kullanım payı yine geçerli).'],
+  InvalidKeyMapError:['Anahtar geçersiz','Ayarlar → Harita ve Konum bölümüne anahtarı yeniden, boşluksuz yapıştır.'],
+  MissingKeyMapError:['Anahtar gönderilmedi','Ayarlar → Harita ve Konum bölümüne anahtarı gir.'],
+  ExpiredKeyMapError:['Anahtarın süresi dolmuş ya da silinmiş','Cloud\'da yeni bir anahtar oluşturup Ayarlar → Harita ve Konum\'a gir.'],
+  DeletedApiProjectMapError:['Anahtarın bağlı olduğu proje silinmiş','Cloud\'da yeni bir anahtar oluşturup Ayarlar → Harita ve Konum\'a gir.']
+};
+function hrGmHataModal(){
+  const k=HR.gmHataKod;const t=HR_GM_HATA[k]||['Google Maps anahtarı reddetti','Anahtarın web sitesi kısıtlamasını, API kısıtlamalarını ve faturalandırmayı kontrol et.'];
+  let m=document.getElementById('modal-hr-gmhata');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-hr-gmhata';m.innerHTML=`<div class="modal" style="max-width:480px"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title">🗺️ Harita açılamadı</h3><button class="modal-close" onclick="closeModal('modal-hr-gmhata')">✕</button></div><div class="modal-body" id="hr-gmhata-body" style="font-size:13px;line-height:1.55"></div></div>`;document.body.appendChild(m);}
+  document.getElementById('hr-gmhata-body').innerHTML=`<div class="gf-risk yuksek"><b>${t[0]}</b>${k?' <small>('+k+')</small>':''}</div>
+    <div style="margin:10px 0">${t[1]}</div>
+    <div class="gf-satir"><span>Bu sayfanın adresi</span><b style="word-break:break-all">${_esc(HR.gmHataUrl||location.href.split('#')[0])}</b></div>
+    <button class="btn btn-secondary btn-full" style="margin-top:8px" data-u="${_esc(HR.gmHataUrl||location.href.split('#')[0])}" onclick="try{navigator.clipboard.writeText(this.dataset.u);showToast('Adres kopyalandı','green')}catch(e){}">⧉ Adresi kopyala</button>
+    ${HR.gmHataHam&&!HR_GM_HATA[k]?`<div class="gf-ipucu" style="word-break:break-all">${_esc(HR.gmHataHam)}</div>`:''}`;
+  openModal('modal-hr-gmhata');
 }
 function hrGmHataGoster(e){
   if(String(e&&e.message)==='anahtar'){showToast('Google Maps anahtarı girilmemiş: Ayarlar → Harita ve Konum','amber');setTimeout(hrAyarModalAc,400);}
@@ -15929,7 +15986,7 @@ try{TK.gorunum=localStorage.getItem('tk_gorunum')||'ay';}catch(e){}
 TK.evrak=true;try{TK.evrak=localStorage.getItem('tk_evrak')!=='0';}catch(e){}
 function tkEvrakDegistir(){TK.evrak=!TK.evrak;try{localStorage.setItem('tk_evrak',TK.evrak?'1':'0');}catch(e){}tkCiz();}
 function tkEvOlay(bas,bit){if(!TK.evrak||typeof evTakvimOlaylari!=='function')return [];try{return evTakvimOlaylari(bas,bit);}catch(e){console.warn('takvim evrak',e);return [];}}
-function tkEvOgeHtml(x,kucuk,tarihli){const e=x.e;return `<div class="tk-ev${x.gecikmis?' gec':''}${kucuk?' kucuk':''}" onclick="evDetayAc(${e.id})"><div class="tk-ev-a"><div class="tk-oge-u"><span class="tk-oge-s">${tarihli?gfTrTarih(x.gun).slice(0,5)+' ':''}Son gün</span><span>📄 Evrak</span>${x.gecikmis?'<span class="tk-oge-d gec">⚠️ Gecikti</span>':''}</div><div class="tk-oge-b">${evIk(e)} ${_esc(evAd(e))}</div><div class="tk-oge-k">${_esc(x.p.ad)}${x.tutar?' · <b class="num">'+evPara(x.tutar)+'</b>':''}</div></div>${kucuk||USER_ROL==='goruntule'?'':`<div class="tk-oge-e"><button title="Öde" onclick="event.stopPropagation();evOdemeAc(${e.id},'${x.p.k}')">💳</button></div>`}</div>`;}
+function tkEvOgeHtml(x,kucuk,tarihli){const e=x.e;return `<div class="tk-ev${x.gecikmis?' gec':''}${kucuk?' kucuk':''}" onclick="evDetayAc(${e.id})"><div class="tk-ev-a"><div class="tk-oge-u"><span class="tk-oge-s">${tarihli?gfTrTarih(x.gun).slice(0,5)+' ':''}Son gün</span><span>📄 Evrak</span>${x.gecikmis?'<span class="tk-oge-d gec">⚠️ Gecikti</span>':''}</div><div class="tk-oge-b">${evIk(e)} ${_esc(evAd(e))}</div><div class="tk-oge-k">${_esc(x.p.ad)}${x.tutar?' · <b class="num">'+evTahminHtml(e,x.tutar)+'</b>':''}</div></div>${kucuk||USER_ROL==='goruntule'?'':`<div class="tk-oge-e"><button title="Öde" onclick="event.stopPropagation();evOdemeAc(${e.id},'${x.p.k}')">💳</button></div>`}</div>`;}
 var TK_TIP={'İş':{ik:'🛠️',renk:'var(--amber)',ad:'İş'},'Alacak':{ik:'📥',renk:'var(--green)',ad:'Alacak'},'Verecek':{ik:'📤',renk:'var(--red)',ad:'Verecek'},'Bilgi':{ik:'📝',renk:'var(--text3)',ad:'Not'}};
 var TK_DURUM={planlandi:{ad:'Planlandı',ik:'🕘'},yapildi:{ad:'Yapıldı',ik:'✅'},ertelendi:{ad:'Ertelendi',ik:'⏭'},iptal:{ad:'İptal',ik:'✖️'}};
 var TK_GUN=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
@@ -16096,7 +16153,7 @@ function tkPanelVeri(){
     const k=getKisi(i.kisiId);(y>0?al:ver).push({gun:g,tutar:t,ad:k?.isim||i.kat||i.tip,alt:(i.altKat&&i.altKat!=='-'?i.altKat:i.kat)||'',kaynak:'Vadeli işlem',islemId:i.id});});
   gelecek.filter(o=>o.durum==='planlandi'&&(o.t.tip==='Alacak'||o.t.tip==='Verecek')).forEach(o=>{const k=o.t.kisiId?getKisi(o.t.kisiId):null;
     (o.t.tip==='Alacak'?al:ver).push({gun:o.gun,tutar:o.t.tutar||0,ad:k?k.isim:(o.t.baslik||''),alt:k?(o.t.baslik||''):'',kaynak:'Ajanda',tkId:o.t.id});});
-  tkEvOlay(bg,gfGunEkle(bg,365)).forEach(z=>{(z.gider?ver:al).push({gun:z.gun,tutar:z.tutar||0,ad:evAd(z.e),alt:z.p.ad,kaynak:'Evrak',evId:z.e.id});});
+  tkEvOlay(bg,gfGunEkle(bg,365)).forEach(z=>{(z.gider?ver:al).push({gun:z.gun,tutar:z.tutar||0,ad:evAd(z.e),alt:z.p.ad,kaynak:'Evrak',evId:z.e.id,ort:evOrtMu(z.e)});});
   const sirala=L=>L.sort((a,b)=>a.gun.localeCompare(b.gun));sirala(al);sirala(ver);
   const top=L=>L.reduce((s,x)=>s+(x.tutar||0),0);
   return {bg,gecmis,gecAcik:gecmis.filter(tkGecikmis),yaklasan,gelecek,al,ver,alTop:top(al),verTop:top(ver)};
@@ -16124,10 +16181,11 @@ function tkPanelListeCiz(){
   let h='';
   if(tur==='alacak'||tur==='verecek'){
     const L=tur==='alacak'?P.al:P.ver;const top=tur==='alacak'?P.alTop:P.verTop;const renk=tur==='alacak'?'var(--green)':'var(--red)';const isr=tur==='alacak'?'+':'−';
+    if(L.some(x=>x.ort))h+='<div class="gf-ipucu">≈ işaretli evrak tutarları son ödemelerin ortalamasıdır (tahmin); gerçek fatura farklı olabilir.</div>';
     h+=`<div class="tkl-ozet"><span>${L.length} kayıt · bugünden itibaren</span><b class="num" style="color:${renk}">${top?isr+fmt(top):'—'}</b></div>`;
     if(!L.length)h+='<div class="tk-bos">Kayıt yok.</div>';
     let ay='';L.slice(0,SINIR).forEach(x=>{const a=x.gun.slice(0,7);if(a!==ay){ay=a;const at=L.filter(y=>y.gun.slice(0,7)===a).reduce((s,y)=>s+(y.tutar||0),0);h+=`<div class="tk-gp-b">${AYLAR[parseInt(a.slice(5))-1]} ${a.slice(0,4)} <small class="num" style="color:${renk}">${at?isr+fmt(at):''}</small></div>`;}
-      h+=`<div class="tk-is" onclick="${x.islemId?`showIslemDetay(${x.islemId})`:x.evId?`evDetayAc(${x.evId})`:`tkFormAc(${x.tkId},'${x.gun}')`}"><span><b class="tkl-g">${gfTrTarih(x.gun).slice(0,5)}</b> ${_esc(x.ad)}<small> · ${x.kaynak==='Ajanda'?'📅 ajanda':x.kaynak==='Evrak'?'📄 evrak':'💳 vadeli'}${x.alt?' · '+_esc(String(x.alt).slice(0,40)):''}</small></span><b class="num" style="color:${x.tutar?renk:'var(--text3)'}">${x.tutar?isr+fmt(x.tutar):'tutar yok'}</b></div>`;});
+      h+=`<div class="tk-is" onclick="${x.islemId?`showIslemDetay(${x.islemId})`:x.evId?`evDetayAc(${x.evId})`:`tkFormAc(${x.tkId},'${x.gun}')`}"><span><b class="tkl-g">${gfTrTarih(x.gun).slice(0,5)}</b> ${_esc(x.ad)}<small> · ${x.kaynak==='Ajanda'?'📅 ajanda':x.kaynak==='Evrak'?'📄 evrak':'💳 vadeli'}${x.alt?' · '+_esc(String(x.alt).slice(0,40)):''}</small></span><b class="num" style="color:${x.tutar?renk:'var(--text3)'}">${x.tutar?(x.ort?'≈ ':'')+isr+fmt(x.tutar):'tutar yok'}${x.ort&&x.tutar?'<br><small class="ev-ort">ort. tahmin</small>':''}</b></div>`;});
   }else{
     const L=tur==='gecmis'?P.gecmis:tur==='yaklasan'?P.yaklasan:P.gelecek;
     const acik=L.filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi').length;
@@ -16517,6 +16575,9 @@ function evBeklenen(e){
   const L=evOdemeleri(e.id).filter(o=>o.tl!=null&&o.tl>0).slice(-3);if(!L.length)return parseFloat(e.beklenen_tutar)>0?parseFloat(e.beklenen_tutar):null;
   return Math.round(L.reduce((s,o)=>s+o.tl,0)/L.length);
 }
+// beklenen tutar sabit değilse "ortalama tahmin" olduğunu her yerde belli et
+function evOrtMu(e){return !(e&&e.tutar_tipi==='sabit'&&parseFloat(e.beklenen_tutar)>0);}
+function evTahminHtml(e,t,isaret){if(!t)return '—';const s=(isaret||'')+evPara(t);return evOrtMu(e)?`≈ ${s} <small class="ev-ort">ort. tahmin</small>`:s;}
 function evAylikKarsilik(e){const b=evBeklenen(e);if(!b)return 0;const d=e.odeme_dongusu||'Yok';return d==='Aylık'?b:d==='Haftalık'?b*52/12:(d==='Yıllık'||d==='Sezonluk')?b/12:0;}
 function evPeriyotMetin(e){
   const d=e.odeme_dongusu||'Yok',b=String(e.periyot_bas||''),s=String(e.periyot_bit||'');
@@ -16537,9 +16598,9 @@ function evTakvimOlaylari(bas,bit){
 function evUyariListesi(){
   const bg=localToday();const L=[];
   (DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e)||0;const ad=evIk(e)+' '+evAd(e);
-    if(R.gecikmis.length){L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:R.gecikmis.length+' dönem · '+R.gecikmis.map(p=>p.ad).slice(0,3).join(', '),tutar:bt*R.gecikmis.length,tarih:evTarih(R.gecikmis[0].son),renk:'var(--red)',etiket:'Gecikti!',gecmis:true});return;}
+    if(R.gecikmis.length){L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:R.gecikmis.length+' dönem · '+R.gecikmis.map(p=>p.ad).slice(0,3).join(', '),tutar:bt*R.gecikmis.length,tarih:evTarih(R.gecikmis[0].son),renk:'var(--red)',etiket:'Gecikti!'+(bt&&evOrtMu(e)?' · ≈ ort. tahmin':''),gecmis:true});return;}
     const p=R.simdiki;if(p&&!R.simdikiOdendi&&p.son>=R.takip){const kg=evGunFark(bg,p.son);
-      L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:kg===0?'Bugün son ödeme günü!':kg+' gün kaldı · '+p.ad,tutar:bt,tarih:evTarih(p.son),renk:kg===0?'#f97316':'var(--amber)',etiket:kg===0?'Son gün!':kg+' gün kaldı',gecmis:false});}});
+      L.push({id:'e_'+e.id,evId:e.id,tip:'evrak',baslik:ad,detay:kg===0?'Bugün son ödeme günü!':kg+' gün kaldı · '+p.ad,tutar:bt,tarih:evTarih(p.son),renk:kg===0?'#f97316':'var(--amber)',etiket:(kg===0?'Son gün!':kg+' gün kaldı')+(bt&&evOrtMu(e)?' · ≈ ort. tahmin':''),gecmis:false});}});
   return L;
 }
 
@@ -16562,10 +16623,10 @@ function evOzetCiz(){
   const kart=(cls,lbl,deger,alt,fn)=>`<div class="${cls}"${fn?` onclick="${fn}"`:''}><span>${lbl}</span><b class="num">${deger}</b><small>${alt}</small></div>`;
   el.innerHTML=`<div class="tk-bugun ev-ozet"><div class="tk-bg-u"><div><b>Evraklar</b> · ${AYLAR[d.getMonth()]} ${d.getFullYear()}</div><div class="gf-ipucu" style="margin:0">${(DB.evraklar||[]).length} evrak</div></div>
     <div class="tk-bg-k ev-k">
-      ${kart('aj'+(V.gecN?' kirmizi':''),'Gecikmiş',V.gecN?'−'+fmt(V.gecT):'—',V.gecN+' dönem'+(V.tahminsiz?' · '+V.tahminsiz+' tutarsız':''),"evFiltre('kirmizi')")}
-      ${kart('aj','Bu ay ödenecek',V.buN?'−'+fmt(V.buT):'—',V.buN+' ödeme kaldı',"evFiltre('sari')")}
+      ${kart('aj'+(V.gecN?' kirmizi':''),'Gecikmiş',V.gecN?'≈ −'+fmt(V.gecT):'—',V.gecN+' dönem · ort. tahmin'+(V.tahminsiz?' · '+V.tahminsiz+' tutarsız':''),"evFiltre('kirmizi')")}
+      ${kart('aj','Bu ay ödenecek',V.buN?'≈ −'+fmt(V.buT):'—',V.buN+' ödeme kaldı · ort. tahmin',"evFiltre('sari')")}
       ${kart('aj','Bu ay ödenen',V.odN?fmt(V.odT):'—',V.odN+' ödeme','')}
-      ${kart('pa','Aylık sabit gider',V.sabit?'−'+fmt(V.sabit):'—','yıllıklar aya bölünerek','')}
+      ${kart('pa','Aylık sabit gider',V.sabit?'≈ −'+fmt(V.sabit):'—','ort. tahmin · yıllıklar aya bölünerek','')}
     </div></div>`;
   el.querySelectorAll('.kirmizi b').forEach(b=>b.style.color='var(--red)');
 }
@@ -16599,7 +16660,7 @@ function evKartHtml(R){
       ${bilgi?`<div class="ev-kart-k">${bilgi}</div>`:''}
     </div>
     <div class="ev-kart-s">
-      <div class="ev-kart-t num">${bt?evPara(bt):'—'}<small>${e.tutar_tipi==='sabit'&&bt?'sabit':bt?'ortalama':'tutar yok'}</small></div>
+      <div class="ev-kart-t num">${bt?(evOrtMu(e)?'≈ ':'')+evPara(bt):'—'}<small>${!bt?'tutar yok':evOrtMu(e)?'ortalama tahmin':'sabit tutar'}</small></div>
       ${ro||R.renk==='pasif'||((e.odeme_dongusu||'Yok')==='Yok'&&!e.bitis_tarihi&&R.O.length)?'':`<button class="ev-ode" onclick="event.stopPropagation();evOdemeAc(${e.id})">Öde</button>`}
     </div></div>`;
 }
@@ -16622,7 +16683,7 @@ function evDetayCiz(){
       `<div class="gf-ipucu">Bu dönemleri ödediysen ama kaydetmediysen: <a href="#" onclick="event.preventDefault();evGecmisKapat(${e.id})">bugüne kadarki dönemleri takipten çıkar</a>.</div>`;
   }
   h+=`<div class="tk-gp-b">Bilgiler</div>`+satir('Firma / kurum',k?(k.firmaUnvan||k.isim):'')+(k&&k.tel?`<div class="gf-satir"><span>Telefon</span><a href="tel:${_esc(k.tel)}">📞 ${_esc(k.tel)}</a></div>`:'')+
-    satir('Ödeme düzeni',evPeriyotMetin(e))+satir('Beklenen tutar',bt?evPara(bt)+(e.tutar_tipi==='sabit'?' (sabit)':' (son ödemelerin ortalaması)'):'')+
+    satir('Ödeme düzeni',evPeriyotMetin(e))+satir(evOrtMu(e)?'Beklenen tutar (ortalama tahmin)':'Beklenen tutar (sabit)',bt?(evOrtMu(e)?'≈ '+evPara(bt)+' · son ödemelerin ortalaması, gerçek tutar farklı olabilir':evPara(bt)):'')+
     satir('Abone no',e.abone_no,true)+satir('Tesisat no',e.tesisat_no,true)+satir('Plaka / poliçe / referans',e.referans_no,true)+
     satir('Otomatik ödeme',e.otomatik_odeme?'Evet (talimatlı)':'')+satir('ERP kategorisi',(e.erp_tip||'Gider')+' · '+(e.erp_kapsam||'İşletme')+(e.erp_isle===false?' · ERP\'ye işlenmez':' · ödemeler ERP\'ye işlenir'))+satir('Not',e.aciklama);
   h+=evGrafikHtml(e);
@@ -16770,7 +16831,7 @@ function evOdemeAc(evrakId,donemK,odemeId){
   const bt=evBeklenen(e);const isl=o?evIslemBul(o):null;
   const yeniBitis=(e.odeme_dongusu||'Yok')==='Yok'&&e.bitis_tarihi?(()=>{const d=tkDt(String(e.bitis_tarihi).slice(0,10));d.setFullYear(d.getFullYear()+1);return localDateObjStr(d);})():'';
   EV.od=o?{id:o.id,evrakId,donem:dk,tarih:o.tarih,tutar:String(o.tutar).replace('.',','),pb:o.pb,kur:o.kur?String(o.kur).replace('.',','):'',not:o.not,yontem:o.yontem||(isl&&isl.odemeYontemi)||'İBAN',erp:!!isl,erpVar:!!isl,islemId:isl?isl.id:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis:''}
-    :{id:null,evrakId,donem:dk,tarih:localToday(),tutar:bt?String(Math.round(bt*100)/100).replace('.',','):'',pb:'TRY',kur:'',not:'',yontem:e.otomatik_odeme?'Kart':'İBAN',erp:e.erp_isle!==false,erpVar:false,islemId:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis};
+    :{id:null,evrakId,donem:dk,tarih:localToday(),tutar:bt?String(Math.round(bt*100)/100).replace('.',','):'',pb:'TRY',kur:'',not:'',yontem:e.otomatik_odeme?'Kart':'İBAN',erp:e.erp_isle!==false,erpVar:false,islemId:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis,oneri:!!bt};
   let m=document.getElementById('modal-ev-odeme');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-odeme';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evo-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-odeme')">✕</button></div><div class="modal-body" id="evo-body"></div><div class="modal-foot" id="evo-foot"></div></div>`;document.body.appendChild(m);}
   document.body.appendChild(m);evOdemeCiz();openModal('modal-ev-odeme');
@@ -16788,7 +16849,8 @@ function evOdemeCiz(){
   document.getElementById('evo-body').innerHTML=`
     ${ops.length?`<div class="fi"><label>Hangi dönemin ödemesi?</label><select onchange="EV.od.donem=this.value">${ops.map(p=>`<option value="${p.k}"${p.k===P.donem?' selected':''}>${_esc(p.ad)} · son ${evKisa(p.son)}${p.son<bg?' (gecikmiş)':''}</option>`).join('')}<option value=""${!P.donem?' selected':''}>Döneme bağlama</option></select></div>`:''}
     <div class="hr-satir"><div class="fi"><label>Ödeme tarihi</label><input type="date" value="${_esc(P.tarih)}" onchange="EV.od.tarih=this.value;evKurGetir()"></div>
-      <div class="fi"><label>Tutar</label><input type="text" inputmode="decimal" value="${_esc(P.tutar)}" placeholder="0,00" oninput="EV.od.tutar=this.value;evTlGuncelle()"></div></div>
+      <div class="fi"><label>Tutar</label><input type="text" inputmode="decimal" value="${_esc(P.tutar)}" placeholder="0,00" oninput="EV.od.tutar=this.value;EV.od.oneri=false;evTlGuncelle()"></div></div>
+    ${P.oneri&&evOrtMu(e)?`<div class="gf-ipucu ev-oneri">≈ Tutar, son ödemelerin ortalamasından önerildi. Faturadaki gerçek tutarı yaz.</div>`:''}
     <div class="fi"><label>Para birimi</label><div class="isf-chips">${Object.keys(EV_PB).map(pb=>chip(P.pb===pb,pb+' '+EV_PB[pb],`EV.od.pb='${pb}';EV.od.kur='';evOdemeCiz();evKurGetir()`)).join('')}</div></div>
     ${yabanci?`<div class="hr-satir"><div class="fi"><label>Kur (1 ${P.pb} = ? ₺)</label><input type="text" inputmode="decimal" id="evo-kur" value="${_esc(P.kur)}" placeholder="yükleniyor…" oninput="EV.od.kur=this.value;evTlGuncelle()"></div><div class="fi"><label>TL karşılığı</label><div class="ev-tl num" id="evo-tl">${tl?fmt(tl):'—'}</div></div></div>`:''}
     <div class="fi"><label>Ödeme yöntemi</label><div class="isf-chips">${[['Nakit','💵 Nakit'],['Kart','💳 Kart'],['İBAN','🏦 Banka / İBAN']].map(([v,l])=>chip(P.yontem===v,l,`EV.od.yontem='${v}';evOdemeCiz()`)).join('')}</div></div>
@@ -16924,14 +16986,17 @@ function dashBakisCiz(c){
   const el=document.getElementById('dash-bakis');if(!el)return;c=c||calcFinans();const bg=localToday();
   const ps=v=>`<b class="num" data-isr-yok style="color:${v<0?'var(--red)':v>0?'var(--green)':'var(--text3)'}">${v<0?'−':v>0?'+':''}${fmt(v)}</b>`;
   // Randevu
-  let ry='<b class="db-say">0</b><div class="db-alt">Gelecek randevu yok</div>';
+  let ry='<b class="db-say">0</b><div class="db-alt">Gelecek randevu yok</div>',rRenk='yesil';
   try{const O=tkOlaylar(bg,gfGunEkle(bg,365)).filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi');
+    const gec=tkOlaylar(gfGunEkle(bg,-365),gfGunEkle(bg,-1)).filter(tkGecikmis).length;const bugunN=O.filter(o=>String(o.gun).slice(0,10)===bg).length;
+    rRenk=gec?'kirmizi':bugunN?'turuncu':O.length?'sari':'yesil';
+    if(!O.length&&gec)ry=`<b class="db-say">0</b><div class="db-alt"><span style="color:var(--red)">${gec} geçmiş randevu açık kaldı</span></div>`;
     const sim=new Date();const ss=String(sim.getHours()).padStart(2,'0')+':'+String(sim.getMinutes()).padStart(2,'0');
     const sir=O.filter(o=>o.gun>bg||!o.t.saat||o.t.saat>=ss);const y=sir[0]||O[0];
     if(O.length){const sat=o=>{const g=String(o.gun).slice(0,10);const k=o.t.kisiId?getKisi(o.t.kisiId):null;const gun=g===bg?'Bugün':g===gfGunEkle(bg,1)?'Yarın':evKisa(g);
         return `<div class="db-sat"><b>${gun}${o.t.saat?' '+o.t.saat.slice(0,5):''}</b><span>${_esc(o.t.baslik||'')}${k?' · '+_esc(k.isim):''}</span></div>`;};
       const ilk3=[y].concat(sir.filter(o=>o!==y)).slice(0,3);
-      ry=`<b class="db-say">${O.length}</b><div class="db-alt">gelecek randevu</div>${ilk3.map(sat).join('')}`;}}catch(e){}
+      ry=`<b class="db-say">${O.length}</b><div class="db-alt">gelecek randevu${bugunN?' · <span style="color:#f97316">bugün '+bugunN+'</span>':''}${gec?' · <span style="color:var(--red)">'+gec+' geçmiş açık</span>':''}</div>${ilk3.map(sat).join('')}`;}}catch(e){}
   // Evrak
   let ev='<b class="db-say">0</b><div class="db-alt">Dönem içi ya da gecikmiş evrak yok</div>',evRenk='yesil';
   try{const R=(DB.evraklar||[]).map(evDurum).filter(r=>r.renk==='kirmizi'||r.renk==='sari');
@@ -16941,7 +17006,7 @@ function dashBakisCiz(c){
       ev=`<b class="db-say">${R.length}</b><div class="db-alt">${kir.length?'<span style="color:var(--red)">'+kir.length+' gecikmiş</span>':''}${kir.length&&sar.length?' · ':''}${sar.length?sar.length+' dönem içi':''}</div>${kir.concat(sar).slice(0,3).map(sat).join('')}${R.length>3?`<div class="db-alt">+${R.length-3} evrak daha</div>`:''}`;}}catch(e){}
   const gelir=(c.isGelir||0)+(c.shGelir||0),gider=(c.isGider||0)+(c.shGider||0);const donem=getMonth()?isfAyAdi(getMonth()):'Tüm zamanlar';
   el.innerHTML=`
-    <div class="db-k" onclick="goPage('takvim')"><div class="db-b">📅 Randevu</div>${ry}</div>
+    <div class="db-k r-${rRenk}" onclick="goPage('takvim')"><div class="db-b">📅 Randevu</div>${ry}</div>
     <div class="db-k r-${evRenk}" onclick="goPage('evrak')"><div class="db-b">📄 Evrak</div>${ev}</div>
     <div class="db-k" onclick="showDashDetay('kasa')"><div class="db-b">💰 Kasa <small>${_esc(donem)}</small></div>
       <div class="db-s"><span>Toplam gelir</span>${ps(gelir)}</div><div class="db-s"><span>Toplam gider</span>${ps(-gider)}</div><div class="db-s ince"><span>Eldeki</span>${ps(c.kasa||0)}</div></div>
@@ -16960,14 +17025,14 @@ function dashEvrakListeCiz(){
   el.innerHTML=L.slice(0,8).map(({x,n,top})=>{const kg=evGunFark(bg,x.gun);const ne=x.gecikmis?`<span style="color:var(--red)">${n>1?n+' dönem gecikti':(-kg)+' gün gecikti'}</span>`:kg===0?'<span style="color:#f97316">bugün son gün</span>':kg+' gün kaldı';
     const tt=n>1?top:x.tutar;
     return `<div class="db-ev${x.gecikmis?' gec':''}" onclick="evDetayAc(${x.e.id})"><div class="db-ev-a"><b>${evIk(x.e)} ${_esc(evAd(x.e))}</b><small>${_esc(n>1?'en eskisi '+x.p.ad:x.p.ad)} · son ${evKisa(x.gun)} · ${ne}</small></div>
-      <div class="db-ev-s"><b class="num" data-isr-yok style="color:var(--red)">${tt?'−'+evPara(tt):'—'}</b>${ro?'':`<button class="ev-ode kucuk" onclick="event.stopPropagation();evOdemeAc(${x.e.id},'${x.p.k}')">Öde</button>`}</div></div>`;}).join('')+(L.length>8?`<div class="gf-ipucu">+${L.length-8} evrak daha · <a href="#" onclick="event.preventDefault();goPage('evrak')">tümü</a></div>`:'');
+      <div class="db-ev-s"><b class="num" data-isr-yok style="color:var(--red)">${tt?evTahminHtml(x.e,tt,'−'):'—'}</b>${ro?'':`<button class="ev-ode kucuk" onclick="event.stopPropagation();evOdemeAc(${x.e.id},'${x.p.k}')">Öde</button>`}</div></div>`;}).join('')+(L.length>8?`<div class="gf-ipucu">+${L.length-8} evrak daha · <a href="#" onclick="event.preventDefault();goPage('evrak')">tümü</a></div>`:'');
 }
 // ---------- faturalar & sabit giderler kartları
 function dashSabitCiz(){
   const el=document.getElementById('dash-sabit');if(!el)return;const S=evSabitOzet();const A=evAnomaliler();
-  const kart=(lbl,v,alt,fn)=>`<div class="card" onclick="${fn}"><div class="lbl">${lbl}</div><div class="val num" data-isr-yok style="color:${v<0?'var(--red)':'var(--text3)'}">${v<0?'−'+fmt(v):'0 ₺'}</div>${alt?`<div class="db-kalt">${alt}</div>`:''}</div>`;
+  const kart=(lbl,v,alt,fn)=>`<div class="card" onclick="${fn}"><div class="lbl">${lbl}</div><div class="val num" data-isr-yok style="color:${v<0?'var(--red)':'var(--text3)'}">${v<0?'≈ −'+fmt(v):'0 ₺'}</div>${alt?`<div class="db-kalt">${alt}</div>`:''}</div>`;
   const sy=v=>v==null?'—':v.toFixed(v<10?1:0).replace('.',',');
-  el.innerHTML=`<div class="cards">${kart('📌 Aylık sabit gider',-S.aylik,'evrakların aylık karşılığı',"goPage('evrak')")}${kart('🧾 Bu ay kalan',-(S.kalan+S.gec),(S.kalanN+S.gecN)+' ödeme'+(S.gecN?' · '+S.gecN+' gecikmiş':''),"goPage('evrak');setTimeout(()=>evFiltre('sari'),200)")}
+  el.innerHTML=`<div class="cards">${kart('📌 Aylık sabit gider',-S.aylik,'ort. tahmin · evrakların aylık karşılığı',"goPage('evrak')")}${kart('🧾 Bu ay kalan',-(S.kalan+S.gec),'ort. tahmin · '+(S.kalanN+S.gecN)+' ödeme'+(S.gecN?' · '+S.gecN+' gecikmiş':''),"goPage('evrak');setTimeout(()=>evFiltre('sari'),200)")}
     <div class="card" style="grid-column:span 2;cursor:default"><div class="lbl">⏱️ Kazançla karşılaştır</div><div class="db-oran">
       <div><b>${sy(S.isGunu)}</b><small>iş günü kazancın bu ayki kalan faturalara gidiyor</small></div>
       <div><b>${sy(S.isGunuAy)}</b><small>iş günü kazancın her ay sabit giderlere gidiyor</small></div>
@@ -17042,7 +17107,7 @@ function ozBolumEvrak(kisa){
   const vir=v=>v.toFixed(1).replace('.',',');
   const ad=e=>{const k=e.kisi_id?getKisi(e.kisi_id):null;const t=(e.tur==='Fatura'||e.tur==='Araç')&&e.alt_tur?e.tur+' · '+e.alt_tur:(e.tur||'Evrak');return (k?ozIsim(k)+' — ':'')+t;};
   const S=evSabitOzet();
-  h+=`- Aylık sabit gider (evrakların aylık karşılığı): ${ozT(-S.aylik)}. Bu ay kalan: ${S.kalanN} ödeme, ${ozT(-S.kalan)}. Gecikmiş: ${S.gecN} dönem${S.gec?', ≈ '+ozT(-S.gec):''}.\n`;
+  h+=`- Aylık sabit gider (evrakların aylık karşılığı; sabit tutar girilmemiş evraklarda son ödemelerin ortalamasıyla tahmin): ≈ ${ozT(-S.aylik)}. Bu ay kalan: ${S.kalanN} ödeme, ${ozT(-S.kalan)}. Gecikmiş: ${S.gecN} dönem${S.gec?', ≈ '+ozT(-S.gec):''}.\n`;
   if(S.isGunuAy!=null)h+=`- Sabit giderler ayda ≈ ${vir(S.isGunuAy)} iş günü kazancına denk${S.kasaAy!=null?'; mevcut kasa sabit giderleri ≈ '+vir(S.kasaAy)+' ay karşılar':''}.\n`;
   const L=(DB.evraklar||[]).map(evDurum).filter(R=>R.renk!=='pasif');
   const gec=L.filter(R=>R.renk==='kirmizi'),ici=L.filter(R=>R.renk==='sari');
@@ -17052,7 +17117,7 @@ function ozBolumEvrak(kisa){
     h+='- Evrak listesi (son 12 ay / önceki 12 ay ödenen):\n';
     L.forEach(R=>{const e=R.e;const O=evOdemeleri(e.id).filter(o=>o.tl>0);const t=(a,b)=>O.filter(o=>o.tarih>a&&o.tarih<=b).reduce((s,o)=>s+o.tl,0);
       const s12=t(gfGunEkle(bg,-365),bg),o12=t(gfGunEkle(bg,-730),gfGunEkle(bg,-365));const bt=evBeklenen(e);
-      h+=`  - ${ad(e)}: ${evPeriyotMetin(e)}${bt?', beklenen '+ozN(bt):''}${e.otomatik_odeme?', otomatik ödeme':''}; ${ozT(-s12)} / ${o12?ozT(-o12)+' ('+(s12>=o12?'+':'')+Math.round((s12/o12-1)*100)+'%)':'veri yok'}\n`;});}
+      h+=`  - ${ad(e)}: ${evPeriyotMetin(e)}${bt?(evOrtMu(e)?', beklenen ≈ '+ozN(bt)+' (son ödemelerin ortalaması, tahmin)':', sabit tutar '+ozN(bt)):''}${e.otomatik_odeme?', otomatik ödeme':''}; ${ozT(-s12)} / ${o12?ozT(-o12)+' ('+(s12>=o12?'+':'')+Math.round((s12/o12-1)*100)+'%)':'veri yok'}\n`;});}
   const A=evAnomaliler();if(A.length)h+='- Olağan dışı faturalar: '+A.map(x=>`${ad(x.e)}: son ${ozN(x.son.tl)}, olağan ${ozN(x.med)} (%${Math.round((x.oran-1)*100)} üstünde)`).join('; ')+'\n';
   return h;
 }
