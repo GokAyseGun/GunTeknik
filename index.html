@@ -1067,6 +1067,58 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .tk-ev-a{flex:1;min-width:0;padding:8px 10px;}
 .tk-ev.kucuk .tk-ev-a{padding:6px 7px;}.tk-ev.kucuk .tk-oge-b{font-size:12px;}
 .tk-h-g .tk-ev{margin-bottom:0;}
+
+/* ── ÖZET: BİR BAKIŞTA · EVRAK · KÜÇÜK/BÜYÜK GRAFİK ── */
+.dash-bakis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px;}
+.db-k{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0;transition:border-color .2s;}
+.db-k:hover{border-color:var(--border2);}
+.db-k.r-kirmizi{border-left:4px solid var(--red);background:linear-gradient(90deg,rgba(255,23,68,.07),var(--surface) 55%);}
+.db-k.r-sari{border-left:4px solid var(--amber);background:linear-gradient(90deg,rgba(255,171,0,.06),var(--surface) 55%);}
+.db-k.r-yesil{border-left:4px solid var(--green);}
+.db-b{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;display:flex;justify-content:space-between;gap:6px;}
+.db-b small{text-transform:none;letter-spacing:0;font-weight:500;}
+.db-say{font-size:26px;font-weight:800;line-height:1.1;font-family:var(--fd);}
+.db-alt{font-size:12px;color:var(--text2);line-height:1.4;overflow-wrap:anywhere;}
+.db-sat{display:flex;flex-direction:column;gap:1px;padding:3px 0 3px 8px;border-left:2px solid var(--border2);font-size:12px;min-width:0;}
+.db-sat b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.db-sat span{color:var(--text2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.db-sat.kirmizi{border-left-color:var(--red);}.db-sat.kirmizi span{color:var(--red);}
+.db-s{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--text2);}
+.db-s b{font-size:15px;white-space:nowrap;}
+.db-s.ince{border-top:1px solid var(--border);padding-top:4px;margin-top:2px;}
+.db-s.ince b{font-size:13px;}
+.db-ev{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;}
+.db-ev.gec{border-left-color:var(--red);background:var(--red-lt);}
+.db-ev-a{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.db-ev-a b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.db-ev-a small{font-size:11px;color:var(--text2);}
+.db-ev-s{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.db-kalt{font-size:10px;color:var(--text3);margin-top:3px;}
+.db-oran{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px;}
+.db-oran div{display:flex;flex-direction:column;gap:2px;}
+.db-oran b{font-size:20px;font-family:var(--fd);}
+.db-oran small{font-size:10px;color:var(--text3);line-height:1.35;}
+.gf-buyut-btn{display:none;}
+@media(min-width:900px){
+  .gf-buyut-btn{display:inline-flex;white-space:nowrap;}
+  #page-dashboard.dash-kucuk .gf-kart .gf-ust{display:flex!important;width:100%;margin-right:0!important;}
+  #page-dashboard.dash-kucuk .gf-buyut-btn{margin-left:auto;}
+  #page-dashboard.dash-kucuk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:stretch;}
+  #page-dashboard.dash-kucuk>*{grid-column:1/-1;}
+  #page-dashboard.dash-kucuk>#dash-grafik-kart{grid-column:1;margin-bottom:14px;}
+  #page-dashboard.dash-kucuk>#dash-bakis{grid-column:2;grid-template-rows:minmax(0,1.45fr) minmax(0,1fr);contain:size;margin-bottom:14px;}
+  #page-dashboard.dash-kucuk .db-k{overflow:hidden;}
+  #page-dashboard.dash-kucuk .db-say{font-size:30px;}
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-arac,
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-cizim-bar,
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-tutamak,
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-alt-ipucu,
+  #page-dashboard.dash-kucuk #dash-grafik-kart .gf-tabs,
+  #page-dashboard.dash-kucuk #dash-grafik-kart #gf-tab-icerik{display:none!important;}
+  #page-dashboard.dash-buyuk>#dash-bakis{grid-template-columns:repeat(4,minmax(0,1fr));}
+  #dash-grafik-kart.gf-gecis{animation:gfGecis .25s ease-out;}
+  @keyframes gfGecis{from{opacity:.55;}to{opacity:1;}}
+}
 </style>
 </head>
 <body>
@@ -1190,6 +1242,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
         <div class="gf-ust">
           <select id="gf-metrik" class="gf-sel" onchange="gfMetrikSec(this.value)"></select>
           <div class="gf-seg" id="gf-periyot"></div>
+          <button class="gf-ab gf-buyut-btn" id="gf-btn-buyut" onclick="gfBuyutDegistir()">⤢ Büyüt</button>
         </div>
         <div class="gf-arac">
           <button class="gf-ab" id="gf-btn-tip" onclick="gfTipDegistir()">🕯 Mum</button>
@@ -1209,6 +1262,8 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
         <div class="gf-tabs" id="gf-tabs"></div>
         <div id="gf-tab-icerik"></div>
       </div>
+
+      <div class="dash-bakis" id="dash-bakis"></div>
 
       <div id="vade-banner-wrap"></div>
 
@@ -1272,6 +1327,10 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 
       </section>
       <section class="dash-blok">
+      <div class="sec-title">📄 Faturalar &amp; Sabit Giderler</div>
+      <div id="dash-sabit"></div>
+      </section>
+      <section class="dash-blok">
       <div class="sec-title">Vergi Durumu (Bu Ay)</div>
       <div class="cards" style="margin-bottom:14px;">
         <div class="card" onclick="goPage('vergi')"><div class="lbl">📥 Gelen Vergi</div><div class="val c-green num" id="d-v-gelen">0 ₺</div></div>
@@ -1287,6 +1346,9 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 
       <section class="dash-blok dash-kredi-blok"><div class="sec-title" id="dash-kredi-baslik" style="display:none;">🏦 Banka Kredileri</div>
       <div id="dash-kredi-panel" style="display:none;margin-bottom:14px;"></div></section>
+
+      <section class="dash-blok"><div class="sec-title">📄 Evrak Ödemeleri</div>
+      <div id="dash-evrak-list"></div></section>
 
       <section class="dash-blok"><div class="sec-title">Bugünkü Hareketler</div>
       <div class="stagger-wrap" id="dash-bugun-list"></div></section>
@@ -4473,6 +4535,7 @@ function renderAll(){
     if(e('d-alacak'))ozKartSayi(e('d-alacak'),c.alacakTop);
     if(e('d-verecek'))ozKartSayi(e('d-verecek'),-c.borcTop);
     if(e('d-personel'))ozKartSayi(e('d-personel'),-c.topPersonelBakiye);
+    try{dashEvrakTumu(c);}catch(er){console.warn('özet evrak',er);}
     if(e('personel-bakiye-top'))animateCount(e('personel-bakiye-top'),c.topPersonelBakiye);
     if(e('kasa-dagitim'))e('kasa-dagitim').innerHTML=[['💵',c.kasaNakit],['💳',c.kasaKart],['🏦',c.kasaIBAN]].map(([ik,v])=>`<span class="badge ${v<0?'bg-red':v>0?'bg-green':'bg-gray'}">${ik} ${v<0?'−':''}${fmt(v)}</span>`).join('');
     const _activePageId=document.querySelector('.page.active')?.id;
@@ -4797,6 +4860,12 @@ var GF_METRIK={
   diger:   {ad:'Standart Dışı',     grup:'Akış (kümülatif)',renk:'#BCAAA4',tahmin:'tam',acik:'İşletme/Şahsi dışındaki ana kategoriler (ör. evrak, vergi modülü)'},
   finans:  {ad:'Finansman Girişi',  grup:'Akış (kümülatif)',renk:'#EA80FC',tahmin:null,acik:'Kredi ve borç alımları'},
   serbest: {ad:'Serbest Kasa',      grup:'Davranış',renk:'#00E676',tahmin:null,acik:'Kasa − ayrılmış kovalar (vergi karşılığı, maaş, 30 günlük sabit ödemeler, kış tamponu)'},
+  evrakOd:   {ad:'Evrak ödemeleri (tümü)',grup:'Evrak & Faturalar',renk:'#FFB74D',tahmin:null,ters:true,acik:'Evrak sayfasına kaydedilen tüm gider ödemeleri (TL karşılığı) — ERP\'ye işlenmese de'},
+  f_elektrik:{ad:'Elektrik faturası',grup:'Evrak & Faturalar',renk:'#FFD54F',tahmin:null,ters:true},
+  f_su:      {ad:'Su faturası',      grup:'Evrak & Faturalar',renk:'#4FC3F7',tahmin:null,ters:true},
+  f_internet:{ad:'İnternet faturası',grup:'Evrak & Faturalar',renk:'#9575CD',tahmin:null,ters:true},
+  f_dogalgaz:{ad:'Doğalgaz faturası',grup:'Evrak & Faturalar',renk:'#FF8A65',tahmin:null,ters:true},
+  f_telefon: {ad:'Telefon faturası', grup:'Evrak & Faturalar',renk:'#81C784',tahmin:null,ters:true},
   dayanma: {ad:'Dayanma Süresi',    grup:'Davranış',renk:'#FFD740',tahmin:null,birim:'gün',acik:'Gelir tamamen dursa (kasa − vergi karşılığı − personel borcu) son 90 günün ortalama harcamasıyla kaç gün yeter'}
 };
 // Gider gibi metrikler (ters:true) grafikte ve özette eksi gösterilir; gizli olanlar seçicide yok ama hesapta kullanılır
@@ -4836,7 +4905,7 @@ function gfMaasliSet(){const s=new Set();(DB.personeller||[]).forEach(p=>{if((p.
 
 function gfDbImza(){
   let t=0,b=0;(DB.islemler||[]).forEach(i=>{t+=(i.tutar||0)*(i.id%7+1);if(i.statu==='Bekliyor')b++;});
-  return [(DB.islemler||[]).length,(DB.odemeler||[]).length,(DB.yardimciIslemleri||[]).length,(DB.bankaKredileri||[]).length,(DB.krediOdemeleri||[]).length,(DB.personeller||[]).length,(DB.sablonlar||[]).length,Math.round(t),b,localToday()].join('|');
+  return [(DB.islemler||[]).length,(DB.odemeler||[]).length,(DB.yardimciIslemleri||[]).length,(DB.bankaKredileri||[]).length,(DB.krediOdemeleri||[]).length,(DB.personeller||[]).length,(DB.sablonlar||[]).length,Math.round(t),b,localToday(),DB._evVer||0].join('|');
 }
 
 function gfDefterKur(){
@@ -4950,6 +5019,9 @@ function gfDefterKur(){
   d.buyukEsik=gfBuyukEsik(ol);
   // davranış metrikleri (serbest kasa, dayanma) — işaret çevrilmeden önce, ham değerlerle
   try{gfPsikoDefterEk(d);}catch(e){console.warn('psiko defter',e);['serbest','dayanma'].forEach(m=>{if(!d.C[m]){d.O[m]=new Float64Array(gunSay);d.H[m]=new Float64Array(gunSay);d.L[m]=new Float64Array(gunSay);d.C[m]=new Float64Array(gunSay);}});}
+  // evrak ve fatura metrikleri (evrak sayfasındaki ödemeler)
+  try{if(typeof gfEvrakDefterEk==='function')gfEvrakDefterEk(d);}catch(e){console.warn('evrak defter',e);}
+  ['evrakOd','f_elektrik','f_su','f_internet','f_dogalgaz','f_telefon'].forEach(m=>{if(!d.C[m]){d.O[m]=new Float64Array(gunSay);d.H[m]=new Float64Array(gunSay);d.L[m]=new Float64Array(gunSay);d.C[m]=new Float64Array(gunSay);}});
   // ters metrikler: eksi olarak göster (yüksek/düşük yer değiştirir)
   Object.keys(GF_METRIK).forEach(m=>{if(!GF_METRIK[m].ters||!C[m])return;const o=O[m],h=H[m],l=L[m],c=C[m];
     for(let g=0;g<gunSay;g++){const hh=h[g];o[g]=-o[g];h[g]=-l[g];l[g]=-hh;c[g]=-c[g];}});
@@ -4999,6 +5071,10 @@ function gfBarOlaylari(d,b){
     else if(e.tur==='kredi')isaret.push({ik:'🏦',m:'Yeni kredi/borç kaydı'});
     else if(e.kasa&&!e.haric&&e.tur==='islem'&&Math.abs(e.kasa)>=d.buyukEsik)isaret.push({ik:e.kasa>0?'⭐':'⚠️',m:(e.kasa>0?'Olağandışı büyük giriş ':'Olağandışı büyük çıkış ')+fmt(e.kasa)});
   });
+  // bugün: gecikmiş evrak ödemeleri
+  const bi=d.gunIdx[d.bugun];
+  if(bi!=null&&bi>=b.g0&&bi<=b.g1&&typeof evDurum==='function'){try{let n=0,t=0;(DB.evraklar||[]).filter(e=>evAktif(e)&&evGider(e)).forEach(e=>{const R=evDurum(e);n+=R.gecikmis.length;t+=(evBeklenen(e)||0)*R.gecikmis.length;});
+    if(n)isaret.push({ik:'📄',m:n+' evrak ödemesi gecikti'+(t?' (≈ '+fmt(t)+')':'')});}catch(er){}}
   return isaret;
 }
 
@@ -5221,18 +5297,20 @@ function gfKesinHareketler(bitis){
   if(Array.isArray(ek.evraklar)&&Array.isArray(ek.evrakOdemeler)){
     const erpEvrak=(DB.islemler||[]).filter(i=>i.islemKaynagi==='Evrak');
     ek.evraklar.forEach(e=>{
-      const dongu=e.odeme_dongusu||'Yok';if(!['Aylık','Yıllık','Sezonluk','Haftalık'].includes(dongu)||!e.periyot_bas||!e.periyot_bit)return;
+      const dongu=e.odeme_dongusu||'Yok';if(e.aktif===false)return;
+      const tekBitis=dongu==='Yok'&&e.bitis_tarihi&&typeof evVadeler==='function';
+      if(!tekBitis&&(!['Aylık','Yıllık','Sezonluk','Haftalık'].includes(dongu)||!e.periyot_bas||!e.periyot_bit))return;
       const od=ek.evrakOdemeler.filter(o=>String(o.evrak_id)===String(e.id)&&(!o.para_birimi||o.para_birimi==='TRY')).sort((a,b)=>(a.odeme_tarihi||'').localeCompare(b.odeme_tarihi||''));
-      if(!od.length)return;
-      const erpde=od.some(o=>erpEvrak.some(i=>localDateStr(i.tarih)===o.odeme_tarihi&&Math.abs((i.tutar||0)-(parseFloat(o.tutar)||0))<0.01));
-      if(!erpde)return;
-      const tutar=(typeof evBeklenen==='function'&&evBeklenen(e))||gfOrt(od.slice(-3).map(o=>parseFloat(o.tutar)||0));if(!tutar)return;
+      // "Ödemeleri ERP'ye işlenir" ayarı varsa ona göre; yoksa (SQL çalışmadıysa) eski kural: ödemeleri ERP'de görünen evraklar
+      if('erp_isle' in e){if(e.erp_isle===false)return;}
+      else{if(!od.length)return;const erpde=od.some(o=>erpEvrak.some(i=>localDateStr(i.tarih)===o.odeme_tarihi&&Math.abs((i.tutar||0)-(parseFloat(o.tutar)||0))<0.01));if(!erpde)return;}
+      const tutar=(typeof evBeklenen==='function'&&evBeklenen(e))||(od.length?gfOrt(od.slice(-3).map(o=>parseFloat(o.tutar)||0)):0);if(!tutar)return;
       const tip=e.erp_tip||'Gider';const kapsam=e.erp_kapsam||'İşletme';
       const kat=tip==='Gelir'?(kapsam==='İşletme'?'İşletme Geliri':'Şahsi Gelir'):(kapsam==='İşletme'?'İşletme Gideri':'Şahsi Gider');
       const y=tip==='Gelir'?1:-1;const ad='Evrak: '+(e.baslik||e.evrak_adi||e.ad||e.tur||('#'+e.id));
       const odendi=(bas,bit)=>od.some(o=>o.odeme_tarihi>=bas&&o.odeme_tarihi<=bit);
       const t=new Date();const tarihler=[];
-      if(dongu==='Aylık'){
+      if(tekBitis){}else if(dongu==='Aylık'){
         for(let a=0;a<24;a++){const yil=t.getFullYear(),ay=t.getMonth()+a;const son=new Date(yil,ay+1,0).getDate();
           const due=localDateObjStr(new Date(yil,ay,Math.min(parseInt(e.periyot_bit)||son,son)));
           const ayBas=localDateObjStr(new Date(yil,ay,1)),aySon=localDateObjStr(new Date(yil,ay,son));
@@ -5831,6 +5909,7 @@ function renderDashGrafik(){
   if(typeof klinecharts==='undefined'){if(!GF._klYukleniyor){GF._klYukleniyor=true;el.innerHTML='<div class="gf-bos">Grafik yükleniyor…</div>';perfScriptYukle('https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js').then(()=>{GF._klYukleniyor=false;el.innerHTML='';if(document.querySelector('#page-dashboard.active'))renderDashGrafik();}).catch(()=>{GF._klYukleniyor=false;el.innerHTML='<div class="gf-bos">Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.</div>';});}return;}
   gfGostergeKaydet();
   gfAracCiz();
+  try{if(typeof gfDuzenUygula==='function')gfDuzenUygula();}catch(e){}
   try{gfYukseklikAyarla();gfTutamakBagla();}catch(e){console.warn('masaüstü',e);}
   if(!GF.chart){
     GF.chart=klinecharts.init(el,{locale:'tr-TR',timezone:'Europe/Istanbul',styles:gfStiller(),thousandsSeparator:'.',customApi:{formatBigNumber:v=>gfKisa(Number(v)),formatDate:gfTarihFormat}});
@@ -6010,10 +6089,11 @@ function gfGostergeleriKur(kars,tahmin,eski){
     ana(g);});
   if(ay.gecenYil)ana('GF_GECENYIL');
   if(eski)ana('GF_ESKI');
-  if(kars.length){const opt={calcParams:kars,styles:{lines:kars.map(k=>({color:GF_METRIK[k].renk,size:1.4,style:'solid',smooth:false,dashedValue:[2,2]}))}};if(ay.karsAyri)alt('GF_KARSI',opt,90);else ana('GF_KARSI',opt);}
+  const kucuk=typeof gfKucukMu==='function'&&gfKucukMu(); // masaüstü küçük hâl: alt paneller gizli
+  if(kars.length){const opt={calcParams:kars,styles:{lines:kars.map(k=>({color:GF_METRIK[k].renk,size:1.4,style:'solid',smooth:false,dashedValue:[2,2]}))}};if(ay.karsAyri&&!kucuk)alt('GF_KARSI',opt,90);else ana('GF_KARSI',opt);}
   if(tahmin)ana('GF_TAHMIN');
   if(ay.olaylar)ana('GF_OLAY');
-  ay.altGosterge.forEach(g=>alt(g));
+  if(!kucuk)ay.altGosterge.forEach(g=>alt(g));
 }
 
 // ---------- Araç çubuğu
@@ -7074,7 +7154,7 @@ function psAbonelikler(){
     if(gfMedyan(ara.map(a=>Math.abs(a-mi)))>Math.max(3,mi*0.25))return;
     const son=localDateStr(g[g.length-1].tarih);if(gfGunFark(son,bugun)>per[1]*2)return; // bitmiş
     const i0=g[g.length-1];const k=i0.kisiId?getKisi(i0.kisiId):null;
-    abone.push({ad:(k&&k.isim)||(i0.altKat&&i0.altKat!=='-'?i0.altKat:'')||String(i0.not||'').replace(/^Otomatik — /,'').slice(0,40)||'Şahsi gider',per:per[0],tutar:med,yillik:med*365/per[1],adet:g.length,son,sablon:g.some(i=>(i.not||'').startsWith('Otomatik — '))});});
+    abone.push({ad:(k&&k.isim)||(i0.altKat&&i0.altKat!=='-'?i0.altKat:'')||String(i0.not||'').replace(/^Otomatik — /,'').slice(0,40)||'Şahsi gider',per:per[0],tutar:med,yillik:med*365/per[1],adet:g.length,son,sablon:g.some(i=>(i.not||'').startsWith('Otomatik — ')),kisiId:i0.kisiId||null,evrak:g.some(i=>i.islemKaynagi==='Evrak')||(!!i0.kisiId&&(DB.evraklar||[]).some(e=>String(e.kisi_id)===String(i0.kisiId)))});});
   abone.sort((a,b)=>b.yillik-a.yillik);
   // küçük kaçaklar: son 90 günün şahsi giderlerinde alt %35'lik dilim
   const s90=L.filter(i=>localDateStr(i.tarih)>=gfGunEkle(bugun,-90));const tutarlar=s90.map(i=>i.tutar).sort((a,b)=>a-b);
@@ -7154,7 +7234,7 @@ function gfDavranisSekme(){
   const A=psAbonelikler();
   h+=`<div class="gf-en-baslik">🔁 Tekrarlayan şahsi giderler</div>`;
   if(!A.abone.length)h+='<div class="gf-not">Son 200 günde düzenli tekrar eden şahsi gider bulunamadı.</div>';
-  else{const yt=A.abone.reduce((s,x)=>s+x.yillik,0);h+=`<div class="gf-not">${A.abone.length} düzenli kalem · yıllık toplam <b style="color:${dn}">−${fmt(yt)}</b></div>`+A.abone.slice(0,10).map(x=>`<div class="gf-satir"><span>${_esc(x.ad)}${x.sablon?' <small>(şablon)</small>':''}<br><small>${x.per} · ${x.adet} kez · son ${gfTrTarih(x.son)}</small></span><b class="num" style="color:${dn}">−${fmt(x.tutar)}<br><small>yılda −${fmt(x.yillik)}</small></b></div>`).join('');}
+  else{const yt=A.abone.reduce((s,x)=>s+x.yillik,0);h+=`<div class="gf-not">${A.abone.length} düzenli kalem · yıllık toplam <b style="color:${dn}">−${fmt(yt)}</b></div>`+A.abone.slice(0,10).map(x=>`<div class="gf-satir"><span>${_esc(x.ad)}${x.sablon?' <small>(şablon)</small>':''}<br><small>${x.per} · ${x.adet} kez · son ${gfTrTarih(x.son)}</small></span><span style="display:flex;align-items:center;gap:8px"><b class="num" style="color:${dn}">−${fmt(x.tutar)}<br><small>yılda −${fmt(x.yillik)}</small></b>${x.evrak?'<small title="Evrak olarak takip ediliyor">📄</small>':(typeof evAboneEkle==='function'&&USER_ROL!=='goruntule'?`<button class="isf-chip" title="Bu düzenli gideri evrak olarak takip et" onclick="evAboneEkle(${JSON.stringify(x.kisiId)},'${x.per}',${Math.round(x.tutar)},'${x.son}')">📄 Evrak yap</button>`:'')}</span></div>`).join('');}
   if(A.kucuk.adet)h+=`<div class="gf-risk orta">☕ <b>Küçük kaçaklar:</b> son 90 günde ${fmt(A.kucuk.esik)} ve altındaki ${A.kucuk.adet} küçük şahsi harcama ayda ~<b>${fmt(A.kucuk.aylik)}</b>, yılda ~<b>${fmt(A.kucuk.yillik)}</b> ediyor.${A.kucuk.katlar.length?' En çok: '+A.kucuk.katlar.map(([k,v])=>_esc(k)+' '+gfKisa(v)).join(', ')+'.':''}</div>`;
   // 5) Bağlam
   const B=psBaglamAnaliz();
@@ -7549,6 +7629,7 @@ function ozMetin(){
   if(tur==='genel'||tur==='tahmin'||tur==='aysonu')ekle(()=>ozBolumAylik(d));
   if(tur!=='tahsilat'&&tur!=='davranis')ekle(()=>ozBolumTahmin(d,tur==='haftalik'));
   ekle(()=>ozBolumAlacak(d,tur==='tahsilat'));
+  if(tur!=='tahsilat'&&typeof ozBolumEvrak==='function')ekle(()=>ozBolumEvrak(tur==='haftalik'));
   if(tur!=='tahmin'&&tur!=='tahsilat')ekle(()=>ozBolumDavranis(d,tur==='haftalik'));
   if(tur!=='tahmin'&&tur!=='tahsilat')ekle(()=>ozBolumCheckin(A,tur==='haftalik'));
   ekle(()=>ozBolumOnceki(d,A));
@@ -15377,6 +15458,9 @@ function gfYukseklikAyarla(){
   const wrap=document.querySelector('#dash-grafik-kart .gf-chart-wrap');if(!wrap)return;
   const kart=document.getElementById('dash-grafik-kart');
   if(!gfMasaustuMu()||(kart&&kart.classList.contains('gf-tam'))){wrap.style.height='';return;}
+  // küçük hâl (açılış): ekran yüksekliğinin yaklaşık yarısı
+  if(typeof gfKucukMu==='function'&&gfKucukMu()){const mc0=document.getElementById('main-content');const nh=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h'))||68;
+    wrap.style.height=Math.max(250,Math.round(((mc0?mc0.clientHeight:window.innerHeight)-nh)*0.47))+'px';return;}
   let el=null;try{el=parseInt(localStorage.getItem('gf_yukseklik')||'0');}catch(e){}
   if(el&&el>=300){wrap.style.height=Math.min(el,2400)+'px';return;}
   // otomatik: ilk bakışta ekranı doldursun
@@ -16426,7 +16510,7 @@ function evDurum(e){
 function evBeklenen(e){
   if(e.tutar_tipi==='sabit'&&parseFloat(e.beklenen_tutar)>0)return parseFloat(e.beklenen_tutar);
   const L=evOdemeleri(e.id).filter(o=>o.tl!=null&&o.tl>0).slice(-3);if(!L.length)return parseFloat(e.beklenen_tutar)>0?parseFloat(e.beklenen_tutar):null;
-  return L.reduce((s,o)=>s+o.tl,0)/L.length;
+  return Math.round(L.reduce((s,o)=>s+o.tl,0)/L.length);
 }
 function evAylikKarsilik(e){const b=evBeklenen(e);if(!b)return 0;const d=e.odeme_dongusu||'Yok';return d==='Aylık'?b:d==='Haftalık'?b*52/12:(d==='Yıllık'||d==='Sezonluk')?b/12:0;}
 function evPeriyotMetin(e){
@@ -16535,7 +16619,7 @@ function evDetayCiz(){
   h+=`<div class="tk-gp-b">Bilgiler</div>`+satir('Firma / kurum',k?(k.firmaUnvan||k.isim):'')+(k&&k.tel?`<div class="gf-satir"><span>Telefon</span><a href="tel:${_esc(k.tel)}">📞 ${_esc(k.tel)}</a></div>`:'')+
     satir('Ödeme düzeni',evPeriyotMetin(e))+satir('Beklenen tutar',bt?evPara(bt)+(e.tutar_tipi==='sabit'?' (sabit)':' (son ödemelerin ortalaması)'):'')+
     satir('Abone no',e.abone_no,true)+satir('Tesisat no',e.tesisat_no,true)+satir('Plaka / poliçe / referans',e.referans_no,true)+
-    satir('Otomatik ödeme',e.otomatik_odeme?'Evet (talimatlı)':'')+satir('ERP kategorisi',(e.erp_tip||'Gider')+' · '+(e.erp_kapsam||'İşletme'))+satir('Not',e.aciklama);
+    satir('Otomatik ödeme',e.otomatik_odeme?'Evet (talimatlı)':'')+satir('ERP kategorisi',(e.erp_tip||'Gider')+' · '+(e.erp_kapsam||'İşletme')+(e.erp_isle===false?' · ERP\'ye işlenmez':' · ödemeler ERP\'ye işlenir'))+satir('Not',e.aciklama);
   h+=evGrafikHtml(e);
   const O=R.O.slice().reverse();const islemVar=o=>!!evIslemBul(o);
   const donemAd={};R.donemler.forEach(p=>{(R.odeme[p.k]||[]).forEach(o=>donemAd[o.id]=p.ad);});
@@ -16570,8 +16654,8 @@ function evGrafikHtml(e){
 function evFormAc(id){
   if(USER_ROL==='goruntule')return;const e=id?evBul(id):null;
   EV.form=e?{id:e.id,kisiId:e.kisi_id||null,tur:e.tur||'Fatura',alt:e.alt_tur||'',dongu:e.odeme_dongusu||'Yok',bas:String(e.periyot_bas||''),bit:String(e.periyot_bit||''),bitis:e.bitis_tarihi?String(e.bitis_tarihi).slice(0,10):'',
-      tutarTipi:e.tutar_tipi==='sabit'?'sabit':'ortalama',beklenen:e.beklenen_tutar!=null?String(e.beklenen_tutar):'',abone:e.abone_no||'',tesisat:e.tesisat_no||'',ref:e.referans_no||'',oto:!!e.otomatik_odeme,aktif:e.aktif!==false,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',not:e.aciklama||''}
-    :{id:null,kisiId:null,tur:'Fatura',alt:'Elektrik',dongu:'Aylık',bas:'1',bit:'15',bitis:'',tutarTipi:'ortalama',beklenen:'',abone:'',tesisat:'',ref:'',oto:false,aktif:true,tip:'Gider',kapsam:'İşletme',not:''};
+      tutarTipi:e.tutar_tipi==='sabit'?'sabit':'ortalama',beklenen:e.beklenen_tutar!=null?String(e.beklenen_tutar):'',abone:e.abone_no||'',tesisat:e.tesisat_no||'',ref:e.referans_no||'',oto:!!e.otomatik_odeme,aktif:e.aktif!==false,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',not:e.aciklama||'',erpIsle:e.erp_isle!==false}
+    :{id:null,kisiId:null,tur:'Fatura',alt:'Elektrik',dongu:'Aylık',bas:'1',bit:'15',bitis:'',tutarTipi:'ortalama',beklenen:'',abone:'',tesisat:'',ref:'',oto:false,aktif:true,tip:'Gider',kapsam:'İşletme',not:'',erpIsle:true};
   let m=document.getElementById('modal-ev-form');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-form';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evf-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-form')">✕</button></div><div class="modal-body" id="evf-body"></div><div class="modal-foot" id="evf-foot"></div></div>`;document.body.appendChild(m);}
   evFormCiz();openModal('modal-ev-form');
@@ -16599,7 +16683,7 @@ function evFormCiz(){
     <div class="hr-satir"><div class="fi"><label>Abone no</label><input type="text" value="${_esc(F.abone)}" oninput="EV.form.abone=this.value"></div><div class="fi"><label>Tesisat no</label><input type="text" value="${_esc(F.tesisat)}" oninput="EV.form.tesisat=this.value"></div></div>
     <div class="fi"><label>Plaka / poliçe no / referans</label><input type="text" value="${_esc(F.ref)}" oninput="EV.form.ref=this.value"></div>
     <div class="isf-chips">${chip(F.oto,'🔁 Otomatik ödeme talimatı var',"EV.form.oto=!EV.form.oto;evFormCiz()")}${chip(F.aktif,F.aktif?'✅ Takip ediliyor':'⏸ Pasif',"EV.form.aktif=!EV.form.aktif;evFormCiz()")}</div>
-    <div class="fi"><label>ERP kategorisi <small>(ödemeler ERP'ye bu kategoriyle işlenir)</small></label><div class="isf-chips">${chip(F.tip==='Gider','📤 Gider',"EV.form.tip='Gider';evFormCiz()")}${chip(F.tip==='Gelir','📥 Gelir',"EV.form.tip='Gelir';evFormCiz()")}${chip(F.kapsam==='İşletme','🏢 İşletme',"EV.form.kapsam='İşletme';evFormCiz()")}${chip(F.kapsam==='Şahsi','👤 Şahsi',"EV.form.kapsam='Şahsi';evFormCiz()")}</div></div>
+    <div class="fi"><label>ERP kategorisi <small>(ödemeler ERP'ye bu kategoriyle işlenir)</small></label><div class="isf-chips">${chip(F.erpIsle,F.erpIsle?'🔗 Ödemeleri ERP\'ye işlenir':'⛔ ERP\'ye işlenmez',"EV.form.erpIsle=!EV.form.erpIsle;evFormCiz()")}</div><div class="gf-ipucu" style="margin:2px 0 6px">${F.erpIsle?'Öde ekranında ERP kutusu işaretli gelir; bu evrak kasa tahminine ve Serbest Kasa\'daki sabit ödemelere girer.':'Ödemeler sadece burada tutulur; kasa tahminine girmez.'}</div><div class="isf-chips">${chip(F.tip==='Gider','📤 Gider',"EV.form.tip='Gider';evFormCiz()")}${chip(F.tip==='Gelir','📥 Gelir',"EV.form.tip='Gelir';evFormCiz()")}${chip(F.kapsam==='İşletme','🏢 İşletme',"EV.form.kapsam='İşletme';evFormCiz()")}${chip(F.kapsam==='Şahsi','👤 Şahsi',"EV.form.kapsam='Şahsi';evFormCiz()")}</div></div>
     <div class="fi"><label>Not</label><textarea rows="2" oninput="EV.form.not=this.value">${_esc(F.not)}</textarea></div>`;
   document.getElementById('evf-foot').innerHTML=`<button class="btn btn-secondary" style="flex:1" onclick="closeModal('modal-ev-form')">Vazgeç</button><button class="btn btn-primary" style="flex:2" onclick="evKaydet(this)">${F.id?'Güncelle':'Kaydet'}</button>`;
   evFormOzet();
@@ -16628,7 +16712,7 @@ async function evKaydet(btn){
   const alt=EV_ALT[F.tur]?F.alt:'';
   const satir={kisi_id:F.kisiId||null,tur:F.tur,alt_tur:alt||null,evrak_adi:alt?F.tur+' - '+alt:F.tur,odeme_dongusu:F.dongu,periyot_bas:F.dongu==='Yok'?'':F.bas,periyot_bit:F.dongu==='Yok'?'':F.bit,
     aciklama:F.not||'',aktif:F.aktif,erp_tip:F.tip,erp_kapsam:F.kapsam,bitis_tarihi:F.dongu==='Yok'&&F.bitis?F.bitis:null,tutar_tipi:F.tutarTipi,beklenen_tutar:F.tutarTipi==='sabit'?evSayi(F.beklenen):null,
-    abone_no:F.abone.trim()||null,tesisat_no:F.tesisat.trim()||null,referans_no:F.ref.trim()||null,otomatik_odeme:F.oto};
+    abone_no:F.abone.trim()||null,tesisat_no:F.tesisat.trim()||null,referans_no:F.ref.trim()||null,otomatik_odeme:F.oto,erp_isle:F.erpIsle};
   if(!F.id)satir.takip_baslangic=localToday();
   if(btn)btn.disabled=true;
   try{let id=F.id;
@@ -16636,6 +16720,7 @@ async function evKaydet(btn){
     else{const r=await evYaz('sirket_evraklar','POST',satir,EV_ESKI_EVRAK,true);id=r&&r[0]&&r[0].id;}
     await loadDB();closeModal('modal-ev-form');showToast(F.id?'Evrak güncellendi':'Evrak eklendi','green');evYenile();
     if(id&&document.getElementById('modal-ev-detay')?.classList.contains('open'))evDetayAc(id);
+    if(GF){GF.tahminAnahtar='';GF.defter=null;}
   }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,70),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,600);}
 }
@@ -16680,7 +16765,7 @@ function evOdemeAc(evrakId,donemK,odemeId){
   const bt=evBeklenen(e);const isl=o?evIslemBul(o):null;
   const yeniBitis=(e.odeme_dongusu||'Yok')==='Yok'&&e.bitis_tarihi?(()=>{const d=tkDt(String(e.bitis_tarihi).slice(0,10));d.setFullYear(d.getFullYear()+1);return localDateObjStr(d);})():'';
   EV.od=o?{id:o.id,evrakId,donem:dk,tarih:o.tarih,tutar:String(o.tutar).replace('.',','),pb:o.pb,kur:o.kur?String(o.kur).replace('.',','):'',not:o.not,yontem:o.yontem||(isl&&isl.odemeYontemi)||'İBAN',erp:!!isl,erpVar:!!isl,islemId:isl?isl.id:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis:''}
-    :{id:null,evrakId,donem:dk,tarih:localToday(),tutar:bt?String(Math.round(bt*100)/100).replace('.',','):'',pb:'TRY',kur:'',not:'',yontem:e.otomatik_odeme?'Kart':'İBAN',erp:true,erpVar:false,islemId:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis};
+    :{id:null,evrakId,donem:dk,tarih:localToday(),tutar:bt?String(Math.round(bt*100)/100).replace('.',','):'',pb:'TRY',kur:'',not:'',yontem:e.otomatik_odeme?'Kart':'İBAN',erp:e.erp_isle!==false,erpVar:false,islemId:null,tip:e.erp_tip||'Gider',kapsam:e.erp_kapsam||'İşletme',dosyalar:[],yeniBitis};
   let m=document.getElementById('modal-ev-odeme');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-ev-odeme';m.innerHTML=`<div class="modal ev-modal"><div class="modal-handle"></div><div class="modal-head"><h3 class="modal-title" id="evo-baslik"></h3><button class="modal-close" onclick="closeModal('modal-ev-odeme')">✕</button></div><div class="modal-body" id="evo-body"></div><div class="modal-foot" id="evo-foot"></div></div>`;document.body.appendChild(m);}
   document.body.appendChild(m);evOdemeCiz();openModal('modal-ev-odeme');
@@ -16793,7 +16878,8 @@ function evBelgeEkle(id){const inp=document.createElement('input');inp.type='fil
   inp.onchange=async()=>{if(!inp.files.length)return;showToast('Yükleniyor…','blue');const h=await evDosyaYukle([...inp.files],'evrak',id);await loadDB();evDetayCiz();showToast(h?h+' dosya yüklenemedi':'Belge eklendi',h?'amber':'green');};inp.click();}
 
 // ---------- ortak yenileme + günlük bildirim (her evrakın her dönemi için tek kayıt)
-function evYenile(){EV._c=null;if(document.querySelector('#page-evrak.active'))evCiz();if(document.querySelector('#page-takvim.active')&&typeof tkCiz==='function')tkCiz();}
+function evYenile(){EV._c=null;if(document.querySelector('#page-evrak.active'))evCiz();if(document.querySelector('#page-takvim.active')&&typeof tkCiz==='function')tkCiz();
+  if(document.querySelector('#page-dashboard.active')){try{dashEvrakTumu();}catch(e){}try{if(GF.chart)gfCiz();}catch(e){}}}
 async function evBildirimEsitle(){
   const anah='ev_bildirim_'+localToday();try{if(localStorage.getItem(anah))return;}catch(e){}
   const M=[];(DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);R.gecikmis.forEach(p=>M.push('📄 '+evAd(e)+' — '+p.ad+' ödemesi gecikti (son gün '+evTarih(p.son)+')'));});
@@ -16803,6 +16889,167 @@ async function evBildirimEsitle(){
       if(yeni.length)await sbFetch('sistem_bildirimleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify(yeni.map(m=>({baslik:m.slice(0,60),mesaj:m,tip:'uyari'})))});}
     try{localStorage.setItem(anah,'1');}catch(e){}
   }catch(e){console.warn('evrak bildirim',e);}
+}
+
+
+// ============================================================ ÖZET SAYFASI: bir bakışta kutuları · evrak ödemeleri · sabit giderler · küçük/büyük grafik
+// ---------- evrak yardımcıları (özet, grafik, özet çıkart ortak)
+function evSabitOzet(){
+  const bg=localToday(),ay=bg.slice(0,7);let aylik=0,kalan=0,kalanN=0,gec=0,gecN=0;
+  (DB.evraklar||[]).filter(e=>evAktif(e)&&evGider(e)).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e)||0;aylik+=evAylikKarsilik(e);
+    gecN+=R.gecikmis.length;gec+=bt*R.gecikmis.length;
+    R.donemler.forEach(p=>{if(p.son>=bg&&p.son.slice(0,7)===ay&&!R.odeme[p.k].length&&p.son>=R.takip){kalan+=bt;kalanN++;}});});
+  let gunluk=0;try{gunluk=psIsOlcu().gunlukBrut||0;}catch(e){}
+  let kasa=0;try{kasa=calcFinans().kasa||0;}catch(e){}
+  return {aylik,kalan,kalanN,gec,gecN,isGunu:gunluk>0?(kalan+gec)/gunluk:null,isGunuAy:gunluk>0?aylik/gunluk:null,kasaAy:aylik>0?kasa/aylik:null};
+}
+// Fatura anormalliği: son ödeme, kendi geçmişinin ortancasından (ve varsa geçen yılın aynı döneminden) belirgin yüksek
+function evAnomaliler(){
+  const bg=localToday();const L=[];
+  (DB.evraklar||[]).filter(evAktif).forEach(e=>{const O=evOdemeleri(e.id).filter(o=>o.tl>0);if(O.length<4)return;const son=O[O.length-1];if(son.tarih<gfGunEkle(bg,-60))return;
+    const onc=O.slice(Math.max(0,O.length-7),-1).map(o=>o.tl);const med=gfMedyan(onc);if(!(med>0))return;const oran=son.tl/med;
+    const gy=O.find(o=>o!==son&&Math.abs(gfGunFark(o.tarih,gfGunEkle(son.tarih,-365)))<=20);const gyOran=gy?son.tl/gy.tl:null;
+    if(oran>=1.4&&(gyOran==null||gyOran>=1.25))L.push({e,son,oran,med,gy,gyOran});});
+  return L.sort((a,b)=>b.oran-a.oran);
+}
+function evAnomaliMetin(x){return `${evAd(x.e)}: son ödeme ${fmt(x.son.tl)}, olağan seviyenin (${fmt(x.med)}) %${Math.round((x.oran-1)*100)} üstünde${x.gy?' · geçen yıl aynı dönem '+fmt(x.gy.tl):''}`;}
+
+// ---------- bir bakışta kutuları (grafiğin sağı)
+function dashBakisCiz(c){
+  const el=document.getElementById('dash-bakis');if(!el)return;c=c||calcFinans();const bg=localToday();
+  const ps=v=>`<b class="num" data-isr-yok style="color:${v<0?'var(--red)':v>0?'var(--green)':'var(--text3)'}">${v<0?'−':v>0?'+':''}${fmt(v)}</b>`;
+  // Randevu
+  let ry='<b class="db-say">0</b><div class="db-alt">Gelecek randevu yok</div>';
+  try{const O=tkOlaylar(bg,gfGunEkle(bg,365)).filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi');
+    const sim=new Date();const ss=String(sim.getHours()).padStart(2,'0')+':'+String(sim.getMinutes()).padStart(2,'0');
+    const sir=O.filter(o=>o.gun>bg||!o.t.saat||o.t.saat>=ss);const y=sir[0]||O[0];
+    if(O.length){const sat=o=>{const g=String(o.gun).slice(0,10);const k=o.t.kisiId?getKisi(o.t.kisiId):null;const gun=g===bg?'Bugün':g===gfGunEkle(bg,1)?'Yarın':evKisa(g);
+        return `<div class="db-sat"><b>${gun}${o.t.saat?' '+o.t.saat.slice(0,5):''}</b><span>${_esc(o.t.baslik||'')}${k?' · '+_esc(k.isim):''}</span></div>`;};
+      const ilk3=[y].concat(sir.filter(o=>o!==y)).slice(0,3);
+      ry=`<b class="db-say">${O.length}</b><div class="db-alt">gelecek randevu</div>${ilk3.map(sat).join('')}`;}}catch(e){}
+  // Evrak
+  let ev='<b class="db-say">0</b><div class="db-alt">Dönem içi ya da gecikmiş evrak yok</div>',evRenk='yesil';
+  try{const R=(DB.evraklar||[]).map(evDurum).filter(r=>r.renk==='kirmizi'||r.renk==='sari');
+    if(R.length){const kir=R.filter(r=>r.renk==='kirmizi');evRenk=kir.length?'kirmizi':'sari';
+      const sar=R.filter(r=>r.renk==='sari');kir.sort((a,b)=>a.gecikmis[0].son.localeCompare(b.gecikmis[0].son));sar.sort((a,b)=>a.simdiki.son.localeCompare(b.simdiki.son));
+      const sat=r=>`<div class="db-sat${r.renk==='kirmizi'?' kirmizi':''}"><b>${evIk(r.e)} ${_esc(evAd(r.e))}</b><span>${_esc(r.metin)}</span></div>`;
+      ev=`<b class="db-say">${R.length}</b><div class="db-alt">${kir.length?'<span style="color:var(--red)">'+kir.length+' gecikmiş</span>':''}${kir.length&&sar.length?' · ':''}${sar.length?sar.length+' dönem içi':''}</div>${kir.concat(sar).slice(0,3).map(sat).join('')}${R.length>3?`<div class="db-alt">+${R.length-3} evrak daha</div>`:''}`;}}catch(e){}
+  const gelir=(c.isGelir||0)+(c.shGelir||0),gider=(c.isGider||0)+(c.shGider||0);const donem=getMonth()?isfAyAdi(getMonth()):'Tüm zamanlar';
+  el.innerHTML=`
+    <div class="db-k" onclick="goPage('takvim')"><div class="db-b">📅 Randevu</div>${ry}</div>
+    <div class="db-k r-${evRenk}" onclick="goPage('evrak')"><div class="db-b">📄 Evrak</div>${ev}</div>
+    <div class="db-k" onclick="showDashDetay('kasa')"><div class="db-b">💰 Kasa <small>${_esc(donem)}</small></div>
+      <div class="db-s"><span>Toplam gelir</span>${ps(gelir)}</div><div class="db-s"><span>Toplam gider</span>${ps(-gider)}</div><div class="db-s ince"><span>Eldeki</span>${ps(c.kasa||0)}</div></div>
+    <div class="db-k" onclick="showDashDetay('alacak')"><div class="db-b">⚖️ Alacak & Verecek</div>
+      <div class="db-s"><span>Toplam alacak</span>${ps(c.alacakTop||0)}</div><div class="db-s"><span>Toplam verecek</span>${ps(-(c.borcTop||0))}</div><div class="db-s"><span>Bekleyen personel ödemesi</span>${ps(-(c.topPersonelBakiye||0))}</div></div>`;
+}
+// ---------- evrak ödemeleri listesi (gecikmişler + 14 gün)
+function dashEvrakListeCiz(){
+  const el=document.getElementById('dash-evrak-list');if(!el)return;const bg=localToday();
+  if(!(DB.evraklar||[]).length){el.innerHTML='<div class="tk-bos">Evrak yok. <a href="#" onclick="event.preventDefault();goPage(\'evrak\')">Evrak sayfası</a></div>';return;}
+  const T=evTakvimOlaylari(gfGunEkle(bg,-730),gfGunEkle(bg,14));const ro=USER_ROL==='goruntule';
+  if(!T.length){el.innerHTML='<div class="tk-bos">Önümüzdeki 14 günde evrak ödemesi yok ✓</div>';return;}
+  // evrak başına tek satır: en eski ödenmemiş dönem; birden fazla gecikmiş dönem varsa toplamıyla
+  const G={};T.forEach(x=>{(G[x.e.id]=G[x.e.id]||[]).push(x);});
+  const L=Object.values(G).map(a=>({x:a[0],n:a.filter(z=>z.gecikmis).length,top:a.filter(z=>z.gecikmis).reduce((s,z)=>s+(z.tutar||0),0)})).sort((a,b)=>a.x.gun.localeCompare(b.x.gun));
+  el.innerHTML=L.slice(0,8).map(({x,n,top})=>{const kg=evGunFark(bg,x.gun);const ne=x.gecikmis?`<span style="color:var(--red)">${n>1?n+' dönem gecikti':(-kg)+' gün gecikti'}</span>`:kg===0?'<span style="color:#f97316">bugün son gün</span>':kg+' gün kaldı';
+    const tt=n>1?top:x.tutar;
+    return `<div class="db-ev${x.gecikmis?' gec':''}" onclick="evDetayAc(${x.e.id})"><div class="db-ev-a"><b>${evIk(x.e)} ${_esc(evAd(x.e))}</b><small>${_esc(n>1?'en eskisi '+x.p.ad:x.p.ad)} · son ${evKisa(x.gun)} · ${ne}</small></div>
+      <div class="db-ev-s"><b class="num" data-isr-yok style="color:var(--red)">${tt?'−'+evPara(tt):'—'}</b>${ro?'':`<button class="ev-ode kucuk" onclick="event.stopPropagation();evOdemeAc(${x.e.id},'${x.p.k}')">Öde</button>`}</div></div>`;}).join('')+(L.length>8?`<div class="gf-ipucu">+${L.length-8} evrak daha · <a href="#" onclick="event.preventDefault();goPage('evrak')">tümü</a></div>`:'');
+}
+// ---------- faturalar & sabit giderler kartları
+function dashSabitCiz(){
+  const el=document.getElementById('dash-sabit');if(!el)return;const S=evSabitOzet();const A=evAnomaliler();
+  const kart=(lbl,v,alt,fn)=>`<div class="card" onclick="${fn}"><div class="lbl">${lbl}</div><div class="val num" data-isr-yok style="color:${v<0?'var(--red)':'var(--text3)'}">${v<0?'−'+fmt(v):'0 ₺'}</div>${alt?`<div class="db-kalt">${alt}</div>`:''}</div>`;
+  const sy=v=>v==null?'—':v.toFixed(v<10?1:0).replace('.',',');
+  el.innerHTML=`<div class="cards">${kart('📌 Aylık sabit gider',-S.aylik,'evrakların aylık karşılığı',"goPage('evrak')")}${kart('🧾 Bu ay kalan',-(S.kalan+S.gec),(S.kalanN+S.gecN)+' ödeme'+(S.gecN?' · '+S.gecN+' gecikmiş':''),"goPage('evrak');setTimeout(()=>evFiltre('sari'),200)")}
+    <div class="card" style="grid-column:span 2;cursor:default"><div class="lbl">⏱️ Kazançla karşılaştır</div><div class="db-oran">
+      <div><b>${sy(S.isGunu)}</b><small>iş günü kazancın bu ayki kalan faturalara gidiyor</small></div>
+      <div><b>${sy(S.isGunuAy)}</b><small>iş günü kazancın her ay sabit giderlere gidiyor</small></div>
+      <div><b>${S.kasaAy==null?'—':sy(S.kasaAy)+' ay'}</b><small>kasa, sabit giderleri bu kadar karşılar</small></div></div></div></div>
+    ${A.map(x=>`<div class="gf-risk orta" style="cursor:pointer" onclick="evDetayAc(${x.e.id})">⚠️ <b>Olağan dışı fatura</b> · ${_esc(evAnomaliMetin(x))}. Bir kaçak, tarife değişikliği ya da okuma hatası olabilir.</div>`).join('')}`;
+}
+function dashEvrakTumu(c){try{dashBakisCiz(c);}catch(e){console.warn('bakış',e);}try{dashEvrakListeCiz();}catch(e){console.warn('evrak listesi',e);}try{dashSabitCiz();}catch(e){console.warn('sabit gider',e);}}
+
+// ---------- grafik: "Evrak & Faturalar" metrikleri (evrak ödemeleri, ERP'ye işlenmese de)
+var GF_EVRAK_METRIK={evrakOd:null,f_elektrik:'Elektrik',f_su:'Su',f_internet:'İnternet',f_dogalgaz:'Doğalgaz',f_telefon:'Telefon'};
+function gfEvrakDefterEk(d){
+  const n=d.gunSay;const mk=()=>new Float64Array(n);const top={};
+  Object.keys(GF_EVRAK_METRIK).forEach(m=>{d.O[m]=mk();d.H[m]=mk();d.L[m]=mk();d.C[m]=mk();top[m]=mk();});
+  (DB.evrakOdemeler||[]).forEach(o=>{if(!(o.tl>0))return;const e=evBul(o.evrakId);if(!e||!evGider(e))return;let g=d.gunIdx[o.tarih];if(g==null){if(o.tarih<d.ilk)g=0;else return;}
+    top.evrakOd[g]+=o.tl;const k=Object.keys(GF_EVRAK_METRIK).find(m=>GF_EVRAK_METRIK[m]&&GF_EVRAK_METRIK[m]===e.alt_tur&&e.tur==='Fatura');if(k)top[k][g]+=o.tl;});
+  Object.keys(GF_EVRAK_METRIK).forEach(m=>{let c=0;for(let g=0;g<n;g++){const o=c;c+=top[m][g];d.O[m][g]=o;d.C[m][g]=c;d.H[m][g]=Math.max(o,c);d.L[m][g]=Math.min(o,c);}});
+}
+// özet sekmesinde fatura analizi (yıllık değişim, en yüksek ay, sıcaklık ilişkisi)
+function gfFaturaAnalizHtml(m){
+  const alt=GF_EVRAK_METRIK[m];const O=(DB.evrakOdemeler||[]).filter(o=>{const e=evBul(o.evrakId);return o.tl>0&&e&&evGider(e)&&(m==='evrakOd'||(e.tur==='Fatura'&&e.alt_tur===alt));});
+  if(!O.length)return `<div class="gf-not">📄 Bu metrik için kayıtlı ${m==='evrakOd'?'evrak ödemesi':alt.toLowerCase()+' faturası'} yok. Evrak sayfasında ödeme kaydettikçe burada görünür (ERP'ye işlenmese de).</div>`;
+  const bg=localToday();const top=(a,b)=>O.filter(o=>o.tarih>a&&o.tarih<=b).reduce((s,o)=>s+o.tl,0);
+  const s12=top(gfGunEkle(bg,-365),bg),o12=top(gfGunEkle(bg,-730),gfGunEkle(bg,-365));
+  const ay={};O.forEach(o=>{const k=o.tarih.slice(0,7);ay[k]=(ay[k]||0)+o.tl;});const enY=Object.entries(ay).sort((a,b)=>b[1]-a[1])[0];
+  let h=`<div class="gf-en-baslik">📄 ${m==='evrakOd'?'Evrak ödemeleri':alt+' faturası'}</div>
+    <div class="gf-satir"><span>Son 12 ay</span><b class="num" data-isr-yok style="color:var(--red)">−${fmt(s12)}</b></div>
+    ${o12?`<div class="gf-satir"><span>Önceki 12 ay</span><b class="num" data-isr-yok>−${fmt(o12)} <small style="color:${s12>o12?'var(--red)':'var(--green)'}">${s12>o12?'+':''}${Math.round((s12/o12-1)*100)}%</small></b></div>`:''}
+    ${enY?`<div class="gf-satir"><span>En yüksek ay</span><b>${AYLAR[parseInt(enY[0].slice(5))-1]} ${enY[0].slice(0,4)} · ${fmt(enY[1])}</b></div>`:''}`;
+  // sıcaklık ilişkisi: fatura genelde bir önceki ayın tüketimidir
+  if((alt==='Elektrik'||alt==='Doğalgaz')&&typeof GF_HAVA!=='undefined'&&GF_HAVA.gun&&Object.keys(GF_HAVA.gun).length>60){
+    const ortT=k=>{const [y,mm]=k.split('-').map(Number);const dt=new Date(y,mm-2,1);const p=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');let s=0,n=0;for(const g in GF_HAVA.gun)if(g.startsWith(p)&&GF_HAVA.gun[g]!=null){s+=GF_HAVA.gun[g];n++;}return n>=15?s/n:null;};
+    const X=[],Y=[];Object.keys(ay).forEach(k=>{const t=ortT(k);if(t==null)return;const v=alt==='Elektrik'?Math.max(0,t-22):Math.max(0,18-t);X.push(v);Y.push(ay[k]);});
+    const r=X.length>=6&&X.some(v=>v>0)?gfOls(X,Y):null;const ort=Y.length?Y.reduce((s,v)=>s+v,0)/Y.length:0;
+    if(r&&ort>0&&Math.abs(r.t)>=1.5)h+=`<div class="gf-not">🌡️ <b>Sıcaklık ilişkisi:</b> ${alt==='Elektrik'?'tüketim ayının ortalama en yüksek sıcaklığı 22°C\'nin üstündeki her 1°C':'tüketim ayının sıcaklığı 18°C\'nin altındaki her 1°C'} faturayı ortalama <b>${fmt(Math.abs(r.b))}</b> (${r.b>=0?'+':'−'}%${Math.round(Math.abs(r.b)/ort*100)}) değiştiriyor · ${X.length} ay, ilişki gücü ${Math.abs(r.r).toFixed(2).replace('.',',')}. Tutarlar nominal; enflasyon etkisi de içinde.</div>`;
+    else h+=`<div class="gf-not">🌡️ Sıcaklık ilişkisi için ${X.length<6?'en az 6 aylık fatura gerekiyor ('+X.length+' ay var)':'belirgin bir ilişki bulunamadı'}.</div>`;
+  }
+  return h;
+}
+(function(){try{const _oz=gfOzetSekme;gfOzetSekme=function(){const m=GF.ay&&GF.ay.metrik;const ust=m in GF_EVRAK_METRIK?gfFaturaAnalizHtml(m):'';return ust+_oz.apply(this,arguments);};}catch(e){console.warn(e);}})();
+// Davranış sekmesi: düzenli tekrar eden gideri evrak olarak ekle
+function evAboneEkle(kisiId,per,tutar,sonTarih){
+  goPage('evrak');setTimeout(()=>{evFormAc();const F=EV.form;F.kisiId=kisiId||null;F.tur='Diğer';F.alt='';
+    if(per==='haftalık'){F.dongu='Haftalık';const g=(tkDt(sonTarih).getDay()+6)%7;F.bas=EV_HG[Math.max(0,g-2)];F.bit=EV_HG[g];}
+    else{F.dongu='Aylık';const gun=parseInt(String(sonTarih).slice(8,10))||1;F.bas=String(Math.max(1,gun-5));F.bit=String(Math.min(28,gun+2));}
+    if(tutar>0){F.tutarTipi='sabit';F.beklenen=String(Math.round(tutar));}F.kapsam='Şahsi';evFormCiz();},250);
+}
+
+// ---------- masaüstü: grafik küçük başlar, sadece "Büyüt" ile büyür
+var GF_BUYUK=false;
+function gfKucukMu(){return typeof gfMasaustuMu==='function'&&gfMasaustuMu()&&!GF_BUYUK;}
+function gfDuzenUygula(){
+  const p=document.getElementById('page-dashboard');if(!p)return;const k=gfKucukMu();p.classList.toggle('dash-kucuk',k);p.classList.toggle('dash-buyuk',!k&&gfMasaustuMu());
+  const b=document.getElementById('gf-btn-buyut');if(b){b.innerHTML=GF_BUYUK?'⤡ Küçült':'⤢ Büyüt';b.title=GF_BUYUK?'Grafiği küçült (Esc)':'Grafiği büyüt';}
+}
+function gfBuyutDegistir(ac){
+  GF_BUYUK=ac==null?!GF_BUYUK:!!ac;const k=document.getElementById('dash-grafik-kart');
+  if(k){k.classList.add('gf-gecis');setTimeout(()=>k.classList.remove('gf-gecis'),260);}
+  gfDuzenUygula();GF._sonGorunum='';
+  try{gfYukseklikAyarla();}catch(e){}
+  if(GF.chart){try{GF.chart.resize();gfCiz();}catch(e){console.warn(e);}}
+  if(GF_BUYUK){try{gfSekmeCiz();}catch(e){}}
+  const mc=document.querySelector('.content');if(mc&&k)mc.scrollTo({top:Math.max(0,k.offsetTop-10),behavior:'smooth'});
+}
+document.addEventListener('keydown',e=>{if(e.key!=='Escape'||!GF_BUYUK)return;if(!document.querySelector('#page-dashboard.active'))return;if(document.querySelector('.modal-ov.open'))return;if(document.getElementById('dash-grafik-kart')?.classList.contains('gf-tam'))return;gfBuyutDegistir(false);});
+window.addEventListener('resize',()=>{clearTimeout(window._gfDuzT);window._gfDuzT=setTimeout(()=>{const once=document.getElementById('page-dashboard')?.classList.contains('dash-kucuk');gfDuzenUygula();
+  if(once!==document.getElementById('page-dashboard')?.classList.contains('dash-kucuk')){GF._sonGorunum='';try{gfYukseklikAyarla();}catch(e){}if(GF.chart){GF.chart.resize();gfCiz();}}},180);});
+
+// ---------- Özet Çıkart: evrak bölümü
+function ozBolumEvrak(kisa){
+  let h='### Evraklar ve faturalar (düzenli ödemeler)\n';
+  if(!(DB.evraklar||[]).length)return h+'- Evrak kaydı yok.\n';
+  const vir=v=>v.toFixed(1).replace('.',',');
+  const ad=e=>{const k=e.kisi_id?getKisi(e.kisi_id):null;const t=(e.tur==='Fatura'||e.tur==='Araç')&&e.alt_tur?e.tur+' · '+e.alt_tur:(e.tur||'Evrak');return (k?ozIsim(k)+' — ':'')+t;};
+  const S=evSabitOzet();
+  h+=`- Aylık sabit gider (evrakların aylık karşılığı): ${ozT(-S.aylik)}. Bu ay kalan: ${S.kalanN} ödeme, ${ozT(-S.kalan)}. Gecikmiş: ${S.gecN} dönem${S.gec?', ≈ '+ozT(-S.gec):''}.\n`;
+  if(S.isGunuAy!=null)h+=`- Sabit giderler ayda ≈ ${vir(S.isGunuAy)} iş günü kazancına denk${S.kasaAy!=null?'; mevcut kasa sabit giderleri ≈ '+vir(S.kasaAy)+' ay karşılar':''}.\n`;
+  const L=(DB.evraklar||[]).map(evDurum).filter(R=>R.renk!=='pasif');
+  const gec=L.filter(R=>R.renk==='kirmizi'),ici=L.filter(R=>R.renk==='sari');
+  if(gec.length)h+='- Gecikmiş evraklar: '+gec.map(R=>`${ad(R.e)} (${R.gecikmis.map(p=>p.ad).join(', ')})`).join('; ')+'\n';
+  if(ici.length)h+='- Ödeme dönemi içinde: '+ici.map(R=>`${ad(R.e)} (son gün ${ozTr(R.simdiki.son)})`).join('; ')+'\n';
+  if(!kisa){const bg=localToday();
+    h+='- Evrak listesi (son 12 ay / önceki 12 ay ödenen):\n';
+    L.forEach(R=>{const e=R.e;const O=evOdemeleri(e.id).filter(o=>o.tl>0);const t=(a,b)=>O.filter(o=>o.tarih>a&&o.tarih<=b).reduce((s,o)=>s+o.tl,0);
+      const s12=t(gfGunEkle(bg,-365),bg),o12=t(gfGunEkle(bg,-730),gfGunEkle(bg,-365));const bt=evBeklenen(e);
+      h+=`  - ${ad(e)}: ${evPeriyotMetin(e)}${bt?', beklenen '+ozN(bt):''}${e.otomatik_odeme?', otomatik ödeme':''}; ${ozT(-s12)} / ${o12?ozT(-o12)+' ('+(s12>=o12?'+':'')+Math.round((s12/o12-1)*100)+'%)':'veri yok'}\n`;});}
+  const A=evAnomaliler();if(A.length)h+='- Olağan dışı faturalar: '+A.map(x=>`${ad(x.e)}: son ${ozN(x.son.tl)}, olağan ${ozN(x.med)} (%${Math.round((x.oran-1)*100)} üstünde)`).join('; ')+'\n';
+  return h;
 }
 
 
