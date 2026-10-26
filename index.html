@@ -1145,6 +1145,22 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .ust-harita-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;}
 .ust-harita-btn:hover{border-color:var(--blue);color:var(--blue);}
 @media(max-width:700px){.ust-harita-btn{width:36px;padding:0;justify-content:center;}.ust-harita-btn .oz-yazi{display:none;}}
+
+.ps-baglam-a{font-size:11px;color:var(--text3);margin-top:6px;}
+.ps-degdi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;margin:6px 0;display:flex;flex-direction:column;gap:7px;}
+.ps-degdi-u{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:12px;}
+.ps-degdi-u small{color:var(--text3);}
+.ps-degdi-c{display:flex;gap:6px;flex-wrap:wrap;}
+.ps-degdi-c .ps-bc{padding:6px 10px;}
+.ps-degdi-c .ps-bc:disabled{opacity:.5;}
+.ck-degdi{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border2);}
+.ps-ay{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-size:11px;padding:3px 0;}
+.ps-ay-a{color:var(--text2);}
+.ps-ay-iz{display:flex;height:12px;border-radius:4px;overflow:hidden;background:var(--bg2);}
+.ps-ay-iz div{height:100%;}
+.ps-ay b{color:var(--red);font-size:11px;}
+.ps-lejant{display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:var(--text3);margin:6px 0 2px;}
+.ps-lejant i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
 </style>
 </head>
 <body>
@@ -4221,7 +4237,7 @@ async function loadDB(){
       odemeYontemi:o.odeme_yontemi||'Nakit', islemId:o.islem_id, notlar:o.notlar||''
     }));
     DB.kisiler=(kisiler||[]).map(k=>({id:k.id,tip:k.tip,isim:k.isim,kapsam:k.kapsam,vergiNo:k.vergi_no||'',vergiDairesi:k.vergi_dairesi||'',firmaUnvan:k.firma_unvan||'',iban:k.iban||'',eFatura:k.e_fatura||false,tel:k.tel||'',adres:k.adres||'',not:k.not||'',favori:k.favori||false}));
-    DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,islemKaynagi:i.islem_kaynagi||'',baglam:i.baglam||'',tahsilTarihi:i.tahsil_tarihi||null,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
+    DB.islemler=(islemler||[]).map(i=>({id:i.id,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,islemKaynagi:i.islem_kaynagi||'',baglam:i.baglam||'',degdi:('degdi' in i)?(i.degdi==null?null:Number(i.degdi)):undefined,tahsilTarihi:i.tahsil_tarihi||null,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
     DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
     DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:(/^\d{4}-\d{2}-\d{2}$/.test(String(t.tarih||''))?t.tarih:(t.tarih?localDateStr(t.tarih):'')),tip:t.tip||'Bilgi',baslik:t.baslik||t.not||'',detay:t.detay||t.not||'',saat:t.saat?String(t.saat).slice(0,5):'',kisiId:t.kisi_id||null,
@@ -4886,7 +4902,8 @@ var GF_METRIK={
   vergi:   {ad:'Vergi / Harç',      grup:'Akış (kümülatif)',renk:'#90A4AE',tahmin:'tam',ters:true},
   diger:   {ad:'Standart Dışı',     grup:'Akış (kümülatif)',renk:'#BCAAA4',tahmin:'tam',acik:'İşletme/Şahsi dışındaki ana kategoriler (ör. evrak, vergi modülü)'},
   finans:  {ad:'Finansman Girişi',  grup:'Akış (kümülatif)',renk:'#EA80FC',tahmin:null,acik:'Kredi ve borç alımları'},
-  serbest: {ad:'Serbest Kasa',      grup:'Davranış',renk:'#00E676',tahmin:null,acik:'Kasa − ayrılmış kovalar (vergi karşılığı, maaş, 30 günlük sabit ödemeler, kış tamponu)'},
+  serbest: {ad:'Serbest Kasa',      grup:'Davranış',renk:'#00E676',tahmin:null,acik:'Kasa − ayrılmış kovalar (vergi karşılığı, maaş, 30 günlük sabit ödemeler, kış tamponu, acil durum payı)'},
+  duygusal:{ad:'Dürtü + Stres harcamaları',grup:'Davranış',renk:'#FF4081',tahmin:null,ters:true,acik:'Şahsi giderlerde "Dürtü" veya "Stres" etiketi seçilmiş harcamaların birikimli toplamı'},
   evrakOd:   {ad:'Evrak ödemeleri (tümü)',grup:'Evrak & Faturalar',renk:'#FFB74D',tahmin:null,ters:true,acik:'Evrak sayfasına kaydedilen tüm gider ödemeleri (TL karşılığı) — ERP\'ye işlenmese de'},
   f_elektrik:{ad:'Elektrik faturası',grup:'Evrak & Faturalar',renk:'#FFD54F',tahmin:null,ters:true},
   f_su:      {ad:'Su faturası',      grup:'Evrak & Faturalar',renk:'#4FC3F7',tahmin:null,ters:true},
@@ -4931,8 +4948,8 @@ function gfGunFark(a,b){return Math.round((gfGunTs(b)-gfGunTs(a))/GF_GUN_MS);}
 function gfMaasliSet(){const s=new Set();(DB.personeller||[]).forEach(p=>{if((p.maasTutar||0)>0)s.add(String(p.id));});return s;}
 
 function gfDbImza(){
-  let t=0,b=0;(DB.islemler||[]).forEach(i=>{t+=(i.tutar||0)*(i.id%7+1);if(i.statu==='Bekliyor')b++;});
-  return [(DB.islemler||[]).length,(DB.odemeler||[]).length,(DB.yardimciIslemleri||[]).length,(DB.bankaKredileri||[]).length,(DB.krediOdemeleri||[]).length,(DB.personeller||[]).length,(DB.sablonlar||[]).length,Math.round(t),b,localToday(),DB._evVer||0].join('|');
+  let t=0,b=0,e=0;(DB.islemler||[]).forEach(i=>{t+=(i.tutar||0)*(i.id%7+1);if(i.statu==='Bekliyor')b++;if(i.baglam)e+=i.baglam.length*(i.id%5+1);});
+  return [(DB.islemler||[]).length,(DB.odemeler||[]).length,(DB.yardimciIslemleri||[]).length,(DB.bankaKredileri||[]).length,(DB.krediOdemeleri||[]).length,(DB.personeller||[]).length,(DB.sablonlar||[]).length,Math.round(t),b,e,localToday(),DB._evVer||0].join('|');
 }
 
 function gfDefterKur(){
@@ -5048,7 +5065,8 @@ function gfDefterKur(){
   try{gfPsikoDefterEk(d);}catch(e){console.warn('psiko defter',e);['serbest','dayanma'].forEach(m=>{if(!d.C[m]){d.O[m]=new Float64Array(gunSay);d.H[m]=new Float64Array(gunSay);d.L[m]=new Float64Array(gunSay);d.C[m]=new Float64Array(gunSay);}});}
   // evrak ve fatura metrikleri (evrak sayfasındaki ödemeler)
   try{if(typeof gfEvrakDefterEk==='function')gfEvrakDefterEk(d);}catch(e){console.warn('evrak defter',e);}
-  ['evrakOd','f_elektrik','f_su','f_internet','f_dogalgaz','f_telefon'].forEach(m=>{if(!d.C[m]){d.O[m]=new Float64Array(gunSay);d.H[m]=new Float64Array(gunSay);d.L[m]=new Float64Array(gunSay);d.C[m]=new Float64Array(gunSay);}});
+  try{psDuygusalDefterEk(d);}catch(e){console.warn('duygusal defter',e);}
+  ['evrakOd','f_elektrik','f_su','f_internet','f_dogalgaz','f_telefon','duygusal'].forEach(m=>{if(!d.C[m]){d.O[m]=new Float64Array(gunSay);d.H[m]=new Float64Array(gunSay);d.L[m]=new Float64Array(gunSay);d.C[m]=new Float64Array(gunSay);}});
   // ters metrikler: eksi olarak göster (yüksek/düşük yer değiştirir)
   Object.keys(GF_METRIK).forEach(m=>{if(!GF_METRIK[m].ters||!C[m])return;const o=O[m],h=H[m],l=L[m],c=C[m];
     for(let g=0;g<gunSay;g++){const hh=h[g];o[g]=-o[g];h[g]=-l[g];l[g]=-hh;c[g]=-c[g];}});
@@ -7051,7 +7069,7 @@ function gfEnlerSekme(){
 }
 
 // ============================================================ DAVRANIŞ PAKETİ: para kovaları · serbest kasa · dayanma · abonelikler · yoğunluk · bağlam etiketi
-var PS_KOVA_VARSAYILAN={vergiOran:null,sabitUfuk:30,tamponKapsam:100,aktif:{vergi:true,maas:true,sabit:true,tampon:true}};
+var PS_KOVA_VARSAYILAN={vergiOran:null,sabitUfuk:30,tamponKapsam:100,acilAy:3,aktif:{vergi:true,maas:true,sabit:true,tampon:true,acil:true}};
 function psKovaAyar(){const a=(PS.ayar&&PS.ayar.kovalar)||{};const v=JSON.parse(JSON.stringify(PS_KOVA_VARSAYILAN));Object.assign(v,a);v.aktif=Object.assign({},PS_KOVA_VARSAYILAN.aktif,a.aktif||{});return v;}
 async function psAyarKaydet(anahtar,deger){
   PS.ayar[anahtar]=deger;PS.ver++;
@@ -7116,7 +7134,12 @@ function gfPsikoDefterEk(d){
   const maasPlan=tumPlan.filter(k=>k.tur==='maas').reduce((s,k)=>s-k.tutar,0);
   const maasAylik=(DB.personeller||[]).reduce((s,p)=>s+((p.maasTutar||0)>0&&(p.maasDongusu||'Aylık')==='Aylık'?p.maasTutar:0),0);
   // vergi: yılbaşından beri işletme kârı × oran − ödenen vergi
-  const kov={vergi:mk(),maas:mk(),sabit:mk(),tampon:mk()};
+  const kov={vergi:mk(),maas:mk(),sabit:mk(),tampon:mk(),acil:mk()};
+  // acil durum payı: "Beklenmedik" (şahsi) ve "Acil" (işletme) etiketli giderlerin aylık ortalaması × kapsam ayı
+  const acilGun=mk();let acilIlk=-1;
+  (DB.islemler||[]).forEach(i=>{if(i.statu!=='Tamamlandı'||i.tip!=='Gider'||!(i.tutar>0)||!psAcilMi(i))return;const g=d.gunIdx[localDateStr(i.tarih)];if(g==null)return;acilGun[g]+=i.tutar;if(acilIlk<0||g<acilIlk)acilIlk=g;});
+  const acilPre=new Float64Array(n+1);for(let g=0;g<n;g++)acilPre[g+1]=acilPre[g]+acilGun[g];
+  const acilAy=Math.max(0,Number(K.acilAy)||0);
   let yilBasNet=0,yilVergi=0,yil='';
   const cikis90=new Float64Array(n+1);for(let g=0;g<n;g++)cikis90[g+1]=cikis90[g]+d.cikis[g];
   for(let g=0;g<n;g++){
@@ -7128,7 +7151,8 @@ function gfPsikoDefterEk(d){
       if(g+U>=n-1){for(const pg in planGun){const fark=gfGunFark(gs,pg);if(fark>0&&fark<=U)v+=planGun[pg];}}
       kov.sabit[g]=v;}
     if(A.tampon)kov.tampon[g]=psTamponGerekli(gs,S,K.tamponKapsam);
-    const ayrilan=kov.vergi[g]+kov.maas[g]+kov.sabit[g]+kov.tampon[g];
+    if(A.acil&&acilAy>0&&acilIlk>=0&&g>=acilIlk){const a0=Math.max(acilIlk,g-364);const ay=Math.max(3,(g-a0+1)/30.4);kov.acil[g]=(acilPre[g+1]-acilPre[a0])/ay*acilAy;}
+    const ayrilan=kov.vergi[g]+kov.maas[g]+kov.sabit[g]+kov.tampon[g]+kov.acil[g];
     const sv=C.kasa[g]-ayrilan;d.C.serbest[g]=sv;
     const g0=Math.max(0,g-89);const gunlukCikis=(cikis90[g+1]-cikis90[g0])/(g+1-g0);
     const kullan=C.kasa[g]-kov.vergi[g]-Math.max(0,C.personel[g]);
@@ -7137,13 +7161,39 @@ function gfPsikoDefterEk(d){
   // gün içi açılış/yüksek/düşük: önceki günün kapanışı ile bugünün kapanışı arası
   ['serbest','dayanma'].forEach(m=>{const c=d.C[m];for(let g=0;g<n;g++){const o=g?c[g-1]:c[g];d.O[m][g]=o;d.H[m][g]=Math.max(o,c[g]);d.L[m][g]=Math.min(o,c[g]);}});
   const s=n-1;
-  d.kova={vergi:kov.vergi[s],maas:kov.maas[s],sabit:kov.sabit[s],tampon:kov.tampon[s],kasa:C.kasa[s],serbest:d.C.serbest[s],dayanma:d.C.dayanma[s],
+  d.kova={vergi:kov.vergi[s],maas:kov.maas[s],sabit:kov.sabit[s],tampon:kov.tampon[s],acil:kov.acil[s],acilAy,acilVeri:acilIlk>=0,kasa:C.kasa[s],serbest:d.C.serbest[s],dayanma:d.C.dayanma[s],
     vergiOran:vOran*100,vergiOneri:oneri,sezon:S,ufuk:U,kapsam:K.tamponKapsam,aktif:A,kdvBorc:psKdvBorcu(d.bugun,kdv),maasPlan};
 }
 
 // ---------- A3 / A4 / E13: işlem formu yardımcıları
-var PS_BAGLAM=[['planli','📅','Planlı'],['ihtiyac','🧺','İhtiyaç'],['odul','🎁','Ödül'],['stres','😣','Stres'],['durtu','⚡','Dürtü']];
-var PS_FORM={baglam:'',id:null};
+var PS_BAGLAM=[
+  ['planli','📅','Planlı','Önceden bildiğin, hesaba kattığın harcama'],
+  ['ihtiyac','🧺','İhtiyaç','Market, ev, temel ihtiyaç'],
+  ['beklenmedik','🚨','Beklenmedik','Arıza, ceza, sağlık gibi sürpriz ama mecburi gider'],
+  ['sosyal','👥','Sosyal','Dışarıda yemek, ikram, arkadaş ortamı'],
+  ['odul','🎁','Ödül','Kendini ödüllendirmek için'],
+  ['yatirim','🌱','Yatırım','Eğitim, alet, kendine yatırım'],
+  ['stres','😣','Stres','Stresi atmak, rahatlamak için'],
+  ['durtu','⚡','Dürtü','Anlık istek, plansız']];
+var PS_BAGLAM_IS=[
+  ['planli','📅','Planlı / rutin','Stok, düzenli malzeme, bilinen gider'],
+  ['acil','🚨','Acil / arıza','Araç arızası, kayıp, beklenmedik iş gideri'],
+  ['firsat','💡','Fırsat','İndirim, toplu alım, kampanya'],
+  ['yatirim','🌱','Yatırım','Alet, ekipman, eğitim, büyüme']];
+// şahsi etiket grupları (aylık seyir)
+var PS_BAGLAM_GRUP={planli:'bilincli',ihtiyac:'bilincli',yatirim:'bilincli',beklenmedik:'mecburi',sosyal:'keyif',odul:'keyif',stres:'duygusal',durtu:'duygusal'};
+var PS_GRUPLAR=[['bilincli','Bilinçli','--green','#00E676'],['mecburi','Mecburi','--blue','#00E5FF'],['keyif','Keyif','--amber','#FFAB00'],['duygusal','Duygusal','--red','#FF1744'],['yok','Etiketsiz','--text3','#707070']];
+// "Değdi mi?" sorulacak etiketler: [en erken gün, en geç gün]
+var PS_DEGDI_KURAL={'Şahsi Gider':{durtu:[3,21],stres:[3,21],odul:[3,21],sosyal:[3,21],yatirim:[30,75]},'İşletme Gideri':{firsat:[30,75],yatirim:[30,75]}};
+var PS_DEGDI_ESIK=250;
+var PS_DEGDI=[[1,'👍','Değdi'],[0,'🤷','Emin değilim'],[-1,'👎','Değmedi']];
+function psBaglamListe(tip,kat){return tip!=='Gider'?null:kat==='Şahsi Gider'?PS_BAGLAM:kat==='İşletme Gideri'?PS_BAGLAM_IS:null;}
+function psBaglamBul(kat,k){return (kat==='İşletme Gideri'?PS_BAGLAM_IS:PS_BAGLAM).find(x=>x[0]===k)||null;}
+function psDegdiKural(kat,k){const r=PS_DEGDI_KURAL[kat];return r&&r[k]||null;}
+// islemler.degdi sütunu var mı (davranis_tablolar.sql yeni hali çalıştırıldı mı)
+function psDegdiAlanVar(){if(PS.degdiVar===false)return false;const i=(DB.islemler||[])[0];return !i||i.degdi!==undefined;}
+function psAcilMi(i){return (i.kat==='Şahsi Gider'&&i.baglam==='beklenmedik')||(i.kat==='İşletme Gideri'&&i.baglam==='acil');}
+var PS_FORM={baglam:'',degdi:null,id:null};
 function psIsOlcu(){
   const d=GF.defter||gfDefterKur();const n=d.gunSay;const g0=Math.max(0,n-90);
   const brut=d.C.isBrut[n-1]-d.O.isBrut[g0];let isGunu=0;for(let g=g0;g<n;g++)if(d.C.isGelir[g]-d.O.isGelir[g]>0)isGunu++;
@@ -7160,24 +7210,56 @@ function psFormGuncelle(){
       if(O.gunlukBrut>0&&t>=Math.max(1500,O.gunlukBrut*0.5)){const gun=t/O.gunlukBrut;
         h+=`<div class="ps-ipucu">⏱️ Bu harcama ≈ <b>${gun.toFixed(gun<10?1:0).replace('.',',')} iş günü</b>${O.ortIs>0?` · ≈ <b>${(t/O.ortIs).toFixed(1).replace('.',',')} ortalama iş</b>`:''} emeğine denk <small>(son 90 günde iş yapılan gün başına brüt kâr ${fmt(O.gunlukBrut)})</small></div>`;}}
     if(tip==='Gelir'&&kat==='İşletme Geliri'&&t>0){const O=psIsOlcu();const d=GF.defter||gfDefterKur();const K=d.kova;
-      if(K&&t>=Math.max(5000,O.ortIs*2)){const vo=K.vergiOran/100;const v=t*vo;const tampEksik=Math.max(0,K.tampon-Math.max(0,K.kasa-K.vergi-K.maas-K.sabit));const tm=Math.min(tampEksik,t*0.25);const sb=Math.max(0,t-v-tm);
+      if(K&&t>=Math.max(5000,O.ortIs*2)){const vo=K.vergiOran/100;const v=t*vo;const tampEksik=Math.max(0,K.tampon-Math.max(0,K.kasa-K.vergi-K.maas-K.sabit-(K.acil||0)));const tm=Math.min(tampEksik,t*0.25);const sb=Math.max(0,t-v-tm);
         h+=`<div class="ps-ipucu">🪣 Büyük tahsilat — önerilen paylaştırma: vergi kovası <b>${fmt(v)}</b> (%${K.vergiOran.toFixed(0)})${tm>0?` · kış tamponu <b>${fmt(tm)}</b>`:''} · serbest <b>${fmt(sb)}</b></div>`;}}
-    if(tip==='Gider'&&kat==='Şahsi Gider'){
-      h+=`<div class="ps-baglam"><div class="ps-baglam-b">Bu harcama nasıl bir harcama? <small>(isteğe bağlı)</small></div><div class="ps-baglam-c">${PS_BAGLAM.map(([k,ik,ad])=>`<button type="button" class="ps-bc${PS_FORM.baglam===k?' on':''}" onclick="psBaglamSec('${k}')">${ik} ${ad}</button>`).join('')}</div></div>`;}
+    const BL=psBaglamListe(tip,kat);
+    if(BL){const sec=BL.find(x=>x[0]===PS_FORM.baglam);
+      h+=`<div class="ps-baglam"><div class="ps-baglam-b">${kat==='İşletme Gideri'?'Bu gider nasıl bir gider?':'Bu harcama nasıl bir harcama?'} <small>(isteğe bağlı)</small></div><div class="ps-baglam-c">${BL.map(([k,ik,ad,ac])=>`<button type="button" class="ps-bc${PS_FORM.baglam===k?' on':''}" title="${ac}" onclick="psBaglamSec('${k}')">${ik} ${ad}</button>`).join('')}</div>${sec?`<div class="ps-baglam-a">${sec[3]}</div>`:''}`;
+      // kayıtlı bir harcama düzenlenirken: "değdi mi?"
+      if(PS_FORM.id&&sec&&psDegdiKural(kat,sec[0])&&psDegdiAlanVar())h+=`<div class="ps-baglam-b" style="margin-top:10px">Geriye bakınca bu harcama değdi mi?</div><div class="ps-baglam-c">${PS_DEGDI.map(([v,ik,ad])=>`<button type="button" class="ps-bc${PS_FORM.degdi===v?' on':''}" onclick="psFormDegdi(${v})">${ik} ${ad}</button>`).join('')}</div>`;
+      h+='</div>';}
   }catch(e){console.warn('psiko form',e);}
   el.innerHTML=h;el.style.display=h?'':'none';
 }
 function psBaglamSec(k){PS_FORM.baglam=PS_FORM.baglam===k?'':k;psFormGuncelle();}
-function psFormSifirla(id){try{psFormBagla();}catch(e){}PS_FORM.id=id||null;const i=id?(DB.islemler||[]).find(x=>String(x.id)===String(id)):null;PS_FORM.baglam=(i&&i.baglam)||'';setTimeout(psFormGuncelle,60);}
+function psFormDegdi(v){PS_FORM.degdi=PS_FORM.degdi===v?null:v;psFormGuncelle();}
+function psFormSifirla(id){try{psFormBagla();}catch(e){}PS_FORM.id=id||null;const i=id?(DB.islemler||[]).find(x=>String(x.id)===String(id)):null;PS_FORM.baglam=(i&&i.baglam)||'';PS_FORM.degdi=i&&i.degdi!=null?i.degdi:null;setTimeout(psFormGuncelle,60);}
 function psFormBagla(){
   const m=document.getElementById('modal-islem');if(!m||m.dataset.psBagli)return;m.dataset.psBagli='1';
   let t=null;const f=()=>{clearTimeout(t);t=setTimeout(psFormGuncelle,120);};m.addEventListener('input',f,true);m.addEventListener('change',f,true);
 }
 async function psBaglamKaydet(id){
-  if(!id)return;const i=(DB.islemler||[]).find(x=>String(x.id)===String(id));const eski=(i&&i.baglam)||'';
-  const tip=document.getElementById('mi-tip')?.value,kat=document.getElementById('mi-kat')?.value;const yeni=(tip==='Gider'&&kat==='Şahsi Gider')?PS_FORM.baglam:'';
-  if(yeni===eski)return;try{await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({baglam:yeni||null})});}catch(e){console.warn('bağlam kaydı',e);}
+  if(!id)return;const i=(DB.islemler||[]).find(x=>String(x.id)===String(id));const eski=(i&&i.baglam)||'';const eskiD=i&&i.degdi!=null?i.degdi:null;
+  const tip=document.getElementById('mi-tip')?.value,kat=document.getElementById('mi-kat')?.value;const BL=psBaglamListe(tip,kat);
+  const yeni=BL&&BL.some(x=>x[0]===PS_FORM.baglam)?PS_FORM.baglam:'';
+  const yeniD=yeni&&psDegdiKural(kat,yeni)&&PS_FORM.id&&String(PS_FORM.id)===String(id)?PS_FORM.degdi:null;
+  const body={};if(yeni!==eski)body.baglam=yeni||null;if(yeniD!==eskiD&&(yeniD!=null||i)){body.degdi=yeniD;body.degdi_tarih=yeniD==null?null:new Date().toISOString();}
+  if(!Object.keys(body).length)return;
+  const yaz=b=>sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(b)});
+  try{await yaz(body);}
+  catch(e){if('degdi' in body){delete body.degdi;delete body.degdi_tarih;PS.degdiVar=false;showToast('"Değdi mi?" cevabı için Supabase\'de davranis_tablolar.sql tekrar çalıştırılmalı','amber');if(Object.keys(body).length)try{await yaz(body);}catch(e2){console.warn('bağlam kaydı',e2);}}else console.warn('bağlam kaydı',e);}
+  if(i){if('baglam' in body)i.baglam=yeni;if('degdi' in body)i.degdi=yeniD;}PS.ver++;
 }
+// "Değdi mi?" — tek tıkla cevap (check-in ve Davranış sekmesi)
+async function psDegdiKaydet(id,v){
+  try{await sbFetch('islemler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({degdi:v,degdi_tarih:new Date().toISOString()})});}
+  catch(e){PS.degdiVar=false;showToast('Kaydedilemedi — Supabase\'de davranis_tablolar.sql tekrar çalıştırılmalı (degdi alanı)','red');return false;}
+  const i=(DB.islemler||[]).find(x=>String(x.id)===String(id));if(i)i.degdi=v;PS.ver++;return true;
+}
+function psDegdiBekleyen(){
+  if(!psDegdiAlanVar())return [];const bugun=localToday();
+  return (DB.islemler||[]).filter(i=>{if(i.statu!=='Tamamlandı'||i.tip!=='Gider'||i.degdi!==null||!i.baglam||!(i.tutar>=PS_DEGDI_ESIK))return false;
+    const r=psDegdiKural(i.kat,i.baglam);if(!r)return false;const yas=gfGunFark(localDateStr(i.tarih),bugun);return yas>=r[0]&&yas<=r[1];})
+    .sort((a,b)=>{const ka=psDegdiKural(a.kat,a.baglam)[1]<=21?0:1,kb=psDegdiKural(b.kat,b.baglam)[1]<=21?0:1;return ka-kb||b.tutar-a.tutar;}); // önce taze şahsi harcamalar
+}
+function psIslemEtiket(i){const b=psBaglamBul(i.kat,i.baglam);const k=i.kisiId?getKisi(i.kisiId):null;
+  const ad=(k&&k.isim)||(i.altKat&&i.altKat!=='-'?i.altKat:'')||String(i.not||'').replace(/^Otomatik — /,'').slice(0,40)||i.kat;
+  return {ik:b?b[1]:'🏷️',etiket:b?b[2]:i.baglam,ad};}
+// mod: 'ck' (check-in içinde, kaydet'e kadar bekler) / 'an' (anında kaydeder)
+function psDegdiSatir(i,mod,secili){const e=psIslemEtiket(i);
+  return `<div class="ps-degdi" data-id="${i.id}"><div class="ps-degdi-u"><span>${e.ik} <b>${_esc(e.ad)}</b><br><small>${e.etiket}${i.kat==='İşletme Gideri'?' · işletme':''} · ${gfTrTarih(localDateStr(i.tarih))}</small></span><b class="num" style="color:var(--red)">−${fmt(i.tutar)}</b></div>
+    <div class="ps-degdi-c">${PS_DEGDI.map(([v,ik,ad])=>`<button type="button" class="ps-bc${secili===v?' on':''}" onclick="${mod==='ck'?`ckDegdiSec(${i.id},${v})`:`psDegdiTik(${i.id},${v},this)`}">${ik} ${ad}</button>`).join('')}</div></div>`;}
+async function psDegdiTik(id,v,btn){if(btn){btn.disabled=true;}const ok=await psDegdiKaydet(id,v);if(ok){showToast('Kaydedildi','green');try{gfSekmeCiz();}catch(e){}}else if(btn)btn.disabled=false;}
 
 // ---------- A5: abonelikler ve küçük kaçaklar
 function psAbonelikler(){
@@ -7235,7 +7317,9 @@ function psYogunluk(){
 
 // ---------- E13: bağlam etiketi analizi
 function psBaglamAnaliz(){
-  const bugun=localToday();const L=(DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&i.tip==='Gider'&&i.kat==='Şahsi Gider'&&localDateStr(i.tarih)>=gfGunEkle(bugun,-180));
+  const bugun=localToday();const s180=gfGunEkle(bugun,-180);
+  const T=(DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&i.tip==='Gider'&&i.tutar>0);
+  const L=T.filter(i=>i.kat==='Şahsi Gider'&&localDateStr(i.tarih)>=s180);
   const etiketli=L.filter(i=>i.baglam);const top={};etiketli.forEach(i=>{top[i.baglam]=(top[i.baglam]||{n:0,t:0});top[i.baglam].n++;top[i.baglam].t+=i.tutar;});
   const durtu=etiketli.filter(i=>i.baglam==='durtu');const gunD=new Array(7).fill(0);const saatD={};
   durtu.forEach(i=>{const dt=new Date(i.tarih);gunD[(dt.getDay()+6)%7]+=i.tutar;const s=dt.getHours();const dil=s<12?'sabah':s<17?'öğleden sonra':s<21?'akşam':'gece';saatD[dil]=(saatD[dil]||0)+i.tutar;});
@@ -7245,8 +7329,81 @@ function psBaglamAnaliz(){
     const once=gs=>{const v=[];for(let q=0;q<=3;q++){const c=ckM[gfGunEkle(gs,-q)];if(c&&c.stres)v.push(c.stres);}return v.length?gfOrt(v):null;};
     const a=etiketli.filter(i=>i.baglam==='durtu'||i.baglam==='stres').map(i=>once(localDateStr(i.tarih))).filter(x=>x!=null);
     const genel=gfOrt(ck.filter(c=>c.stres).map(c=>c.stres));if(a.length>=3)stresIliski={once:gfOrt(a),genel,n:a.length};}
-  return {toplam:L.length,etiketli:etiketli.length,top,gunD,saatD,durtuToplam:durtu.reduce((s,i)=>s+i.tutar,0),stresIliski};
+  // stresli haftalar (check-in stres ort. ≥ 7) ile diğer haftaların haftalık şahsi harcaması
+  let stresHafta=null;
+  try{if(ck.length>=10){const bh=gfPeriyotAnahtar(bugun,'hafta');const yuk=[],nor=[];
+    ckHaftalik().forEach(h=>{if(h.stres==null||h.k>=bh)return;const f=ckFinansHafta(h.k);if(!f)return;(h.stres>=7?yuk:nor).push(f);});
+    if(yuk.length>=2&&nor.length>=3)stresHafta={n:yuk.length,m:nor.length,yuk:gfOrt(yuk.map(f=>f.shGider)),nor:gfOrt(nor.map(f=>f.shGider)),yukD:gfOrt(yuk.map(f=>f.duygusal||0)),norD:gfOrt(nor.map(f=>f.duygusal||0))};}}catch(e){}
+  // işletme giderleri
+  const LI=T.filter(i=>i.kat==='İşletme Gideri'&&localDateStr(i.tarih)>=s180);const etI=LI.filter(i=>i.baglam);const topI={};
+  etI.forEach(i=>{topI[i.baglam]=(topI[i.baglam]||{n:0,t:0});topI[i.baglam].n++;topI[i.baglam].t+=i.tutar;});
+  // "değdi mi?" cevapları (tüm zamanlar), etiket başına
+  const degdi={};T.forEach(i=>{if(i.degdi==null||!i.baglam)return;const key=(i.kat==='İşletme Gideri'?'is:':'')+i.baglam;const o=degdi[key]=degdi[key]||{n:0,evet:0,hayir:0,emin:0,hayirT:0,evetT:0};o.n++;if(i.degdi>0){o.evet++;o.evetT+=i.tutar;}else if(i.degdi<0){o.hayir++;o.hayirT+=i.tutar;}else o.emin++;});
+  // aylık seyir: son 6 ay (bu ay dahil), şahsi gider grupları
+  const aylar=[];{const b=new Date();for(let q=5;q>=0;q--)aylar.push(localDateObjStr(new Date(b.getFullYear(),b.getMonth()-q,1)).slice(0,7));}
+  const ay={};aylar.forEach(k=>ay[k]={top:0,bilincli:0,mecburi:0,keyif:0,duygusal:0,yok:0});
+  T.forEach(i=>{if(i.kat!=='Şahsi Gider')return;const a=ay[localDateStr(i.tarih).slice(0,7)];if(!a)return;a.top+=i.tutar;a[PS_BAGLAM_GRUP[i.baglam]||'yok']+=i.tutar;});
+  const pay=ks=>{let d=0,e=0;ks.forEach(k=>{const a=ay[k];d+=a.duygusal;e+=a.top-a.yok;});return e>0?{p:d/e,e}:null;};
+  const trend={once:pay(aylar.slice(0,3)),son:pay(aylar.slice(3))};
+  // bu ay duygusal harcama önceki 3 ayın ortalamasını %30 aştıysa uyarı
+  const buAy=ay[aylar[5]];const onc=aylar.slice(2,5).map(k=>ay[k].duygusal);const oncOrt=gfOrt(onc);
+  const uyari=onc.filter(v=>v>0).length>=2&&buAy.duygusal>Math.max(500,oncOrt*1.3)?{bu:buAy.duygusal,ort:oncOrt}:null;
+  // beklenmedik / acil giderler (son 12 ay)
+  const acL=T.filter(i=>psAcilMi(i)&&localDateStr(i.tarih)>=gfGunEkle(bugun,-365));
+  const acil={n:acL.length,top:acL.reduce((s,i)=>s+i.tutar,0),enBuyuk:acL.reduce((m,i)=>Math.max(m,i.tutar),0),sahsi:acL.filter(i=>i.kat==='Şahsi Gider').length};
+  return {toplam:L.length,etiketli:etiketli.length,top,gunD,saatD,durtuToplam:durtu.reduce((s,i)=>s+i.tutar,0),stresIliski,stresHafta,
+    is:{toplam:LI.length,etiketli:etI.length,top:topI},degdi,aylar,ay,trend,uyari,acil};
 }
+// tek satırlık pişmanlık metni
+function psDegdiMetin(o){return `${o.n} cevap · ${o.hayir?'<b>%'+Math.round(o.hayir/o.n*100)+' değmedi</b>':'hiç pişmanlık yok'}${o.evet?' · %'+Math.round(o.evet/o.n*100)+' değdi':''}${o.emin?' · '+o.emin+' kararsız':''}`;}
+// Davranış sekmesi: bağlam + değdi mi bölümleri
+function psBaglamHtml(){
+  const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744'),am=gfCss('--amber','#FFAB00');
+  const B=psBaglamAnaliz();let h='';const gun=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+  const renk=k=>{const g=PS_BAGLAM_GRUP[k];const G=PS_GRUPLAR.find(x=>x[0]===g);return G?gfCss(G[2],G[3]):up;};
+  const bar=(L,top,rf)=>{const tt=Object.values(top).reduce((s,x)=>s+x.t,0)||1;return L.filter(([k])=>top[k]).map(([k,ik,ad])=>`<div class="gf-bar-satir"><div class="gf-bar-ad">${ik} ${ad} <small>(${top[k].n} · %${Math.round(top[k].t/tt*100)})</small></div><div class="gf-bar-iz"><div style="width:${Math.max(3,top[k].t/tt*100)}%;background:${rf(k)}"></div></div><div class="gf-bar-v num" style="color:${dn}">−${gfKisa(top[k].t)}</div></div>`).join('');};
+  h+=`<div class="gf-en-baslik">🏷️ Harcama bağlamı</div>`;
+  if(!B.etiketli&&!B.is.etiketli)h+=`<div class="gf-not">Gider girerken "Bu harcama nasıl bir harcama?" sorusuna cevap verdikçe burada dağılım, aylık seyir, stresle ilişki ve pişmanlık oranları görünecek. Şahsi giderde 8, işletme giderinde 4 seçenek var.</div>`;
+  if(B.etiketli){
+    h+=`<div class="gf-bolum">Şahsi giderler</div><div class="gf-not">Son 180 günde ${B.toplam} şahsi giderin ${B.etiketli}'i etiketli.</div>`+bar(PS_BAGLAM,B.top,renk);
+    if(B.durtuToplam>0){const gi=B.gunD.indexOf(Math.max(...B.gunD));const sa=Object.entries(B.saatD).sort((a,b)=>b[1]-a[1])[0];h+=`<div class="gf-not">⚡ Dürtüsel harcamalar en çok <b>${gun[gi]}</b> günleri${sa?', <b>'+sa[0]+'</b>':''} oluyor.</div>`;}
+    if(B.stresIliski)h+=`<div class="gf-not">😣 Stres/dürtü harcamalarından önceki 3 günde ortalama stres <b>${B.stresIliski.once.toFixed(1).replace('.',',')}</b> (genel ortalama ${B.stresIliski.genel.toFixed(1).replace('.',',')}).</div>`;
+    if(B.stresHafta){const S=B.stresHafta;const f=S.nor>0?S.yuk/S.nor-1:0;
+      h+=`<div class="gf-risk ${f>0.15?'orta':''}">📊 Stres puanı <b>7 ve üstü</b> olan ${S.n} haftada şahsi harcaman haftada ort. <b>${fmt(S.yuk)}</b>, diğer ${S.m} haftada <b>${fmt(S.nor)}</b> — <b style="color:${f>0.05?dn:f<-0.05?up:'inherit'}">${f>=0?'%'+Math.round(f*100)+' daha fazla':'%'+Math.round(-f*100)+' daha az'}</b>.${S.yukD+S.norD>0?` Dürtü + stres etiketli kısım: ${fmt(S.yukD)} / ${fmt(S.norD)}.`:''}</div>`;}
+    if(B.uyari)h+=`<div class="gf-risk yuksek">⚠️ Bu ay dürtü + stres harcamaların şimdiden <b>${fmt(B.uyari.bu)}</b> — önceki 3 ayın ortalaması ${fmt(B.uyari.ort)}.</div>`;
+    // aylık seyir
+    const ays=B.aylar.filter(k=>B.ay[k].top>0);
+    if(ays.length>=2){h+=`<div class="gf-bolum">Aylık seyir</div>`+ays.map(k=>{const a=B.ay[k];return `<div class="ps-ay"><span class="ps-ay-a">${GF_AYLAR[parseInt(k.slice(5,7))-1]}</span><div class="ps-ay-iz">${PS_GRUPLAR.filter(([g])=>a[g]>0).map(([g,ad,v,y])=>`<div title="${ad} ${fmt(a[g])}" style="width:${a[g]/a.top*100}%;background:${gfCss(v,y)}"></div>`).join('')}</div><b class="num">−${gfKisa(a.top)}</b></div>`;}).join('')+
+        `<div class="ps-lejant">${PS_GRUPLAR.map(([g,ad,v,y])=>`<span><i style="background:${gfCss(v,y)}"></i>${ad}</span>`).join('')}</div><div class="gf-ipucu">Bilinçli: planlı, ihtiyaç, yatırım · Mecburi: beklenmedik · Keyif: sosyal, ödül · Duygusal: stres, dürtü.</div>`;
+      const T=B.trend;if(T.once&&T.son){const fark=T.son.p-T.once.p;h+=`<div class="gf-not">Duygusal (stres + dürtü) harcamaların etiketli şahsi giderlerdeki payı: önceki 3 ay <b>%${Math.round(T.once.p*100)}</b> → son 3 ay <b style="color:${fark>0.03?dn:fark<-0.03?up:'inherit'}">%${Math.round(T.son.p*100)}</b>${Math.abs(fark)<=0.03?' (yatay)':fark>0?' (artıyor)':' (azalıyor)'}.</div>`;}}
+  }
+  if(B.is.etiketli){h+=`<div class="gf-bolum">İşletme giderleri</div><div class="gf-not">Son 180 günde ${B.is.toplam} işletme giderinin ${B.is.etiketli}'i etiketli.</div>`+bar(PS_BAGLAM_IS,B.is.top,k=>k==='acil'?dn:k==='firsat'?am:k==='yatirim'?up:gfCss('--blue','#00E5FF'));
+    const tt=Object.values(B.is.top).reduce((s,x)=>s+x.t,0);if(B.is.top.acil&&tt)h+=`<div class="gf-not">🚨 Etiketli işletme giderlerinin <b>%${Math.round(B.is.top.acil.t/tt*100)}</b>'i acil / arıza.</div>`;}
+  if(B.acil.n){const K=GF.defter&&GF.defter.kova;h+=`<div class="gf-risk orta">🚨 Son 12 ayda <b>${B.acil.n}</b> beklenmedik/acil gider, toplam <b>${fmt(B.acil.top)}</b> (en büyüğü ${fmt(B.acil.enBuyuk)}).${K&&K.aktif&&K.aktif.acil&&K.acil>0?` Para kovalarında <b>acil durum payı ${fmt(K.acil)}</b> ayrılıyor (aylık ortalama × ${K.acilAy} ay).`:' Acil durum payı kovası kapalı; kova ayarlarından açabilirsin.'}</div>`;}
+  if(B.etiketli)h+=`<div class="isf-chips"><button class="isf-chip" onclick="gfMetrikSec('duygusal')">📈 Dürtü + stres harcamalarını grafikte göster</button></div>`;
+  // değdi mi
+  h+=`<div class="gf-en-baslik">💭 Değdi mi?</div>`;
+  if(!psDegdiAlanVar()){h+=`<div class="gf-not">Bu bölüm için Supabase'de güncel <b>davranis_tablolar.sql</b> çalıştırılmalı (işlemlere "degdi" alanı eklenir).</div>`;return h;}
+  const P=psDegdiBekleyen();
+  if(P.length)h+=`<div class="gf-not">Geriye bakınca bu harcamalar değdi mi? (${P.length} harcama cevap bekliyor)</div>`+P.slice(0,6).map(i=>psDegdiSatir(i,'an',null)).join('');
+  const D=Object.entries(B.degdi);
+  if(D.length){h+=`<div class="gf-bolum">Pişmanlık oranları</div>`+D.sort((a,b)=>b[1].n-a[1].n).map(([key,o])=>{const is=key.startsWith('is:');const b=psBaglamBul(is?'İşletme Gideri':'Şahsi Gider',key.replace('is:',''));
+      return `<div class="gf-satir"><span>${b?b[1]+' '+b[2]:key}${is?' <small>(işletme)</small>':''}<br><small>${psDegdiMetin(o)}</small></span>${o.hayirT?`<b class="num" style="color:${dn}">−${gfKisa(o.hayirT)}<br><small>değmeyen</small></b>`:''}</div>`;}).join('');
+    const tH=D.reduce((s,[,o])=>s+o.hayir,0),tN=D.reduce((s,[,o])=>s+o.n,0);if(tN>=5)h+=`<div class="gf-ipucu">Toplam ${tN} cevabın ${tH}'inde "değmedi" dedin.</div>`;}
+  else if(!P.length)h+=`<div class="gf-not">Dürtü, stres, ödül ve sosyal etiketli ${fmt(PS_DEGDI_ESIK)} üstü şahsi harcamalar 3–21 gün sonra; yatırım ve işletmedeki fırsat alımları 30–75 gün sonra burada ve günlük check-in'de "Değdi mi?" diye sorulur. Zamanla etiket başına pişmanlık oranı oluşur.</div>`;
+  return h;
+}
+// grafik metriği: dürtü + stres etiketli şahsi harcamalar (birikimli)
+function psDuygusalDefterEk(d){
+  const n=d.gunSay;const mk=()=>new Float64Array(n);d.O.duygusal=mk();d.H.duygusal=mk();d.L.duygusal=mk();d.C.duygusal=mk();const t=mk();
+  (DB.islemler||[]).forEach(i=>{if(i.statu!=='Tamamlandı'||i.tip!=='Gider'||i.kat!=='Şahsi Gider'||PS_BAGLAM_GRUP[i.baglam]!=='duygusal'||!(i.tutar>0))return;const g=d.gunIdx[localDateStr(i.tarih)];if(g!=null)t[g]+=i.tutar;});
+  let c=0;for(let g=0;g<n;g++){const o=c;c+=t[g];d.O.duygusal[g]=o;d.C.duygusal[g]=c;d.H.duygusal[g]=Math.max(o,c);d.L.duygusal[g]=Math.min(o,c);}
+}
+// özet sekmesi: "duygusal" metriği seçiliyken üstte bağlam özeti
+(function(){try{const _oz=gfOzetSekme;gfOzetSekme=function(){const m=GF.ay&&GF.ay.metrik;let ust='';
+  if(m==='duygusal'){try{const B=psBaglamAnaliz();const bu=B.ay[B.aylar[5]];const o=B.aylar.slice(2,5).map(k=>B.ay[k].duygusal);
+    ust=`<div class="gf-en-baslik">⚡ Dürtü + stres harcamaları</div><div class="gf-satir"><span>Bu ay</span><b class="num" style="color:var(--red)">−${fmt(bu.duygusal)}</b></div><div class="gf-satir"><span>Önceki 3 ayın ortalaması</span><b class="num">−${fmt(gfOrt(o))}</b></div>${B.trend.son?`<div class="gf-satir"><span>Son 3 ayda etiketli şahsi giderlerdeki payı</span><b>%${Math.round(B.trend.son.p*100)}</b></div>`:''}<div class="gf-ipucu">Sadece "Dürtü" veya "Stres" etiketi seçilmiş şahsi giderler sayılır; etiketsiz harcamalar dahil değildir.</div>`;}catch(e){}}
+  return ust+_oz.apply(this,arguments);};}catch(e){console.warn(e);}})();
 
 // ---------- Davranış sekmesi
 function gfDavranisSekme(){
@@ -7255,13 +7412,14 @@ function gfDavranisSekme(){
   // 1) Para kovaları
   h+=`<div class="gf-en-baslik">🪣 Para kovaları ve serbest kasa</div>`;
   if(!PS.ayarVar)h+=`<div class="gf-risk orta">Ayarları kaydetmek için Supabase'de <b>davranis_tablolar.sql</b> dosyası çalıştırılmalı. Hesaplamalar varsayılan ayarlarla gösteriliyor.</div>`;
-  if(K){const ayr=K.vergi+K.maas+K.sabit+K.tampon;const svR=K.serbest<0?dn:up;
+  if(K){const ayr=K.vergi+K.maas+K.sabit+K.tampon+(K.acil||0);const svR=K.serbest<0?dn:up;
     h+=`<div class="ps-kova-ozet"><div><span>Kasa</span><b class="num">${gfTL(K.kasa)}</b></div><div class="eks"><span>Ayrılmış</span><b class="num">−${fmt(ayr)}</b></div><div class="sb"><span>Serbest kasa</span><b class="num" style="color:${svR}">${gfTL(K.serbest)}</b></div></div>`;
     const mx=Math.max(1,K.kasa,ayr);const kv=(ik,ad,v,acik,on)=>on?`<div class="ps-kova"><div class="ps-kova-u"><span>${ik} ${ad}</span><b class="num" style="color:${v>0?dn:'inherit'}">${v>0?'−':''}${fmt(v)}</b></div><div class="ps-kova-iz"><div style="width:${Math.min(100,v/mx*100)}%"></div></div><div class="ps-kova-a">${acik}</div></div>`:'';
     h+=kv('🏛️','Vergi karşılığı',K.vergi,`Yılbaşından beri işletme kârının %${K.vergiOran.toFixed(1).replace('.',',')}'i − ödenen vergi${K.kdvBorc>0?' + ödenecek KDV '+fmt(K.kdvBorc):''}`,K.aktif.vergi);
     h+=kv('👷','Maaş ve personel',K.maas,`Personel borcu + ${K.ufuk} gün içindeki maaşlar`,K.aktif.maas);
     h+=kv('📌','Sabit ödemeler',K.sabit,`${K.ufuk} gün içindeki taksit, şablon, evrak ve vadeli borçlar`,K.aktif.sabit);
     h+=kv('❄️','Kış tamponu',K.tampon,K.sezon.yeterli?(K.sezon.olu.length?`Ölü sezon: ${K.sezon.olu.map(i=>GF_AYLAR[i]).join(', ')} · geçmiş yılların ortalama açığı × %${K.kapsam}`:'Geçmişte net akışı eksiye dönen ay yok'):'Ölü sezonu bulmak için en az 12 aylık veri gerekli',K.aktif.tampon);
+    h+=kv('🚨','Acil durum payı',K.acil||0,K.acilVeri?`"Beklenmedik" (şahsi) ve "Acil / arıza" (işletme) etiketli giderlerin son 12 aylık aylık ortalaması × ${K.acilAy} ay`:'Henüz "Beklenmedik" ya da "Acil / arıza" etiketli gider yok — etiketledikçe hesaplanır',K.aktif.acil);
     const gun=K.dayanma;const gr=gun<30?dn:gun<90?am:up;
     h+=`<div class="gf-risk ${gun<30?'yuksek':gun<90?'orta':''}">⏳ <b>Dayanma süresi: <span style="color:${gr}">${Math.round(gun)} gün</span></b> — gelir bugün tamamen dursa, vergi karşılığı ve personel borcu ayrıldıktan sonra kasa son 90 günün ortalama harcamasıyla bu kadar yeter.${K.sezon.yeterli&&K.sezon.olu.length?` Önümüzdeki ölü sezonun tahmini açığı ${fmt(K.tampon/(K.kapsam/100||1))}.`:''}</div>`;
     h+=`<div class="isf-chips"><button class="isf-chip" onclick="psKovaModalAc()">⚙️ Kova ve enflasyon ayarları</button><button class="isf-chip" onclick="gfMetrikSec('serbest')">📈 Serbest kasayı grafikte göster</button><button class="isf-chip" onclick="gfMetrikSec('dayanma')">📈 Dayanma süresini göster</button></div>`;}
@@ -7275,14 +7433,8 @@ function gfDavranisSekme(){
   if(!A.abone.length)h+='<div class="gf-not">Son 200 günde düzenli tekrar eden şahsi gider bulunamadı.</div>';
   else{const yt=A.abone.reduce((s,x)=>s+x.yillik,0);h+=`<div class="gf-not">${A.abone.length} düzenli kalem · yıllık toplam <b style="color:${dn}">−${fmt(yt)}</b></div>`+A.abone.slice(0,10).map(x=>`<div class="gf-satir"><span>${_esc(x.ad)}${x.sablon?' <small>(şablon)</small>':''}<br><small>${x.per} · ${x.adet} kez · son ${gfTrTarih(x.son)}</small></span><span style="display:flex;align-items:center;gap:8px"><b class="num" style="color:${dn}">−${fmt(x.tutar)}<br><small>yılda −${fmt(x.yillik)}</small></b>${x.evrak?'<small title="Evrak olarak takip ediliyor">📄</small>':(typeof evAboneEkle==='function'&&USER_ROL!=='goruntule'?`<button class="isf-chip" title="Bu düzenli gideri evrak olarak takip et" onclick="evAboneEkle(${JSON.stringify(x.kisiId)},'${x.per}',${Math.round(x.tutar)},'${x.son}')">📄 Evrak yap</button>`:'')}</span></div>`).join('');}
   if(A.kucuk.adet)h+=`<div class="gf-risk orta">☕ <b>Küçük kaçaklar:</b> son 90 günde ${fmt(A.kucuk.esik)} ve altındaki ${A.kucuk.adet} küçük şahsi harcama ayda ~<b>${fmt(A.kucuk.aylik)}</b>, yılda ~<b>${fmt(A.kucuk.yillik)}</b> ediyor.${A.kucuk.katlar.length?' En çok: '+A.kucuk.katlar.map(([k,v])=>_esc(k)+' '+gfKisa(v)).join(', ')+'.':''}</div>`;
-  // 5) Bağlam
-  const B=psBaglamAnaliz();
-  h+=`<div class="gf-en-baslik">🏷️ Harcama bağlamı</div>`;
-  if(!B.etiketli)h+=`<div class="gf-not">Şahsi gider girerken "Planlı / İhtiyaç / Ödül / Stres / Dürtü" etiketlerinden birini seçtikçe burada dağılım ve stresle ilişki görünecek.</div>`;
-  else{const tt=Object.values(B.top).reduce((s,x)=>s+x.t,0)||1;
-    h+=`<div class="gf-not">Son 180 günde ${B.toplam} şahsi giderin ${B.etiketli}'i etiketli.</div>`+PS_BAGLAM.filter(([k])=>B.top[k]).map(([k,ik,ad])=>`<div class="gf-bar-satir"><div class="gf-bar-ad">${ik} ${ad} <small>(${B.top[k].n})</small></div><div class="gf-bar-iz"><div style="width:${Math.max(3,B.top[k].t/tt*100)}%;background:${k==='durtu'||k==='stres'?dn:k==='odul'?am:up}"></div></div><div class="gf-bar-v num" style="color:${dn}">−${gfKisa(B.top[k].t)}</div></div>`).join('');
-    if(B.durtuToplam>0){const gi=B.gunD.indexOf(Math.max(...B.gunD));const sa=Object.entries(B.saatD).sort((a,b)=>b[1]-a[1])[0];h+=`<div class="gf-not">⚡ Dürtüsel harcamalar en çok <b>${['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'][gi]}</b> günleri${sa?', <b>'+sa[0]+'</b>':''} oluyor.</div>`;}
-    if(B.stresIliski)h+=`<div class="gf-not">😣 Stres/dürtü harcamalarından önceki 3 günde ortalama stres <b>${B.stresIliski.once.toFixed(1).replace('.',',')}</b> (genel ortalama ${B.stresIliski.genel.toFixed(1).replace('.',',')}).</div>`;}
+  // 5) Bağlam ve "değdi mi?"
+  try{h+=psBaglamHtml();}catch(e){console.warn('bağlam',e);h+='<div class="gf-not">Bağlam analizi hesaplanamadı.</div>';}
   // 6) Yoğunluk
   const Y=psYogunluk();
   h+=`<div class="gf-en-baslik">🔥 Yoğunluk ve yorgunluk</div>`;
@@ -7306,12 +7458,14 @@ function psKovaModalAc(){
   const K=psKovaAyar();const d=GF.defter||gfDefterKur();const on=d.kova?d.kova.vergiOneri:psVergiOneri(d);const E=gfTufeAyar();
   const yillar=Object.keys(E.yillik).map(Number).sort((a,b)=>a-b).filter(y=>y>=Math.max(2015,parseInt(d.ilk.slice(0,4))-1));
   document.getElementById('ps-kova-body').innerHTML=`
-    <div class="isf-grup-b">Hangi kovalar ayrılsın?</div><div class="isf-chips">${[['vergi','🏛️ Vergi'],['maas','👷 Maaş'],['sabit','📌 Sabit ödemeler'],['tampon','❄️ Kış tamponu']].map(([k,l])=>`<button class="isf-chip${K.aktif[k]?' on':''}" onclick="this.classList.toggle('on')" data-kova="${k}">${l}</button>`).join('')}</div>
+    <div class="isf-grup-b">Hangi kovalar ayrılsın?</div><div class="isf-chips">${[['vergi','🏛️ Vergi'],['maas','👷 Maaş'],['sabit','📌 Sabit ödemeler'],['tampon','❄️ Kış tamponu'],['acil','🚨 Acil durum']].map(([k,l])=>`<button class="isf-chip${K.aktif[k]?' on':''}" onclick="this.classList.toggle('on')" data-kova="${k}">${l}</button>`).join('')}</div>
     <div class="isf-satir"><div class="fi" style="flex:1"><label>Gelir vergisi karşılığı (kârın %)</label><input type="text" inputmode="decimal" id="psk-vergi" value="${K.vergiOran!=null&&K.vergiOran!==''?K.vergiOran:''}" placeholder="Öneri: ${on.oran}"></div>
       <div class="fi" style="flex:1"><label>Sabit ödeme ufku (gün)</label><input type="number" id="psk-ufuk" value="${K.sabitUfuk}" min="7" max="90"></div></div>
     <div class="isf-ipucu">Önerilen vergi oranı %${on.oran} — ${on.kaynak}. Boş bırakırsan öneri kullanılır. Ödenecek KDV (bu ay + 28'ine kadar geçen ay) vergi kovasına ayrıca eklenir.</div>
     <div class="fi" style="margin-top:8px;"><label>Kış tamponu kapsamı (%)</label><input type="number" id="psk-kapsam" value="${K.tamponKapsam}" min="0" max="200"></div>
     <div class="isf-ipucu">%100 = önümüzdeki ölü sezonda geçmiş yılların ortalama açığının tamamı kenarda dursun.</div>
+    <div class="fi" style="margin-top:8px;"><label>Acil durum payı (kaç aylık beklenmedik gider)</label><input type="number" id="psk-acil" value="${K.acilAy}" min="0" max="12"></div>
+    <div class="isf-ipucu">"Beklenmedik" ve "Acil / arıza" etiketli giderlerin aylık ortalaması × bu ay sayısı kenarda tutulur. 0 = ayırma.</div>
     <div class="isf-grup-b">Enflasyon (yıllık TÜFE %, Aralık/Aralık)</div>
     <div class="ps-enf">${yillar.map(y=>`<div class="fi"><label>${y}</label><input type="text" inputmode="decimal" data-yil="${y}" value="${E.yillik[y]}"></div>`).join('')}<div class="fi"><label>Sonrası</label><input type="text" inputmode="decimal" id="psk-gelecek" value="${E.gelecek}"></div></div>
     <div class="isf-ipucu">Varsayılanlar TÜİK yıl sonu oranlarıdır; içinde bulunulan yıl ve sonrası tahmindir, güncelleyebilirsin. Reel grafik, tahsilattaki enflasyon kaybı ve Özet Çıkart bunları kullanır.</div>
@@ -7321,7 +7475,7 @@ function psKovaModalAc(){
 async function psKovaKaydet(){
   const aktif={};document.querySelectorAll('#ps-kova-body [data-kova]').forEach(b=>aktif[b.dataset.kova]=b.classList.contains('on'));
   const vs=document.getElementById('psk-vergi').value.trim();
-  const kov={vergiOran:vs===''?null:parseFloat(vs.replace(',','.')),sabitUfuk:Math.max(7,Math.min(90,parseInt(document.getElementById('psk-ufuk').value)||30)),tamponKapsam:Math.max(0,Math.min(200,parseInt(document.getElementById('psk-kapsam').value)||0)),aktif};
+  const kov={vergiOran:vs===''?null:parseFloat(vs.replace(',','.')),sabitUfuk:Math.max(7,Math.min(90,parseInt(document.getElementById('psk-ufuk').value)||30)),tamponKapsam:Math.max(0,Math.min(200,parseInt(document.getElementById('psk-kapsam').value)||0)),acilAy:Math.max(0,Math.min(12,parseInt(document.getElementById('psk-acil').value)||0)),aktif};
   const yillik={};document.querySelectorAll('#ps-kova-body [data-yil]').forEach(i=>{const v=parseFloat(String(i.value).replace(',','.'));if(isFinite(v))yillik[i.dataset.yil]=v;});
   const gel=parseFloat(String(document.getElementById('psk-gelecek').value).replace(',','.'));
   const ok1=await psAyarKaydet('kovalar',kov);const ok2=await psAyarKaydet('enflasyon',{yillik,gelecek:isFinite(gel)?gel:GF_TUFE_GELECEK});
@@ -7338,7 +7492,7 @@ var CK_SORULAR=[
   {k:'stres',s:'Stres seviyen nedir?',yon:-1,uc:['Çok düşük','Çok yüksek'],kisa:'Stres'},
   {k:'kaygi',s:'Kaygı seviyen nedir?',yon:-1,uc:['Çok düşük','Çok yüksek'],kisa:'Kaygı'}
 ];
-var CK={secim:{},sonraZaman:0,acikGun:null,izliyor:false};
+var CK={secim:{},degdi:{},sonraZaman:0,acikGun:null,izliyor:false};
 function ckRuh(c){const v=CK_SORULAR.map(q=>c[q.k]).filter(x=>x>0);if(!v.length)return null;return gfOrt(CK_SORULAR.filter(q=>c[q.k]>0).map(q=>q.yon>0?c[q.k]:11-c[q.k]));}
 function ckSahibiMi(){
   if(typeof CURRENT_USER==='undefined'||!CURRENT_USER||!CURRENT_USER.id)return false;
@@ -7373,7 +7527,7 @@ function ckModalAc(){
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-checkin';
     m.innerHTML=`<div class="modal ck-modal"><div class="modal-handle"></div><div class="modal-head"><h3 id="ck-baslik">🧠 Günlük check-in</h3><button class="modal-close" onclick="ckSonra()">✕</button></div><div class="modal-body" id="ck-body"></div><div class="modal-foot"><button class="btn btn-secondary" style="flex:1" onclick="ckSonra()">Sonra</button><button class="btn btn-primary" style="flex:2" id="ck-kaydet" onclick="ckKaydet()">Kaydet</button></div></div>`;
     document.body.appendChild(m);}
-  CK.secim={};CK.acikGun=localToday();
+  CK.secim={};CK.degdi={};CK.acikGun=localToday();let dg=[];try{dg=psDegdiBekleyen().slice(0,3);}catch(e){}
   const son=(PS.checkinler||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih))[0];
   const dt=new Date();document.getElementById('ck-baslik').textContent='🧠 Check-in · '+dt.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});
   document.getElementById('ck-body').innerHTML=`<div class="ck-giris">Bir dakikanı alır. Puanlar zamanla finans verilerinle birlikte analiz edilir ve sadece sen görebilirsin.</div>`+
@@ -7381,6 +7535,7 @@ function ckModalAc(){
       <div class="ck-puanlar">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button type="button" class="ck-p" data-v="${v}" style="--ck:${ckRenk(q,v)}" onclick="ckSec('${q.k}',${v})">${v}</button>`).join('')}</div>
       <div class="ck-uc"><span>${q.uc[0]}</span><span>${q.uc[1]}</span></div>
       ${q.k==='gider_baski'?`<div class="fi ck-tutar" id="ck-tutar-wrap" style="display:none;margin-top:8px;"><label>Tahmini bekleyen harcama tutarı (isteğe bağlı)</label><input type="text" inputmode="decimal" id="ck-tutar" placeholder="ör. 15.000"></div>`:''}</div>`).join('')+
+    (dg.length?`<div class="ck-degdi"><div class="ck-soru-b">💭 Geçen günlerin harcamaları — değdi mi? <small>(isteğe bağlı)</small></div>${dg.map(i=>psDegdiSatir(i,'ck',null)).join('')}</div>`:'')+
     `<div class="fi" style="margin-top:10px;"><label>Not almak ister misin? (isteğe bağlı)</label><textarea id="ck-not" rows="3" placeholder="Bugün aklında ne var?" style="width:100%;padding:12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea></div>`;
   ckKaydetDurum();openModal('modal-checkin');
 }
@@ -7388,6 +7543,7 @@ function ckRenk(q,v){const t=(v-1)/9;const iyi=q.yon>0?t:1-t;const r=Math.round(
 function ckSec(k,v){CK.secim[k]=v;document.querySelectorAll('#ck-q-'+k+' .ck-p').forEach(b=>b.classList.toggle('on',Number(b.dataset.v)===v));
   if(k==='gider_baski'){const w=document.getElementById('ck-tutar-wrap');if(w)w.style.display=v>1?'':'none';}ckKaydetDurum();}
 function ckKaydetDurum(){const n=CK_SORULAR.filter(q=>CK.secim[q.k]).length;const b=document.getElementById('ck-kaydet');if(b){b.textContent=n<CK_SORULAR.length?`Kaydet (${n}/${CK_SORULAR.length})`:'Kaydet ✓';b.disabled=n<CK_SORULAR.length;b.style.opacity=n<CK_SORULAR.length?0.55:1;}}
+function ckDegdiSec(id,v){if(CK.degdi[id]===v)delete CK.degdi[id];else CK.degdi[id]=v;document.querySelectorAll('#ck-body .ps-degdi[data-id="'+id+'"] .ps-bc').forEach((b,j)=>b.classList.toggle('on',CK.degdi[id]===PS_DEGDI[j][0]));}
 function ckSonra(){CK.sonraZaman=Date.now();closeModal('modal-checkin');}
 async function ckKaydet(){
   if(CK_SORULAR.some(q=>!CK.secim[q.k])){showToast('Tüm soruları puanla','amber');return;}
@@ -7398,6 +7554,7 @@ async function ckKaydet(){
     PS.checkinler=(PS.checkinler||[]).filter(c=>c.tarih!==row.tarih).concat([rec||row]).sort((a,b)=>a.tarih.localeCompare(b.tarih));}
   catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');return;}
   if(!(PS.ayar.checkin&&PS.ayar.checkin.sahip)&&CURRENT_USER&&CURRENT_USER.id)psAyarKaydet('checkin',{sahip:CURRENT_USER.id});
+  {const L=Object.entries(CK.degdi||{});let ok=0;for(const [id,v] of L){if(await psDegdiKaydet(id,v))ok++;}CK.degdi={};if(ok)PS.ver++;}
   closeModal('modal-checkin');showToast('Check-in kaydedildi 🙌','green');
   if(document.querySelector('#page-dashboard.active')&&GF.chart){GF._veriVar&&gfCiz();}
 }
@@ -7410,7 +7567,7 @@ function ckHaftalik(){
 function ckFinansHafta(k){ // haftalık finans: işletme gelir/net, şahsi gider, iş adedi
   const d=GF.defter||gfDefterKur();const g0=d.gunIdx[k];if(g0==null)return null;const g1=Math.min(d.gunSay-1,g0+6);
   const f=m=>d.C[m][g1]-d.O[m][g0];let is=0;for(let g=g0;g<=g1;g++)d.gunOlay[g].forEach(ix=>{const e=d.olaylar[ix];if(e.d&&e.d.isGelir)is++;});
-  return {isGelir:f('isGelir'),isNet:f('isNet'),shGider:-f('shGider'),is};
+  return {isGelir:f('isGelir'),isNet:f('isNet'),shGider:-f('shGider'),duygusal:d.C.duygusal?-f('duygusal'):0,is};
 }
 function ckSpearman(x,y){const n=x.length;if(n<5)return null;const rank=a=>{const s=a.map((v,i)=>[v,i]).sort((p,q)=>p[0]-q[0]);const r=new Array(n);for(let i=0;i<n;){let j=i;while(j+1<n&&s[j+1][0]===s[i][0])j++;const rr=(i+j)/2+1;for(let q=i;q<=j;q++)r[s[q][1]]=rr;i=j+1;}return r;};
   const rx=rank(x),ry=rank(y);const mx=gfOrt(rx),my=gfOrt(ry);let a=0,b=0,c=0;for(let i=0;i<n;i++){a+=(rx[i]-mx)*(ry[i]-my);b+=(rx[i]-mx)**2;c+=(ry[i]-my)**2;}return b&&c?a/Math.sqrt(b*c):0;}
@@ -7426,6 +7583,7 @@ function ckIliskiler(){
   ekle('İş yoğunluğu ↔ kaygı',al((h,f)=>f.is),al(h=>h.kaygi),'iş adedi arttıkça kaygı');
   ekle('İşletme geliri ↔ kazanç memnuniyeti',al((h,f)=>f.isGelir),al(h=>h.kazanc),'gelir arttıkça memnuniyet');
   ekle('İşletme kârı ↔ ruh hali',al((h,f)=>f.isNet),al(h=>h.ruh),'kâr arttıkça genel ruh hali');
+  {const y=al((h,f)=>f.duygusal||0);if(y.filter(v=>v>0).length>=3)ekle('Stres ↔ dürtü/stres etiketli harcama',al(h=>h.stres),y,'stresli haftalarda dürtü + stres etiketli harcama');}
   ekle('Eğlence ↔ şahsi harcama',al(h=>h.eglence),al((h,f)=>f.shGider),'eğlendiğini düşündüğün haftalarda şahsi harcama');
   ekle('Gider baskısı ↔ kaygı',al(h=>h.gider_baski),al(h=>h.kaygi),'bekleyen gider baskısı arttıkça kaygı');
   return {yeterli:true,hafta:ok.length,L:L.sort((a,b)=>Math.abs(b.r)-Math.abs(a.r))};
@@ -7487,11 +7645,11 @@ function ozDonemAralik(kod){
 }
 function ozDonemTopla(bas,bit){
   const L=(DB.islemler||[]).filter(i=>i.statu==='Tamamlandı'&&(i.tip==='Gelir'||i.tip==='Gider')).filter(i=>{const g=localDateStr(i.tarih);return g>=bas&&g<=bit;});
-  const o={isGelir:0,isGider:0,malzeme:0,shGelir:0,shGider:0,finans:0,isAdet:0,hizmet:{},musteri:{},kaynak:{},bolge:{},isGiderKat:{},shGiderKat:{},odeme:{},baglam:{}};
+  const o={isGelir:0,isGider:0,malzeme:0,shGelir:0,shGider:0,finans:0,isAdet:0,hizmet:{},musteri:{},kaynak:{},bolge:{},isGiderKat:{},shGiderKat:{},odeme:{},baglam:{},isBaglam:{}};
   L.forEach(i=>{const t=i.tutar||0;
     if(i.tip==='Gelir'&&i.kat==='İşletme Geliri'){o.isGelir+=t;o.malzeme+=i.malzemeTutar||0;o.isAdet++;const hz=String(i.altKat||'').split('|')[0].split(':')[0].trim()||'Belirtilmemiş';o.hizmet[hz]=(o.hizmet[hz]||0)+t;
       const k=i.kisiId?getKisi(i.kisiId):null;const kk=k?ozIsim(k):'Kişisiz';o.musteri[kk]=(o.musteri[kk]||0)+t;const kay=i.islemKaynagi||'Belirtilmemiş';o.kaynak[kay]=(o.kaynak[kay]||0)+t;const bl=k&&typeof hrKisiBolge==='function'?hrKisiBolge(k):null;if(bl)o.bolge[bl]=(o.bolge[bl]||0)+t;o.odeme[i.odemeYontemi||'Nakit']=(o.odeme[i.odemeYontemi||'Nakit']||0)+t;}
-    else if(i.tip==='Gider'&&i.kat==='İşletme Gideri'){o.isGider+=t;const a=i.altKat&&i.altKat!=='-'?i.altKat:'Diğer';o.isGiderKat[a]=(o.isGiderKat[a]||0)+t;}
+    else if(i.tip==='Gider'&&i.kat==='İşletme Gideri'){o.isGider+=t;const a=i.altKat&&i.altKat!=='-'?i.altKat:'Diğer';o.isGiderKat[a]=(o.isGiderKat[a]||0)+t;if(i.baglam)o.isBaglam[i.baglam]=(o.isBaglam[i.baglam]||0)+t;}
     else if(i.tip==='Gelir'&&i.kat==='Şahsi Gelir')o.shGelir+=t;
     else if(i.tip==='Gider'&&i.kat==='Şahsi Gider'){o.shGider+=t;const a=i.altKat&&i.altKat!=='-'?i.altKat:'Diğer';o.shGiderKat[a]=(o.shGiderKat[a]||0)+t;if(i.baglam)o.baglam[i.baglam]=(o.baglam[i.baglam]||0)+t;}
     else if(i.kat==='Finansman')o.finans+=t;});
@@ -7519,7 +7677,7 @@ function ozBolumBakiye(d){
 - Açık alacak: ${ozT(C.alacak[s])} · Açık verecek: ${ozT(-C.verecek[s])} · Personel borcu: ${ozT(C.personel[s])} · Kredi/borç bakiyesi: ${ozT(C.kredi[s])}
 - Net durum: ${ozT(C.netDurum[s])} · 30 gün önce ${ozT(C.netDurum[ay30])}
 `;
-  if(K&&K.kasa!=null)h+=`- Ayrılmış kovalar: vergi karşılığı ${ozT(-K.vergi)} (kârın %${(K.vergiOran||0).toFixed(1).replace('.',',')}'i${K.kdvBorc>0?' + ödenecek KDV '+ozN(K.kdvBorc):''}), maaş/personel ${ozT(-K.maas)}, ${K.ufuk} günlük sabit ödemeler ${ozT(-K.sabit)}, kış tamponu ${ozT(-K.tampon)}
+  if(K&&K.kasa!=null)h+=`- Ayrılmış kovalar: vergi karşılığı ${ozT(-K.vergi)} (kârın %${(K.vergiOran||0).toFixed(1).replace('.',',')}'i${K.kdvBorc>0?' + ödenecek KDV '+ozN(K.kdvBorc):''}), maaş/personel ${ozT(-K.maas)}, ${K.ufuk} günlük sabit ödemeler ${ozT(-K.sabit)}, kış tamponu ${ozT(-K.tampon)}${K.acil>0?`, acil durum payı ${ozT(-K.acil)} (beklenmedik/acil etiketli giderlerin aylık ortalaması × ${K.acilAy} ay)`:''}
 - Serbest kasa: ${ozT(K.serbest)} · Dayanma süresi: ${Math.round(K.dayanma)} gün${K.sezon&&K.sezon.yeterli?` · ölü sezon ayları: ${K.sezon.olu.length?K.sezon.olu.map(i=>GF_AYLAR_UZUN[i]).join(', '):'yok'}`:''}
 `;
   return h;
@@ -7544,6 +7702,7 @@ ${a.finans?`| Finansman girişi (kredi/borç) | ${ozT(a.finans)} | ${ozT(b.finan
   const liste=(ad,o,ters)=>{const L=ozSirala(o,8);return L.length?`- ${ad}: `+L.map(([k,v])=>`${k} ${ozT(ters?-v:v)}`).join('; ')+'\n':'';};
   h+=liste('En çok gelir getiren hizmetler',a.hizmet)+liste('En çok gelir getiren müşteriler',a.musteri)+liste('İşin kaynağına göre gelir',a.kaynak)+liste('Mahallelere göre gelir',a.bolge)+liste('Ödeme yöntemine göre gelir',a.odeme)+liste('İşletme gider kalemleri',a.isGiderKat,true)+liste('Şahsi gider kalemleri',a.shGiderKat,true);
   if(Object.keys(a.baglam).length)h+=`- Şahsi giderlerin bağlam etiketleri: `+PS_BAGLAM.filter(([k])=>a.baglam[k]).map(([k,,ad])=>ad+' '+ozT(-a.baglam[k])).join('; ')+'\n';
+  if(a.isBaglam&&Object.keys(a.isBaglam).length)h+=`- İşletme giderlerinin bağlam etiketleri: `+PS_BAGLAM_IS.filter(([k])=>a.isBaglam[k]).map(([k,,ad])=>ad+' '+ozT(-a.isBaglam[k])).join('; ')+'\n';
   return h;
 }
 function ozBolumAylik(d){
@@ -7609,7 +7768,15 @@ function ozBolumDavranis(d,kisa){
     if(A.abone.length)h+=`- Düzenli tekrar eden şahsi giderler: `+A.abone.slice(0,10).map(x=>`${x.ad} (${x.per}, ${ozN(x.tutar)}, yılda ${ozN(x.yillik)})`).join('; ')+'\n';
     if(A.kucuk.adet)h+=`- Küçük kaçaklar: son 90 günde ${ozN(A.kucuk.esik)} altı ${A.kucuk.adet} harcama, ayda ~${ozN(A.kucuk.aylik)}, yılda ~${ozN(A.kucuk.yillik)}\n`;}catch(e){}
   try{const B=psBaglamAnaliz();if(B.etiketli){h+=`- Harcama bağlamı (son 180 gün, ${B.etiketli}/${B.toplam} şahsi gider etiketli): `+PS_BAGLAM.filter(([k])=>B.top[k]).map(([k,,ad])=>`${ad} ${B.top[k].n} kez ${ozT(-B.top[k].t)}`).join('; ')+'\n';
-    if(B.stresIliski)h+=`- Stres/dürtü harcamalarından önceki 3 günde ortalama stres ${B.stresIliski.once.toFixed(1).replace('.',',')} (genel ${B.stresIliski.genel.toFixed(1).replace('.',',')})\n`;}}catch(e){}
+    if(B.stresIliski)h+=`- Stres/dürtü harcamalarından önceki 3 günde ortalama stres ${B.stresIliski.once.toFixed(1).replace('.',',')} (genel ${B.stresIliski.genel.toFixed(1).replace('.',',')})\n`;}
+    if(B.stresHafta){const S=B.stresHafta;h+=`- Stres puanı 7+ olan ${S.n} haftada haftalık şahsi harcama ort. ${ozN(S.yuk)}, diğer ${S.m} haftada ${ozN(S.nor)}${S.yukD+S.norD>0?`; dürtü+stres etiketli kısım ${ozN(S.yukD)} / ${ozN(S.norD)}`:''}\n`;}
+    const ays=B.aylar.filter(k=>B.ay[k].top>0);if(B.etiketli&&ays.length>=2)h+=`- Aylık şahsi gider dağılımı (bilinçli = planlı+ihtiyaç+yatırım; mecburi = beklenmedik; keyif = sosyal+ödül; duygusal = stres+dürtü): `+ays.map(k=>{const a=B.ay[k];return `${GF_AYLAR_UZUN[parseInt(k.slice(5,7))-1]} ${k.slice(0,4)} toplam ${ozN(a.top)} (bilinçli ${ozN(a.bilincli)}, mecburi ${ozN(a.mecburi)}, keyif ${ozN(a.keyif)}, duygusal ${ozN(a.duygusal)}, etiketsiz ${ozN(a.yok)})`;}).join('; ')+'\n';
+    if(B.trend.once&&B.trend.son)h+=`- Duygusal harcamaların etiketli şahsi giderlerdeki payı: önceki 3 ay %${Math.round(B.trend.once.p*100)} → son 3 ay %${Math.round(B.trend.son.p*100)}\n`;
+    if(B.uyari)h+=`- Uyarı: bu ay dürtü+stres harcaması şimdiden ${ozN(B.uyari.bu)} (önceki 3 ay ortalaması ${ozN(B.uyari.ort)})\n`;
+    if(B.is.etiketli)h+=`- İşletme gideri bağlamı (son 180 gün, ${B.is.etiketli}/${B.is.toplam} etiketli): `+PS_BAGLAM_IS.filter(([k])=>B.is.top[k]).map(([k,,ad])=>`${ad} ${B.is.top[k].n} kez ${ozT(-B.is.top[k].t)}`).join('; ')+'\n';
+    if(B.acil.n)h+=`- Son 12 ayda beklenmedik/acil gider: ${B.acil.n} kez, toplam ${ozN(B.acil.top)}, en büyüğü ${ozN(B.acil.enBuyuk)}\n`;
+    const D=Object.entries(B.degdi);if(D.length)h+=`- "Değdi mi?" cevapları (harcamadan birkaç gün/hafta sonra soruluyor): `+D.map(([key,o])=>{const is=key.startsWith('is:');const b=psBaglamBul(is?'İşletme Gideri':'Şahsi Gider',key.replace('is:',''));return `${b?b[2]:key}${is?' (işletme)':''} ${o.n} cevap, ${o.hayir} değmedi (${ozN(o.hayirT)}), ${o.evet} değdi, ${o.emin} kararsız`;}).join('; ')+'\n';
+  }catch(e){}
   try{const Y=psYogunluk();h+=`- Çalışma serisi: ${Y.seri?Y.seri+' gündür ara verilmedi':'bugün ve dün iş kaydı yok'}; son 30 günde ${Y.son30} gün çalışıldı; son 1 yılda en uzun seri ${Y.enUzun} gün${Y.sonIzin?'; son boş gün '+ozTr(Y.sonIzin):''}\n`;
     if(Y.kiyas&&!kisa){const k=Y.kiyas;const p=v=>v==null?'—':Math.round(v*100)+'%';h+=`- Yoğun vs sakin haftalar (son 2 yıl, ${k.hafta} hafta): haftalık iş ${k.yogun.n.toFixed(1).replace('.',',')} / ${k.sakin.n.toFixed(1).replace('.',',')}; malzeme/ciro ${p(k.yogun.mal)} / ${p(k.sakin.mal)}; hizmet medyanına göre fiyat ${k.yogun.fiyat!=null?ozY(k.yogun.fiyat*100,0):'—'} / ${k.sakin.fiyat!=null?ozY(k.sakin.fiyat*100,0):'—'}; 14 gün içinde tekrar ziyaret ${p(k.yogun.tekrar)} / ${p(k.sakin.tekrar)}${k.yogun.stres!=null?'; check-in stres '+k.yogun.stres.toFixed(1).replace('.',',')+' / '+(k.sakin.stres!=null?k.sakin.stres.toFixed(1).replace('.',','):'—'):''}\n`;}}catch(e){}
   return h;
