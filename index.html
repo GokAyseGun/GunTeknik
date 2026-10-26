@@ -1103,7 +1103,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   .gf-buyut-btn{display:inline-flex;white-space:nowrap;}
   #page-dashboard.dash-kucuk .gf-kart .gf-ust{display:flex!important;width:100%;margin-right:0!important;}
   #page-dashboard.dash-kucuk .gf-buyut-btn{margin-left:auto;}
-  #page-dashboard.dash-kucuk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:stretch;}
+  #page-dashboard.dash-kucuk.active{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:stretch;}
   #page-dashboard.dash-kucuk>*{grid-column:1/-1;}
   #page-dashboard.dash-kucuk>#dash-grafik-kart{grid-column:1;margin-bottom:14px;}
   #page-dashboard.dash-kucuk>#dash-bakis{grid-column:2;grid-template-rows:minmax(0,1.45fr) minmax(0,1fr);contain:size;margin-bottom:14px;}
@@ -1116,6 +1116,11 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
   #page-dashboard.dash-kucuk #dash-grafik-kart .gf-tabs,
   #page-dashboard.dash-kucuk #dash-grafik-kart #gf-tab-icerik{display:none!important;}
   #page-dashboard.dash-buyuk>#dash-bakis{grid-template-columns:repeat(4,minmax(0,1fr));}
+  /* büyük hâl: küçült düğmesi kartın sağ üst köşesinde */
+  #page-dashboard.dash-buyuk #dash-grafik-kart{position:relative;}
+  #page-dashboard.dash-buyuk #gf-btn-buyut{position:absolute;top:14px;right:14px;z-index:6;padding:7px 12px;font-weight:700;border-color:var(--blue);color:var(--blue);background:var(--blue-lt);}
+  #page-dashboard.dash-buyuk #dash-grafik-kart .gf-arac{margin-right:120px;}
+  #dash-grafik-kart.gf-tam #gf-btn-buyut{display:none!important;}
   #dash-grafik-kart.gf-gecis{animation:gfGecis .25s ease-out;}
   @keyframes gfGecis{from{opacity:.55;}to{opacity:1;}}
 }
@@ -17024,7 +17029,7 @@ function gfBuyutDegistir(ac){
   try{gfYukseklikAyarla();}catch(e){}
   if(GF.chart){try{GF.chart.resize();gfCiz();}catch(e){console.warn(e);}}
   if(GF_BUYUK){try{gfSekmeCiz();}catch(e){}}
-  const mc=document.querySelector('.content');if(mc&&k)mc.scrollTo({top:Math.max(0,k.offsetTop-10),behavior:'smooth'});
+  const mc=document.querySelector('.content');if(mc&&k)mc.scrollTo({top:0,behavior:'smooth'});
 }
 document.addEventListener('keydown',e=>{if(e.key!=='Escape'||!GF_BUYUK)return;if(!document.querySelector('#page-dashboard.active'))return;if(document.querySelector('.modal-ov.open'))return;if(document.getElementById('dash-grafik-kart')?.classList.contains('gf-tam'))return;gfBuyutDegistir(false);});
 window.addEventListener('resize',()=>{clearTimeout(window._gfDuzT);window._gfDuzT=setTimeout(()=>{const once=document.getElementById('page-dashboard')?.classList.contains('dash-kucuk');gfDuzenUygula();
