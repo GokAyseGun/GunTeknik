@@ -12,8 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js"></script>
+
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -29,7 +28,6 @@
 <meta name="msapplication-TileImage" content="ms-icon-144x144.png">
 <meta name="msapplication-TileColor" content="#060606">
 <!-- Barkod okuma kütüphanesi - önceden yükle -->
-<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <title>Gün Teknik · ERP</title>
 <style>
 
@@ -451,19 +449,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
 .kpi-cy .kpi-progress-fill{background:var(--gcy);}
 
 
-/* ── ARKA PLAN DEVRE ANİMASYONU ── */
-#bg-circuit-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0.85;}
-#bg-circuit-fx svg{position:absolute;inset:0;width:100%;height:100%;}
-#bg-circuit-fx .bg-line{stroke:var(--mg);stroke-width:2.2;fill:none;stroke-dasharray:90 180;opacity:0.7;animation:bgLineDraw 9s linear infinite;filter:drop-shadow(0 0 3px currentColor);}
-#bg-circuit-fx .bg-line:nth-child(2n){stroke:var(--cy);animation-duration:12s;animation-delay:-3s;}
-#bg-circuit-fx .bg-line:nth-child(3n){animation-duration:15s;animation-delay:-7s;}
-#bg-circuit-fx .bg-line:nth-child(4n){stroke:var(--cy);animation-duration:10.5s;animation-delay:-1.5s;}
-@keyframes bgLineDraw{from{stroke-dashoffset:0;}to{stroke-dashoffset:-560;}}
-#bg-circuit-fx .bg-dot{fill:var(--mg);opacity:0;animation:bgDotPulse 4s ease-in-out infinite;filter:drop-shadow(0 0 4px currentColor);}
-#bg-circuit-fx .bg-dot:nth-child(odd){fill:var(--cy);}
-@keyframes bgDotPulse{0%,100%{opacity:0;transform:scale(0.3);}50%{opacity:0.95;transform:scale(1.3);}}
 #app{position:relative;z-index:1;}
-[data-tema="acik"] #bg-circuit-fx{opacity:0.4;}
+
 
 
 
@@ -995,6 +982,27 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .tk-aktar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;}
 .tk-aktar-b{font-size:13px;font-weight:700;}
 .tk-aktar .isf-chips{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ── PERFORMANS ── */
+/* bulanık cam efektleri (kaydırmada her karede yeniden hesaplanıyordu) kapatıldı; yerine düz zemin */
+.topbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(6,6,6,0.985);}
+.bottom-nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(6,6,6,0.99);}
+.modal-ov{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(2,4,8,0.82);}
+.isl-ust-bar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(6,6,6,0.985)!important;}
+/* modallar daha çabuk açılsın */
+.modal{animation-duration:.24s;}
+@media(min-width:640px){.modal{animation-duration:.22s;}}
+/* liste satırları beklemeden görünür (ilk 8 satır kısa animasyonla JS'ten) */
+.stagger-item,.stok-row{opacity:1;animation:none;}
+/* sayfa geçişi: sadece saydamlık (transform/blur yok, sabit çubukları bozmaz) */
+.page.sayfa-gir{animation:sayfaGir .2s ease-out;}
+@keyframes sayfaGir{from{opacity:0;}to{opacity:1;}}
+/* sürekli yanıp sönen süs animasyonları kapalı */
+.pulse-mg,.pulse-cy,.vade-banner-dot{animation:none;}
+/* ekranda olmayan uzun liste satırlarının çizimini tarayıcı atlasın */
+.stagger-wrap .stagger-item{content-visibility:auto;contain-intrinsic-size:auto 64px;}
+/* hareket azaltma tercihi olan cihazlarda animasyonları kapat */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}}
 </style>
 </head>
 <body>
@@ -1092,7 +1100,7 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 </div>
 
 <!-- ANA UYGULAMA -->
-<div id="bg-circuit-fx" aria-hidden="true"></div>
+
 <div id="app">
   <div class="topbar">
     <div class="topbar-title" id="page-title">Genel Özet</div>
@@ -3718,11 +3726,7 @@ function initKpiHover(){
 }
 
 /* ── STAGGER ANİMASYON (geliştirilmiş) ── */
-function applyStagger(root){
-  (root?root.querySelectorAll('.stagger-item'):document.querySelectorAll('.stagger-item')).forEach((el,i)=>{
-    el.style.animationDelay=`${i*55}ms`;
-  });
-}
+
 
 /* ── SAYFA GEÇİŞ ANİMASYONU ── */
 const PAGE_TRANSITION_MS=1000; // Her faz (iniş/çıkış) süresi
@@ -3868,10 +3872,9 @@ function initNumObserver(){
 }
 
 /* ── STAGGER ANİMASYON ── */
-function applyStagger(){
-  document.querySelectorAll('.stagger-item').forEach((el,i)=>{
-    el.style.animationDelay=`${i*55}ms`;
-  });
+function applyStagger(root){
+  const L=(root&&root.querySelectorAll?root:document.querySelector('.page.active')||document).querySelectorAll('.stagger-item');
+  for(let i=0;i<L.length&&i<8;i++){const el=L[i];if(el.dataset.st)continue;el.dataset.st='1';el.style.animation='staggerIn .2s ease-out both';el.style.animationDelay=(i*30)+'ms';}
 }
 
 /* ── TEMA TOGGLE ── */
@@ -4207,6 +4210,13 @@ function closeConfirm(ok){closeModal('modal-confirm');if(ok&&confirmCB)confirmCB
 
 function animateCount(el,target){
   if(!el)return;
+  target=target||0;const yaz=v=>(v<0?'- ':'')+fmt(Math.round(Math.abs(v)));
+  if(target<0){el.style.color='var(--red)';}else if(el.style.color==='var(--red)'){el.style.color='';}
+  if(el._sayHedef===target){el.textContent=yaz(target);return;}
+  const bas=el._sayHedef!=null?el._sayHedef:0;el._sayHedef=target;
+  if(document.hidden||Math.abs(target-bas)<1){el.textContent=yaz(target);return;}
+  const t0=performance.now(),sure=450;const adim=t=>{if(el._sayHedef!==target)return;const p=Math.min((t-t0)/sure,1),e=1-Math.pow(1-p,3);el.textContent=yaz(bas+(target-bas)*e);if(p<1)requestAnimationFrame(adim);};
+  requestAnimationFrame(adim);return;
   const dur=1200;const start=Date.now();const abs=Math.abs(target||0);const isNeg=(target||0)<0;
   // Renk güncelle
   if(isNeg){el.style.color='var(--red)';}
@@ -4267,28 +4277,24 @@ function goPage(id,navEl){
   const afterEnter=()=>{
     if(content)content.scrollTo(0,0);
     const mc=page.querySelector('.main-content')||page;
-    setTimeout(()=>{
+    requestAnimationFrame(()=>{
       initRipple();
       applyStagger(page);
       initCounters(page);
       initKpiHover();
       initScrollFx(mc);
-    },60);
+    });
     renderAll();
     if(typeof aiSayfaAnalizLocal==='function')setTimeout(()=>aiSayfaAnalizLocal(id),600);
     _goPageBusy=false;
   };
 
   try{
-    if(oldPage){
-      animatePage(page,_navForAnim,oldPage,oldNavEl);
-      // _pageEnter, _pageExit bitince çağrılıyor; afterEnter'ı toplam süre sonunda tetikle
-      setTimeout(afterEnter,PAGE_TRANSITION_MS+50);
-    }else{
-      page.classList.add('active');
-      animatePage(page,_navForAnim);
-      setTimeout(afterEnter,PAGE_TRANSITION_MS+50);
-    }
+    if(oldPage)oldPage.classList.remove('active');
+    page.classList.remove('sayfa-gir');page.classList.add('active');
+    afterEnter();
+    void page.offsetWidth;page.classList.add('sayfa-gir');
+    setTimeout(()=>page.classList.remove('sayfa-gir'),260);
   }catch(e){
     console.error('Sayfa geçiş hatası:',e);
     page.classList.add('active');
@@ -5790,7 +5796,7 @@ async function gfEkYukle(zorla){
 // ---------- Ana çizim
 function renderDashGrafik(){
   const el=document.getElementById('gf-chart');if(!el)return;
-  if(typeof klinecharts==='undefined'){el.innerHTML='<div class="gf-bos">Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.</div>';return;}
+  if(typeof klinecharts==='undefined'){if(!GF._klYukleniyor){GF._klYukleniyor=true;el.innerHTML='<div class="gf-bos">Grafik yükleniyor…</div>';perfScriptYukle('https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js').then(()=>{GF._klYukleniyor=false;el.innerHTML='';if(document.querySelector('#page-dashboard.active'))renderDashGrafik();}).catch(()=>{GF._klYukleniyor=false;el.innerHTML='<div class="gf-bos">Grafik kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.</div>';});}return;}
   gfGostergeKaydet();
   gfAracCiz();
   try{gfYukseklikAyarla();gfTutamakBagla();}catch(e){console.warn('masaüstü',e);}
@@ -5815,10 +5821,19 @@ function gfTarihFormat(dtf,ts,format,type){
   if(p==='yil')return String(y);if(p==='ay')return GF_AYLAR_UZUN[m]+' '+y;
   return d+' '+GF_AYLAR[m]+' '+y;
 }
+function gfTahminAnahtar(d){return [d.imza,GF.ay.metrik,GF.ay.tahminUfuk,GF.ay.gelirPct,GF.ay.giderPct,GF.ay.tahsilatPct,GF.ek.versiyon,JSON.stringify(GF.hedefler)].join('#');}
+// performans: grafik önce tahminsiz (ya da son tahminle) çizilir, tahmin hesabı ekran boyandıktan sonra yapılır
+function gfTahminErtele(d){
+  const m=GF.ay.metrik;if(!GF.ay.tahminAcik&&GF.ay.sekme!=='tahmin')return null;
+  if(!GF_METRIK[m]||!GF_METRIK[m].tahmin)return null;
+  if(GF.tahmin&&GF.tahminAnahtar===gfTahminAnahtar(d))return GF.tahmin;
+  clearTimeout(GF._thT);GF._thT=setTimeout(()=>{GF._thT=null;try{gfTahminAl(GF.defter||d);}catch(e){}if(GF.chart&&document.querySelector('#page-dashboard.active'))gfCiz();},40);
+  return (GF.tahmin&&GF.tahmin.metrik===m)?GF.tahmin:null;
+}
 function gfTahminAl(d){
   const m=GF.ay.metrik;if(!GF.ay.tahminAcik&&GF.ay.sekme!=='tahmin')return null;
   if(!GF_METRIK[m]||!GF_METRIK[m].tahmin)return null;
-  const anahtar=[d.imza,m,GF.ay.tahminUfuk,GF.ay.gelirPct,GF.ay.giderPct,GF.ay.tahsilatPct,GF.ek.versiyon,JSON.stringify(GF.hedefler)].join('#');
+  const anahtar=gfTahminAnahtar(d);
   if(GF.tahmin&&GF.tahminAnahtar===anahtar)return GF.tahmin;
   try{GF.tahmin=gfTahminHesapla(d,m,GF.ay);GF.tahminAnahtar=anahtar;}catch(e){console.error('Tahmin hatası',e);GF.tahmin=null;}
   if(GF.tahmin&&m==='kasa'&&!GF.ay.gelirPct&&!GF.ay.giderPct)gfTahminOtoKaydet(GF.tahmin);
@@ -5845,7 +5860,7 @@ function gfCiz(){
     if(eskiler.length){const gs=d.gunler[b.g1];b.eski=eskiler.map(m=>m[gs]!=null?m[gs]:null);}
   });
   // tahmin
-  const T=ay.tahminAcik?gfTahminAl(d):(ay.sekme==='tahmin'?gfTahminAl(d):null);
+  const T=gfTahminErtele(d);
   let tum=bars.slice();
   if(T&&ay.tahminAcik){
     const sonAnahtar=bars.length?bars[bars.length-1].anahtar:'';
@@ -11288,6 +11303,7 @@ function reklamMetrikSecCiz(){
 }
 
 function reklamGrafikCiz(veri){
+  if(!window.Chart){perfScriptYukle('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js').then(()=>reklamGrafikCiz(veri)).catch(()=>showToast('Grafik kütüphanesi yüklenemedi','red'));return;}
   const canvas=document.getElementById('reklam-chart');
   if(!canvas)return;
   // Zoom uygula
@@ -11991,7 +12007,7 @@ let barkodStream=null;
 let barkodScanTimer=null;
 let barkodActive=false;
 
-function preloadHtml5QR(){/* jsQR head'den yükleniyor */}
+function preloadHtml5QR(){if(!window.jsQR)perfScriptYukle('https://unpkg.com/jsqr@1.4.0/dist/jsQR.js').catch(()=>{});}
 
 async function openBarkodKamera(targetInputId){
   barkodTargetInputId=targetInputId;
@@ -17772,6 +17788,14 @@ async function gtOtomatikDegistir(){const A=gtAyar();await gtAyarYaz({otomatik:A
 // eski ajanda pencereleri hangi yoldan açılırsa açılsın yeni forma yönlensin
 (function(){try{const _om=openModal;openModal=function(id){if(id==='modal-ajanda-ekle'){tkFormAc(null);return;}if(id==='modal-tak-detay'){const v=document.getElementById('takd-id')?.value;if(v){tkFormAc(Number(v));return;}}return _om.apply(this,arguments);};}catch(e){console.warn(e);}})();
 
+// ============================================================ PERFORMANS YARDIMCILARI
+var _perfBetik={};
+function perfScriptYukle(url){if(_perfBetik[url])return _perfBetik[url];
+  _perfBetik[url]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=url;s.async=true;s.onload=()=>res();s.onerror=()=>{delete _perfBetik[url];rej(new Error('yüklenemedi '+url));};document.head.appendChild(s);});
+  return _perfBetik[url];}
+// grafik kütüphanesi sayfayı bekletmeden arka planda iner
+try{perfScriptYukle('https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js').catch(()=>{});}catch(e){}
+
 // ============================================================ VERİ YEDEKLEME
 
 
@@ -21290,7 +21314,7 @@ async function tavsiyeYazdirAc(){
 }
 
 // ── ARKA PLAN DEVRE ANİMASYONU OLUŞTUR ──
-function initBgCircuit(){
+function initBgCircuit(){return; // performans: arka plan animasyonu kaldırıldı
   const host=document.getElementById('bg-circuit-fx');
   if(!host)return;
   const W=1200,H=2400; // viewBox - dikey ekranlar için uzun
