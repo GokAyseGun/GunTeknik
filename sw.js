@@ -1,10 +1,14 @@
 // Gün Teknik ERP — Service Worker
-const CACHE = 'gunteknik-v5';
+const CACHE = 'gunteknik-v6';
+// El Kitabı sahada çekim yokken de açılsın diye kurulumda önbelleğe alınır
+const ELKITABI = ['elkitabi/index.html','elkitabi/hesap.html','elkitabi/semalar.html','elkitabi/teori.html','elkitabi/ortak.css','elkitabi/ortak.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(['/GunTeknik/']))
+      .then(c => Promise.all([c.add('/GunTeknik/').catch(() => {})].concat(
+        ELKITABI.map(y => c.add(new Request(new URL(y, self.registration.scope).href, {cache:'reload'})).catch(() => {}))
+      )))
       .catch(() => {}) // Cache hatası uygulamayı engellemesin
   );
   self.skipWaiting();
