@@ -17,7 +17,7 @@
 :root{--tel-hale:rgba(255,255,255,.16);--c-l1:#B8682E;--c-l2:#1b1b1b;--c-l3:#9a9a9a;--c-n:#2F7BFF;--c-pe:#2EA043;--c-pe2:#F2C200;--c-ls:#1b1b1b;--c-lv:#7d7d7d;--c-k:#E53935;--c-dp:#E53935;--c-dn:#1E40AF;--c-s:#A855F7;--c-z:#14B8A6;--c-z2:#F472B6;--c-ak:#FFE082;--sv-bg:#0b0b0b;}
 [data-tema="acik"]{--tel-hale:rgba(0,0,0,.10);--c-ak:#FF8F00;--sv-bg:#fbfbfe;}
 .sm-k-aydinlatma{--kr:var(--amber);--kr-lt:var(--amber-lt);--kr-md:var(--amber-md);}
-.sm-k-priz,.sm-k-pano{--kr:var(--mg);--kr-lt:var(--mg-lt);--kr-md:var(--mg-md);}
+.sm-k-priz,.sm-k-pano,.sm-k-role{--kr:var(--mg);--kr-lt:var(--mg-lt);--kr-md:var(--mg-md);}
 .sm-k-topraklama,.sm-k-gunes{--kr:var(--green);--kr-lt:var(--green-lt);--kr-md:var(--green-md);}
 .sm-k-diafon,.sm-k-uydu{--kr:var(--purple);--kr-lt:var(--purple-lt);--kr-md:var(--purple-md);}
 .sm-k-motor,.sm-k-klima{--kr:var(--cy);--kr-lt:var(--cy-lt);--kr-md:var(--cy-md);}
@@ -105,7 +105,7 @@
 .sv-pervane{fill:var(--text2);}
 .sv-don{animation:svDon .8s linear infinite;} .sv-don-ters{animation:svDon .8s linear infinite reverse;} .sv-don-yavas{animation:svDon 2.6s linear infinite;}
 @keyframes svDon{to{transform:rotate(360deg);}}
-.sv-bobin{fill:var(--surface2);stroke:var(--text2);stroke-width:2;} .sv-bobin.aktif{fill:var(--purple-lt);stroke:var(--purple);}
+.sv-bobin{fill:var(--surface2);stroke:var(--text2);stroke-width:2;} .sv-bobin.aktif{fill:var(--purple-lt);stroke:var(--purple);} .sv-bobin.isiniyor{fill:var(--amber-lt);stroke:var(--amber);animation:svYanip .5s linear infinite;} .sv-bobin.yanik{fill:var(--red-lt);stroke:var(--red);} .sv-led-k{fill:var(--surface2);stroke:var(--border2);} .sv-led-k.on{fill:var(--red);stroke:var(--red);} .sv-led-y.on{fill:var(--green);stroke:var(--green);} .sv-grafik{fill:none;stroke:var(--purple);stroke-width:2;} .sv-grafik-z{fill:none;stroke:var(--border2);stroke-width:1;stroke-dasharray:2 3;} .sv-sonda{stroke:var(--text2);stroke-width:2.5;}
 .sv-mcb{fill:var(--surface2);stroke:var(--text2);stroke-width:1.5;} .sv-mcb.acik{stroke:var(--red);}
 .sv-kol{fill:var(--text3);} .sv-kol.on{fill:var(--green);}
 .sv-test{fill:var(--amber-lt);stroke:var(--amber);stroke-width:1.5;}
@@ -171,9 +171,9 @@ const tikG = (e, ic, b) => `<g class="tik" data-e="${e.id}"${b ? ` data-b="${b}"
 const DOK = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent"/>`;
 const enMi = (R, e, ad) => R.yukEn[e.id + (ad ? '#' + ad : '')];
 /* Kontak sürücüsünün durumu */
-function surucuAktif(R, id, tip){
+function surucuAktif(R, id, tip, k2){
   const s = R.el[id]; if(!s) return false;
-  const f = ET[s.tip].aktif; const a = f ? f(s, R) : !!s.st.en;
+  const f = (k2 && ET[s.tip].aktif2) || ET[s.tip].aktif; const a = f ? f(s, R) : !!s.st.en;
   if(tip === 'tno' || tip === 'tnc'){ const g = s.st.tamam; return tip === 'tno' ? g : !g; }
   return a;
 }
@@ -364,18 +364,98 @@ ET.mot6 = {
 };
 
 /* ── Bobin, kontak, termik ── */
+/* Bobin anma değeri (gerilim + AC/DC) ve uygulanan beslemenin değerlendirilmesi */
+function besleme(R, e, a, b, key){
+  const y = R.yukEn[key || e.id]; if(!y) return null;
+  const pa = anaPot(R.potNet(e.id + '.' + a)), pb = anaPot(R.potNet(e.id + '.' + b)), ta = potTip(pa), tb = potTip(pb);
+  const dc = ta === 'arti' || ta === 'eksi' || tb === 'arti' || tb === 'eksi';
+  return {V:Math.round(y.V * 10) / 10, tip:dc ? 'dc' : 'ac', ters:dc && (ta === 'eksi' || tb === 'arti')};
+}
+const AKIM_AD = {ac:'AC', dc:'DC', uc:'AC/DC'};
+function bobAnma(e){ const s = e.o.secenek ? e.o.secenek[e.st.si || 0] : e.o; return s.v ? {v:s.v, akim:s.akim || 'ac', vmin:s.vmin || s.v, vmax:s.vmax || s.v} : null; }
+const anmaYazi = a => a ? (a.vmin !== a.vmax ? a.vmin + '–' + a.vmax : a.v) + ' V ' + AKIM_AD[a.akim] : '';
+const vYaz = V => String(V).replace('.', ',');
+function bobDegerlendir(a, b){
+  if(!b) return {s:'yok'};
+  const V = b.V;
+  if(a.akim === 'ac' && b.tip === 'dc') return V >= a.v * 0.3 ? {s:'acdc', sure:2.5} : {s:'dusuk'};
+  if(a.akim === 'dc' && b.tip === 'ac') return V > a.v * 1.6 ? {s:'yuksek', sure:1.2} : V >= a.v * 0.5 ? {s:'dcac'} : {s:'dusuk'};
+  if(V > a.vmax * 1.15) return {s:'yuksek', sure:V > a.vmax * 2.5 ? 0.6 : V > a.vmax * 1.5 ? 1.5 : 4};
+  if(V < a.vmin * 0.8) return {s:'dusuk'};
+  return {s:'ok'};
+}
+/* Anma kontrollü bobin güncellemesi: çekti mi? (e.st.d, isi, yan) */
+function anmaCek(e, R, a, b, key, polar){
+  const an = bobAnma(e), bs = besleme(R, e, a, b, key);
+  if(!an) return !!bs;
+  let d = bobDegerlendir(an, bs);
+  if(polar && bs && bs.ters && d.s === 'ok') d = {s:'ters'};
+  e.st.d = d.s; e.st.V = bs ? bs.V : 0; e.st.vt = bs ? bs.tip : '';
+  if(d.s === 'yuksek' || d.s === 'acdc'){ if(!(e.st.isi > 0) && !e.st.yan) e.st.isi = d.sure; }
+  else e.st.isi = 0;
+  if(e.st.yan) return false;
+  return d.s === 'ok' || d.s === 'yuksek' || d.s === 'acdc';
+}
+function anmaTik(e, dt){ if(e.st.isi > 0 && !e.st.yan){ e.st.isi -= dt; if(e.st.isi <= 0){ e.st.isi = 0; e.st.yan = true; } return true; } return false; }
+function anmaDurum(e, ad){
+  const an = bobAnma(e), V = vYaz(e.st.V || 0), vt = (e.st.vt || '').toUpperCase(), adT = ad + (an ? ' · ' + anmaYazi(an) : '');
+  if(e.st.yan) return {ikon:'🔥', ad:adT, durum:'BOBİN YANDI — dokun, yenisini tak 👆', kotu:true};
+  const m = {
+    ok:{ikon:'🧲', durum:`çekti ✓ (${V} V ${vt})`, on:true},
+    yuksek:{ikon:'🌡️', durum:`AŞIRI GERİLİM ${V} V ${vt} → bobin ısınıyor, yanacak!`, kotu:true},
+    acdc:{ikon:'🌡️', durum:`AC bobine ${V} V DC verildi → akımı sınırlayan empedans yok, aşırı akım: ısınıyor!`, kotu:true},
+    dcac:{ikon:'〰️', durum:`DC bobine ${V} V AC verildi → titriyor, vızıldıyor, tam çekemiyor`, kotu:true},
+    ters:{ikon:'↕️', durum:`polarite TERS (${V} V DC) → çekmiyor, LED yanmıyor`, kotu:true},
+    dusuk:{ikon:'🔇', durum:`gerilim düşük (${V} V ${vt}) → çekmiyor` + ((e.st.V || 0) >= (an ? an.v : 1) * 0.5 ? ', vızıldıyor' : ''), kotu:true},
+    yok:{ikon:'🧲', durum:'bırakık (enerjisiz)'}
+  }[e.st.d || 'yok'] || {ikon:'🧲', durum:'bırakık'};
+  return Object.assign({ad:adT}, m);
+}
+const SECICI_AD = {A:'OTO', '0':'0 (kapalı)', '1':'1 (elle açık)'};
 ET.bob = {
   uclar:e => e.o.yatay ? {A1:[e.x - 22, e.y], A2:[e.x + 22, e.y]} : {A1:[e.x, e.y - 18], A2:[e.x, e.y + 18]},
   yukler:e => [{a:'A1', b:'A2', ad:e.o.ad || e.id, ikon:'🧲', durum:['çekti','bırakık'], gizli:e.o.gizli}],
-  guncelle:(e, R) => { const y = !!R.yukEn[e.id]; if(y !== !!e.st.en){ e.st.en = y; return true; } return false; },
-  ciz:(e, R) => { const y = !!e.st.en, w = e.o.yatay ? 30 : 34, h = e.o.yatay ? 18 : 18;
-    return `<rect x="${e.x - w / 2}" y="${e.y - h / 2}" width="${w}" height="${h}" rx="3" class="sv-bobin${y ? ' aktif' : ''}"/>` + (e.o.yatay ? `<line x1="${e.x - 22}" y1="${e.y}" x2="${e.x - 15}" y2="${e.y}" class="sv-c"/><line x1="${e.x + 22}" y1="${e.y}" x2="${e.x + 15}" y2="${e.y}" class="sv-c"/>` : `<line x1="${e.x}" y1="${e.y - 18}" x2="${e.x}" y2="${e.y - 9}" class="sv-c"/><line x1="${e.x}" y1="${e.y + 18}" x2="${e.x}" y2="${e.y + 9}" class="sv-c"/>`) +
-      yz(e.o.yatay ? e.x : e.x + 22, e.o.yatay ? e.y - 13 : e.y + 4, e.o.ad || e.id, {a:e.o.yatay ? 'middle' : 'start', c:'sv-k'}) + (e.o.not ? yz(e.o.yatay ? e.x : e.x + 22, e.o.yatay ? e.y + 22 : e.y + 16, e.o.not, {a:e.o.yatay ? 'middle' : 'start', s:9}) : ''); }
+  ilk:e => ({si:e.o.si || 0, sec:e.o.sec || 'A', isi:0, yan:false, kiv:0}),
+  guncelle:(e, R) => {
+    const y = anmaCek(e, R, 'A1', 'A2');
+    if(y !== !!e.st.en){
+      if(!y && e.st.en && e.o.kiv && !R.liste.some(s => s.tip === 'sdr' && [[s.id + '.a', s.id + '.k'], [s.id + '.k', s.id + '.a']].some(([p, q]) => R.net(p) === R.net(e.id + '.A1') && R.net(q) === R.net(e.id + '.A2')))) e.st.kiv = 1.6;
+      e.st.en = y; return true; }
+    return false; },
+  tik:(e, R, dt) => { let d = anmaTik(e, dt); if(e.st.kiv > 0){ e.st.kiv = Math.max(0, e.st.kiv - dt); d = true; } return d; },
+  aktif:e => e.o.secici && e.st.sec !== 'A' ? e.st.sec === '1' : !!e.st.en,
+  tikla:(e, b) => { if(e.st.yan){ e.st.yan = false; e.st.isi = 0; return; } if(b === 'sec'){ e.st.sec = {A:'0', '0':'1', '1':'A'}[e.st.sec]; return; } if(e.o.secenek){ e.st.si = (e.st.si + 1) % e.o.secenek.length; e.st.isi = 0; } },
+  durum:(e, R) => {
+    const L = [];
+    if(e.o.gizli) return L;
+    const an = bobAnma(e);
+    if(!an){ const y = R.yukEn[e.id]; L.push({ikon:'🧲', ad:e.o.ad || e.id, durum:y ? 'çekti' + (y.V > 300 ? ' (400 V!)' : '') : 'bırakık', on:!!y}); }
+    else L.push(anmaDurum(e, e.o.ad || e.id));
+    if(e.o.secici) L.push({ikon:'🎚️', ad:(e.o.ad || e.id) + ' selektör', durum:SECICI_AD[e.st.sec] + (e.st.sec === '1' ? ' → kontaklar bobinden bağımsız KAPALI' : e.st.sec === '0' ? ' → kontaktör çekmez' : ' → bobin kontrol eder'), on:e.st.sec === '1', kotu:e.st.sec !== 'A'});
+    if(e.st.kiv > 0) L.push({ikon:'⚡', ad:'Ters gerilim sıçraması', durum:'bobin bırakırken yüzlerce volt indüklendi — söndürücü (diyot/RC) yok! Sürücü kontak/PLC çıkışı zarar görür', kotu:true});
+    return L; },
+  ciz:(e, R) => { const y = !!e.st.en, w = e.o.yatay ? 30 : 34, h = 18, an = bobAnma(e), tikla = an && (e.o.secenek || e.st.yan);
+    const cls = e.st.yan ? ' yanik' : e.st.isi > 0 ? ' isiniyor' : y ? ' aktif' : '';
+    let g = `<rect x="${e.x - w / 2}" y="${e.y - h / 2}" width="${w}" height="${h}" rx="3" class="sv-bobin${cls}"/>` + (e.o.yatay ? `<line x1="${e.x - 22}" y1="${e.y}" x2="${e.x - 15}" y2="${e.y}" class="sv-c"/><line x1="${e.x + 22}" y1="${e.y}" x2="${e.x + 15}" y2="${e.y}" class="sv-c"/>` : `<line x1="${e.x}" y1="${e.y - 18}" x2="${e.x}" y2="${e.y - 9}" class="sv-c"/><line x1="${e.x}" y1="${e.y + 18}" x2="${e.x}" y2="${e.y + 9}" class="sv-c"/>`);
+    if(e.st.yan) g += `<path d="M${e.x - 9} ${e.y - 6} l18 12 M${e.x + 9} ${e.y - 6} l-18 12" class="sv-c" style="stroke:var(--red)"/>`;
+    else if(e.st.isi > 0) g += yz(e.x, e.y + 4, '🌡', {s:10});
+    if(an && an.akim === 'dc') g += yz(e.o.yatay ? e.x - 22 : e.x - 7, e.o.yatay ? e.y - 5 : e.y - 11, '+', {s:9, a:'end'});
+    if(tikla) g = tikG(e, DOK(e.x - 22, e.y - 14, 44, 28) + g);
+    const ax = e.o.yatay ? e.x : e.x + 22, an2 = e.o.yatay ? 'middle' : 'start';
+    let t = yz(ax, e.o.yatay ? e.y - 13 : e.y + 4, e.o.ad || e.id, {a:an2, c:'sv-k'});
+    let sy2 = e.o.yatay ? e.y + 22 : e.y + 16;
+    if(an){ t += yz(ax, sy2, anmaYazi(an) + (e.o.secenek ? ' 👆' : ''), {a:an2, s:9, c:e.st.yan || e.st.isi > 0 ? 'sv-kirmizi' : ''}); sy2 += 11; }
+    if(e.o.not) t += yz(ax, sy2, e.o.not, {a:an2, s:9});
+    if(e.st.yan) t += yz(ax, sy2 + (e.o.not ? 11 : 0), 'YANDI 🔥', {a:an2, s:9, c:'sv-kirmizi'});
+    if(e.st.kiv > 0) t += `<path d="M${e.x - 34} ${e.y - 16} l8 9 l-5 1 l8 10" class="sv-simsek"/>`;
+    if(e.o.secici){ const sx = e.x - 62, sy = e.y - 12;
+      t += tikG(e, `<rect x="${sx}" y="${sy}" width="34" height="24" rx="5" class="${e.st.sec === 'A' ? 'sv-ariza-btn' : 'sv-ariza-btn aktif'}"/>` + yz(sx + 17, sy + 16, e.st.sec === 'A' ? 'OTO' : e.st.sec, {s:9.5, c:'sv-k'}), 'sec') + yz(sx + 17, sy - 4, 'selektör 👆', {s:8}); }
+    return g + t; }
 };
 ET.kon = {
   uclar:e => e.o.yatay ? {a:[e.x, e.y], b:[e.x + 36, e.y]} : {a:[e.x, e.y], b:[e.x, e.y + 36]},
   baglar:(e, R) => ET.kon.kapali(e, R) ? [['a','b']] : [],
-  kapali:(e, R) => { const t = e.o.tip || 'no'; const a = surucuAktif(R, e.o.r, t); return t === 'no' || t === 'tno' ? a : t === 'nc' ? !a : a; },
+  kapali:(e, R) => { const t = e.o.tip || 'no'; const a = surucuAktif(R, e.o.r, t, e.o.k2); return t === 'no' || t === 'tno' ? a : t === 'nc' ? !a : a; },
   ciz:(e, R) => {
     const k = ET.kon.kapali(e, R), t = e.o.tip || 'no', nc = t === 'nc' || t === 'tnc', y = e.o.yatay;
     const [ax, ay] = [e.x, e.y], [bx, by] = y ? [e.x + 36, e.y] : [e.x, e.y + 36];
@@ -399,14 +479,34 @@ ET.kon3 = {
   ciz:(e, R) => { const k = surucuAktif(R, e.o.r, 'no'), s = e.o.s || 26, n = e.o.n || 3; let g = '';
     for(let i = 0; i < n; i++){ const x = e.x + i * s; g += nok(x, e.y) + nok(x, e.y + 40) + `<line x1="${x}" y1="${e.y}" x2="${x}" y2="${e.y + 10}" class="sv-c"/><line x1="${x}" y1="${e.y + 40}" x2="${x}" y2="${e.y + 30}" class="sv-c"/>` + (k ? `<line x1="${x}" y1="${e.y + 10}" x2="${x}" y2="${e.y + 30}" class="sv-bicak kapali"/>` : `<line x1="${x}" y1="${e.y + 10}" x2="${x + 9}" y2="${e.y + 29}" class="sv-bicak"/>`); }
     g += `<line x1="${e.x + 4}" y1="${e.y + 20}" x2="${e.x + (n - 1) * s + 6}" y2="${e.y + 20}" class="sv-mek"/>`;
+    if(e.o.nolar) for(let i = 0; i < n; i++){ const x = e.x + i * s; g += yz(x + 4, e.y + 8, String(2 * i + 1), {a:'start', s:7.5}) + yz(x + 4, e.y + 38, String(2 * i + 2), {a:'start', s:7.5}); }
     return g + yz(e.x - 8, e.y + 24, e.o.ad || e.o.r, {a:'end', c:'sv-k'}); }
 };
 ET.term3 = {
   uclar:e => { const s = e.o.s || 26, o = {}; for(let i = 1; i <= (e.o.n || 3); i++){ o['a' + i] = [e.x + (i - 1) * s, e.y]; o['b' + i] = [e.x + (i - 1) * s, e.y + 36]; } return o; },
   baglar:e => { const L = []; for(let i = 1; i <= (e.o.n || 3); i++) L.push(['a' + i, 'b' + i]); return L; },
-  ilk:() => ({atik:false}), aktif:e => e.st.atik,
-  tikla:e => { e.st.atik = !e.st.atik; },
+  ilk:e => ({atik:false, ai:e.o.ai || 0, isi:0, oto:!!e.o.oto, yuk:false}), aktif:e => e.st.atik,
+  tikla:(e, b) => { if(!e.o.ayarlar){ e.st.atik = !e.st.atik; return; }
+    if(b === 'ayar'){ e.st.ai = (e.st.ai + 1) % e.o.ayarlar.length; return; } if(b === 'mod'){ e.st.oto = !e.st.oto; return; } if(b === 'yuk'){ e.st.yuk = !e.st.yuk; return; }
+    if(e.st.atik && e.st.isi <= 0.8) e.st.atik = false; },
+  akim:(e, R) => { const m = e.o.m && R.el[e.o.m]; const on = m && (ET[m.tip].durum ? ET[m.tip].durum(m, R)[0].on : !!R.yukEn[m.id]); return on ? e.o.In * (e.st.yuk ? 1.45 : 1) : 0; },
+  tik:(e, R, dt) => { if(!e.o.ayarlar) return false; const I = ET.term3.akim(e, R), ay = e.o.ayarlar[e.st.ai], i0 = e.st.isi, a0 = e.st.atik;
+    if(I > ay * 1.15) e.st.isi += dt * (I / ay - 1) * 3; else e.st.isi = Math.max(0, e.st.isi - dt * 0.6);
+    if(e.st.isi >= 3){ e.st.isi = 3; e.st.atik = true; }
+    if(e.st.atik && e.st.oto && e.st.isi <= 0.3) e.st.atik = false;
+    return a0 !== e.st.atik || Math.abs(i0 - e.st.isi) > 0.001; },
+  durum:(e, R) => { if(!e.o.ayarlar) return []; const I = ET.term3.akim(e, R), ay = e.o.ayarlar[e.st.ai], mot = e.o.In;
+    const L = [{ikon:e.st.atik ? '⚡' : '🌡️', ad:(e.o.ad || 'Termik') + ' · ayar ' + vYaz(ay) + ' A', durum:e.st.atik ? 'ATTI (95-96 açık, 97-98 kapalı) — ' + (e.st.isi > 0.8 ? 'bimetal soğuyor %' + Math.round(e.st.isi / 3 * 100) + ', ' : '') + (e.st.oto ? 'soğuyunca kendiliğinden kurulur (A)' : 'soğuyunca elle RESET 👆 (H)') : I ? `motor ${vYaz(Math.round(I * 10) / 10)} A çekiyor` + (e.st.isi > 0.05 ? ' · ısınıyor %' + Math.round(e.st.isi / 3 * 100) : '') : 'motor duruyor', kotu:e.st.atik}];
+    if(ay < mot * 0.95) L.push({ikon:'⚠️', ad:'Ayar düşük', durum:`etiket akımı ${vYaz(mot)} A, ayar ${vYaz(ay)} A → motor normal yükte bile termik atar`, kotu:true});
+    else if(ay > mot * 1.1) L.push({ikon:'🔥', ad:'Ayar yüksek', durum:`etiket ${vYaz(mot)} A iken ${vYaz(ay)} A ayar → aşırı yükte termik ATMAZ, motor sargısı yanar`, kotu:true});
+    return L; },
   ciz:e => { const s = e.o.s || 26, n = e.o.n || 3; let g = '';
+    if(e.o.ayarlar){ const bx = e.x + (n - 1) * s + 18, ay = e.o.ayarlar[e.st.ai];
+      g += tikG(e, `<rect x="${bx}" y="${e.y + 36}" width="64" height="18" rx="5" class="sv-ariza-btn"/>` + yz(bx + 32, e.y + 49, 'Ir ' + vYaz(ay) + ' A 👆', {s:9}), 'ayar') +
+        tikG(e, `<rect x="${bx + 68}" y="${e.y + 36}" width="54" height="18" rx="5" class="sv-ariza-btn${e.st.oto ? ' aktif' : ''}"/>` + yz(bx + 95, e.y + 49, e.st.oto ? 'reset: A' : 'reset: H', {s:9, c:'sv-k'}), 'mod') +
+        tikG(e, `<rect x="${bx + 126}" y="${e.y + 36}" width="74" height="18" rx="5" class="sv-ariza-btn${e.st.yuk ? ' aktif' : ''}"/>` + yz(bx + 163, e.y + 49, e.st.yuk ? '⚠ aşırı yük VAR' : 'aşırı yük yap', {s:9}), 'yuk');
+      for(let i = 0; i < n; i++){ const x = e.x + i * s; g += nok(x, e.y) + nok(x, e.y + 36) + `<path d="M${x} ${e.y} V${e.y + 10} h6 v8 h-12 v8 h6 V${e.y + 36}" class="sv-c" fill="none"/>`; }
+      return g + tikG(e, DOK(e.x - 14, e.y - 4, (n - 1) * s + 28, 44) + `<rect x="${e.x - 12}" y="${e.y + 4}" width="${(n - 1) * s + 24}" height="28" rx="5" class="sv-ipucu${e.st.atik ? ' hata' : ''}" style="fill-opacity:.35"/>`) + yz(bx, e.y + 16, e.o.ad || 'Termik', {a:'start', c:'sv-k'}) + yz(bx, e.y + 30, e.st.atik ? (e.st.oto ? 'ATTI · soğuyor…' : 'ATTI · RESET 👆') : e.st.isi > 0.05 ? 'ısınıyor %' + Math.round(e.st.isi / 3 * 100) : 'normal', {a:'start', s:9, c:e.st.atik ? 'sv-kirmizi' : ''}); }
     for(let i = 0; i < n; i++){ const x = e.x + i * s; g += nok(x, e.y) + nok(x, e.y + 36) + `<path d="M${x} ${e.y} V${e.y + 10} h6 v8 h-12 v8 h6 V${e.y + 36}" class="sv-c" fill="none"/>`; }
     return tikG(e, DOK(e.x - 14, e.y - 4, (n - 1) * s + 28, 44) + `<rect x="${e.x - 12}" y="${e.y + 4}" width="${(n - 1) * s + 24}" height="28" rx="5" class="sv-ipucu${e.st.atik ? ' hata' : ''}"/>` + g) + yz(e.x + (n - 1) * s + 18, e.y + 16, e.o.ad || 'Termik', {a:'start', c:'sv-k'}) + yz(e.x + (n - 1) * s + 18, e.y + 30, e.st.atik ? 'ATTI (sıfırla 👆)' : 'aşırı yük yap 👆', {a:'start', s:9, c:e.st.atik ? 'sv-kirmizi' : ''}); }
 };
@@ -879,6 +979,403 @@ ET.ups = { // UPS: giriş Lg/Ng, çıkış L/N, dahili akü
 };
 
 /* ============================================================
+   ŞEMA ELEMANLARI 2 — Kontaktör ve röle çeşitleri, zaman röleleri,
+   söndürücüler, kompresör ve marş röleleri
+   ============================================================ */
+
+/* Değiştirici (C/O) kontak: ortak üstte, NC sol altta, NO sağ altta */
+ET.kco = {
+  uclar:e => ({c:[e.x, e.y], nc:[e.x - 14, e.y + 40], no:[e.x + 14, e.y + 40]}),
+  baglar:(e, R) => [['c', surucuAktif(R, e.o.r, 'no', e.o.k2) ? 'no' : 'nc']],
+  ciz:(e, R) => { const k = surucuAktif(R, e.o.r, 'no', e.o.k2), n = e.o.n || ['11','12','14'];
+    let g = nok(e.x, e.y) + nok(e.x - 14, e.y + 40) + nok(e.x + 14, e.y + 40) +
+      `<line x1="${e.x}" y1="${e.y}" x2="${e.x}" y2="${e.y + 10}" class="sv-c"/><line x1="${e.x - 14}" y1="${e.y + 40}" x2="${e.x - 14}" y2="${e.y + 28}" class="sv-c"/><line x1="${e.x + 14}" y1="${e.y + 40}" x2="${e.x + 14}" y2="${e.y + 28}" class="sv-c"/>` +
+      `<line x1="${e.x - 14}" y1="${e.y + 28}" x2="${e.x - 9}" y2="${e.y + 28}" class="sv-c"/><line x1="${e.x}" y1="${e.y + 10}" x2="${k ? e.x + 14 : e.x - 10}" y2="${e.y + 28}" class="sv-bicak kapali"/>`;
+    if(e.o.zaman) g += `<path d="M${e.x + 3} ${e.y + 15} a5 5 0 0 1 10 0" class="sv-c" fill="none"/>`;
+    return g + yz(e.x - 4, e.y + 8, n[0], {a:'end', s:8.5}) + yz(e.x - 18, e.y + 38, n[1], {a:'end', s:8.5}) + yz(e.x + 18, e.y + 38, n[2], {a:'start', s:8.5}) + (e.o.ad === '' ? '' : yz(e.x + 6, e.y + 6, e.o.ad || e.o.r, {a:'start', s:9, c:'sv-k'}));
+  }
+};
+
+/* Bobin söndürücü: diyot (k: katot → A1 +, a: anot → A2 −), RC, varistör */
+ET.sdr = {
+  uclar:e => ({k:[e.x, e.y - 18], a:[e.x, e.y + 18]}),
+  ilk:() => ({ilet:false}),
+  guncelle:(e, R) => { if((e.o.tur || 'diyot') !== 'diyot') return false;
+    const A = R.potNet(e.id + (e.o.ters ? '.k' : '.a')), K = R.potNet(e.id + (e.o.ters ? '.a' : '.k')), art = L => L.some(p => potTip(p) === 'arti'), eks = L => L.some(p => potTip(p) === 'eksi');
+    const il = e.st.ilet ? art(A) && eks(A) : art(A) && eks(K);
+    if(il !== e.st.ilet){ e.st.ilet = il; return true; } return false; },
+  baglar:e => e.st.ilet ? [['a','k']] : [],
+  ciz:e => { const t = e.o.tur || 'diyot', x = e.x, y = e.y; let g = nok(x, y - 18) + nok(x, y + 18);
+    if(t === 'diyot'){ const f = e.o.ters ? -1 : 1; g += `<line x1="${x}" y1="${y - 18}" x2="${x}" y2="${y + 18}" class="sv-c"/><path d="M${x - 7} ${y + 6 * f} L${x + 7} ${y + 6 * f} L${x} ${y - 5 * f} Z" class="sv-c" style="fill:var(--surface)"/><line x1="${x - 8}" y1="${y - 6 * f}" x2="${x + 8}" y2="${y - 6 * f}" class="sv-c"/>`; }
+    else if(t === 'rc') g += `<line x1="${x}" y1="${y - 18}" x2="${x}" y2="${y - 13}" class="sv-c"/><rect x="${x - 5}" y="${y - 13}" width="10" height="12" class="sv-c" style="fill:var(--surface)"/><line x1="${x}" y1="${y - 1}" x2="${x}" y2="${y + 5}" class="sv-c"/><line x1="${x - 8}" y1="${y + 5}" x2="${x + 8}" y2="${y + 5}" class="sv-c"/><line x1="${x - 8}" y1="${y + 10}" x2="${x + 8}" y2="${y + 10}" class="sv-c"/><line x1="${x}" y1="${y + 10}" x2="${x}" y2="${y + 18}" class="sv-c"/>`;
+    else g += `<line x1="${x}" y1="${y - 18}" x2="${x}" y2="${y - 10}" class="sv-c"/><rect x="${x - 6}" y="${y - 10}" width="12" height="20" class="sv-c" style="fill:var(--surface)"/><path d="M${x - 9} ${y + 9} L${x + 6} ${y - 9} h4" class="sv-c" fill="none"/><line x1="${x}" y1="${y + 10}" x2="${x}" y2="${y + 18}" class="sv-c"/>`;
+    const ad = e.o.ad || {diyot:'söndürme diyodu', rc:'RC söndürücü', varistor:'varistör'}[t];
+    return g + yz(x + 12, y - 2, ad, {a:'start', s:9, c:'sv-k'}) + yz(x + 12, y + 10, e.st.ilet ? 'TERS! kısa devre' : t === 'diyot' ? (e.o.ters ? 'katot (çizgi) −’de!' : 'katot (çizgi) +’da') : 'polaritesiz', {a:'start', s:8.5, c:e.st.ilet ? 'sv-kirmizi' : ''});
+  }
+};
+
+/* Kaynak seçici: dokununca bobine giden gerilim değişir */
+const KSEC = {
+  '230ac':{ad:'230 V AC', alt:'L – N', p:['L1','N']},
+  '400ac':{ad:'400 V AC', alt:'L1 – L2', p:['L1','L2']},
+  '24ac':{ad:'24 V AC', alt:'kumanda trafosu', p:['ks24:a','ks24:b'], d:['ks24', 24]},
+  '24dc':{ad:'24 V DC', alt:'adaptör / PLC', p:['kd24:+','kd24:-'], d:['kd24', 24]},
+  '48dc':{ad:'48 V DC', alt:'adaptör', p:['kd48:+','kd48:-'], d:['kd48', 48]},
+  '12dc':{ad:'12 V DC', alt:'akü', p:['kd12:+','kd12:-'], d:['kd12', 12]}
+};
+ET.ksec = {
+  uclar:e => ({X1:[e.x + 60, e.y - 12], X2:[e.x + 60, e.y + 12]}),
+  ilk:e => ({i:e.o.i || 0}),
+  liste:e => e.o.liste || ['230ac','400ac','24ac','24dc','12dc'],
+  sec:e => KSEC[ET.ksec.liste(e)[e.st.i]],
+  kaynaklar:e => { const s = ET.ksec.sec(e); return [['X1', s.p[0]], ['X2', s.p[1]]]; },
+  domV:e => { const s = ET.ksec.sec(e); return s.d ? [s.d] : []; },
+  tikla:e => { e.st.i = (e.st.i + 1) % ET.ksec.liste(e).length; },
+  ciz:e => { const s = ET.ksec.sec(e), dc = s.p[0].endsWith('+');
+    return tikG(e, `<rect x="${e.x - 52}" y="${e.y - 26}" width="104" height="52" rx="8" class="sv-ozel-sec"/>` + yz(e.x, e.y - 4, '⚡ ' + s.ad, {s:12, c:'sv-k'}) + yz(e.x, e.y + 13, s.alt + ' · değiştir 👆', {s:8.5})) +
+      `<line x1="${e.x + 52}" y1="${e.y - 12}" x2="${e.x + 60}" y2="${e.y - 12}" class="sv-c"/><line x1="${e.x + 52}" y1="${e.y + 12}" x2="${e.x + 60}" y2="${e.y + 12}" class="sv-c"/>` +
+      yz(e.x + 64, e.y - 16, dc ? '+' : '~', {a:'start', s:10}) + yz(e.x + 64, e.y + 24, dc ? '−' : '~', {a:'start', s:10}) + yz(e.x, e.y - 32, e.o.ad || 'Kaynak', {c:'sv-k'});
+  }
+};
+
+/* Çok fonksiyonlu zaman rölesi: A1-A2 besleme, B1 kontrol girişi, çıkış(lar) ayrı kontak elemanlarıyla */
+const ZR_MOD = {E:'Çekmede gecikmeli', R:'Düşmede gecikmeli', Wu:'Tek darbe (çekince)', Bl:'Flaşör', YD:'Yıldız-üçgen'};
+const ZR_ACIK = {E:'enerji gelince t sonra çıkış kapanır, enerji gidince hemen açılır', R:'B1 gelince çıkış hemen kapanır; B1 gidince t kadar daha kapalı kalır', Wu:'enerji gelince çıkış hemen kapanır, t sonra açılır', Bl:'çıkış t1 kapalı / t2 açık sürekli tekrar eder', YD:'önce Y çıkışı (17-18) t süre, kısa ölü zaman, sonra Δ çıkışı (17-28)'};
+ET.zr2 = {
+  uclar:e => { const u = {A1:[e.x - 34, e.y - 36], A2:[e.x + 34, e.y - 36]}; if(e.o.b1) u.B1 = [e.x, e.y - 36]; return u; },
+  yukler:e => [{a:'A1', b:'A2', ad:e.o.ad || e.id, gizli:1}],
+  ilk:e => ({mi:0, si:0, t:0, cik:false, cik2:false, en:false, b1:false, faz:0, gec:[], gt:0}),
+  mod:e => e.o.modlar ? e.o.modlar[e.st.mi] : (e.o.mod || 'E'),
+  sure:e => e.o.sureler ? e.o.sureler[e.st.si] : (e.o.sure || 3),
+  basla:e => { const m = ET.zr2.mod(e); e.st.t = 0; e.st.faz = 0; e.st.cik2 = false; e.st.cik = m === 'Wu' || m === 'Bl' || m === 'YD' || (m === 'R' && e.st.b1); },
+  guncelle:(e, R) => {
+    const en = !!R.yukEn[e.id], b1 = !!e.o.b1 && (R.potNet(e.id + '.B1') || []).some(p => ['faz','arti','sek'].includes(potTip(p)));
+    let d = false;
+    if(b1 !== e.st.b1){ e.st.b1 = b1; d = true; if(e.st.en && ET.zr2.mod(e) === 'R'){ if(b1){ e.st.cik = true; e.st.faz = 0; e.st.t = 0; } else if(e.st.cik){ e.st.faz = 1; e.st.t = 0; } } }
+    if(en !== e.st.en){ e.st.en = en; d = true; if(en) ET.zr2.basla(e); else { e.st.cik = false; e.st.cik2 = false; e.st.t = 0; e.st.faz = 0; } }
+    return d; },
+  tik:(e, R, dt) => {
+    let d = false; const m = ET.zr2.mod(e), T = ET.zr2.sure(e);
+    if(e.st.en){
+      if(m === 'E' && !e.st.cik){ e.st.t += dt; if(e.st.t >= T) e.st.cik = true; d = true; }
+      else if(m === 'Wu' && e.st.cik){ e.st.t += dt; if(e.st.t >= T) e.st.cik = false; d = true; }
+      else if(m === 'Bl'){ e.st.t += dt; if(e.st.t >= (e.st.cik ? T : (e.o.sure2 || T))){ e.st.cik = !e.st.cik; e.st.t = 0; } d = true; }
+      else if(m === 'YD' && e.st.faz < 2){ e.st.t += dt; if(e.st.faz === 0 && e.st.t >= T){ e.st.cik = false; e.st.faz = 1; e.st.t = 0; } else if(e.st.faz === 1 && e.st.t >= (e.o.olu || 0.4)){ e.st.cik2 = true; e.st.faz = 2; } d = true; }
+      else if(m === 'R' && e.st.faz === 1 && e.st.cik){ e.st.t += dt; if(e.st.t >= T){ e.st.cik = false; e.st.faz = 0; } d = true; }
+    }
+    if(e.o.grafik){ e.st.gt += dt; if(e.st.gt >= 0.2){ e.st.gt = 0; e.st.gec.push([e.st.en ? 1 : 0, e.st.b1 ? 1 : 0, e.st.cik ? 1 : 0]); if(e.st.gec.length > 60) e.st.gec.shift(); d = true; } }
+    return d; },
+  aktif:e => e.st.cik, aktif2:e => e.st.cik2,
+  tikla:(e, b) => { if(b === 'mod' && e.o.modlar) e.st.mi = (e.st.mi + 1) % e.o.modlar.length; else if(b === 'sure' && e.o.sureler) e.st.si = (e.st.si + 1) % e.o.sureler.length; else return;
+    if(e.st.en) ET.zr2.basla(e); else { e.st.cik = false; e.st.cik2 = false; } e.st.gec = []; },
+  kalan:e => { const m = ET.zr2.mod(e), T = ET.zr2.sure(e);
+    if(!e.st.en) return 'enerjisiz';
+    if(m === 'E') return e.st.cik ? 'süre doldu → çıkış KAPALI' : 'sayıyor ' + vYaz(Math.max(0, T - e.st.t).toFixed(1)) + ' sn';
+    if(m === 'Wu') return e.st.cik ? 'çıkış kapalı, ' + vYaz(Math.max(0, T - e.st.t).toFixed(1)) + ' sn kaldı' : 'darbe bitti → çıkış açık';
+    if(m === 'Bl') return e.st.cik ? 'çıkış KAPALI (yanıyor)' : 'çıkış açık (sönük)';
+    if(m === 'YD') return e.st.faz === 0 ? 'YILDIZ · ' + vYaz(Math.max(0, T - e.st.t).toFixed(1)) + ' sn' : e.st.faz === 1 ? 'ölü zaman (ikisi de açık)' : 'ÜÇGEN';
+    return e.st.b1 ? 'B1 var → çıkış KAPALI' : e.st.cik ? 'B1 gitti, ' + vYaz(Math.max(0, T - e.st.t).toFixed(1)) + ' sn sonra açılacak' : 'beklemede (B1 yok)'; },
+  durum:(e) => { const m = ET.zr2.mod(e); return [{ikon:'⏱️', ad:(e.o.ad || e.id) + ' · ' + ZR_MOD[m] + ' · t = ' + vYaz(ET.zr2.sure(e)) + ' sn' + (m === 'Bl' && e.o.sure2 ? ' / ' + vYaz(e.o.sure2) + ' sn' : ''), durum:ET.zr2.kalan(e), on:e.st.cik || e.st.cik2}]; },
+  ciz:e => { const m = ET.zr2.mod(e), x = e.x, y = e.y;
+    let g = `<rect x="${x - 50}" y="${y - 28}" width="100" height="58" rx="8" class="sv-yuk${e.st.en ? ' aktif' : ''}"/>`;
+    [['A1', -34], ['A2', 34]].concat(e.o.b1 ? [['B1', 0]] : []).forEach(([t, dx]) => { g += `<line x1="${x + dx}" y1="${y - 36}" x2="${x + dx}" y2="${y - 28}" class="sv-c"/>` + yz(x + dx, y - 18, t, {s:8.5}); });
+    g += yz(x, y - 3, '⏱ ' + m + ' · ' + vYaz(ET.zr2.sure(e)) + ' sn', {s:10.5, c:'sv-k'}) + yz(x, y + 12, ET.zr2.kalan(e).slice(0, 26), {s:7.8});
+    g += `<circle cx="${x - 40}" cy="${y + 22}" r="3.5" class="sv-led-k sv-led-y${e.st.en ? ' on' : ''}"/>` + yz(x - 33, y + 25, 'U', {a:'start', s:7.5});
+    g += `<circle cx="${x + 24}" cy="${y + 22}" r="3.5" class="sv-led-k${e.st.cik ? ' on' : ''}"/>` + yz(x + 31, y + 25, m === 'YD' ? 'Y' : 'R', {a:'start', s:7.5});
+    if(m === 'YD') g += `<circle cx="${x + 4}" cy="${y + 22}" r="3.5" class="sv-led-k${e.st.cik2 ? ' on' : ''}"/>` + yz(x + 11, y + 25, 'Δ', {a:'start', s:7.5});
+    let bx = x - 50;
+    if(e.o.modlar){ g += tikG(e, `<rect x="${bx}" y="${y + 36}" width="62" height="18" rx="5" class="sv-ariza-btn"/>` + yz(bx + 31, y + 49, 'mod: ' + m + ' 👆', {s:9}), 'mod'); bx += 66; }
+    if(e.o.sureler) g += tikG(e, `<rect x="${bx}" y="${y + 36}" width="56" height="18" rx="5" class="sv-ariza-btn"/>` + yz(bx + 28, y + 49, 't: ' + vYaz(ET.zr2.sure(e)) + ' sn 👆', {s:9}), 'sure');
+    g += yz(x - 50, y + (e.o.modlar || e.o.sureler ? 68 : 46), e.o.ad || e.id, {a:'start', c:'sv-k'});
+    if(e.o.grafik){ const gx = x + (e.o.gx || 60), gw = 150, sat = [['besleme A1-A2', 0]].concat(e.o.b1 ? [['B1 kontrol', 1]] : []).concat([['çıkış (R)', 2]]);
+      sat.forEach(([ad, k], i) => { const yy = y - 2 + i * 22, P = e.st.gec.map((s, j) => `${gx + j * gw / 60},${yy - s[k] * 12}`);
+        g += `<line x1="${gx}" y1="${yy}" x2="${gx + gw}" y2="${yy}" class="sv-grafik-z"/>` + (P.length > 1 ? `<polyline points="${P.join(' ')}" class="sv-grafik"/>` : '') + yz(gx + gw + 4, yy, ad, {a:'start', s:8}); });
+      g += yz(gx, y + sat.length * 22 + 8, '← son 12 sn', {a:'start', s:7.5}); }
+    return g; }
+};
+
+/* Mandallı (kilitli) röle / kontaktör: SET bobini (A1) kapatır, RESET bobini (A3) açar; enerji gidince konum korunur */
+ET.mand = {
+  uclar:e => ({A1:[e.x - 24, e.y - 22], A3:[e.x + 24, e.y - 22], A2:[e.x, e.y + 30]}),
+  yukler:e => [{a:'A1', b:'A2', gizli:1, ad:'set'}, {a:'A3', b:'A2', gizli:1, ad:'reset'}],
+  ilk:e => ({k:!!e.o.k, s:false, r:false}),
+  guncelle:(e, R) => { const s = !!R.yukEn[e.id + '#set'], r = !!R.yukEn[e.id + '#reset']; let d = s !== e.st.s || r !== e.st.r; e.st.s = s; e.st.r = r;
+    if(s && !r && !e.st.k){ e.st.k = true; d = true; } if(r && !s && e.st.k){ e.st.k = false; d = true; } return d; },
+  aktif:e => e.st.k,
+  durum:e => [{ikon:'🔒', ad:(e.o.ad || e.id) + ' (mandallı)', durum:(e.st.k ? 'KAPALI konumda kilitli' : 'AÇIK konumda kilitli') + (e.st.s ? ' · SET bobini darbe alıyor' : e.st.r ? ' · RESET bobini darbe alıyor' : ' · bobinler enerjisiz, konum korunuyor'), on:e.st.k}],
+  ciz:e => { const x = e.x, y = e.y;
+    let g = [[-24, e.st.s, 'SET'], [24, e.st.r, 'RESET']].map(([dx, a, ad]) => `<line x1="${x + dx}" y1="${y - 22}" x2="${x + dx}" y2="${y - 8}" class="sv-c"/><rect x="${x + dx - 14}" y="${y - 8}" width="28" height="16" rx="3" class="sv-bobin${a ? ' aktif' : ''}"/><line x1="${x + dx}" y1="${y + 8}" x2="${x + dx}" y2="${y + 18}" class="sv-c"/>` + yz(x + dx, y + 4, ad[0], {s:8})).join('');
+    g += `<line x1="${x - 24}" y1="${y + 18}" x2="${x + 24}" y2="${y + 18}" class="sv-c"/><line x1="${x}" y1="${y + 18}" x2="${x}" y2="${y + 30}" class="sv-c"/>`;
+    return g + yz(x - 28, y - 24, 'A1 (SET)', {a:'end', s:8.5}) + yz(x + 28, y - 24, 'A3 (RESET)', {a:'start', s:8.5}) + yz(x + 6, y + 30, 'A2', {a:'start', s:8.5}) + yz(x + 44, y - 2, e.o.ad || e.id, {a:'start', c:'sv-k'}) + yz(x + 44, y + 11, 'konum: ' + (e.st.k ? 'KAPALI 🔒' : 'AÇIK 🔒'), {a:'start', s:9});
+  }
+};
+
+/* Soketli / ray tipi röleler: pin numaraları gerçek soket numaralarıdır */
+const ROLE_TUR = {
+  mk2:{ad:'8 pin (MK2P) · 2 C/O', bob:['2','7'], kut:[['1','3','4'],['8','6','5']]},
+  mk3:{ad:'11 pin (MK3P) · 3 C/O', bob:['2','10'], kut:[['1','3','4'],['6','7','5'],['11','9','8']]},
+  my4:{ad:'14 pin (MY4) · 4 C/O', bob:['13','14'], kut:[['9','5','1'],['10','6','2'],['11','7','3'],['12','8','4']]},
+  oto:{ad:'oto rölesi · 5 pin', bob:['86','85'], kut:[['30','87','87a']]},
+  ince:{ad:'ince ray rölesi · 1 C/O', bob:['A1','A2'], kut:[['11','14','12']]}
+};
+ET.role = {
+  tur:e => ROLE_TUR[e.o.tur || 'mk2'],
+  poz:e => { const T = ET.role.tur(e), P = {}; P[T.bob[e.o.terb ? 1 : 0]] = [e.x, e.y]; P[T.bob[e.o.terb ? 0 : 1]] = [e.x, e.y + 84];
+    T.kut.forEach(([c, no, nc], i) => { const x = e.x + 60 + i * 58; P[c] = [x, e.y]; P[nc] = [x - 14, e.y + 84]; P[no] = [x + 14, e.y + 84]; }); return P; },
+  uclar:e => ET.role.poz(e),
+  yukler:e => { const T = ET.role.tur(e); return [{a:T.bob[0], b:T.bob[1], ad:e.o.ad || e.id, gizli:1}]; },
+  ilk:() => ({isi:0, yan:false}),
+  guncelle:(e, R) => { const T = ET.role.tur(e), y = anmaCek(e, R, T.bob[0], T.bob[1], null, e.o.polar); if(y !== !!e.st.en){ e.st.en = y; return true; } return false; },
+  tik:(e, R, dt) => anmaTik(e, dt),
+  baglar:e => ET.role.tur(e).kut.map(([c, no, nc]) => [c, e.st.en ? no : nc]),
+  aktif:e => !!e.st.en,
+  tikla:e => { if(e.st.yan){ e.st.yan = false; e.st.isi = 0; } },
+  durum:e => { if(e.o.gizli) return []; const T = ET.role.tur(e), d = anmaDurum(e, (e.o.ad || e.id) + ' · ' + T.ad);
+    if(d.on) d.durum += ' — kapalı kontaklar: ' + T.kut.map(k => k[0] + '-' + k[1]).join(', ');
+    else if(!d.kotu) d.durum = 'bırakık — kapalı kontaklar: ' + T.kut.map(k => k[0] + '-' + k[2]).join(', ');
+    return [d]; },
+  ciz:e => { const T = ET.role.tur(e), P = ET.role.poz(e), n = T.kut.length, x0 = e.x, y0 = e.y, x1 = e.x + 60 + (n - 1) * 58 + 26, an = bobAnma(e), dc = an && an.akim === 'dc';
+    const en = !!e.st.en, cls = e.st.yan ? ' yanik' : e.st.isi > 0 ? ' isiniyor' : en ? ' aktif' : '';
+    let g = `<rect x="${x0 - 24}" y="${y0 + 8}" width="${x1 - x0 + 24}" height="68" rx="8" class="sv-yuk${en ? ' aktif' : ''}" style="fill-opacity:.55"/>`;
+    g += `<line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0 + 30}" class="sv-c"/><line x1="${x0}" y1="${y0 + 54}" x2="${x0}" y2="${y0 + 84}" class="sv-c"/><rect x="${x0 - 9}" y="${y0 + 30}" width="18" height="24" rx="3" class="sv-bobin${cls}"/>`;
+    if(e.st.yan) g += `<path d="M${x0 - 8} ${y0 + 33} l16 18 M${x0 + 8} ${y0 + 33} l-16 18" class="sv-c" style="stroke:var(--red)"/>`;
+    T.kut.forEach(([c, no, nc], i) => { const x = x0 + 60 + i * 58;
+      g += `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + 30}" class="sv-c"/><line x1="${x - 14}" y1="${y0 + 84}" x2="${x - 14}" y2="${y0 + 56}" class="sv-c"/><line x1="${x + 14}" y1="${y0 + 84}" x2="${x + 14}" y2="${y0 + 56}" class="sv-c"/><line x1="${x - 14}" y1="${y0 + 56}" x2="${x - 9}" y2="${y0 + 56}" class="sv-c"/><line x1="${x}" y1="${y0 + 30}" x2="${en ? x + 14 : x - 10}" y2="${y0 + 56}" class="sv-bicak kapali"/>` +
+        yz(x + 5, y0 + 21, c, {a:'start', s:9, c:'sv-k'}) + yz(x - 18, y0 + 72, nc, {a:'end', s:8.5}) + yz(x + 18, y0 + 72, no, {a:'start', s:8.5}); });
+    g += `<line x1="${x0 + 9}" y1="${y0 + 42}" x2="${x0 + 60 + (n - 1) * 58 + 4}" y2="${y0 + 42}" class="sv-mek"/>`;
+    const b0 = e.o.terb ? T.bob[1] : T.bob[0], b1 = e.o.terb ? T.bob[0] : T.bob[1], pz = e.o.terb ? [' −', ' +'] : [' +', ' −'];
+    g += yz(x0 - 5, y0 + 21, b0 + (dc ? pz[0] : ''), {a:'end', s:9, c:'sv-k'}) + yz(x0 - 5, y0 + 72, b1 + (dc ? pz[1] : ''), {a:'end', s:9, c:'sv-k'});
+    g += Object.values(P).map(([x, y]) => nok(x, y)).join('');
+    if(e.o.led) g += `<circle cx="${x0 + 24}" cy="${y0 + 20}" r="4" class="sv-led-k${en ? ' on' : ''}"/>` + yz(x0 + 24, y0 + 34, 'LED', {s:6.5});
+    if(e.st.yan) g = tikG(e, DOK(x0 - 24, y0 + 8, x1 - x0 + 24, 68) + g);
+    return g + yz(x1 + 8, y0 + 32, e.o.ad || e.id, {a:'start', c:'sv-k'}) + yz(x1 + 8, y0 + 45, T.ad, {a:'start', s:8.5}) + (an ? yz(x1 + 8, y0 + 57, 'bobin ' + anmaYazi(an), {a:'start', s:8.5, c:e.st.yan || e.st.isi > 0 ? 'sv-kirmizi' : ''}) : '') + (e.st.yan ? yz(x1 + 8, y0 + 69, 'YANDI · yenisini tak 👆', {a:'start', s:8.5, c:'sv-kirmizi'}) : '');
+  }
+};
+
+/* Katı hal rölesi (SSR, DA tipi): giriş 3(+) 4(−) 3–32 V DC, çıkış 1-2 AC */
+ET.ssr = {
+  uclar:e => ({'1':[e.x - 22, e.y - 38], '2':[e.x + 22, e.y - 38], '3':[e.x + (e.o.ters ? 22 : -22), e.y + 38], '4':[e.x + (e.o.ters ? -22 : 22), e.y + 38]}),
+  yukler:e => [{a:'3', b:'4', gizli:1, ad:e.o.ad || 'SSR'}],
+  ilk:() => ({on:false, yan:false, d:'yok', V:0}),
+  guncelle:(e, R) => { const b = besleme(R, e, '3', '4'); let d = 'yok';
+    if(b){ e.st.V = b.V; if(b.tip === 'ac') d = b.V > 40 ? 'yan' : 'ac'; else if(b.ters) d = 'ters'; else if(b.V > 38) d = 'yan'; else if(b.V < 3) d = 'dusuk'; else d = 'ok'; }
+    if(d === 'yan') e.st.yan = true;
+    e.st.d = d; const on = !e.st.yan && d === 'ok'; if(on !== e.st.on){ e.st.on = on; return true; } return false; },
+  baglar:e => e.st.on ? [['1','2']] : [],
+  tikla:e => { if(e.st.yan) e.st.yan = false; },
+  durum:e => { const V = vYaz(e.st.V || 0);
+    if(e.st.yan) return [{ikon:'🔥', ad:e.o.ad || 'SSR', durum:'GİRİŞ KATI YANDI — DC girişe yüksek/AC gerilim verildi. Yenisini tak 👆', kotu:true}];
+    return [Object.assign({ikon:'🔲', ad:(e.o.ad || 'SSR') + ' · giriş 3–32 V DC'}, {ok:{durum:`kontrol ${V} V DC → çıkış İLETİMDE (sıfır geçişte açılır)`, on:true}, ters:{durum:`giriş polaritesi TERS (${V} V) → iletime geçmez, LED yanmaz`, kotu:true}, ac:{durum:`girişe ${V} V AC → DA tipi SSR çalışmaz`, kotu:true}, dusuk:{durum:`kontrol ${V} V → 3 V altında, iletmez`, kotu:true}, yok:{durum:'kontrol sinyali yok → çıkış kesik'}}[e.st.d])]; },
+  ciz:e => { const x = e.x, y = e.y;
+    let g = `<rect x="${x - 40}" y="${y - 30}" width="80" height="60" rx="6" class="sv-yuk${e.st.on ? ' aktif' : ''}"/>` + yz(x, y - 2, e.st.yan ? 'SSR 🔥' : 'SSR · DA', {s:10.5, c:e.st.yan ? 'sv-kirmizi' : 'sv-k'}) + `<circle cx="${x - 33}" cy="${y - 6}" r="4" class="sv-led-k${e.st.on ? ' on' : ''}"/>`;
+    [['1 ~', -22, -38], ['2 ~', 22, -38], ['3 +', e.o.ters ? 22 : -22, 38], ['4 −', e.o.ters ? -22 : 22, 38]].forEach(([t, dx, dy]) => { g += `<line x1="${x + dx}" y1="${y + dy}" x2="${x + dx}" y2="${y + dy * 30 / 38}" class="sv-c"/>` + yz(x + dx, y + (dy < 0 ? -19 : 24), t, {s:8.5}); });
+    if(e.st.yan) g = tikG(e, DOK(x - 40, y - 30, 80, 60) + g);
+    return g + yz(x + 48, y - 18, 'çıkış 24–380 V AC', {a:'start', s:8.5}) + yz(x + 48, y + 26, 'giriş 3–32 V DC', {a:'start', s:8.5});
+  }
+};
+
+/* Elektrotlu seviye rölesi + depo/kuyu (H üst, L alt, C ortak sonda) */
+ET.svr = {
+  uclar:e => ({A1:[e.x - 56, e.y - 12], A2:[e.x - 56, e.y + 12]}),
+  yukler:e => [{a:'A1', b:'A2', gizli:1, ad:e.o.ad || 'Seviye rölesi'}],
+  ilk:e => ({sev:e.o.sev != null ? e.o.sev : 0.5, cik:false, mod:e.o.mod || 'dol', kul:false}),
+  esik:e => e.o.ters ? {L:0.82, H:0.3} : {L:0.3, H:0.82},
+  islak:(e, h) => !e.o.cyok && e.st.sev >= h,
+  tik:(e, R, dt) => { const g = !!R.yukEn[e.id], m = e.o.m && R.el[e.o.m], on = m && (ET[m.tip].durum ? ET[m.tip].durum(m, R)[0].on : !!R.yukEn[m.id]);
+    const s0 = e.st.sev, c0 = e.st.cik, E = ET.svr.esik(e);
+    if(e.st.mod === 'dol'){ if(on) e.st.sev += 0.07 * dt; if(e.st.kul) e.st.sev -= 0.05 * dt; }
+    else { if(on) e.st.sev -= 0.07 * dt; e.st.sev += (e.o.dolum || 0.025) * dt; }
+    e.st.sev = Math.max(0, Math.min(1, e.st.sev));
+    if(!g) e.st.cik = false;
+    else if(e.st.mod === 'dol'){ if(!ET.svr.islak(e, E.L)) e.st.cik = true; if(ET.svr.islak(e, E.H)) e.st.cik = false; }
+    else { if(ET.svr.islak(e, E.H)) e.st.cik = true; if(!ET.svr.islak(e, E.L)) e.st.cik = false; }
+    return c0 !== e.st.cik || Math.abs(s0 - e.st.sev) > 0.0005; },
+  aktif:e => e.st.cik,
+  tikla:(e, b) => { if(b === 'mod'){ e.st.mod = e.st.mod === 'dol' ? 'bos' : 'dol'; e.st.cik = false; e.st.kul = false; } else if(b === 'kul') e.st.kul = !e.st.kul; },
+  durum:(e, R) => { const m = e.o.m && R.el[e.o.m], on = m && (ET[m.tip].durum ? ET[m.tip].durum(m, R)[0].on : !!R.yukEn[m.id]);
+    const L = [{ikon:'💧', ad:(e.o.ad || 'Seviye rölesi') + ' · ' + (e.st.mod === 'dol' ? 'DOLDURMA (depo)' : 'BOŞALTMA (kuyu)'), durum:'seviye %' + Math.round(e.st.sev * 100) + ' · röle ' + (e.st.cik ? 'ÇEKTİ → pompa çalıştır' : 'bırakık → pompa dur'), on:e.st.cik}];
+    if(e.st.mod === 'dol' && e.st.sev >= 0.98 && on) L.push({ikon:'🌊', ad:'Depo', durum:'TAŞIYOR! Pompa durmuyor — üst sonda veya C (ortak) sondası görülmüyor', kotu:true});
+    if(e.st.mod === 'bos' && e.st.sev <= 0.02 && on) L.push({ikon:'🔥', ad:'Kuyu', durum:'KURU! Pompa susuz çalışıyor — salmastra ve rotor yanar', kotu:true});
+    return L; },
+  ciz:e => { const x = e.x, y = e.y, E = ET.svr.esik(e), tx = x + 78, tw = 74, ty = y - 56, th = 118, sv = e.st.sev, wy = ty + th - 2 - sv * (th - 4);
+    let g = `<rect x="${x - 48}" y="${y - 26}" width="96" height="56" rx="6" class="sv-yuk${e.st.cik ? ' aktif' : ''}"/>` + yz(x + 4, y - 4, 'Seviye rölesi', {s:9.5, c:'sv-k'}) + yz(x + 4, y + 10, e.st.cik ? 'röle ÇEKTİ' : 'bırakık', {s:8.5}) +
+      `<line x1="${x - 56}" y1="${y - 12}" x2="${x - 48}" y2="${y - 12}" class="sv-c"/><line x1="${x - 56}" y1="${y + 12}" x2="${x - 48}" y2="${y + 12}" class="sv-c"/>` + yz(x - 44, y - 13, 'A1', {a:'start', s:7.5}) + yz(x - 44, y + 20, 'A2', {a:'start', s:7.5}) + yz(x + 38, y - 14, 'H', {s:7}) + yz(x + 38, y - 5, 'L', {s:7}) + yz(x + 38, y + 4, 'C', {s:7}) + `<circle cx="${x + 36}" cy="${y + 20}" r="3.5" class="sv-led-k${e.st.cik ? ' on' : ''}"/>`;
+    g += tikG(e, `<rect x="${x - 48}" y="${y + 36}" width="96" height="18" rx="5" class="sv-ariza-btn"/>` + yz(x, y + 49, (e.st.mod === 'dol' ? 'mod: DOLDURMA' : 'mod: BOŞALTMA') + ' 👆', {s:8.5}), 'mod');
+    g += `<rect x="${tx}" y="${ty}" width="${tw}" height="${th}" rx="5" class="sv-depo"/><rect x="${tx + 2}" y="${wy}" width="${tw - 4}" height="${sv * (th - 4)}" rx="3" class="sv-su"/>`;
+    const sonda = [['H', tx + 18, E.H], ['L', tx + 37, E.L], ['C', tx + 56, 0.03]];
+    sonda.forEach(([ad, sx, h], i) => { const alt = ty + th - 2 - h * (th - 4), kop = ad === 'C' && e.o.cyok, ry = y - 8 + i * 9;
+      g += `<line x1="${sx}" y1="${ty - 6}" x2="${sx}" y2="${alt}" class="sv-sonda"/>` +
+        `<polyline points="${x + 48},${ry} ${x + 62 - i * 4},${ry} ${x + 62 - i * 4},${ty - 6 - (2 - i) * 5} ${sx},${ty - 6 - (2 - i) * 5} ${sx},${ty - 6}" class="sv-c" fill="none"${kop ? ' style="stroke:var(--red);stroke-dasharray:3 3"' : ''}/>` + yz(sx + 4, alt - 2, ad, {a:'start', s:8, c:'sv-k'}); });
+    if(e.o.cyok) g += yz(tx + tw + 4, ty + 10, 'C bağlı değil!', {a:'start', s:8.5, c:'sv-kirmizi'});
+    g += yz(tx + tw / 2, ty + th + 12, (e.st.mod === 'dol' ? 'Depo' : 'Kuyu') + ' %' + Math.round(sv * 100), {s:9, c:'sv-k'});
+    if(e.st.mod === 'dol') g += tikG(e, `<rect x="${tx}" y="${ty + th + 18}" width="${tw}" height="18" rx="5" class="sv-ariza-btn${e.st.kul ? ' aktif' : ''}"/>` + yz(tx + tw / 2, ty + th + 31, e.st.kul ? '🚰 kullanılıyor' : '🚰 su kullan', {s:8.5}), 'kul');
+    else g += yz(tx + tw / 2, ty + th + 30, '↑ kuyuya su sızıyor', {s:8});
+    return g;
+  }
+};
+
+/* Motor sargısındaki PTC termistör (dokun: ısıt/soğut) */
+ET.ptcs = {
+  uclar:e => ({a:[e.x - 14, e.y - 26], b:[e.x + 14, e.y - 26]}),
+  ilk:() => ({sicak:false}),
+  baglar:e => e.st.sicak ? [] : [['a','b']],
+  tikla:e => { e.st.sicak = !e.st.sicak; },
+  ciz:e => tikG(e, `<rect x="${e.x - 42}" y="${e.y - 16}" width="84" height="32" rx="6" class="sv-ariza-btn${e.st.sicak ? ' aktif' : ''}"/>` + yz(e.x, e.y - 2, e.st.sicak ? '🔥 sargı 150 °C' : '🌡 sargı normal', {s:9.5}) + yz(e.x, e.y + 11, e.st.sicak ? 'soğut 👆' : 'aşırı ısıt 👆', {s:8})) +
+    `<line x1="${e.x - 14}" y1="${e.y - 26}" x2="${e.x - 14}" y2="${e.y - 16}" class="sv-c"/><line x1="${e.x + 14}" y1="${e.y - 26}" x2="${e.x + 14}" y2="${e.y - 16}" class="sv-c"/>` + yz(e.x + 48, e.y + 4, e.o.ad || 'PTC (sargı içinde)', {a:'start', s:9, c:'sv-k'})
+};
+/* PTC termistör motor koruma rölesi: T1-T2 devresi açılırsa (sıcak veya kopuk) arızaya geçer */
+ET.ptcr = {
+  uclar:e => ({A1:[e.x - 22, e.y - 34], A2:[e.x + 22, e.y - 34], T1:[e.x - 22, e.y + 34], T2:[e.x + 22, e.y + 34]}),
+  yukler:e => [{a:'A1', b:'A2', gizli:1, ad:e.o.ad || 'PTC rölesi'}],
+  ilk:() => ({atik:false, g:false, dong:true}),
+  guncelle:(e, R) => { const g = !!R.yukEn[e.id], dong = R.net(e.id + '.T1') === R.net(e.id + '.T2'); let d = g !== e.st.g || dong !== e.st.dong; e.st.g = g; e.st.dong = dong;
+    if(g && !dong && !e.st.atik){ e.st.atik = true; d = true; } return d; },
+  aktif:e => !(e.st.g && !e.st.atik),
+  tikla:e => { if(e.st.atik && e.st.dong) e.st.atik = false; },
+  durum:(e, R) => { const s = e.o.s && R.el[e.o.s];
+    const L = [{ikon:e.st.atik ? '⚡' : '🛡️', ad:e.o.ad || 'PTC termistör rölesi', durum:!e.st.g ? 'enerjisiz (95-96 açık)' : e.st.atik ? (e.st.dong ? 'ARIZA hafızada — sargı soğudu, RESET 👆' : 'ARIZA: T1-T2 devresi açık (sargı sıcak veya kablo kopuk)') : 'normal — T1-T2 devresi kapalı, 95-96 kapalı', kotu:e.st.atik, on:e.st.g && !e.st.atik}];
+    if(s && s.st.sicak && e.st.g && !e.st.atik) L.push({ikon:'🔥', ad:'Motor', durum:'sargı aşırı ısındı ama koruma algılamıyor → motor yanacak!', kotu:true});
+    return L; },
+  ciz:e => { const x = e.x, y = e.y;
+    let g = `<rect x="${x - 40}" y="${y - 26}" width="80" height="52" rx="6" class="sv-yuk${e.st.g && !e.st.atik ? ' aktif' : ''}"/>` + yz(x, y - 6, 'PTC rölesi', {s:9.5, c:'sv-k'}) +
+      `<circle cx="${x - 24}" cy="${y + 10}" r="3.5" class="sv-led-k sv-led-y${e.st.g ? ' on' : ''}"/>` + yz(x - 17, y + 13, 'U', {a:'start', s:7.5}) + `<circle cx="${x + 4}" cy="${y + 10}" r="3.5" class="sv-led-k${e.st.atik ? ' on' : ''}"/>` + yz(x + 11, y + 13, 'arıza', {a:'start', s:7.5});
+    [['A1', -22, -34], ['A2', 22, -34], ['T1', -22, 34], ['T2', 22, 34]].forEach(([t, dx, dy]) => { g += `<line x1="${x + dx}" y1="${y + dy}" x2="${x + dx}" y2="${y + dy * 26 / 34}" class="sv-c"/>` + yz(x + dx + (dx < 0 ? -4 : 4), y + dy + (dy < 0 ? 4 : 2), t, {a:dx < 0 ? 'end' : 'start', s:8}); });
+    if(e.st.atik) g += tikG(e, `<rect x="${x + 46}" y="${y - 9}" width="62" height="18" rx="5" class="sv-ariza-btn aktif"/>` + yz(x + 77, y + 4, 'RESET 👆', {s:9}));
+    return g; }
+};
+
+/* Motor koruma şalteri (MPCB): ayarlı aşırı yük + manyetik kısa devre koruması, yardımcı kontak 13-14 */
+ET.mpcb = {
+  uclar:e => { const s = e.o.s || 22, o = {}; for(let i = 1; i <= 3; i++){ o['a' + i] = [e.x + (i - 1) * s, e.y]; o['b' + i] = [e.x + (i - 1) * s, e.y + 40]; } return o; },
+  baglar:e => e.st.on ? [['a1','b1'],['a2','b2'],['a3','b3']] : [],
+  ilk:e => ({on:e.o.on !== false, atti:false, ai:e.o.ai || 0, isi:0, yuk:false}),
+  koruma:'mcb', aktif:e => e.st.on,
+  tikla:(e, b) => { if(b === 'ayar'){ e.st.ai = (e.st.ai + 1) % e.o.ayarlar.length; return; } if(b === 'yuk'){ e.st.yuk = !e.st.yuk; return; } e.st.on = !e.st.on; e.st.atti = false; },
+  akim:(e, R) => ET.term3.akim(e, R),
+  tik:(e, R, dt) => { const I = ET.mpcb.akim(e, R), ay = e.o.ayarlar[e.st.ai], i0 = e.st.isi, o0 = e.st.on;
+    if(e.st.on && I > ay * 1.15) e.st.isi += dt * (I / ay - 1) * 3; else e.st.isi = Math.max(0, e.st.isi - dt * 0.6);
+    if(e.st.isi >= 3){ e.st.isi = 3; e.st.on = false; e.st.atti = 'asiri'; }
+    return o0 !== e.st.on || Math.abs(i0 - e.st.isi) > 0.001; },
+  durum:(e, R) => { const I = ET.mpcb.akim(e, R), ay = e.o.ayarlar[e.st.ai];
+    return [{ikon:'🛡️', ad:(e.o.ad || 'Motor koruma şalteri') + ' · ayar ' + vYaz(ay) + ' A', durum:e.st.atti === 'asiri' ? 'AŞIRI YÜKTEN ATTI — kolu kaldır 👆' : e.st.atti ? 'KISA DEVREDEN ATTI (manyetik)' : !e.st.on ? 'kapalı (0)' : I ? 'motor ' + vYaz(Math.round(I * 10) / 10) + ' A' + (e.st.isi > 0.05 ? ' · ısınıyor %' + Math.round(e.st.isi / 3 * 100) : '') : 'açık (I) · motor duruyor', kotu:!!e.st.atti, on:e.st.on}]
+    .concat(ay < e.o.In * 0.95 ? [{ikon:'⚠️', ad:'Ayar düşük', durum:`motor ${vYaz(e.o.In)} A, ayar ${vYaz(ay)} A → normal yükte atar`, kotu:true}] : ay > e.o.In * 1.1 ? [{ikon:'🔥', ad:'Ayar yüksek', durum:`motor ${vYaz(e.o.In)} A iken ${vYaz(ay)} A ayar → aşırı yükte ATMAZ, sargı yanar`, kotu:true}] : []); },
+  ciz:e => { const s = e.o.s || 22, bx = e.x + 2 * s + 16, ay = e.o.ayarlar[e.st.ai];
+    return tikG(e, DOK(e.x - 14, e.y, 2 * s + 28, 40) + kutuCiz(e, 3, s, e.st.on, e.o.ad || 'Q1', e.st.atti === 'asiri' ? 'aşırı yük ATTI' : e.st.atti ? 'kısa devre ATTI' : e.st.on ? 'I · açık' : '0 · kapalı')) +
+      tikG(e, `<rect x="${bx}" y="${e.y + 40}" width="62" height="18" rx="5" class="sv-ariza-btn"/>` + yz(bx + 31, e.y + 53, 'Ir ' + vYaz(ay) + ' A 👆', {s:9}), 'ayar') +
+      tikG(e, `<rect x="${bx + 66}" y="${e.y + 40}" width="74" height="18" rx="5" class="sv-ariza-btn${e.st.yuk ? ' aktif' : ''}"/>` + yz(bx + 103, e.y + 53, e.st.yuk ? '⚠ aşırı yük VAR' : 'aşırı yük yap', {s:9}), 'yuk'); }
+};
+
+/* ── Kompresör ve marş elemanları ── */
+/* S ucundan R ucuna giden yollar: direkt iletken, daimi (run) kondansatör, kalkış (start) kondansatörü */
+function kompYol(R, k){
+  const kom = {}; const ek = (a, b, t) => { (kom[a] = kom[a] || []).push([b, t]); (kom[b] = kom[b] || []).push([a, t]); };
+  R.teller.forEach(w => ek(w.a, w.b, 'tel'));
+  (R.ic || []).forEach(([a, b]) => { const el = R.el[a.slice(0, a.indexOf('.'))]; const kt = el && ET[el.tip].kapTip ? ET[el.tip].kapTip(el) : null; ek(a, b, kt || 'tel'); });
+  const ulas = izin => { const h = k.id + '.R', g = new Set([k.id + '.S']), q = [k.id + '.S']; while(q.length){ const n = q.shift(); if(n === h) return true; (kom[n] || []).forEach(([m, t]) => { if(izin.includes(t) && !g.has(m)){ g.add(m); q.push(m); } }); } return false; };
+  return {direkt:ulas(['tel']), run:ulas(['tel','run']), start:ulas(['tel','start'])};
+}
+/* Hermetik kompresör: C ortak, S yardımcı (start), R ana (run) sargı; dahili klixon */
+ET.komp = {
+  uclar:e => ({C:[e.x, e.y - 46], S:[e.x - 30, e.y + 42], R:[e.x + 30, e.y + 42]}),
+  yukler:e => e.st.klx ? [] : [{a:'C', b:'R', gizli:1, ad:'run'}, {a:'C', b:'S', gizli:1, ad:'start'}],
+  ilk:() => ({hiz:0, zor:0, klx:false, sogu:0, sw:0, denge:0, d:'dur', neden:'', yol:{}, sg:false}),
+  guc:(e, R) => !e.st.klx && !!R.yukEn[e.id + '#run'],
+  guncelle:(e, R) => { e.st.yol = kompYol(R, e); e.st.sg = !!R.yukEn[e.id + '#start']; return false; },
+  tik:(e, R, dt) => {
+    const s = e.st, g = ET.komp.guc(e, R), Y = s.yol || {}, iz = () => [s.d, s.klx, Math.round(s.hiz * 10), Math.ceil(s.sogu), Math.ceil(s.zor * 2), Math.ceil(s.denge), Math.ceil(s.sw * 2)].join();
+    const s0 = iz();
+    if(s.klx){ s.sogu -= dt; s.hiz = Math.max(0, s.hiz - dt * 1.5); s.d = 'termik'; if(s.sogu <= 0){ s.klx = false; s.zor = 0; s.sw = 0; s.d = 'dur'; } s.denge = Math.max(0, s.denge - dt); }
+    else if(!g){ if(s.d === 'calis' && e.o.denge) s.denge = e.o.denge; else s.denge = Math.max(0, s.denge - dt); s.hiz = Math.max(0, s.hiz - dt * 1.5); s.zor = 0; s.sw = 0; s.d = 'dur'; }
+    else {
+      const yard = s.sg && (Y.direkt || Y.run || Y.start), zorlu = s.denge > 0 && !(Y.start && s.sg);
+      if(s.hiz < 0.8){
+        if(yard && !zorlu){ s.hiz += dt * 1.6; s.d = 'kalkis'; }
+        else { s.d = 'zorlan'; s.zor += dt; s.neden = !yard ? 'start sargısı devreye girmiyor (marş elemanı açık: PTC sıcak, röle/kondansatör arızalı)' : 'basınç dengelenmedi, kalkış momenti yetmiyor'; if(s.zor >= 3){ s.klx = true; s.sogu = e.o.sogu || 6; s.hiz = 0; } }
+      } else {
+        s.hiz = 1; s.d = 'calis'; s.zor = 0;
+        if(s.sg && (Y.direkt || Y.start)){ s.sw += dt; s.neden = Y.start && !Y.direkt ? 'kalkış kondansatörü devrede kaldı' : 'yardımcı (start) sargı devrede kaldı'; if(s.sw >= 4){ s.klx = true; s.sogu = e.o.sogu || 6; s.hiz = 0; } }
+        else s.sw = Math.max(0, s.sw - dt);
+      }
+      s.denge = Math.max(0, s.denge - dt);
+    }
+    return s0 !== iz(); },
+  durum:e => { const s = e.st, ad = e.o.ad || 'Kompresör';
+    const m = s.d === 'calis' ? {durum:'ÇALIŞIYOR ✓', on:true} : s.d === 'kalkis' ? {durum:'kalkıyor…', on:true} : s.d === 'zorlan' ? {durum:'VIZILDIYOR, KALKAMIYOR (' + vYaz(s.zor.toFixed(1)) + ' sn) — ' + s.neden, kotu:true} : s.d === 'termik' ? {durum:'KLİXON ATTI — ' + (s.neden || 'aşırı akım') + ' · ' + Math.max(0, Math.ceil(s.sogu)) + ' sn soğuyor', kotu:true} : {durum:'duruyor' + (s.denge > 0 ? ' · basınçlar dengeleniyor ' + Math.ceil(s.denge) + ' sn' : '')};
+    const L = [Object.assign({ikon:'🧊', ad}, m)];
+    if(s.d === 'calis' && s.sw > 0.3) L.push({ikon:'🌡️', ad:'Uyarı', durum:s.neden + ' → sargı ısınıyor, klixon atacak!', kotu:true});
+    return L; },
+  ciz:e => { const s = e.st, x = e.x, y = e.y, on = s.d === 'calis' || s.d === 'kalkis', kotu = s.d === 'zorlan' || s.d === 'termik';
+    let g = `<line x1="${x}" y1="${y - 46}" x2="${x}" y2="${y - 32}" class="sv-c"/><line x1="${x - 30}" y1="${y + 42}" x2="${x - 18}" y2="${y + 26}" class="sv-c"/><line x1="${x + 30}" y1="${y + 42}" x2="${x + 18}" y2="${y + 26}" class="sv-c"/>`;
+    g += `<g class="${s.d === 'zorlan' ? 'sv-titre' : ''}" style="transform-origin:${x}px ${y}px"><circle cx="${x}" cy="${y}" r="32" class="sv-motor${s.d === 'calis' ? ' aktif' : kotu ? ' kotu' : ''}"/><g class="${s.d === 'calis' ? 'sv-don' : s.d === 'kalkis' ? 'sv-don-yavas' : ''}" style="transform-origin:${x}px ${y}px"><path d="M${x} ${y - 14} L${x + 4} ${y} L${x} ${y + 14} L${x - 4} ${y} Z M${x - 14} ${y} L${x} ${y - 4} L${x + 14} ${y} L${x} ${y + 4} Z" class="sv-pervane"/></g></g>`;
+    g += yz(x + 6, y - 36, 'C', {a:'start', s:9, c:'sv-k'}) + yz(x - 34, y + 34, 'S', {a:'end', s:9, c:'sv-k'}) + yz(x + 34, y + 34, 'R', {a:'start', s:9, c:'sv-k'});
+    g += `<rect x="${x - 12}" y="${y - 31}" width="24" height="8" rx="3" class="sv-mcb${s.klx ? ' acik' : ''}"/>` + yz(x - 16, y - 24, s.klx ? 'klixon AÇIK' : 'klixon', {a:'end', s:8, c:s.klx ? 'sv-kirmizi' : ''});
+    return g + yz(x + 40, y - 4, e.o.ad || 'Kompresör', {a:'start', c:'sv-k'}) + yz(x + 40, y + 9, {calis:'çalışıyor', kalkis:'kalkıyor…', zorlan:'vızıldıyor!', termik:'klixon attı', dur:'duruyor'}[s.d], {a:'start', s:9, c:kotu ? 'sv-kirmizi' : ''});
+  }
+};
+/* Kondansatör: run (daimi, yağlı) veya start (kalkış, elektrolitik) */
+ET.kap = {
+  uclar:e => e.o.yatay ? {a:[e.x - 22, e.y], b:[e.x + 22, e.y]} : {a:[e.x, e.y - 22], b:[e.x, e.y + 22]},
+  baglar:() => [['a','b']],
+  kapTip:e => e.o.tip || 'run',
+  ciz:e => { const x = e.x, y = e.y, st = e.o.tip === 'start'; let g;
+    if(e.o.yatay) g = `<line x1="${x - 22}" y1="${y}" x2="${x - 4}" y2="${y}" class="sv-c"/><line x1="${x + 4}" y1="${y}" x2="${x + 22}" y2="${y}" class="sv-c"/><line x1="${x - 4}" y1="${y - 10}" x2="${x - 4}" y2="${y + 10}" class="sv-c" style="stroke-width:3"/>` + (st ? `<path d="M${x + 7} ${y - 10} q-5 10 0 20" class="sv-c" fill="none" style="stroke-width:3"/>` : `<line x1="${x + 4}" y1="${y - 10}" x2="${x + 4}" y2="${y + 10}" class="sv-c" style="stroke-width:3"/>`);
+    else g = `<line x1="${x}" y1="${y - 22}" x2="${x}" y2="${y - 4}" class="sv-c"/><line x1="${x}" y1="${y + 4}" x2="${x}" y2="${y + 22}" class="sv-c"/><line x1="${x - 10}" y1="${y - 4}" x2="${x + 10}" y2="${y - 4}" class="sv-c" style="stroke-width:3"/>` + (st ? `<path d="M${x - 10} ${y + 7} q10 -5 20 0" class="sv-c" fill="none" style="stroke-width:3"/>` : `<line x1="${x - 10}" y1="${y + 4}" x2="${x + 10}" y2="${y + 4}" class="sv-c" style="stroke-width:3"/>`);
+    const ad = e.o.ad || (st ? 'kalkış kond.' : 'daimi kond.');
+    return g + (e.o.yatay ? yz(x, y - 14, ad, {s:8.5, c:'sv-k'}) + yz(x, y + 20, e.o.uf || '', {s:8}) : yz(x + 14, y - 2, ad, {a:'start', s:8.5, c:'sv-k'}) + yz(x + 14, y + 10, e.o.uf || '', {a:'start', s:8})); }
+};
+/* PTC marş rölesi (pozistör) — o.kap: hard start kiti (içinde kalkış kondansatörü) */
+ET.ptc = {
+  uclar:e => ({a:[e.x, e.y - 24], b:[e.x, e.y + 24]}),
+  ilk:() => ({isi:0, acik:false}),
+  iletir:e => !e.o.kopuk && (e.o.yapisik || !e.st.acik),
+  baglar:e => ET.ptc.iletir(e) ? [['a','b']] : [],
+  kapTip:e => e.o.kap && ET.ptc.iletir(e) ? 'start' : null,
+  tik:(e, R, dt) => { if(e.o.yapisik || e.o.kopuk) return false; const k = e.o.m && R.el[e.o.m], g = k && ET.komp.guc(k, R), i0 = e.st.isi, a0 = e.st.acik;
+    if(e.o.pot){ e.st.acik = !!(g && k.st.hiz >= 0.75); return a0 !== e.st.acik; }
+    if(g) e.st.isi = Math.min(1.2, e.st.isi + dt * (e.o.hiz || 1)); else e.st.isi = Math.max(0, e.st.isi - dt * (e.o.sogu || 0.12));
+    if(e.st.isi >= 1) e.st.acik = true; if(e.st.isi <= 0.2) e.st.acik = false;
+    return a0 !== e.st.acik || Math.round(i0 * 10) !== Math.round(e.st.isi * 10); },
+  durum:(e, R) => { const il = ET.ptc.iletir(e), ad = e.o.ad || (e.o.kap ? 'Hard start kiti' : 'PTC marş rölesi'), k = e.o.m && R.el[e.o.m], g = k && ET.komp.guc(k, R);
+    const ne = e.o.kap ? ' (kalkış kondansatörü devrede)' : ' (start sargısı devrede)';
+    const d = e.o.kopuk ? 'KOPUK — hiç iletmiyor' : e.o.yapisik ? 'KISA DEVRE (yapışık) — hep iletiyor' : e.o.pot ? (il ? 'kontak kapalı' + ne : 'motor hızlandı → kontak açık (kit devre dışı)') : il ? (e.st.isi > 0.05 ? 'ısınıyor, hâlâ iletiyor' : 'soğuk → iletiyor') + ne : g ? (k.st.d === 'calis' ? 'SICAK → açık (normal: çalışırken sıcak kalır)' : 'SICAK → açık — start sargısını devreye alamıyor, soğuması gerek (gerçekte 3–5 dk)') : 'SICAK → açık · soğuması bekleniyor (%' + Math.round(Math.min(1, e.st.isi) * 100) + ')';
+    return [{ikon:e.o.kap ? '🚀' : '🌡️', ad, durum:d, kotu:e.o.kopuk || e.o.yapisik || (!il && !e.o.pot && !(g && k.st.d === 'calis')), on:il}]; },
+  ciz:e => { const x = e.x, y = e.y, il = ET.ptc.iletir(e), t = Math.min(1, e.st.isi);
+    let g = `<line x1="${x}" y1="${y - 24}" x2="${x}" y2="${y - 14}" class="sv-c"/><line x1="${x}" y1="${y + 14}" x2="${x}" y2="${y + 24}" class="sv-c"/><rect x="${x - 9}" y="${y - 14}" width="18" height="28" rx="3" class="sv-yuk" style="fill:rgba(229,57,53,${0.08 + 0.6 * t})"/><path d="M${x - 13} ${y + 12} l26 -24 h5" class="sv-c" fill="none"/>`;
+    if(e.o.kap) g += `<line x1="${x - 7}" y1="${y + 4}" x2="${x + 7}" y2="${y + 4}" class="sv-c"/><path d="M${x - 7} ${y + 9} q7 -4 14 0" class="sv-c" fill="none"/>`;
+    return g + yz(x + 16, y - 4, e.o.ad || (e.o.kap ? 'Hard start kiti' : 'PTC marş'), {a:'start', s:9, c:'sv-k'}) + yz(x + 16, y + 8, e.o.kopuk ? 'kopuk ✕' : e.o.yapisik ? 'yapışık!' : il ? 'iletiyor' : e.o.pot ? 'açık' : 'açık (sıcak)', {a:'start', s:8.5, c:e.o.kopuk || e.o.yapisik ? 'sv-kirmizi' : ''}); }
+};
+/* Akım tipi marş rölesi: bobin ana sargıya seri (L-M); kalkış akımında kontak (L-S) kapanır */
+ET.akr = {
+  uclar:e => ({S:[e.x - 30, e.y - 30], M:[e.x + 30, e.y - 30], L:[e.x, e.y + 30]}),
+  ilk:() => ({k:false}),
+  guncelle:(e, R) => { const k = R.el[e.o.m], g = k && !k.st.klx && !!R.yukEnOnce[k.id + '#run'];
+    const kap = !e.o.ters && (e.o.yapisik || (g && k.st.hiz < 0.75)); if(kap !== e.st.k){ e.st.k = kap; return true; } return false; },
+  baglar:e => [['L','M']].concat(e.st.k ? [['L','S']] : []),
+  durum:e => [{ikon:'🧲', ad:e.o.ad || 'Akım rölesi', durum:e.o.ters ? 'TERS TAKILMIŞ — kontak ağırlıkla açık kalıyor, hiç kapanmıyor' : e.o.yapisik ? 'kontak YAPIŞIK — start sargısı hep devrede' : e.st.k ? 'kalkış akımı yüksek → kontak KAPALI (start devrede)' : 'akım normal → kontak açık', kotu:e.o.ters || e.o.yapisik, on:e.st.k}],
+  ciz:e => { const x = e.x, y = e.y;
+    let g = `<rect x="${x - 44}" y="${y - 22}" width="88" height="44" rx="6" class="sv-yuk${e.st.k ? ' aktif' : ''}"/>` + `<line x1="${x - 30}" y1="${y - 30}" x2="${x - 30}" y2="${y - 22}" class="sv-c"/><line x1="${x + 30}" y1="${y - 30}" x2="${x + 30}" y2="${y - 22}" class="sv-c"/><line x1="${x}" y1="${y + 22}" x2="${x}" y2="${y + 30}" class="sv-c"/>` +
+      `<path d="M${x} ${y + 22} V${y + 8} H${x + 30} v-4 q6 -3 0 -6 q6 -3 0 -6 q6 -3 0 -6 v-8" class="sv-c" fill="none"/><line x1="${x}" y1="${y + 8}" x2="${x - 14}" y2="${y + 8}" class="sv-c"/><line x1="${x - 14}" y1="${y + 8}" x2="${e.st.k ? x - 30 : x - 28}" y2="${e.st.k ? y - 8 : y + 2}" class="sv-bicak${e.st.k ? ' kapali' : ''}"/><line x1="${x - 30}" y1="${y - 8}" x2="${x - 30}" y2="${y - 22}" class="sv-c"/>`;
+    return g + yz(x - 34, y - 26, 'S', {a:'end', s:8.5}) + yz(x + 34, y - 26, 'M', {a:'start', s:8.5}) + yz(x + 6, y + 32, 'L', {a:'start', s:8.5}) + yz(x + 50, y - 4, e.o.ad || 'Akım rölesi', {a:'start', c:'sv-k'}) + yz(x + 50, y + 9, e.st.k ? 'kontak KAPALI' : 'kontak açık', {a:'start', s:9}) + (e.o.ters ? yz(x + 50, y + 22, '⚠ ters takılı', {a:'start', s:8.5, c:'sv-kirmizi'}) : ''); }
+};
+/* Potansiyel (gerilim) rölesi: bobin 2-5 start sargısına paralel, NC kontak 1-2 kalkış kondansatörüne seri */
+ET.potr = {
+  uclar:e => ({'1':[e.x - 26, e.y + 30], '2':[e.x, e.y + 30], '5':[e.x + 26, e.y + 30]}),
+  ilk:() => ({acik:false}),
+  guncelle:(e, R) => { const k = R.el[e.o.m], g = k && !k.st.klx && !!R.yukEnOnce[k.id + '#run'];
+    const dogru = k && R.net(e.id + '.5') === R.net(k.id + '.C') && R.net(e.id + '.2') === R.net(k.id + '.S');
+    const acik = !e.o.yapisik && dogru && g && k.st.hiz >= 0.75; if(acik !== e.st.acik){ e.st.acik = acik; return true; } return false; },
+  baglar:e => e.st.acik ? [] : [['1','2']],
+  durum:e => [{ikon:'🧲', ad:e.o.ad || 'Potansiyel röle', durum:e.o.yapisik ? 'kontak 1-2 YAPIŞIK — kalkış kondansatörü hep devrede' : e.st.acik ? 'motor hızlandı, start sargısı gerilimi yükseldi → bobin çekti, 1-2 AÇIK (kalkış kond. devreden çıktı)' : '1-2 kapalı (dinlenme) → kalkış kondansatörü devrede', kotu:e.o.yapisik, on:!e.st.acik}],
+  ciz:e => { const x = e.x, y = e.y;
+    let g = `<rect x="${x - 40}" y="${y - 22}" width="80" height="44" rx="6" class="sv-yuk${e.st.acik ? ' aktif' : ''}"/>` + ['1','2','5'].map((t, i) => `<line x1="${x - 26 + i * 26}" y1="${y + 22}" x2="${x - 26 + i * 26}" y2="${y + 30}" class="sv-c"/>` + yz(x - 26 + i * 26 + 5, y + 18, t, {a:'start', s:8.5, c:'sv-k'})).join('') +
+      `<rect x="${x + 6}" y="${y - 14}" width="22" height="12" rx="2" class="sv-bobin${e.st.acik ? ' aktif' : ''}"/>` + yz(x + 17, y + 4, '2-5', {s:7.5}) + `<line x1="${x - 26}" y1="${y - 8}" x2="${x - 26}" y2="${y + 4}" class="sv-c"/><line x1="${x - 26}" y1="${y - 8}" x2="${e.st.acik ? x - 4 : x}" y2="${e.st.acik ? y - 16 : y - 8}" class="sv-bicak${e.st.acik ? '' : ' kapali'}"/>` + yz(x - 14, y + 8, '1-2', {s:7.5});
+    return g + yz(x + 46, y - 4, e.o.ad || 'Potansiyel röle', {a:'start', c:'sv-k'}) + yz(x + 46, y + 9, e.st.acik ? '1-2 AÇIK' : '1-2 kapalı', {a:'start', s:9}); }
+};
+
+/* Kaynak noktası kendi alanının gerilimini tanımlayabilir (ör. 24 V akü) */
+ET.src.domV = e => e.o.v ? [[potDom(e.o.p), e.o.v]] : [];
+
+/* ============================================================
    ŞEMA MOTORU — net çözücü, koruma, akım yolu, çizim, arayüz
    ============================================================ */
 'use strict';
@@ -887,6 +1384,7 @@ const SKAT = [
   {id:'aydinlatma', ad:'Aydınlatma & Anahtar', ikon:'💡'},
   {id:'priz', ad:'Priz & Hatlar', ikon:'🔌'},
   {id:'pano', ad:'Pano & Sigorta Kutusu', ikon:'🗄️'},
+  {id:'role', ad:'Kontaktör & Röle', ikon:'🧲'},
   {id:'topraklama', ad:'Topraklama & Koruma', ikon:'🌍'},
   {id:'diafon', ad:'Zil & Diafon', ikon:'🔔'},
   {id:'motor', ad:'Motor & Pompa', ikon:'⚙️'},
@@ -986,7 +1484,7 @@ function coz(R){
       R.net = k => P[k] === undefined ? k : bul(k);
       const pot = {}; R.kaynakUc = [];
       R.domV = {};
-      R.liste.forEach(e => { const f = ET[e.tip].kaynaklar; if(f) f(e, R).forEach(([t, p]) => { const r = R.net(e.id + '.' + t); (pot[r] = pot[r] || new Set()).add(p); R.kaynakUc.push([e.id + '.' + t, p]); }); if(e.tip === 'trafo') R.domV[e.id] = e.o.v || 12; });
+      R.liste.forEach(e => { const f = ET[e.tip].kaynaklar; if(f) f(e, R).forEach(([t, p]) => { const r = R.net(e.id + '.' + t); (pot[r] = pot[r] || new Set()).add(p); R.kaynakUc.push([e.id + '.' + t, p]); }); if(e.tip === 'trafo') R.domV[e.id] = Math.round((e.o.v || 12) * (e.o.olcek && R.yukEnOnce[e.id] ? R.yukEnOnce[e.id].V / (e.o.vp || 230) : 1) * 10) / 10; const dv = ET[e.tip].domV; if(dv) dv(e, R).forEach(([d, v]) => { R.domV[d] = v; }); });
       R.pot = pot;
       R.potNet = k => { const s = pot[R.net(k)]; return s ? [...s] : []; };
       const yuk = {};
@@ -3489,6 +3987,670 @@ sema({id:'plan_sembol', kat:'sembol', ikon:'🗺️', ad:'Proje Okuma · Kat Pla
     adim:['Önce lejantı oku, sonra linye listesini panoya göre eşle.','Duvara anahtar/priz yüksekliklerini lazerle işaretle.','Buat yerlerini ulaşılabilir bırak.'],
     hata:['Anahtarı kapının arkasında kalan tarafa koymak.','Mutfak tezgâh prizlerini tek linyeye ve ocakla aynı hatta bağlamak.'],
     hesap:['proje','yuk','kablo'], ilgili:['semboller','tekli','priz']
+  }
+});
+
+/* ============================================================
+   ŞEMALAR — KONTAKTÖR & RÖLE
+   A. Kontaktör ve bobin tipleri  B. Manyetik (ara) röleler
+   C. Zaman röleleri  D. Kompresör marş röleleri  E. Diğer röleler
+   ============================================================ */
+const BOBIN_TIP = [{v:230, akim:'ac'}, {v:24, akim:'ac'}, {v:24, akim:'dc'}, {v:24, vmin:24, vmax:60, akim:'uc'}, {v:400, akim:'ac'}, {v:12, akim:'dc'}];
+const ROLE_GENEL = {
+  hata:['Bobin gerilimini kontrol etmeden röle/kontaktör takmak (24 V ↔ 230 V, AC ↔ DC).','Soket numarası yerine sıraya göre bağlamak.','Kontak akımını aşmak: ara röle kontağı (5–10 A) motoru veya büyük ısıtıcıyı doğrudan anahtarlamaz.'],
+  test:['Bobin uçlarında (A1-A2) gerilimi multimetreyle ölç: etiket değerinin %85–110’u olmalı.','Enerjisizken bobin direncini ölç: kopuksa ∞, kısa devreyse ~0 Ω.','Kontakları süreklilik (bip) ile kontrol et: çekili ve bırakık iki durumda.']
+};
+
+/* ───────────── A. KONTAKTÖR VE BOBİN TİPLERİ ───────────── */
+
+/* A1 — Kontaktörü tanı (özel, dokunmalı) */
+const KT_BILGI = {
+  kural:'<b>Numaralandırma kuralı</b> (EN 60947): ikinci rakam fonksiyonu söyler → <b>1-2 NC</b>, <b>3-4 NO</b>, <b>5-6 özel NC</b> (termik, zaman), <b>7-8 özel NO</b>. İlk rakam sıra numarasıdır (13 → 1. kontak NO, 21 → 2. kontak NC). Ana kontaklarda tek sayı giriş, çift sayı çıkıştır.',
+  '1':'<b>1/L1</b> — 1. ana kontak girişi. Tek sayılar (1, 3, 5) şebeke tarafıdır: sigorta veya motor koruma şalterinden gelir.',
+  '3':'<b>3/L2</b> — 2. ana kontak girişi (şebeke tarafı).', '5':'<b>5/L3</b> — 3. ana kontak girişi (şebeke tarafı).',
+  '2':'<b>2/T1</b> — 1. ana kontak çıkışı. Çift sayılar (2, 4, 6) yük tarafıdır: termik röle, motor, rezistans.',
+  '4':'<b>4/T2</b> — 2. ana kontak çıkışı (yük tarafı).', '6':'<b>6/T3</b> — 3. ana kontak çıkışı (yük tarafı).',
+  '13':'<b>13-14</b> — dahili yardımcı kontak, <b>NO</b>. Mühürleme (START’a paralel) ve “çalışıyor” lambası buradan alınır.', '14':'<b>13-14</b> — dahili yardımcı kontak, <b>NO</b>. Mühürleme (START’a paralel) ve “çalışıyor” lambası buradan alınır.',
+  A1:'<b>A1-A2 bobin</b>. Bobin gerilimi kontaktörün yan/ön etiketinde yazar: 24 V AC, 230 V AC, 24 V DC, 400 V AC… Yanlış gerilim = çekmez ya da yanar. DC bobinde A1 (+), A2 (−).', A2:'<b>A1-A2 bobin</b>. Bazı modellerde A2 alt sırada, bazılarında A1 ile aynı sırada (üstte) bulunur. Etiketi ve gövdedeki baskıyı oku.',
+  '53':'<b>53-54</b> — ön yardımcı blok, <b>NO</b>. İlk rakam 5 = 5. sıradaki kontak; ikinci rakam 3-4 = NO.', '54':'<b>53-54</b> — ön yardımcı blok, <b>NO</b>.',
+  '61':'<b>61-62</b> — ön yardımcı blok, <b>NC</b> (normalde kapalı). İleri-geri ve yıldız-üçgende karşı kontaktörü kilitlemek için kullanılır.', '62':'<b>61-62</b> — ön yardımcı blok, <b>NC</b>.',
+  '95':'<b>95-96 termik NC</b> — kumanda devresine SERİ bağlanır. Aşırı yükte açılır ve bobini düşürür.', '96':'<b>95-96 termik NC</b> — kumanda devresine SERİ bağlanır.',
+  '97':'<b>97-98 termik NO</b> — termik atınca kapanır: arıza lambası, alarm, PLC girişi.', '98':'<b>97-98 termik NO</b> — termik atınca kapanır: arıza lambası, alarm.'
+};
+sema({id:'kontaktor_tani', kat:'role', ikon:'🔢', ad:'Kontaktörü Tanı · Klemens Numaraları', ozet:'1-2, 13-14, 21-22, 53-54, 95-96… Her klemense dokun: ne olduğu ve nereye bağlandığı. Numaraların mantığını öğren.', etiket:['kontaktör','klemens numarası','13-14','21-22','a1 a2','95-96','97-98','yardımcı kontak','no nc','l1 t1'],
+  w:700, h:510, minw:540,
+  ozel:{ilk:() => ({sec:'kural', cek:false, atik:false}),
+    tikla:(st, b) => { if(b === 'cek') st.cek = !st.cek; else if(b === 'termik') st.atik = !st.atik; else if(b && b.startsWith('T_')) st.sec = b.slice(2); else if(b === 'kural') st.sec = 'kural'; },
+    ciz:st => {
+      const kl = (id, x, y, ad) => `<g class="tik" data-b="T_${id}"><circle cx="${x}" cy="${y}" r="13" class="${st.sec === id ? 'sv-ozel-aktif' : 'sv-yuk'}"/>` + sy(x, y + 4, ad || id, {s:9, c:'sv-k'}) + `</g>`;
+      const kon = (x, y1, y2, kapali, nc) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${(y1 + y2) / 2 - 18}" class="sv-c"/><line x1="${x}" y1="${(y1 + y2) / 2 + 18}" x2="${x}" y2="${y2}" class="sv-c"/>` + (nc ? `<line x1="${x}" y1="${(y1 + y2) / 2 + 18}" x2="${x - 9}" y2="${(y1 + y2) / 2 + 18}" class="sv-c"/>` : '') + `<line x1="${x}" y1="${(y1 + y2) / 2 - 18}" x2="${kapali ? x : x + (nc ? -12 : 12)}" y2="${(y1 + y2) / 2 + 18}" class="sv-bicak${kapali ? ' kapali' : ''}"/>`;
+      let h = `<rect x="150" y="56" width="300" height="280" rx="12" class="sv-ozel-kutu"/>` + sy(300, 50, 'Kontaktör (önden görünüş)', {s:10, c:'sv-k'});
+      [['1', 190, '1/L1'], ['3', 250, '3/L2'], ['5', 310, '5/L3'], ['13', 370, '13'], ['A1', 420, 'A1']].forEach(([id, x, ad]) => { h += kl(id, x, 80, ad); });
+      [['2', 190, '2/T1'], ['4', 250, '4/T2'], ['6', 310, '6/T3'], ['14', 370, '14'], ['A2', 420, 'A2']].forEach(([id, x, ad]) => { h += kl(id, x, 312, ad); });
+      [190, 250, 310, 370].forEach(x => { h += kon(x, 93, 299, st.cek, false); });
+      h += `<line x1="420" y1="93" x2="420" y2="178" class="sv-c"/><line x1="420" y1="214" x2="420" y2="299" class="sv-c"/><rect x="404" y="178" width="32" height="36" rx="4" class="sv-bobin${st.cek ? ' aktif' : ''}"/>`;
+      h += `<line x1="196" y1="196" x2="404" y2="196" class="sv-mek"/>` + `<path d="M180 346 v6 h140 v-6 M360 346 v6 h20 v-6" class="sv-c" fill="none" style="stroke-width:1.2"/>` + sy(250, 366, 'ana kontaklar (güç)', {s:8.5}) + sy(370, 366, 'yardımcı', {s:8.5}) + sy(420, 366, 'bobin', {s:8.5});
+      h += `<rect x="470" y="96" width="110" height="170" rx="10" class="sv-ozel-kutu"/>` + sy(525, 90, 'Ön yardımcı blok', {s:9, c:'sv-k'});
+      h += kl('53', 500, 116) + kl('61', 552, 116) + kl('54', 500, 246) + kl('62', 552, 246) + kon(500, 129, 233, st.cek, false) + kon(552, 129, 233, !st.cek, true);
+      h += `<rect x="150" y="384" width="300" height="100" rx="10" class="sv-ozel-kutu"/>` + sy(300, 500, 'Termik röle (kontaktörün altına takılır)', {s:9, c:'sv-k'});
+      h += kl('95', 200, 404) + kl('96', 200, 464) + kl('97', 270, 404) + kl('98', 270, 464) + kon(200, 417, 451, !st.atik, true) + kon(270, 417, 451, st.atik, false);
+      h += sy(370, 424, 'Ir ayar kadranı', {s:9}) + `<circle cx="370" cy="449" r="14" class="sv-yuk"/><line x1="370" y1="449" x2="380" y2="439" class="sv-ibre"/>`;
+      h += `<g class="tik" data-b="cek"><rect x="14" y="96" width="122" height="40" rx="8" class="${st.cek ? 'sv-ozel-aktif' : 'sv-ozel-sec'}"/>` + sy(75, 114, st.cek ? '🧲 bobin ENERJİLİ' : '🧲 bobine enerji ver', {s:9.5}) + sy(75, 128, 'dokun 👆', {s:8}) + `</g>`;
+      h += `<g class="tik" data-b="termik"><rect x="14" y="150" width="122" height="40" rx="8" class="${st.atik ? 'sv-ozel-aktif' : 'sv-ozel-sec'}"/>` + sy(75, 168, st.atik ? '⚡ termik ATTI' : '🌡 termiği attır', {s:9.5}) + sy(75, 182, 'dokun 👆', {s:8}) + `</g>`;
+      h += `<g class="tik" data-b="kural"><rect x="14" y="204" width="122" height="40" rx="8" class="${st.sec === 'kural' ? 'sv-ozel-aktif' : 'sv-ozel-sec'}"/>` + sy(75, 222, '📖 numara kuralı', {s:9.5}) + sy(75, 236, 'dokun 👆', {s:8}) + `</g>`;
+      h += sy(75, 270, 'Klemenslere dokun', {s:9}) + sy(75, 284, 'açıklama aşağıda', {s:9});
+      return h; },
+    durum:st => [{ikon:'📌', ad:st.sec === 'kural' ? 'Kural' : 'Klemens ' + st.sec, durum:KT_BILGI[st.sec].replace(/<[^>]+>/g, ''), on:true},
+      {ikon:'🧲', ad:'Kontaktör', durum:st.cek ? 'bobin enerjili → 1-2, 3-4, 5-6 ve 13-14, 53-54 KAPALI · 61-62 AÇIK' : 'bobin enerjisiz → ana kontaklar, 13-14, 53-54 açık · 61-62 kapalı', on:st.cek},
+      {ikon:'🌡️', ad:'Termik', durum:st.atik ? 'ATTI → 95-96 AÇIK (bobin düşer), 97-98 KAPALI (arıza lambası)' : 'normal → 95-96 kapalı, 97-98 açık', kotu:st.atik}]},
+  bilgi:{
+    nasil:'<p>Kontaktör, küçük bir bobin akımıyla büyük yükleri anahtarlayan elektromanyetik şalterdir. <b>Ana kontaklar</b> (1-2, 3-4, 5-6) yükü taşır; <b>yardımcı kontaklar</b> (13-14, 21-22, ön bloklar) kumanda içindir ve 6–10 A’den fazla taşımaz.</p><p><b>İkinci rakam kuralı:</b> 1-2 = NC, 3-4 = NO, 5-6 = özel NC (termik/zaman), 7-8 = özel NO. <b>İlk rakam</b> kontağın sırasıdır: 13-14 ilk yardımcı (NO), 21-22 ikinci (NC), 53-54 beşinci (NO).</p><p>Kontaktör seçerken üç şey okunur: <b>bobin gerilimi</b> (A1-A2 yanında), <b>kullanım kategorisi ve akımı</b> (AC-3: motor, AC-1: rezistif) ve <b>yardımcı kontak sayısı</b>.</p>',
+    damar:[['Ana kontaklar','yük akımına göre kesit (motor/ısıtıcı)'], ['Bobin ve yardımcılar','kumanda kablosu 0,75–1,5 mm² (çoğunlukla 1 mm²)']],
+    malzeme:['Kontaktör (AC-3 akımı motora göre)','Ön yardımcı kontak bloğu (1NO+1NC)','Termik röle (kontaktöre doğrudan takılan tip)','Kumanda butonları'],
+    adim:['Etiketi oku: bobin gerilimi, AC-3 akımı (kW), yardımcı kontaklar.','Ana girişleri (1-3-5) üstten, çıkışları (2-4-6) alttan bağla.','Bobini kumanda devresinden besle; termik 95-96’yı bobin yoluna seri koy.','Kumandayı yük bağlamadan dene.'],
+    hata:['Yardımcı kontağı (13-14) motor akımı için kullanmak.','Mühürleme için NC (21-22) kontağı kullanmak.','AC-1 değerine göre motor kontaktörü seçmek (motor için AC-3 değeri esas).'].concat(ROLE_GENEL.hata.slice(0, 1)),
+    test:ROLE_GENEL.test,
+    ilgili:['bobin_lab','dol','termik_ayar','kontaktor_yuk']
+  }
+});
+
+/* A2 — Bobin gerilimi laboratuvarı */
+sema({id:'bobin_lab', kat:'role', ikon:'🧪', ad:'Bobin Gerilimi Laboratuvarı · AC, DC, 24 V, 230 V, 400 V', ozet:'Aynı kontaktöre farklı kumanda gerilimleri ver, bobin tipini değiştir: çeker mi, vızıldar mı, yanar mı? Sinyal şeklinin önemini canlı gör.', etiket:['bobin gerilimi','ac bobin','dc bobin','24v kontaktör','230v kontaktör','400v bobin','universal bobin','bobin yandı','kontaktör vızıldıyor','kontaktör çekmiyor'],
+  w:640, h:380, minw:520,
+  ipucu:'Kaynağa dokun: gerilimi değiştir. Bobine dokun: bobin tipini değiştir. S1 ile enerji ver. Bobin yanarsa üzerine dokunup yenisini tak.',
+  e:[['ksec','KY',100,170,{liste:['230ac','400ac','24ac','24dc','48dc','12dc'], ad:'Kumanda gerilimi'}], ['sw','S1',200,158,{ad:'S1'}], ['bob','KM',320,240,{ad:'KM', secenek:BOBIN_TIP}],
+    ['src','LL',480,40,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F2',480,60,{ad:'B10', kademe:1}], ['kon','KMk',480,140,{r:'KM', ad:'KM', no:'1-2'}], ['lamba','H1',480,240,{dik:true, ad:'Yük'}], ['src','LN',480,320,{p:'N', ad:'N', yon:'alt'}]],
+  t:[['KY.X1','S1.a','K'], ['S1.b','KM.A1','K'], ['KY.X2','KM.A2','K',[[180,182],[180,290],[320,290]]],
+    ['LL.o','F2.a1','L'], ['F2.b1','KMk.a','L'], ['KMk.b','H1.a','L'], ['H1.b','LN.o','N']],
+  bolge:[[30, 100, 370, 230, 'Kumanda (bobin) devresi', 'alt'], [420, 10, 190, 350, 'Güç devresi', 'alt']],
+  ariza:[{id:'k230', ad:'24 V AC kumandaya 230 V bobinli kontaktör', st:{KY:{i:2}, KM:{si:0}}, belirti:'S1 kapatılınca kontaktör çekmiyor; bazen hafif vızıltı duyulur. Yük çalışmıyor.', bul:'Bobin uçlarında 24 V ölçülüyor ama etiket 230 V diyor. Bobin değiştirilebilen modellerde bobini, değilse kontaktörü değiştir.'},
+    {id:'acdc', ad:'24 V DC kumandaya 24 V AC bobin', st:{KY:{i:3}, KM:{si:1}}, belirti:'Kontaktör çeker, yük çalışır; birkaç saniye sonra bobin ısınır ve yanar.', bul:'DC’de AC bobinin akımını sınırlayan reaktans yoktur; akımı yalnızca küçük sargı direnci sınırlar → aşırı akım. Etikette “=” veya “DC” yazan bobin kullan.'}],
+  bilgi:{
+    nasil:'<p>Bobin gerilimi ve türü kontaktörün “sinyal şeklidir”. Etiketteki değerle kaynak aynı değilse kontaktör çalışmaz veya bozulur:</p><ul><li><b>Düşük gerilim</b> (%80 altı): çekemez, vızıldar; kontaklar ark yapar.</li><li><b>Yüksek gerilim</b> (%110–115 üstü): bobin aşırı ısınır ve yanar. 230 V bobine 400 V veya 24 V bobine 230 V verilirse saniyeler içinde.</li><li><b>AC bobine DC</b>: AC bobinin akımını reaktansı sınırlar; DC’de reaktans olmadığı için akım katlarca artar → yanar.</li><li><b>DC bobine AC</b>: manyetik alan saniyede 100 kez sıfırdan geçer, nüvede kısa devre halkası olmadığından titrer, vızıldar, tam çekemez.</li><li><b>Universal (AC/DC) elektronik bobin</b>: içinde doğrultucu ve elektronik devre vardır; geniş aralıkta (ör. 24–60 V veya 100–250 V) AC ve DC ile çalışır.</li></ul>',
+    damar:[['Kumanda','bobin gerilimine göre: 230 V L-N, 400 V L1-L2, 24 V trafo/adaptör']],
+    malzeme:['Kontaktör (bobin gerilimi kumandaya uygun)','24 V kumanda trafosu veya 24 V DC adaptör (gerekirse)'],
+    adim:['Kumanda gerilimini belirle (pano standardı: 230 V AC, 24 V AC veya 24 V DC).','Kontaktör siparişinde bobin kodunu buna göre seç (ör. …P7 = 230 V AC, …BD = 24 V DC, markaya göre değişir).','Takmadan önce etiketle karşılaştır; ilk enerjide bobin sıcaklığını ve sesini kontrol et.'],
+    hata:['“Kontaktör kontaktördür” deyip bobin gerilimine bakmamak.','Aynı panoda farklı bobin gerilimli kontaktörleri karıştırmak.','DC kumandada AC bobinli ara röle kullanmak.'],
+    test:['Bobin uçlarında gerilimi ve türünü (AC/DC) multimetrenin doğru kademesiyle ölç.','Çekili kontaktörde vızıltı varsa gerilimi ve nüve yüzeylerinin temizliğini kontrol et.'],
+    ilgili:['kumanda_24ac','bobin_24dc','bobin_400','bobin_uc','kontaktor_tani']
+  }
+});
+
+/* A3 — 24 V AC trafolu kumanda */
+sema({id:'kumanda_24ac', kat:'role', ikon:'🔌', ad:'24 V AC Trafolu Güvenli Kumanda Devresi', ozet:'230/24 V kumanda trafosu: butonlar ve bobin düşük gerilimde. Yanlış bobin veya yanlış trafo primeri ne yapar? Dene.', etiket:['kumanda trafosu','24v ac','güvenli kumanda','230/24','kontaktör 24v','trafo primeri','sekonder sigorta'],
+  w:740, h:470, ipucu:'START’a bas: 24 V AC bobinli KM çeker, motor döner. Arıza menüsünden yanlış bobin ve 400 V primer durumlarını dene.',
+  e:GUC3(68, 'KM').concat([['src','KL',380,24,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F1',380,40,{ad:'F1 2A', kademe:1}], ['trafo','T1',410,120,{v:24, olcek:true, ad:'T1'}], ['src','KN',330,132,{p:'N', ad:'N', yon:'sol'}],
+    ['mcb','F3',500,108,{ad:'F3 4A', kademe:1}], ['kon','F2k',500,166,{r:'F2', tip:'nc', ad:'F2', no:'95-96'}], ['btn','S0',500,214,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}],
+    ['j','J1',500,262], ['j','J1b',580,262], ['btn','S1',500,272,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',580,272,{r:'KM', ad:'KM', no:'13-14'}], ['j','J2',500,330], ['j','J3',640,330],
+    ['bob','KM',500,372,{ad:'KM', v:24, akim:'ac'}], ['lamba','H1',640,372,{dik:true}], bara('NB', 452, 430, [452, 500, 640])]),
+  t:GUC3T(68).concat([['KL.o','F1.a1','K'], ['F1.b1','T1.p1','K'], ['KN.o','T1.p2','N'], ['T1.s1','F3.a1','K'], ['F3.b1','F2k.a','K'], ['F2k.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'],
+    ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[580,330]]], ['J2.o','KM.A1','K'], ['J2.o','J3.o','K'], ['J3.o','H1.a','K'], ['T1.s2','NB.t0','Lv',[[452,132]]], ['KM.A2','NB.t1','Lv'], ['H1.b','NB.t2','Lv']]),
+  bolge:[[30, 6, 220, 420, 'Güç devresi', 'alt'], [310, 6, 370, 450, 'Kumanda devresi · 24 V AC', 'alt']],
+  yazi:[[660, 376, 'çalışıyor', {a:'start', s:9}], [372, 168, 'kumanda trafosu', {a:'end', s:8.5}]],
+  ariza:[{id:'b230', ad:'230 V AC bobinli kontaktör takılmış', o:{KM:{v:230}}, belirti:'START’a basınca kontaktör çekmiyor (belki hafif vızıltı). Motor dönmüyor.', bul:'Bobin uçlarında 24 V var, etiket 230 V diyor. Kumanda gerilimiyle aynı bobinli kontaktör kullan.'},
+    {id:'p400', ad:'Trafo primeri 400 V’a (L1-L2) bağlanmış', o:{KN:{p:'L2', ad:'L2'}}, belirti:'Sekonderde 24 V yerine ≈42 V çıkar. START’a basınca kontaktör çeker ama bobin birkaç saniyede ısınıp yanar.', bul:'Trafo primerindeki gerilimi ölç ve etiketteki primer değeriyle karşılaştır. Çok kademeli trafolarda doğru uçları (0-230 / 0-400) kullan. Sekonderi yüksüz ölç: 24–26 V olmalı.'}],
+  bilgi:{
+    nasil:'<p>Kumanda trafosu butonları, sınır anahtarlarını ve bobinleri şebekeden <b>yalıtılmış düşük gerilimle</b> (24 V AC) besler. Buton kutusuna dokunan kişi 230 V’a maruz kalmaz; nemli ortamlarda (pompa, havuz, tarım) tercih edilir.</p><p>Trafo gücü, aynı anda çeken bobinlerin <b>çekme anı</b> gücüne göre seçilir (AC bobin çekerken tutma gücünün 6–10 katını çeker). Sekonder mutlaka sigortalanır; bir ucunun topraklanması (PE) tavsiye edilir.</p>',
+    damar:[['Primer','L1-N (230 V) veya L1-L2 (400 V) — trafo etiketine göre'], ['Sekonder','24 V AC, 1–1,5 mm² kumanda kablosu']],
+    malzeme:['Kumanda trafosu 230/24 V (63–160 VA)','Primer sigorta (F1) ve sekonder sigorta (F3)','24 V AC bobinli kontaktör','Buton kutusu, sinyal lambası (24 V)'],
+    adim:['Trafo primerini etikete uygun uçlardan bağla.','Sekonderi sigortadan geçirerek kumanda hattına ver; diğer ucu ortak dönüş barasına.','Tüm bobinlerin ve lambaların 24 V olduğunu kontrol et.','Motoru bağlamadan kumandayı dene.'],
+    hata:['Trafo gücünü çekme anı akımını hesaba katmadan küçük seçmek (kontaktörler çekerken titrer).','Sekonder sigortasız bırakmak.','230 V lamba/bobin takmak (yanmaz, çekmez).'].concat(MOTOR_GENEL.hata.slice(0, 1)),
+    test:['Sekonder gerilimini yüksüz ve yüklü ölç (24 V AC’de %10’dan fazla düşmemeli).','Her bobinin etiket gerilimini kontrol et.'],
+    hesap:['motor'], ilgili:['bobin_lab','dol','bobin_24dc']
+  }
+});
+
+/* A4 — 24 V DC bobin, PLC çıkışı ve söndürme diyodu */
+sema({id:'bobin_24dc', kat:'role', ikon:'➖', ad:'24 V DC Bobin · PLC Çıkışı ve Söndürme Diyodu', ozet:'DC bobin bırakırken ters gerilim sıçraması üretir; paralel ters diyot bunu söndürür. Diyot ters takılırsa kısa devre olur.', etiket:['24v dc','dc bobin','plc çıkışı','söndürme diyodu','serbest geçiş diyodu','flyback','ters emk','ara röle','rc söndürücü','varistör'],
+  w:640, h:350, minw:520, ipucu:'PLC çıkışına (Q0.0) dokun: KA çeker, lamba yanar. Arıza menüsünde diyotsuz ve ters diyot durumlarını dene.',
+  e:[['src','L',60,60,{p:'L1', ad:'L', yon:'sol'}], ['src','N',60,110,{p:'N', ad:'N', yon:'sol'}], ['trafo','T1',150,85,{dc:true, v:24, ad:'24 V DC adaptör'}],
+    ['mcb','F1',240,90,{ad:'F 2A', kademe:1}], ['sw','Q',240,150,{dik:true, ad:'PLC çıkışı Q0.0'}], ['j','J',240,206], ['bob','KA',240,240,{ad:'KA', v:24, akim:'dc', kiv:true, not:'ara röle'}], ['sdr','D',330,240,{}],
+    bara('NB', 180, 300, [180, 240, 330]),
+    ['src','LL',480,40,{p:'L1', ad:'L1', yon:'ust'}], ['kon','KAk',480,90,{r:'KA', ad:'KA', no:'11-14'}], ['lamba','H1',480,200,{dik:true, ad:'Yük 230 V'}], ['src','LN',480,300,{p:'N', ad:'N', yon:'alt'}]],
+  t:[['L.o','T1.p1','L'], ['N.o','T1.p2','N'], ['T1.s1','F1.a1','D+'], ['F1.b1','Q.a','D+'], ['Q.b','J.o','D+'], ['J.o','KA.A1','D+'], ['J.o','D.k','D+',[[330,206]],'wdk'], ['D.a','NB.t2','D-',null,'wda'], ['KA.A2','NB.t1','D-'], ['T1.s2','NB.t0','D-'],
+    ['LL.o','KAk.a','L'], ['KAk.b','H1.a','L'], ['H1.b','LN.o','N']],
+  bolge:[[20, 20, 390, 320, '24 V DC kumanda', 'alt'], [420, 10, 190, 330, '230 V yük', 'alt']],
+  ariza:[{id:'ters', ad:'Söndürme diyodu ters takılmış', o:{D:{ters:true}}, belirti:'PLC çıkışı kapanınca 24 V doğrudan diyot üzerinden kısa devre olur: sigorta atar. Sigorta yoksa PLC çıkışı veya adaptör yanar. Röle hiç çekmez.', bul:'Diyodun çizgili ucu (katot) A1 (+), diğer ucu A2 (−) ucuna gelmeli. Hazır diyot modüllerinde ve LED’li soketlerde de polariteye dikkat.'},
+    {id:'diyotsuz', ad:'Söndürme diyodu takılmamış', kop:['wdk','wda'], belirti:'Röle normal çalışıyor gibi görünür; ama her bırakışta bobin uçlarında yüzlerce voltluk ters gerilim sıçraması oluşur. Zamanla PLC transistör çıkışı veya sürücü kontak bozulur.', bul:'DC bobinlere paralel ters diyot (veya diyotlu modül), AC bobinlere RC söndürücü/varistör takılmalı. Sık bozulan PLC çıkışında ilk bakılacak yer.'},
+    {id:'ac', ad:'24 V AC bobinli röle takılmış', o:{KA:{akim:'ac'}}, belirti:'Röle çeker ama bobin hızla ısınır ve yanar.', bul:'Etikette “24 V AC (~)” mı “24 V DC (=)” mi yazdığını kontrol et.'}],
+  bilgi:{
+    nasil:'<p>PLC transistör çıkışları, sensörler ve zaman saatleri genellikle <b>24 V DC</b> ile çalışır ve en fazla 0,5–2 A verir. Bu yüzden önce bir <b>ara röle</b> veya DC bobinli kontaktör sürülür.</p><p>Bobin bir endüktanstır: akım kesildiğinde manyetik enerji, ters yönde yüzlerce voltluk bir gerilim sıçraması üretir. Bobine <b>ters paralel diyot</b> (katot +’ya) bu akımı bobin üzerinde döndürerek söndürür. AC bobinlerde diyot kullanılmaz; <b>RC söndürücü</b> veya <b>varistör</b> kullanılır.</p><p>Diyot bırakma süresini biraz uzatır; çok hızlı bırakma gerekiyorsa diyot + zener veya varistör tercih edilir.</p>',
+    damar:[['DC kumanda','+24 V (kırmızı/kahve), 0 V (mavi), 0,75–1 mm²'], ['Yük','230 V, yük akımına göre']],
+    malzeme:['24 V DC adaptör (ray tipi)','24 V DC bobinli ara röle (diyotlu/LED’li soket önerilir)','1N4007 diyot veya hazır söndürme modülü','Sigorta (2–4 A)'],
+    adim:['Adaptör çıkışını sigortadan geçir.','PLC çıkışını bobinin A1 (+) ucuna, A2’yi 0 V’a bağla.','Diyodu katot A1’e, anot A2’ye gelecek şekilde bobine paralel tak.','Röle kontağıyla 230 V yükü anahtarla.'],
+    hata:['Diyodu ters takmak (kısa devre).','DC bobinde söndürücü kullanmamak.','PLC çıkışından doğrudan büyük kontaktör sürmek (çıkış akımı yetmez).'],
+    test:['Diyodu multimetrenin diyot kademesinde ölç: bir yönde ≈0,6 V, diğer yönde OL.','Çıkış kapalıyken A1-A2 arası 0 V, açıkken 24 V DC olmalı.'],
+    ilgili:['bobin_lab','role_ince','role_14pin','ssr']
+  }
+});
+
+/* A5 — Nötrsüz panoda 400 V bobin */
+sema({id:'bobin_400', kat:'role', ikon:'⚡', ad:'400 V Bobinli Kontaktör · Nötrsüz Panoda Kumanda', ozet:'Panoya nötr gelmiyorsa bobin iki faz arasına bağlanır: 400 V bobin gerekir. 230 V bobin takılırsa yanar.', etiket:['400v bobin','nötrsüz pano','iki faz arası','l1 l2 kumanda','kontaktör yandı','tarım panosu','sulama panosu'],
+  w:720, h:440, ipucu:'START’a bas: bobin L1-L2 (400 V) arasında çeker. Arıza menüsünü dene.',
+  e:GUC3(68, 'KM').concat([['src','KL1',400,24,{p:'L1', ad:'L1', yon:'ust'}], ['src','KL2',440,24,{p:'L2', ad:'L2', yon:'ust'}], ['mcb','F1',400,40,{n:2, s:40, ad:'F1 2A', kademe:1}],
+    ['kon','F2k',400,100,{r:'F2', tip:'nc', ad:'F2', no:'95-96'}], ['btn','S0',400,150,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}], ['j','J1',400,200], ['j','J1b',480,200],
+    ['btn','S1',400,210,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',480,210,{r:'KM', ad:'KM', no:'13-14'}], ['j','J2',400,268], ['bob','KM',400,310,{ad:'KM', v:400, akim:'ac'}],
+    bara('NK', 600, 330, [600, 650])]),
+  t:GUC3T(68).concat([['KL1.o','F1.a1','L'], ['KL2.o','F1.a2','L2'], ['F1.b1','F2k.a','K'], ['F2k.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'],
+    ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[480,268]]], ['J2.o','KM.A1','K'], ['KM.A2','F1.b2','L2',[[400,360],[560,360],[560,92],[440,92]],'wret']]),
+  bolge:[[30, 6, 220, 420, 'Güç devresi', 'alt'], [340, 6, 350, 420, 'Kumanda · L1-L2 (400 V)', 'alt']],
+  yazi:[[625, 318, 'N klemensi (boş)', {s:9}], [625, 350, 'panoya nötr gelmiyor', {s:8.5}]],
+  ariza:[{id:'b230', ad:'230 V AC bobinli kontaktör takılmış', o:{KM:{v:230}}, belirti:'START’a basınca kontaktör çeker ama bobine 400 V düştüğü için ısınır, birkaç saniyede yanar (yanık bobin kokusu).', bul:'Bobin iki faz arasındaysa 400 V bobin seçilmeli. Ya da panoya nötr getirilip 230 V bobin L-N arasına bağlanır.'},
+    {id:'notr', ad:'Bobin dönüşü boştaki N klemensine bağlanmış', degis:{wret:{b:'NK.t0', rota:[[400,360],[600,360]]}}, belirti:'START’a basınca hiçbir şey olmuyor.', bul:'A1’de faz var; A2 tarafı hiçbir yere ulaşmıyor. Bobin uçları arasında 0 V. Dönüş hattını takip et: nötr klemensine şebekeden N geliyor mu?'},
+    {id:'ayni', ad:'Bobinin iki ucu da aynı faza (L1-L1) bağlanmış', o:{KL2:{p:'L1', ad:'L1'}}, belirti:'Kontaktör hiç çekmiyor; kontrol kalemi her iki uçta da yanıyor.', bul:'Kalem yalnızca faz var mı onu gösterir. İki uç arasını multimetreyle ölç: aynı fazsa 0 V.'}],
+  bilgi:{
+    nasil:'<p>Kırsal sulama ve tarım panolarında, eski sanayi panolarında şebekeden <b>nötr gelmeyebilir</b> (yalnızca L1-L2-L3 ve PE). Bu durumda kumanda iki faz arasından alınır ve bobin <b>400 V AC</b> olmalıdır.</p><p>Bir başka yol, 400/24 V veya 400/230 V kumanda trafosu kullanmaktır. Nötr yerine PE’yi dönüş olarak kullanmak <b>yasaktır</b>: kaçak akım rölesi atar, gövdeler gerilim altında kalabilir.</p>',
+    damar:[['Kumanda','L1 ve L2 (iki faz), her ikisi de sigortalı']],
+    malzeme:['400 V AC bobinli kontaktör','2 kutuplu kumanda sigortası','400 V sinyal lambası (gerekirse)'],
+    adim:['Kumandayı iki kutuplu sigortadan al (L1 ve L2).','Butonları L1 tarafına seri bağla, bobinin A2 ucunu L2’ye götür.','Lamba ve diğer cihazların da 400 V olduğunu kontrol et.'],
+    hata:['230 V bobinli kontaktör takmak (yanar).','Nötr yerine PE’yi dönüş olarak kullanmak.','Kumandayı tek kutuplu sigortadan almak (L2 sigortasız kalır).'],
+    test:['A1-A2 arasında 400 V ölç.','Kontaktör etiketinde “400 V AC” yazdığını kontrol et.'],
+    hesap:['motor'], ilgili:['bobin_lab','kumanda_24ac','dol']
+  }
+});
+
+/* A6 — Universal (AC/DC) elektronik bobin */
+sema({id:'bobin_uc', kat:'role', ikon:'🔀', ad:'Universal AC/DC Elektronik Bobinli Kontaktör', ozet:'Klasik 24 V AC bobin ile 24–60 V AC/DC elektronik bobini aynı kaynağa bağla: hangisi hangi gerilimde çalışıyor?', etiket:['universal bobin','ac/dc bobin','elektronik bobin','geniş aralık','24-60v','100-250v','plc uyumlu','düşük tüketim'],
+  w:640, h:340, minw:520, ipucu:'Kaynağa dokunarak gerilimi değiştir, S1 ile enerji ver. İki kontaktörü karşılaştır.',
+  e:[['ksec','KY',100,170,{liste:['24ac','24dc','48dc','12dc','230ac'], ad:'Kumanda gerilimi'}], ['sw','S1',190,158,{ad:'S1'}], ['j','J1',300,158], ['j','J2',470,158],
+    ['bob','KA',300,240,{ad:'KA', v:24, akim:'ac', not:'klasik bobin'}], ['bob','KB',470,240,{ad:'KB', v:24, vmin:24, vmax:60, akim:'uc', not:'elektronik bobin'}], bara('NB', 180, 300, [180, 300, 470])],
+  t:[['KY.X1','S1.a','K'], ['S1.b','J1.o','K'], ['J1.o','J2.o','K'], ['J1.o','KA.A1','K'], ['J2.o','KB.A1','K'], ['KY.X2','NB.t0','K'], ['KA.A2','NB.t1','K'], ['KB.A2','NB.t2','K']],
+  bilgi:{
+    nasil:'<p><b>Elektronik (universal) bobinli</b> kontaktörlerin içinde doğrultucu ve elektronik kontrol devresi vardır. Çekme anında bobine tam güç verir, sonra tutma gücüne düşürür (PWM). Sonuçları:</p><ul><li>Hem AC hem DC ile çalışır, geniş gerilim aralığı (ör. 24–60 V, 48–130 V, 100–250 V).</li><li>Tutma gücü çok düşüktür (1–3 W): PLC çıkışından doğrudan sürülebilen modeller vardır.</li><li>Gerilim dalgalanmasına dayanıklı, sessiz çalışır; vızıltı yapmaz.</li><li>Bazı modellerde düşük güçlü PLC girişi (A1-A2’den ayrı) bulunur.</li></ul><p>Aralık dışında yine çalışmaz: 24–60 V bobine 230 V verilirse yanar, 12 V’ta çekmez.</p>',
+    damar:[['Kumanda','etiketteki aralığa uygun AC veya DC']],
+    malzeme:['Universal (AC/DC) bobinli kontaktör','Uygun kumanda kaynağı'],
+    adim:['Etiketteki gerilim aralığını oku (ör. “24…60 V AC/DC”).','Kaynak bu aralıkta mı ölç.','DC’de polarite işaretli modellerde A1 (+).'],
+    hata:['“Universal” yazısını her gerilimde çalışır sanmak.','Elektronik bobini megger ile ölçmek (elektronik kısım zarar görebilir).'],
+    test:['Bobin direnci ölçümü elektronik bobinde anlamsızdır; gerilimi ölç ve çalışmayı dene.'],
+    ilgili:['bobin_lab','bobin_24dc']
+  }
+});
+
+/* A7 — Mandallı kontaktör: sürekli sinyal ve darbe sinyali */
+sema({id:'mandalli', kat:'role', ikon:'🔒', ad:'Sürekli Sinyal ve Darbe Sinyali · Mandallı Kontaktör', ozet:'Normal kontaktör bobin enerjili kaldıkça çeker; mandallı kontaktör SET ve RESET darbesiyle konum değiştirir. Elektrik kesilince ne oluyor?', etiket:['mandallı kontaktör','latching','kilitli röle','darbe sinyali','set reset','bistable','enerji kesintisi','sürekli sinyal'],
+  w:760, h:450, ipucu:'İki kontaktörü de çalıştır, sonra şebekeye dokunup kesinti yap ve elektriği geri getir. Hangisi eski konumunu hatırlıyor?',
+  e:[['sebeke','SB',70,60,{}], bara('LB', 140, 50, [140, 220, 370, 500, 580, 680]),
+    ['btn','S0',220,80,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}], ['j','J1',220,132], ['j','J1b',290,132], ['btn','S1',220,142,{dik:true, ad:'START', renk:'yesil'}], ['kon','K1h',290,142,{r:'K1', ad:'K1', no:'13-14'}], ['j','J2',220,200], ['bob','K1',220,250,{ad:'K1', not:'normal kontaktör'}],
+    ['kon','K1k',370,90,{r:'K1', ad:'K1'}], ['lamba','H1',370,250,{dik:true, ad:'Yük 1'}],
+    ['btn','SS',500,80,{dik:true, ad:'SET', renk:'yesil'}], ['btn','SR',580,80,{dik:true, ad:'RESET', renk:'kirmizi'}], ['mand','M',540,230,{ad:'K2'}],
+    ['kon','Mk',680,90,{r:'M', ad:'K2'}], ['lamba','H2',680,250,{dik:true, ad:'Yük 2'}], bara('NB', 130, 420, [130, 220, 370, 540, 680])],
+  t:[['SB.L','LB.t0','L'], ['LB.t1','S0.a','L'], ['S0.b','J1.o','L'], ['J1.o','S1.a','L'], ['J1.o','J1b.o','L'], ['J1b.o','K1h.a','L'], ['S1.b','J2.o','L'], ['K1h.b','J2.o','L',[[290,200]]], ['J2.o','K1.A1','L'], ['K1.A2','NB.t1','N'],
+    ['LB.t2','K1k.a','L'], ['K1k.b','H1.a','L'], ['H1.b','NB.t2','N'], ['LB.t3','SS.a','L'], ['SS.b','M.A1','L',[[500,170],[516,170]]], ['LB.t4','SR.a','L'], ['SR.b','M.A3','L',[[580,170],[564,170]]], ['M.A2','NB.t3','N'],
+    ['LB.t5','Mk.a','L'], ['Mk.b','H2.a','L'], ['H2.b','NB.t4','N'], ['SB.N','NB.t0','N',[[130,70]]]],
+  bolge:[[170, 64, 240, 330, 'Normal kontaktör (mühürlemeli)', 'alt'], [460, 64, 270, 330, 'Mandallı kontaktör', 'alt']],
+  bilgi:{
+    nasil:'<p><b>Sürekli sinyalli (normal) kontaktör</b>: bobin enerjili kaldığı sürece çeker. Mühürleme kontağı sayesinde START bırakılınca da çalışır; elektrik kesilip gelince <b>kendiliğinden kalkmaz</b>. Motorlar için güvenlik budur.</p><p><b>Darbe sinyalli (mandallı / latching)</b> kontaktörde iki bobin (SET-RESET) veya tek bobin + mekanik kilit vardır. Kısa bir darbe konumu değiştirir; mekanik kilit konumu korur. Bobin sürekli enerji çekmez, ısınmaz, vızıldamaz. Elektrik kesilip gelince <b>son konumunda kalır</b>.</p><p>Uygun yerler: aydınlatma grupları, uzaktan kumandalı yükler, enerji tasarrufu gereken yerler. Uygun olmayan: kesinti sonrası kendiliğinden kalkması tehlikeli olan motorlar.</p><p>Tek bobinli darbe rölesi (teleruptör) için “Darbe (İmpuls) Rölesi” şemasına bak.</p>',
+    damar:[['Mandallı','SET hattı, RESET hattı, ortak A2 (N)']],
+    malzeme:['Mandallı kontaktör/röle (2 bobinli veya tek bobin + kilit)','SET ve RESET butonları'],
+    adim:['SET butonunu A1’e, RESET butonunu A3’e (markaya göre farklı numara olabilir) bağla.','Ortak ucu (A2) nötre bağla.','Kesinti sonrası davranışın iş için uygun olduğunu düşün.'],
+    hata:['Mandallı kontaktörü motor yol vermede kullanmak (kesinti dönüşünde kendiliğinden çalışır).','SET ve RESET’e aynı anda sinyal vermek.'],
+    test:['Her buton darbesinde konumun değiştiğini, enerji kesilince korunduğunu kontrol et.'],
+    ilgili:['impuls','dol','modul_kontaktor']
+  }
+});
+
+/* A8 — Modüler (ray tipi) kontaktör, OTO/0/1 selektörü */
+sema({id:'modul_kontaktor', kat:'role', ikon:'🎚️', ad:'Modüler Kontaktör · OTO / 0 / 1 Selektörlü', ozet:'Ray tipi sessiz kontaktör: zaman saati gece tarifesinde termosifonu çalıştırır. Önündeki selektörle elle açılıp kapatılabilir.', etiket:['modüler kontaktör','ray tipi kontaktör','sessiz kontaktör','oto 0 1','manuel selektör','termosifon','gece tarifesi','zaman saati'],
+  w:520, h:430, minw:460, ipucu:'Zaman saatine dokun: program açık/kapalı. Kontaktörün selektörüne dokun: OTO → 0 → 1.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 90, 380]), ['saat','ZS',150,120,{ad:'Zaman saati', acik:true}],
+    ['bob','KM',240,230,{ad:'KM', v:230, akim:'ac', secici:true, not:'modüler 2P 25 A'}], ['kon3','KMg',380,120,{r:'KM', n:2, s:26, ad:'KM', nolar:true}], ['src','KN2',406,70,{p:'N', ad:'N', yon:'ust'}],
+    ['yuk','TS',393,250,{w:104, h:30, ad:'Termosifon', ikon:'🚿'}], ['src','KN',40,400,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 400, [60, 150, 240])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','ZS.L','L',[[90,165],[126,165]]], ['ZS.N','NB.t1','N'], ['ZS.Y','KM.A1','Ls'], ['KM.A2','NB.t2','N'], ['LB.t2','KMg.a1','L'], ['KN2.o','KMg.a2','N'],
+    ['KMg.b1','TS.a','L',[[380,200],[341,200]]], ['KMg.b2','TS.b','N',[[406,210],[445,210]]], ['KN.o','NB.t0','N']],
+  bolge:[[90, 70, 220, 320, 'Kumanda', 'alt'], [330, 30, 170, 280, 'Güç (25 A)', 'alt']],
+  ariza:[{id:'sec0', ad:'Selektör 0’da unutulmuş', st:{KM:{sec:'0'}}, belirti:'Zaman saati programı açık, saat çıkışında faz var ama termosifon ısınmıyor.', bul:'Modüler kontaktörün önündeki selektörü kontrol et: OTO konumunda olmalı. Bakım sonrası en sık unutulan şey.'},
+    {id:'sec1', ad:'Selektör 1’de (elle açık) unutulmuş', st:{KM:{sec:'1'}}, belirti:'Termosifon gündüz de sürekli çalışıyor; zaman saati kapatsa da durmuyor. Fatura yükseliyor.', bul:'Selektör 1 konumunda kontaklar bobinden bağımsız kapalıdır. OTO’ya al.'}],
+  bilgi:{
+    nasil:'<p>Modüler (ray tipi) kontaktörler sigorta kutusuna MCB’lerle aynı rayda takılır, <b>sessiz</b> çalışır (konut için uygun) ve çoğunda ön yüzde <b>OTO / 0 / 1</b> selektörü bulunur:</p><ul><li><b>OTO</b>: bobin kontrol eder (zaman saati, termostat, akıllı röle).</li><li><b>0</b>: kontaktör kilitli kapalı (bakım).</li><li><b>1</b>: bobinden bağımsız sürekli açık (elle çalıştırma, test).</li></ul><p>Termosifon, elektrikli ısıtıcı, havuz pompası gibi 16–40 A yükleri zaman saati veya akıllı rölenin küçük kontağı yerine bu kontaktör anahtarlar. Rezistif yük için AC-1, motor için AC-3 değerine bak.</p>',
+    damar:[['Kumanda','zaman saati çıkışı → A1, A2 → N (1,5 mm²)'], ['Güç','faz + nötr (2 kutuplu), yüke göre 2,5–6 mm²']],
+    malzeme:['Modüler kontaktör 2P (25 A AC-1, selektörlü)','Zaman saati veya akıllı röle','Yük sigortası'],
+    adim:['Kontaktörü yük sigortasından sonra raya tak.','Zaman saati çıkışını A1’e, A2’yi nötre bağla.','Faz ve nötrü 1-3 girişlerden, yükü 2-4 çıkışlardan bağla.','Selektörü OTO’ya al ve programı dene.'],
+    hata:['Selektörü 0 veya 1’de unutmak.','Termosifonu doğrudan zaman saati kontağından (genellikle 16 A rezistif) beslemek.'],
+    test:['OTO’da saat programıyla, 1’de elle çalıştığını kontrol et.'],
+    hesap:['kablo'], ilgili:['termosifon','zaman_saati','mandalli']
+  }
+});
+
+/* A9 — Termik röle ayarı */
+const TERMIK_G = GUC3(68, 'KM').map(x => x[1] === 'F2' ? ['term3','F2',68,220,{s:18, ad:'Termik F2', ayarlar:[4, 5, 6.2, 8], ai:2, In:6.2, m:'M'}] : x);
+sema({id:'termik_ayar', kat:'role', ikon:'🌡️', ad:'Termik Röle · Ayar Akımı, 95-96 / 97-98, H/A Reset', ozet:'Termik, motor etiket akımına ayarlanır. Düşük ayarda boşuna atar, yüksek ayarda hiç atmaz ve motor yanar. Dene.', etiket:['termik röle','termik ayarı','95-96','97-98','aşırı yük','reset','manuel reset','otomatik reset','motor koruma'],
+  w:760, h:460, ipucu:'START ile motoru çalıştır, “aşırı yük yap”a dokun: termik ısınır ve atar. Ir ayarını değiştir, H/A reset modunu dene.',
+  e:TERMIK_G.concat([['src','KL',420,24,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F1',420,40,{ad:'B6', kademe:1}], ['j','J0',420,90], ['kon','F2k',420,100,{r:'F2', tip:'nc', ad:'F2', no:'95-96'}],
+    ['btn','S0',420,160,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}], ['j','J1',420,215], ['j','J1b',500,215], ['btn','S1',420,230,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',500,230,{r:'KM', ad:'KM', no:'13-14'}], ['j','J2',420,290], ['j','J3',560,290],
+    ['bob','KM',420,330,{ad:'KM'}], ['lamba','H1',560,330,{dik:true}], ['kon','F2a',660,100,{r:'F2', tip:'no', ad:'F2', no:'97-98'}], ['lamba','H2',660,330,{dik:true}],
+    bara('NB', 420, 400, [420, 560, 660, 700]), ['src','KN',700,420,{p:'N', ad:'N', yon:'alt'}]]),
+  t:GUC3T(68).concat([['KL.o','F1.a1','K'], ['F1.b1','J0.o','K'], ['J0.o','F2k.a','K'], ['J0.o','F2a.a','K',[[660,90]]], ['F2k.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'], ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[500,290]]],
+    ['J2.o','KM.A1','K'], ['J2.o','J3.o','K'], ['J3.o','H1.a','K'], ['F2a.b','H2.a','K'], ['KM.A2','NB.t0','N'], ['H1.b','NB.t1','N'], ['H2.b','NB.t2','N'], ['KN.o','NB.t3','N']]),
+  bolge:[[30, 6, 290, 420, 'Güç devresi', 'alt'], [370, 6, 360, 440, 'Kumanda devresi', 'alt']],
+  yazi:[[580, 334, 'çalışıyor', {a:'start', s:9}], [680, 334, 'termik arıza', {a:'start', s:9}]],
+  ariza:[{id:'9798', ad:'Kumanda 95-96 yerine 97-98 üzerinden bağlanmış', o:{F2k:{tip:'no', no:'97-98'}}, belirti:'Motor START ile çalışmıyor; termik atınca çalışıyor! Davranış ters.', bul:'Termiğin üzerindeki numaralara bak: kumanda devresine seri giden kontak 95-96 (NC) olmalı. 97-98 (NO) yalnızca arıza lambası/alarm içindir.'},
+    {id:'yuksek', ad:'Termik motor akımının üstüne ayarlanmış', st:{F2:{ai:3}}, belirti:'Aşırı yükte termik atmıyor; motor ısınıyor, sonunda sargı yanar.', bul:'Ir ayarını motor etiketindeki nominal akıma (In) getir. Yıldız-üçgende 0,58·In.'}],
+  bilgi:{
+    nasil:'<p>Termik röle, motor akımıyla ısınan bimetal şeritlerden oluşur. Akım ayar değerini (Ir) belli bir oranda aşarsa (ör. 1,2·Ir’de dakikalar, 6·Ir’de birkaç saniye) bimetal bükülür ve <b>95-96 NC</b> kontağı açılır, <b>97-98 NO</b> kontağı kapanır.</p><ul><li><b>Ayar = motor etiket akımı (In)</b>. Düşük ayar: boşuna atar. Yüksek ayar: koruma yok.</li><li><b>H (manuel)</b>: soğuduktan sonra mavi RESET butonuyla kurulur. <b>A (otomatik)</b>: soğuyunca kendiliğinden kurulur. Kendiliğinden kalkması tehlikeli olan makinelerde H kullan.</li><li>Termik <b>faz kaybını</b> da algılar (iki fazda akım artar).</li><li>Termik kısa devreye karşı korumaz; önünde sigorta veya motor koruma şalteri olmalı.</li></ul>',
+    damar:[['95-96','kumandaya seri (bobin yolu)'], ['97-98','arıza lambası / alarm']],
+    malzeme:['Termik röle (ayar aralığı motor akımını kapsayan)','Arıza sinyal lambası'],
+    adim:['Motor etiketinden In’i oku (400 V değerini).','Termiği In’e ayarla.','95-96’yı STOP’tan önce kumandaya seri bağla, 97-98’i arıza lambasına.','Reset modunu seç (H önerilir).'],
+    hata:['Atınca ayarı yükseltmek (asıl sorun: yük, yatak, faz kaybı).','95-96 yerine 97-98 kullanmak.','Yıldız-üçgende termiği tam In’e ayarlamak (0,58·In olmalı).'],
+    test:['Pens ampermetreyle üç fazın akımını ölç: eşit ve In’in altında olmalı.','Termiğin TEST butonuna basınca kontaktör düşmeli.'],
+    hesap:['motor'], ilgili:['kontaktor_tani','mpcb_kont','dol','termistor_role']
+  }
+});
+
+/* A10 — Motor koruma şalteri + kontaktör */
+sema({id:'mpcb_kont', kat:'role', ikon:'🛡️', ad:'Motor Koruma Şalteri (MPCB) + Kontaktör', ozet:'Tek cihazda aşırı yük (ayarlı) ve kısa devre (manyetik) koruması. Yardımcı kontağı 13-14 kumandayı keser.', etiket:['motor koruma şalteri','mpcb','gv2','ayarlı şalter','kısa devre','aşırı yük','13-14 yardımcı','motor şalteri'],
+  w:640, h:430, ipucu:'START ile çalıştır, “aşırı yük yap” ile zorla. Arıza menüsünde motor sargısı kısa devresini dene.',
+  e:[['src','L1',68,24,{p:'L1', ad:'L1', yon:'ust'}], ['src','L2',86,24,{p:'L2', ad:'L2', yon:'ust'}], ['src','L3',104,24,{p:'L3', ad:'L3', yon:'ust'}], ['mpcb','Q1',68,40,{s:18, ad:'Q1', ayarlar:[2.5, 4, 6.3, 10], ai:1, In:3.7, m:'M', kademe:2}],
+    ['kon3','KMg',68,140,{r:'KM', s:18, ad:'KM', nolar:true}], ['mot3','M',86,260,{ad:'M'}],
+    ['src','KL',400,24,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F1',400,40,{ad:'F1 2A', kademe:1}], ['kon','Q1h',400,100,{r:'Q1', ad:'Q1', no:'13-14'}], ['btn','S0',400,150,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}],
+    ['j','J1',400,200], ['j','J1b',480,200], ['btn','S1',400,210,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',480,210,{r:'KM', ad:'KM', no:'13-14'}], ['j','J2',400,268], ['bob','KM',400,310,{ad:'KM'}],
+    bara('NB', 400, 380, [400, 520]), ['src','KN',520,400,{p:'N', ad:'N', yon:'alt'}]],
+  t:[['L1.o','Q1.a1','L'], ['L2.o','Q1.a2','L2'], ['L3.o','Q1.a3','L3'], ['Q1.b1','KMg.a1','L'], ['Q1.b2','KMg.a2','L2'], ['Q1.b3','KMg.a3','L3'], ['KMg.b1','M.U','L'], ['KMg.b2','M.V','L2'], ['KMg.b3','M.W','L3'],
+    ['KL.o','F1.a1','K'], ['F1.b1','Q1h.a','K'], ['Q1h.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'], ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[480,268]]], ['J2.o','KM.A1','K'], ['KM.A2','NB.t0','N'], ['KN.o','NB.t1','N']],
+  bolge:[[30, 6, 270, 400, 'Güç devresi', 'alt'], [340, 6, 260, 420, 'Kumanda', 'alt']],
+  ariza:[{id:'kisa', ad:'Motor sargısında kısa devre (U-V)', ekle:[['M.U','M.V','L',[[68,216],[86,216]]]], belirti:'START’a basar basmaz Q1 manyetik olarak anında atar; 13-14 kontağı açıldığı için kontaktör de düşer.', bul:'Motor klemens kutusunda sargılar arası direnci ölç (eşit olmalı), megger ile izolasyonu kontrol et. Arıza bulunmadan Q1’i tekrar kurma.'},
+    {id:'ayar', ad:'Q1 motor akımının çok üstüne ayarlanmış', st:{Q1:{ai:3}}, belirti:'Aşırı yükte Q1 atmıyor, motor ısınıyor.', bul:'Ayar kadranını motor etiket akımına getir.'}],
+  bilgi:{
+    nasil:'<p>Motor koruma şalteri (MPCB), sigorta + termik ikilisinin işini tek cihazda yapar: <b>ayarlı termik</b> kısım aşırı yükte, <b>manyetik</b> kısım kısa devrede (≈13·Ir) anında açar. Faz kaybına karşı da duyarlıdır.</p><p>Önüne takılan <b>yardımcı kontak bloğu</b> (13-14 NO, 21-22 NC) şalter kapalıyken kumandaya izin verir; şalter atınca kontaktör de düşer. Ayrıca şalter açıkken motor <b>güvenle ayrılmış</b> olur (bakım için kilitlenebilir).</p>',
+    damar:[['Güç','L1-L2-L3 → Q1 → KM → motor'], ['Kumanda','Q1 13-14 seri']],
+    malzeme:['Motor koruma şalteri (ayar aralığı motor In’ini kapsayan)','Yardımcı kontak bloğu (önden veya yandan)','Kontaktör'],
+    adim:['Q1’i motor etiket akımına ayarla.','Q1 çıkışını kontaktör girişine bağla.','Yardımcı 13-14’ü kumandaya seri koy.'],
+    hata:['Ayar aralığı motora uymayan şalter seçmek.','Atınca nedenini bulmadan tekrar tekrar kurmak.'],
+    test:['Q1’in TEST/trip butonuyla kontaktörün düştüğünü kontrol et.'],
+    hesap:['motor','kisadevre'], ilgili:['termik_ayar','dol']
+  }
+});
+
+/* ───────────── B. MANYETİK (ARA) RÖLELER ───────────── */
+const SOKET_NOT = 'Soket üzerindeki numaralar röle bacaklarının numarasıdır; klemens sırası markaya göre değişir. Her zaman NUMARAYA göre bağla.';
+
+/* B1 — 8 pin (MK2P) */
+sema({id:'role_8pin', kat:'role', ikon:'🔘', ad:'8 Pinli Soketli Röle (MK2P) · 2-7 Bobin', ozet:'Bobin 2-7. Ortak 1 ve 8; NO 3 ve 6; NC 4 ve 5. S1 ile çektir: hangi lamba yanıyor?', etiket:['mk2p','8 pin röle','soketli röle','manyetik röle','2-7 bobin','pf083a','ara röle','dpdt','oktal röle'],
+  w:560, h:450, minw:480, ipucu:'S1’e dokun: röle çeker, NC (4) lambası söner, NO (3) lambası yanar.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 200, 260]), ['sw','S1',200,70,{dik:true, ad:'S1'}], ['role','K1',200,150,{tur:'mk2', v:230, akim:'ac', ad:'K1', led:true}],
+    ['lamba','H2',246,330,{dik:true, ad:'H2 · 4 (NC)'}], ['lamba','H1',380,330,{dik:true, ad:'H1 · 3 (NO)'}], ['src','KN',40,420,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 420, [60, 200, 246, 380, 440])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S1.a','L'], ['S1.b','K1.2','Ls',null,'wb2'], ['K1.7','NB.t1','N',null,'wb7'], ['LB.t2','K1.1','L'], ['K1.4','H2.a','L'], ['K1.3','H1.a','L',[[274,280],[380,280]]], ['H2.b','NB.t2','N'], ['H1.b','NB.t3','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'b28', ad:'Bobin dönüşü 7 yerine 8’e bağlanmış', kop:['wb7'], ekle:[['K1.8','NB.t4','N',[[318,130],[440,130]]]], belirti:'S1 kapatılınca röle çekmiyor, LED yanmıyor; H2 yanmaya devam ediyor.', bul:'8 pinli rölede bobin 2-7’dir; 8 ikinci kontağın ortağıdır. Soketin üzerindeki numaraları oku.'},
+    {id:'dc24', ad:'24 V DC bobinli röle takılmış', o:{K1:{v:24, akim:'dc'}}, belirti:'S1 kapatılınca röle çeker gibi olur, titrer ve kısa sürede bobin yanar.', bul:'Rölenin üst yüzündeki bobin gerilimini oku (ör. “AC230V” / “DC24V”). Panodaki kumanda gerilimiyle aynı olmalı.'}],
+  bilgi:{
+    nasil:'<p>8 pinli (oktal) röle 2 değiştirici (C/O) kontaklıdır. Pin numaraları (alttan bakışta saat yönünde 1-8):</p><ul><li><b>Bobin: 2-7</b> (DC’de genellikle 2 (−), 7 (+); röle üstündeki şemaya bak).</li><li><b>1. kontak</b>: ortak <b>1</b>, NO <b>3</b>, NC <b>4</b>.</li><li><b>2. kontak</b>: ortak <b>8</b>, NO <b>6</b>, NC <b>5</b>.</li></ul><p>' + SOKET_NOT + '</p><p>Zaman röleleri, seviye röleleri ve faz koruma rölelerinin bir kısmı da aynı 8 pinli sokete takılır ama pin anlamları farklıdır.</p>',
+    damar:[['Bobin','2 ve 7'], ['Kontaklar','ortak + NO/NC']],
+    malzeme:['MK2P (veya muadili) röle, bobin gerilimi kumandaya uygun','8 pin ray soketi (PF083A muadili)'],
+    adim:['Soketi raya tak, rölenin yön tırnağını hizala.','Bobini 2-7’ye bağla.','Kullanılacak kontakları ortak-NO veya ortak-NC olarak bağla.'],
+    hata:['Bobini 1-8’e (ortaklara) bağlamak.','Sıra numarasına göre bağlamak.'].concat(ROLE_GENEL.hata.slice(0, 1)),
+    test:ROLE_GENEL.test,
+    ilgili:['role_11pin','role_14pin','ara_role']
+  }
+});
+
+/* B2 — 11 pin (MK3P) */
+sema({id:'role_11pin', kat:'role', ikon:'🔘', ad:'11 Pinli Soketli Röle (MK3P) · 2-10 Bobin', ozet:'Bobin 2-10. Ortaklar 1, 6, 11; NO 3, 7, 9; NC 4, 5, 8. Üç bağımsız değiştirici kontak.', etiket:['mk3p','11 pin röle','soketli röle','2-10 bobin','pf113a','3pdt','manyetik röle'],
+  w:600, h:450, minw:500, ipucu:'S1’e dokun: röle çeker. Hangi kontak hangi yükü açıp kapatıyor?',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 200, 260, 318, 376]), ['sw','S1',200,70,{dik:true, ad:'S1'}], ['role','K1',200,150,{tur:'mk3', v:230, akim:'ac', ad:'K1', led:true}],
+    ['lamba','H1',230,340,{dik:true, ad:'H1 (3)'}], ['lamba','H2',320,340,{dik:true, ad:'H2 (5)'}], ['yuk','P',440,340,{dik:true, w:44, h:30, ad:'Pompa', ikon:'💧'}],
+    ['src','KN',40,420,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 420, [60, 200, 230, 320, 440, 500])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S1.a','L'], ['S1.b','K1.2','Ls'], ['K1.10','NB.t1','N',null,'wb10'], ['LB.t2','K1.1','L'], ['LB.t3','K1.6','L'], ['LB.t4','K1.11','L'],
+    ['K1.3','H1.a','L',[[274,280],[230,280]],'wl1'], ['K1.5','H2.a','L',[[304,290],[320,290]]], ['K1.9','P.a','L',[[390,280],[440,280]]], ['H1.b','NB.t2','N'], ['H2.b','NB.t3','N'], ['P.b','NB.t4','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'b27', ad:'Bobin 2-10 yerine 2-7’ye bağlanmış (8 pin alışkanlığı)', kop:['wb10'], ekle:[['K1.7','NB.t5','N',[[332,252],[500,252]]]], belirti:'S1 kapatılınca röle çekmiyor; H2 (beklemede) yanmaya devam ediyor.', bul:'11 pinli rölede bobin 2-10’dur; 7, 2. kontağın NO ucudur. Soket etiketini oku.'},
+    {id:'nc', ad:'H1 için 3 (NO) yerine 4 (NC) kullanılmış', degis:{wl1:{a:'K1.4', rota:[[246,280],[230,280]]}}, belirti:'Pompa dururken “çalışıyor” lambası yanıyor, pompa çalışınca sönüyor.', bul:'Röleyi çektir ve lambanın bağlı olduğu ucu süreklilikle kontrol et: çekiliyken kapanan uç NO’dur.'}],
+  bilgi:{
+    nasil:'<p>11 pinli röle 3 değiştirici kontaklıdır (3PDT). Pin numaraları:</p><ul><li><b>Bobin: 2-10</b></li><li><b>1. kontak</b>: ortak 1, NO 3, NC 4</li><li><b>2. kontak</b>: ortak 6, NO 7, NC 5</li><li><b>3. kontak</b>: ortak 11, NO 9, NC 8</li></ul><p>' + SOKET_NOT + '</p><p>Üç kontak birbirinden yalıtılmıştır: biri 230 V yükü, diğeri 24 V sinyali, üçüncüsü başka bir devreyi anahtarlayabilir.</p>',
+    damar:[['Bobin','2 ve 10'], ['Kontaklar','her kontak için ortak + NO/NC']],
+    malzeme:['MK3P röle (bobin gerilimi uygun)','11 pin ray soketi (PF113A muadili)'],
+    adim:['Bobini 2-10’a bağla.','Her kontağın ortağını (1, 6, 11) besle; yükleri NO veya NC uçlarından al.'],
+    hata:['8 pinli röle alışkanlığıyla bobini 2-7’ye bağlamak.'].concat(ROLE_GENEL.hata.slice(1)),
+    test:ROLE_GENEL.test,
+    ilgili:['role_8pin','role_14pin','ara_role']
+  }
+});
+
+/* B3 — 14 pin (MY4) 24 V DC, LED'li soket */
+sema({id:'role_14pin', kat:'role', ikon:'🟦', ad:'14 Pinli Röle (MY4) · 13-14 Bobin, 24 V DC', ozet:'4 değiştirici kontak: ortaklar 9-12, NO 5-8, NC 1-4. LED’li soketlerde 13 (+), 14 (−) polaritesi önemli.', etiket:['my4','14 pin röle','pyf14a','4pdt','13-14 bobin','24v dc röle','ray soketi','led’li röle'],
+  w:640, h:460, minw:520, ipucu:'S1’e dokun: 24 V DC röle çeker, 230 V lambalar konum değiştirir.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 100, 260, 318, 376]), ['src','KNt',40,97,{p:'N', ad:'N', yon:'sol'}], ['trafo','T1',130,85,{dc:true, v:24, ad:'24 V DC'}],
+    ['sw','S1',200,90,{dik:true, ad:'S1'}], ['role','K1',200,160,{tur:'my4', v:24, akim:'dc', ad:'K1', led:true, polar:true}],
+    ['lamba','H1',250,350,{dik:true, ad:'H1 (5)'}], ['lamba','H2',332,350,{dik:true, ad:'H2 (6)'}], ['lamba','H3',412,350,{dik:true, ad:'H3 (3 NC)'}],
+    ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 250, 332, 412])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','T1.p1','L'], ['KNt.o','T1.p2','N'], ['T1.s1','S1.a','D+'], ['S1.b','K1.13','D+',null,'w13'], ['K1.14','T1.s2','D-',[[200,280],[160,280]],'w14'],
+    ['LB.t2','K1.9','L'], ['LB.t3','K1.10','L'], ['LB.t4','K1.11','L'], ['K1.5','H1.a','L',[[274,290],[250,290]]], ['K1.6','H2.a','L'], ['K1.3','H3.a','L',[[362,300],[412,300]]],
+    ['H1.b','NB.t1','N'], ['H2.b','NB.t2','N'], ['H3.b','NB.t3','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'ters', ad:'Bobin + ve − ters bağlanmış (14’e +)', o:{K1:{terb:true}}, degis:{w13:{b:'K1.14'}, w14:{a:'K1.13'}}, belirti:'S1 kapatılınca röle çekmiyor, soketteki LED yanmıyor.', bul:'LED’li/diyotlu DC soket ve rölelerde 13 (+), 14 (−). Multimetreyle polariteyi ölç.'},
+    {id:'ac', ad:'230 V AC bobinli röle takılmış', o:{K1:{v:230, akim:'ac'}}, belirti:'24 V DC ile röle hiç tepki vermiyor.', bul:'Röle üstündeki bobin gerilimini oku: “DC24V” olmalı.'}],
+  bilgi:{
+    nasil:'<p>MY4 (ve muadilleri) küçük gövdede 4 değiştirici kontak sunar; kontak akımı genellikle 3–5 A’dir. Ray soketi (PYF14A) numaraları:</p><ul><li><b>Bobin: 13-14</b> (DC ve LED’li modelde 13 +, 14 −)</li><li><b>Ortaklar: 9, 10, 11, 12</b></li><li><b>NO: 5, 6, 7, 8</b> (9→5, 10→6, 11→7, 12→8)</li><li><b>NC: 1, 2, 3, 4</b> (9→1, 10→2, 11→3, 12→4)</li></ul><p>IEC baskılı soketlerde aynı uçlar 11-14, 21-24… olarak da yazılabilir; soket üzerindeki baskıyı esas al.</p>',
+    damar:[['Bobin','13 (+), 14 (−)'], ['Kontaklar','ortak 9-12, NO 5-8, NC 1-4']],
+    malzeme:['MY4 röle 24 V DC (LED’li önerilir)','PYF14A ray soketi','Gerekirse diyot modülü'],
+    adim:['24 V DC’yi 13 (+) ve 14 (−) uçlarına bağla.','Her kontak grubunun ortağını besle; NO/NC’yi ihtiyaca göre kullan.','Kontak akımını (3–5 A) aşma.'],
+    hata:['Polariteyi ters bağlamak (LED’li modelde çalışmaz).','Ortak ucu NO/NC ile karıştırmak.'].concat(ROLE_GENEL.hata.slice(2)),
+    test:ROLE_GENEL.test,
+    ilgili:['role_8pin','role_11pin','bobin_24dc','role_ince']
+  }
+});
+
+/* B4 — İnce ray (arayüz) rölesi */
+sema({id:'role_ince', kat:'role', ikon:'▮', ad:'İnce Ray Rölesi (Arayüz Rölesi) · PLC → Kontaktör', ozet:'6 mm’lik arayüz rölesi PLC’nin 24 V DC çıkışını 230 V kontaktör bobinine taşır. A1 (+), A2 (−); 11 ortak, 14 NO, 12 NC.', etiket:['ince röle','arayüz rölesi','interface relay','plc rölesi','6 mm röle','a1 a2','11 12 14','24v dc'],
+  w:620, h:450, minw:500, ipucu:'PLC çıkışına (Q0.1) dokun: ince röle → kontaktör → fan.',
+  e:[['src','PP',60,60,{p:'plc:+', ad:'+24 V', yon:'sol', v:24}], ['src','PM',60,300,{p:'plc:-', ad:'0 V', yon:'sol'}], ['sw','Q',140,90,{dik:true, ad:'PLC Q0.1'}],
+    ['role','K1',140,170,{tur:'ince', v:24, akim:'dc', ad:'K1', led:true, polar:true}], ['src','KL',200,24,{p:'L1', ad:'L1', yon:'ust'}],
+    ['bob','KM',300,330,{ad:'KM', v:230, akim:'ac'}], ['src','KL2',440,40,{p:'L1', ad:'L1', yon:'ust'}], ['kon','KMk',440,100,{r:'KM', ad:'KM'}], ['yuk','FAN',440,250,{dik:true, w:50, h:30, ad:'Fan', ikon:'🌀'}],
+    ['src','KN',520,420,{p:'N', ad:'N', yon:'alt'}], bara('NB', 300, 420, [300, 440, 520])],
+  t:[['PP.o','Q.a','D+'], ['Q.b','K1.A1','D+',null,'wa1'], ['K1.A2','PM.o','D-',null,'wa2'], ['KL.o','K1.11','L'], ['K1.14','KM.A1','L',[[214,290],[300,290]],'wno'], ['KM.A2','NB.t0','N'],
+    ['KL2.o','KMk.a','L'], ['KMk.b','FAN.a','L'], ['FAN.b','NB.t1','N'], ['KN.o','NB.t2','N']],
+  bolge:[[20, 40, 200, 300, 'PLC 24 V DC', 'alt']],
+  ariza:[{id:'ters', ad:'A1 ve A2 ters bağlanmış', o:{K1:{terb:true}}, degis:{wa1:{b:'K1.A2'}, wa2:{a:'K1.A1'}}, belirti:'PLC çıkış LED’i yanıyor ama ince röle çekmiyor, rölenin LED’i yanmıyor.', bul:'Arayüz rölelerinde koruma diyodu ve LED vardır: A1 (+), A2 (−). Ters bağlantıda çalışmaz.'},
+    {id:'nc', ad:'14 yerine 12 (NC) kullanılmış', degis:{wno:{a:'K1.12', rota:[[126,290],[300,290]]}}, belirti:'PLC çıkışı yokken fan çalışıyor, çıkış gelince duruyor (ters mantık).', bul:'Kontak numaralarını oku: 11 ortak, 14 NO, 12 NC.'}],
+  bilgi:{
+    nasil:'<p>PLC’nin transistör çıkışı 0,5 A civarındadır ve 230 V anahtarlayamaz. <b>Arayüz (ince ray) rölesi</b> araya girer: bobini 24 V DC (birkaç mA) ile sürülür, 6 A kontağıyla 230 V kontaktör bobinini anahtarlar. Ayrıca PLC’yi pano gerilimlerinden yalıtır.</p><p>Numaralar IEC standardındadır: bobin <b>A1 (+) / A2 (−)</b>, kontak <b>11 ortak, 14 NO, 12 NC</b>. Modüllerde koruma diyodu ve LED hazırdır.</p><p>Hızlı ve çok sık anahtarlamada (ısıtıcı PWM) mekanik röle yerine <b>SSR</b> kullanılır.</p>',
+    damar:[['PLC tarafı','24 V DC, 0,5–0,75 mm²'], ['Kontak tarafı','230 V kumanda, 1 mm²']],
+    malzeme:['İnce ray arayüz rölesi 24 V DC (6 mm)','Köprü tarakları (ortak besleme için)'],
+    adim:['PLC çıkışını A1’e, 0 V’u A2’ye bağla.','Kontaktör bobin fazını 11’e, 14’ten bobine götür.','Yan yana rölelerde A2 ve 11 uçlarını köprü tarakla ortakla.'],
+    hata:['A1/A2 polaritesini ters bağlamak.','6 A kontakla motor veya büyük ısıtıcı anahtarlamak.'],
+    test:['PLC çıkışı aktifken A1-A2 arası 24 V DC; rölenin LED’i yanmalı.'],
+    ilgili:['bobin_24dc','role_14pin','ssr']
+  }
+});
+
+/* B5 — Ara röle: küçük kontakla büyük yük */
+sema({id:'ara_role', kat:'role', ikon:'🔁', ad:'Ara Röle · Sensör Kontağıyla Projektör Sürme', ozet:'Hareket sensörünün çıkışı küçük yüklere göredir. Ara röle bobinini sürer, rölenin kontağı projektörleri anahtarlar.', etiket:['ara röle','yardımcı röle','sensör yükü','projektör','hareket sensörü','kontak yükü','röle ile yük','led projektör'],
+  w:560, h:470, minw:480, ipucu:'Sensöre dokun (hareket): röle çeker, projektörler yanar.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 76, 260]), ['pir','PIR',120,120,{ad:'Hareket sensörü', sure:6}], ['role','K1',200,190,{tur:'mk2', v:230, akim:'ac', ad:'K1', led:true}],
+    ['j','J1',274,320], ['j','J2',400,320], ['lamba','H1',274,380,{dik:true, ad:'Projektör 1'}], ['lamba','H2',400,380,{dik:true, ad:'Projektör 2'}],
+    ['src','KN',40,450,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 450, [60, 120, 200, 274, 400])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','PIR.L','L',[[76,165],[96,165]]], ['PIR.N','NB.t1','N'], ['PIR.Y','K1.2','Ls'], ['K1.7','NB.t2','N'], ['LB.t2','K1.1','L',null,'wcom'], ['K1.3','J1.o','L'], ['J1.o','H1.a','L'], ['J1.o','J2.o','L'], ['J2.o','H2.a','L'], ['H1.b','NB.t3','N'], ['H2.b','NB.t4','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'com', ad:'Rölenin ortak ucu (1) beslenmemiş', kop:['wcom'], belirti:'Hareket algılanınca röle çekiyor (LED yanıyor, tık sesi) ama projektörler yanmıyor.', bul:'Kontrol kalemiyle 1 numaralı ortak uçta faz var mı bak. Röle kontağı “kuru kontaktır”: ortağa faz getirilmezse çıkış da olmaz.'}],
+  bilgi:{
+    nasil:'<p>Sensör, termostat, zaman saati, akıllı röle gibi cihazların çıkış kontakları genellikle 2–10 A rezistif yük içindir. LED projektör ve sürücülerin <b>ilk çekme akımı</b> (inrush) bu kontakları kaynatır. Çözüm: cihaz yalnızca <b>ara rölenin bobinini</b> sürer, yükü rölenin (veya kontaktörün) kontağı taşır.</p><p>Röle kontağı potansiyelsizdir (kuru kontak): ortak uca hangi gerilim verilirse NO/NC ucundan o çıkar. Böylece 230 V sensör, 12 V veya 24 V bir yükü de anahtarlayabilir.</p>',
+    damar:[['Sensör','L, N, çıkış (3 damar)'], ['Röle kontağı','ortağa faz, NO’dan yüke']],
+    malzeme:['Ara röle (kontak akımı yüke uygun, 10 A) veya modüler kontaktör','Soket'],
+    adim:['Sensör çıkışını rölenin bobinine (2), bobin dönüşünü (7) nötre bağla.','Rölenin ortak ucuna (1) faz ver.','NO ucundan (3) projektörleri besle.'],
+    hata:['Ortak ucu beslemeyi unutmak.','Çok sayıda LED projektörü 10 A röleyle anahtarlamak (inrush) — kontaktör kullan.'],
+    test:['Röle çekiliyken 1-3 arası süreklilik, 3 ucunda faz.'],
+    ilgili:['pir','role_8pin','kontaktor_yuk']
+  }
+});
+
+/* B6 — Katı hal rölesi (SSR) */
+sema({id:'ssr', kat:'role', ikon:'🔲', ad:'Katı Hal Rölesi (SSR) · DC Kontrol, AC Yük', ozet:'Hareketli parçası yok: 3–32 V DC sinyal ile 230 V rezistansı sessizce ve sık anahtarlar. Polarite ve giriş tipi önemli.', etiket:['ssr','katı hal rölesi','solid state','ssr-40da','pid kontrol','rezistans kontrolü','da tipi','sıfır geçiş','soğutucu'],
+  w:620, h:440, minw:500, ipucu:'PID çıkışına dokun: SSR iletime geçer, rezistans ısınır.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 120, 308]), ['src','KNt',60,122,{p:'N', ad:'N', yon:'sol'}], ['trafo','T1',150,110,{dc:true, v:12, ad:'PID kontrolör'}],
+    ['sw','Q',210,98,{ad:'SSR çıkışı'}], ['ssr','SSR',330,200,{ad:'SSR-40DA'}], ['yuk','RZ',540,250,{dik:true, w:60, h:30, ad:'Rezistans', ikon:'♨️'}], ['src','KN',540,420,{p:'N', ad:'N', yon:'alt'}]],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','T1.p1','L'], ['KNt.o','T1.p2','N'], ['T1.s1','Q.a','D+'], ['Q.b','SSR.3','D+',[[270,98],[270,260],[308,260]],'ws3'], ['T1.s2','SSR.4','D-',[[180,280],[352,280]],'ws4'],
+    ['LB.t2','SSR.1','L'], ['SSR.2','RZ.a','L',[[352,140],[540,140]]], ['RZ.b','KN.o','N']],
+  ariza:[{id:'ters', ad:'Giriş polaritesi ters (3 ve 4)', o:{SSR:{ters:true}}, degis:{ws3:{b:'SSR.4'}, ws4:{b:'SSR.3'}}, belirti:'PID çıkış veriyor ama SSR’nin LED’i yanmıyor, rezistans ısınmıyor.', bul:'SSR girişinde 3 (+), 4 (−). Ters bağlanırsa iletime geçmez (çoğu modelde zarar görmez).'},
+    {id:'ac', ad:'DA tipi SSR girişine 230 V AC verilmiş', o:{T1:{dc:false, v:230, ad:'(yanlış) 230 V'}}, belirti:'SSR’nin giriş katı yanar; artık hiç çalışmaz.', bul:'Etiketteki giriş tipini oku: DA = DC giriş / AC çıkış, AA = AC giriş / AC çıkış, DD = DC/DC. Girişe uygun sinyal ver.'}],
+  bilgi:{
+    nasil:'<p>SSR (katı hal rölesi) girişindeki LED’in ışığıyla içindeki triyak/tristörü tetikler. Kontak yoktur: <b>sessizdir, aşınmaz, saniyede birkaç kez</b> anahtarlanabilir. PID sıcaklık kontrolünde rezistansları sürmek için idealdir.</p><ul><li><b>DA tipi</b>: giriş 3–32 V DC, çıkış 24–380 V AC. <b>Polarite</b>: 3 (+), 4 (−).</li><li><b>Sıfır geçişli</b> modeller gerilim sıfırdan geçerken açar: parazit az, rezistif yük için ideal. Motor/trafo gibi endüktif yüklerde rastgele açan tip veya kontaktör daha uygundur.</li><li>İletimde 1–1,5 V düşüm olur ve <b>ısınır</b>: 10 A üstünde mutlaka soğutucu (ve termal macun) gerekir. Yük akımının 2 katı değerli SSR seç.</li><li>Kapalıyken birkaç mA kaçak akım akar: LED lamba sönükken hafif yanabilir.</li><li>Arızada çoğunlukla <b>kısa devre</b> kalır (yük sürekli çalışır): kritik yerlerde önüne kontaktör koy.</li></ul>',
+    damar:[['Giriş','kontrolörden 2 damar (+, −)'], ['Çıkış','faz 1’e, 2’den yüke']],
+    malzeme:['SSR (DA tipi, yük akımının 2 katı)','Soğutucu + termal macun','Sigorta (hızlı tip önerilir)'],
+    adim:['SSR’yi termal macunla soğutucuya monte et.','Kontrol sinyalini 3 (+) / 4 (−) uçlarına bağla.','Fazı 1’e, yükü 2’ye bağla; nötr doğrudan yüke.','İlk çalıştırmada SSR sıcaklığını kontrol et.'],
+    hata:['Soğutucusuz kullanmak (aşırı ısınır, kısa devre arızası yapar).','DA tipi SSR girişine AC vermek.','Endüktif yükte sıfır geçişli SSR kullanmak.'],
+    test:['Giriş varken çıkış 1-2 arası gerilim ≈1 V (iletimde), giriş yokken şebeke gerilimi.'],
+    hesap:['kablo'], ilgili:['bobin_24dc','role_ince','kontaktor_yuk']
+  }
+});
+
+/* B7 — 12 V oto rölesi */
+sema({id:'oto_role', kat:'role', ikon:'🚗', ad:'12 V Oto Tipi Röle · 30, 85, 86, 87, 87a', ozet:'Akü sistemlerinde, kapı motorunda, güneş sisteminde: 85-86 bobin, 30 ortak, 87 NO, 87a NC.', etiket:['oto rölesi','12v röle','30 85 86 87','87a','akü','kapı motoru','güneş sistemi','kamyon 24v','far rölesi'],
+  w:520, h:470, minw:440, ipucu:'Anahtara dokun: röle çeker, 87’ye bağlı yük çalışır, 87a’daki söner.',
+  e:[['src','AP',60,60,{p:'ak:+', ad:'+12 V', yon:'sol', v:12}], ['sig','F',140,80,{ad:'10 A'}], ['j','J',140,140], ['sw','S1',140,160,{dik:true, ad:'Anahtar'}], ['role','K1',140,240,{tur:'oto', v:12, akim:'dc', ad:'K1'}],
+    ['lamba','H2',186,390,{dik:true, ad:'87a (NC)'}], ['lamba','H1',300,390,{dik:true, ad:'87 (NO)'}], ['src','AM',60,450,{p:'ak:-', ad:'−', yon:'sol'}], bara('MB', 60, 450, [60, 140, 186, 300])],
+  t:[['AP.o','F.a1','D+'], ['F.b1','J.o','D+'], ['J.o','S1.a','D+'], ['S1.b','K1.86','D+'], ['J.o','K1.30','D+',[[200,140]]], ['K1.85','MB.t1','D-',null,'w85'], ['K1.87a','H2.a','D+'], ['K1.87','H1.a','D+',[[214,350],[300,350]]],
+    ['H2.b','MB.t2','D-'], ['H1.b','MB.t3','D-'], ['AM.o','MB.t0','D-']],
+  ariza:[{id:'v24', ad:'24 V sistemde (kamyon/akü bankası) 12 V röle', o:{AP:{v:24, ad:'+24 V'}}, belirti:'Röle çeker ama bobin kısa sürede ısınıp yanar.', bul:'Röle gövdesindeki bobin gerilimini oku (12 V / 24 V). 24 V araçlarda 24 V röle kullan.'},
+    {id:'85', ad:'85 (bobin dönüşü) bağlanmamış', kop:['w85'], belirti:'Anahtar açılınca hiçbir şey olmuyor; 86’da +12 V var.', bul:'Bobin 85-86 arasındadır; 85 eksiye (şasiye) gitmeli. Şasi bağlantısını kontrol et.'}],
+  bilgi:{
+    nasil:'<p>Oto tipi röle (Bosch tipi) DIN 72552 numaralarını kullanır:</p><ul><li><b>85-86</b>: bobin (çoğunda polaritesiz; diyotlu modelde 86 +).</li><li><b>30</b>: ortak (aküden, sigortalı).</li><li><b>87</b>: NO — röle çekince 30’a bağlanır.</li><li><b>87a</b>: NC — röle bırakıkken 30’a bağlı (5 pinli rölelerde).</li></ul><p>Kapı ve kepenk motorlarında, güneş/akü sistemlerinde, 12 V aydınlatmada, kamyon ve iş makinelerinde sık kullanılır. Kontak akımı 30–40 A olabilir; soket kabloları buna göre seçilir.</p>',
+    damar:[['Bobin','85 ve 86, ince kablo'], ['Kontak','30 ve 87: yük akımına göre (2,5–6 mm²)']],
+    malzeme:['12 V (veya 24 V) oto rölesi, 4 veya 5 pinli','Röle soketi','Bıçak sigorta'],
+    adim:['30’u sigortadan geçerek akü +’ya bağla.','86’ya anahtar/kontrol sinyalini, 85’i eksiye bağla.','Yükü 87’den (NO) veya 87a’dan (NC) al.'],
+    hata:['Sigortasız kullanmak.','12 V röleyi 24 V sistemde kullanmak.','Diyotlu rölede 85-86 polaritesini ters bağlamak.'],
+    test:['Bobin direnci 12 V rölede ≈70–90 Ω.','Çekiliyken 30-87 arası süreklilik.'],
+    hesap:['gunes'], ilgili:['offgrid','role_8pin']
+  }
+});
+
+/* ───────────── C. ZAMAN RÖLELERİ ───────────── */
+const ZR_GENEL = {
+  hata:['Mod/fonksiyon seçicisini kontrol etmeden takmak (çok fonksiyonlu rölelerde fabrika ayarı genellikle E).','Süre kademesini (sn/dk/saat) yanlış seçmek.','Besleme gerilimine (A1-A2) bakmamak.'],
+  test:['A1-A2 beslemesini ölç, U (besleme) LED’inin yandığını gör.','Süreyi kısa ayarlayıp çıkış LED’i ve kontak geçişini kontrol et.']
+};
+
+/* C1 — Çekmede gecikmeli: sıralı kalkış */
+sema({id:'zr_cekme', kat:'role', ikon:'⏱️', ad:'Çekmede Gecikmeli Zaman Rölesi · Sıralı Kalkış', ozet:'İki fan aynı anda kalkmasın: Fan 1 hemen, Fan 2 zaman rölesi süresi dolunca çalışır. Kontaklar 15-16 (NC), 15-18 (NO).', etiket:['zaman rölesi','çekmede gecikmeli','on delay','sıralı kalkış','15 16 18','gecikmeli çalışma','tdr'],
+  w:720, h:470, ipucu:'START’a bas: Fan 1 hemen, Fan 2 süre dolunca çalışır. STOP ikisini birden durdurur.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 120, 440, 560, 640]),
+    ['btn','S0',120,70,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}], ['j','J1',120,120], ['j','J1b',190,120], ['btn','S1',120,130,{dik:true, ad:'START', renk:'yesil'}], ['kon','K1h',190,130,{r:'K1', ad:'K1', no:'13-14'}], ['j','J2',120,190], ['j','J3',266,190],
+    ['bob','K1',120,240,{ad:'K1'}], ['zr2','KT',300,240,{mod:'E', sure:5, ad:'KT'}], ['kco','KTk',440,100,{r:'KT', n:['15','16','18'], zaman:true, ad:'KT'}],
+    ['lamba','H3',400,250,{dik:true}], ['bob','K2',454,240,{ad:'K2'}],
+    ['kon','K1k',560,90,{r:'K1', ad:'K1'}], ['yuk','F1',560,250,{dik:true, w:56, h:30, ad:'Fan 1', ikon:'🌀'}], ['kon','K2k',640,90,{r:'K2', ad:'K2'}], ['yuk','F2',640,250,{dik:true, w:56, h:30, ad:'Fan 2', ikon:'🌀'}],
+    ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 120, 362, 400, 454, 560, 640])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','K1h.a','K'], ['S1.b','J2.o','K'], ['K1h.b','J2.o','K',[[190,190]]], ['J2.o','K1.A1','K'], ['J2.o','J3.o','K'], ['J3.o','KT.A1','K'],
+    ['KT.A2','NB.t2','N',[[334,192],[362,192]]], ['K1.A2','NB.t1','N'], ['LB.t2','KTk.c','K'], ['KTk.no','K2.A1','K'], ['KTk.nc','H3.a','K',[[426,200],[400,200]]], ['H3.b','NB.t3','N'], ['K2.A2','NB.t4','N'],
+    ['LB.t3','K1k.a','L'], ['K1k.b','F1.a','L'], ['F1.b','NB.t5','N'], ['LB.t4','K2k.a','L'], ['K2k.b','F2.a','L'], ['F2.b','NB.t6','N'], ['KN.o','NB.t0','N']],
+  yazi:[[400, 294, 'bekliyor', {s:8.5}]],
+  bilgi:{
+    nasil:'<p><b>Çekmede gecikmeli</b> (on-delay, mod E) röle: A1-A2’ye enerji gelince saymaya başlar; süre dolunca çıkış kontağı konum değiştirir (15-18 kapanır, 15-16 açılır). Enerji kesilince hemen başa döner.</p><p>Kullanım: büyük yüklerin <b>sıralı kalkışı</b> (jeneratör, ana sigorta yükü), kompresör tekrar çalışma gecikmesi, yıldız-üçgen geçişi, alarm gecikmesi.</p><p>Numara kuralı: zaman rölelerinde ikinci rakam <b>5-6 (NC) ve 5-8 / 7-8 (NO)</b> “özel fonksiyonlu” kontağı belirtir: <b>15-16</b> NC, <b>15-18</b> NO; ikinci kontak 25-26-28.</p>',
+    damar:[['Zaman rölesi','A1-A2 besleme, 15 ortak, 16 NC, 18 NO']],
+    malzeme:['Zaman rölesi (çekmede gecikmeli veya çok fonksiyonlu)','2 kontaktör'],
+    adim:['Röleyi K1 ile aynı anda enerjilenecek şekilde bağla.','15-18 (NO) kontağını K2 bobin yoluna koy.','Süre kademesini ve değerini ayarla.'],
+    hata:ZR_GENEL.hata, test:ZR_GENEL.test,
+    ilgili:['zr_dusme','zr_cok','yildiz_ucgen']
+  }
+});
+
+/* C2 — Düşmede gecikmeli: banyo aspiratörü */
+sema({id:'zr_dusme', kat:'role', ikon:'🌬️', ad:'Düşmede Gecikmeli Zaman Rölesi · Banyo Aspiratörü', ozet:'Işık yanınca aspiratör çalışır; ışık söndükten sonra süre dolana kadar çalışmaya devam eder. Besleme sürekli, anahtar B1’e.', etiket:['düşmede gecikmeli','off delay','banyo fanı','aspiratör gecikmeli','b1 kontrol girişi','zaman rölesi','gecikmeli kapanma'],
+  w:600, h:470, minw:500, ipucu:'Işık anahtarını aç: lamba ve aspiratör çalışır. Kapat: aspiratör 8 sn daha çalışır.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 120, 266, 460]), ['sw','S1',120,70,{dik:true, ad:'Işık anahtarı'}], ['j','J1',120,140], ['lamba','H1',120,230,{dik:true, ad:'Banyo lambası'}],
+    ['zr2','KT',300,220,{mod:'R', b1:true, sure:8, ad:'KT'}], ['kco','KTk',460,100,{r:'KT', n:['15','16','18'], zaman:true, ad:'KT'}], ['yuk','FAN',474,260,{dik:true, w:66, h:30, ad:'Aspiratör', ikon:'🌀'}],
+    ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 120, 372, 474])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S1.a','L'], ['S1.b','J1.o','Ls'], ['J1.o','H1.a','Ls'], ['H1.b','NB.t1','N'], ['LB.t2','KT.A1','L',null,'wa1'], ['J1.o','KT.B1','Ls',[[300,140]]], ['KT.A2','NB.t2','N',[[334,170],[372,170]]],
+    ['LB.t3','KTk.c','L'], ['KTk.no','FAN.a','L'], ['FAN.b','NB.t3','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'besleme', ad:'Röle beslemesi (A1) anahtar sonrasından alınmış', degis:{wa1:{a:'J1.o', rota:[[266,140]]}}, belirti:'Işık söner sönmez aspiratör de duruyor; gecikme çalışmıyor.', bul:'B1 kontrol girişli düşmede gecikmeli rölenin A1-A2 beslemesi sürekli olmalı; anahtar yalnızca B1’e gelir. Beslemesiz (pasif) modellerde bağlantı farklıdır, etikete bak.'}],
+  bilgi:{
+    nasil:'<p><b>Düşmede gecikmeli</b> (off-delay, mod R) röle iki türdür:</p><ul><li><b>Kontrol girişli (B1)</b>: A1-A2 sürekli beslenir. B1’e sinyal gelince çıkış hemen kapanır; sinyal gidince süre kadar daha kapalı kalır.</li><li><b>Beslemesiz (pasif)</b>: kendi içinde enerji depolar; A1-A2 enerjisi gidince süre kadar çıkışı tutar.</li></ul><p>Uygulamalar: banyo/WC aspiratörü, kompresör veya pompa durduktan sonra fanın çalışmaya devam etmesi, kazan sirkülasyon pompasının art çalışması.</p>',
+    damar:[['Röle','sürekli L (A1), N (A2), anahtar dönüşü (B1)'], ['Anahtar kutusu','lamba dönüşü aynı zamanda B1 sinyali']],
+    malzeme:['Düşmede gecikmeli zaman rölesi (B1 girişli) veya çok fonksiyonlu röle (mod R)','Aspiratör'],
+    adim:['A1’e anahtar öncesi sürekli faz, A2’ye nötr bağla.','Anahtar dönüşünü hem lambaya hem B1’e bağla.','15-18 kontağından aspiratörü besle; süreyi ayarla (1–5 dk tipik).'],
+    hata:['A1’i anahtar sonrasından beslemek.'].concat(ZR_GENEL.hata),
+    test:['Işığı kapatıp süreyi kronometreyle doğrula.'],
+    ilgili:['zr_cekme','zr_cok','merdiven4']
+  }
+});
+
+/* C3 — Flaşör */
+sema({id:'zr_flasor', kat:'role', ikon:'🚨', ad:'Flaşör Zaman Rölesi · Simetrik / Asimetrik', ozet:'Çıkış belirli sürelerde açılıp kapanır: uyarı lambası, dönüşümlü iki lamba, periyodik pompa. t1’i değiştirerek asimetrik yap.', etiket:['flaşör','yanıp sönen','asimetrik','simetrik','uyarı lambası','periyodik çalışma','blink','zaman rölesi'],
+  w:680, h:470, minw:540, ipucu:'S1’i aç: iki lamba dönüşümlü yanıp söner. t’ye dokunarak kapalı kalma süresini değiştir.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 200, 560]), ['sw','S1',200,70,{dik:true, ad:'S1'}],
+    ['zr2','KT',234,200,{mod:'Bl', sure:1, sure2:1, sureler:[1, 0.5, 2], ad:'KT', grafik:true, gx:110}], ['kco','KTk',560,90,{r:'KT', n:['15','16','18'], ad:'KT'}],
+    ['lamba','H2',500,320,{dik:true, ad:'Uyarı 2'}], ['lamba','H1',574,320,{dik:true, ad:'Uyarı 1'}], ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 300, 500, 574])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S1.a','L'], ['S1.b','KT.A1','Ls'], ['KT.A2','NB.t1','N',[[268,150],[300,150]]], ['LB.t2','KTk.c','L'], ['KTk.no','H1.a','L'], ['KTk.nc','H2.a','L',[[546,170],[500,170]]], ['H1.b','NB.t3','N'], ['H2.b','NB.t2','N'], ['KN.o','NB.t0','N']],
+  bilgi:{
+    nasil:'<p>Flaşör modunda (Bl/Bp) röle enerjili kaldığı sürece çıkışı <b>t1 kapalı, t2 açık</b> olacak şekilde tekrarlar. t1 = t2 ise simetrik, farklıysa asimetriktir. Bazı modeller “önce açık” (Bp) bazıları “önce kapalı” (Bl) başlar.</p><p>Uygulamalar: uyarı/ikaz lambaları, demiryolu tipi dönüşümlü iki lamba (NO ve NC uçları), sera veya akvaryumda periyodik pompa, karıştırıcı motorların aralıklı çalışması. Büyük yükleri kontaktör üzerinden sür.</p>',
+    damar:[['Röle','A1 (anahtarlı L), A2 (N), 15 ortak, 18 NO, 16 NC']],
+    malzeme:['Çok fonksiyonlu veya flaşör zaman rölesi','Uyarı lambaları'],
+    adim:['Röleyi anahtar üzerinden besle.','Lambaları 18 (NO) ve 16 (NC) uçlarına bağla.','t1 ve t2’yi ayarla.'],
+    hata:ZR_GENEL.hata, test:ZR_GENEL.test,
+    ilgili:['zr_cok','zr_cekme']
+  }
+});
+
+/* C4 — Yıldız-üçgen zaman rölesi (ölü zamanlı) */
+const YD_GUC_E = [['src','L1',100,24,{p:'L1', ad:'L1', yon:'ust'}], ['src','L2',130,24,{p:'L2', ad:'L2', yon:'ust'}], ['src','L3',160,24,{p:'L3', ad:'L3', yon:'ust'}], ['mcb','Q1',100,40,{n:3, s:30, ad:'Q1', kademe:2}],
+  ['kon3','KMg',100,130,{r:'KM', s:30, ad:'KM'}], ['term3','F2',100,200,{s:30, ad:'F2'}], ['mot6','M',130,330,{ad:'M'}], ['j','P1',100,262], ['j','P2',130,270], ['j','P3',160,278], ['kon3','KDg',240,290,{r:'KD', s:30, ad:'KΔ'}], ['kon3','KYg',100,450,{r:'KY', s:30, ad:'KY'}]];
+const YD_GUC_T = [['L1.o','Q1.a1','L'], ['L2.o','Q1.a2','L2'], ['L3.o','Q1.a3','L3'], ['Q1.b1','KMg.a1','L'], ['Q1.b2','KMg.a2','L2'], ['Q1.b3','KMg.a3','L3'], ['KMg.b1','F2.a1','L'], ['KMg.b2','F2.a2','L2'], ['KMg.b3','F2.a3','L3'],
+  ['F2.b1','P1.o','L'], ['P1.o','M.U1','L'], ['F2.b2','P2.o','L2'], ['P2.o','M.V1','L2'], ['F2.b3','P3.o','L3'], ['P3.o','M.W1','L3'],
+  ['P1.o','KDg.a1','L',[[240,262]]], ['P2.o','KDg.a2','L2',[[270,270]]], ['P3.o','KDg.a3','L3',[[300,278]]],
+  ['KDg.b1','M.W2','L',[[240,410],[100,410]]], ['KDg.b2','M.U2','L2',[[270,420],[130,420]]], ['KDg.b3','M.V2','L3',[[300,430],[160,430]]],
+  ['M.W2','KYg.a1','L'], ['M.U2','KYg.a2','L2'], ['M.V2','KYg.a3','L3'], ['KYg.b1','KYg.b2','Lv'], ['KYg.b2','KYg.b3','Lv']];
+sema({id:'zr_yd', kat:'role', ikon:'⭐', ad:'Yıldız-Üçgen Zaman Rölesi · 17-18 / 17-28 ve Ölü Zaman', ozet:'Özel Y/Δ rölesi: önce yıldız çıkışı (17-18), süre dolunca kısa bir ölü zaman, sonra üçgen çıkışı (17-28). Ark ve kısa devreyi önler.', etiket:['yıldız üçgen rölesi','y/δ zaman rölesi','17-18','17-28','ölü zaman','star delta timer','yol verme'],
+  w:880, h:510, ipucu:'START’a bas: motor yıldız kalkar, 5 sn sonra kısa ölü zamandan sonra üçgene geçer.',
+  e:YD_GUC_E.concat([['src','KL',420,24,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F1',420,40,{ad:'B6', kademe:1}], ['kon','F2k',420,96,{r:'F2', tip:'nc', ad:'F2'}], ['btn','S0',420,140,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}],
+    ['j','J1',420,186], ['j','J1b',470,186], ['btn','S1',420,196,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',470,196,{r:'KM', ad:'KM'}], ['j','J2',420,250], ['j','JY',600,250], ['j','JD',680,250], ['j','JK',746,250],
+    ['kon','KTy',600,266,{r:'KT', ad:'KT', no:'17-18'}], ['kon','KDn',600,314,{r:'KD', tip:'nc', ad:'KΔ'}], ['kon','KTd',680,266,{r:'KT', k2:true, ad:'KT', no:'17-28'}], ['kon','KYn',680,314,{r:'KY', tip:'nc', ad:'KY'}],
+    ['bob','KM',420,400,{ad:'KM'}], ['bob','KY',600,400,{ad:'KY', not:'yıldız'}], ['bob','KD',680,400,{ad:'KΔ', not:'üçgen'}], ['zr2','KT',780,330,{mod:'YD', sure:5, olu:0.5, ad:'KT'}],
+    bara('NB', 420, 470, [420, 600, 680, 850]), ['src','KN',850,490,{p:'N', ad:'N', yon:'alt'}]]),
+  t:YD_GUC_T.concat([['KL.o','F1.a1','K'], ['F1.b1','F2k.a','K'], ['F2k.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'], ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[470,250]]],
+    ['J2.o','JY.o','K'], ['JY.o','JD.o','K'], ['JD.o','JK.o','K'], ['J2.o','KM.A1','K'], ['JK.o','KT.A1','K'], ['JY.o','KTy.a','K'], ['KTy.b','KDn.a','K'], ['KDn.b','KY.A1','K'], ['JD.o','KTd.a','K'], ['KTd.b','KYn.a','K'], ['KYn.b','KD.A1','K'],
+    ['KM.A2','NB.t0','N'], ['KY.A2','NB.t1','N'], ['KD.A2','NB.t2','N'], ['KT.A2','NB.t3','N',[[814,280],[850,280]]], ['KN.o','NB.t3','N']]),
+  bolge:[[60, 6, 300, 500, 'Güç devresi', 'alt'], [380, 6, 490, 500, 'Kumanda devresi', 'alt']],
+  ariza:[{id:'karisik', ad:'17-18 ile 17-28 karıştırılmış', o:{KTy:{k2:true, no:'17-28'}, KTd:{k2:false, no:'17-18'}}, belirti:'Motor doğrudan ÜÇGEN kalkar (yüksek kalkış akımı), süre dolunca YILDIZA düşer ve zayıf çalışır.', bul:'Y/Δ rölesinin etiketine bak: 17 ortak, 18 yıldız, 28 üçgen çıkışıdır (markaya göre 17-18 / 17-28 veya 15-18 / 25-28).'}],
+  bilgi:{
+    nasil:'<p>Normal çekmede gecikmeli röleyle yapılan yıldız-üçgende KY bırakır bırakmaz KΔ çeker; KY’nin kontaklarında ark sönmeden KΔ kapanırsa <b>faz-faz kısa devresi</b> olabilir. Özel <b>Y/Δ zaman rölesi</b> iki ayrı çıkış ve aralarında 50–100 ms <b>ölü zaman</b> (her ikisi de açık) bırakır.</p><p>Sıra: enerji gelince 17-18 (Y) kapanır → süre dolunca 17-18 açılır → ölü zaman → 17-28 (Δ) kapanır. Elektriksel kilitleme (KY ve KΔ NC kontakları) yine de konur.</p>',
+    damar:[['Röle','A1-A2 besleme, 17 ortak, 18 yıldız, 28 üçgen']],
+    malzeme:['Yıldız-üçgen zaman rölesi','3 kontaktör, termik','6 uçlu motor (400 V Δ)'],
+    adim:['Röleyi KM ile birlikte enerjilenecek şekilde bağla.','17-18’i KY yoluna, 17-28’i KΔ yoluna koy.','Karşılıklı NC kilitlemeyi ekle; süreyi motor tam hıza yaklaşacak kadar ayarla (3–10 sn).'],
+    hata:['18 ve 28 uçlarını karıştırmak.','Kilitleme kontaklarını atlamak.'].concat(ZR_GENEL.hata.slice(2)),
+    test:['Yıldızdan üçgene geçişte akımı pens ampermetreyle izle: kısa bir sıçrama normaldir.'],
+    hesap:['motor'], ilgili:['yildiz_ucgen','klemens','zr_cekme']
+  }
+});
+
+/* C5 — Çok fonksiyonlu zaman rölesi */
+sema({id:'zr_cok', kat:'role', ikon:'🎛️', ad:'Çok Fonksiyonlu Zaman Rölesi · E, R, Wu, Bl Modları', ozet:'Tek röle, birçok fonksiyon: mod seçicisini değiştir, besleme ve B1 girişini aç-kapa, zaman grafiğinde çıkışın ne yaptığını izle.', etiket:['çok fonksiyonlu zaman rölesi','multifunction timer','e r wu bl','mod seçici','zaman diyagramı','b1 girişi','tek darbe'],
+  w:760, h:470, minw:600, ipucu:'Mod’a dokunarak fonksiyon seç. Besleme (S1) ve B1 kontrol (S2) anahtarlarıyla oyna; grafikte çıkışı izle.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 200, 300, 660]), ['sw','S1',200,70,{dik:true, ad:'Besleme'}], ['sw','S2',300,80,{dik:true, ad:'B1 kontrol'}],
+    ['zr2','KT',300,210,{modlar:['E','R','Wu','Bl'], sureler:[2, 4, 6], b1:true, grafik:true, gx:100, ad:'KT'}], ['kco','KTk',660,90,{r:'KT', n:['15','16','18'], ad:'KT'}], ['lamba','H1',674,300,{dik:true, ad:'Çıkış'}],
+    ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 368, 674])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','S1.a','L'], ['S1.b','KT.A1','L'], ['LB.t2','S2.a','L'], ['S2.b','KT.B1','Ls'], ['KT.A2','NB.t1','N',[[334,160],[368,160]]], ['LB.t3','KTk.c','L'], ['KTk.no','H1.a','L'], ['H1.b','NB.t2','N'], ['KN.o','NB.t0','N']],
+  bilgi:{
+    nasil:'<p>Çok fonksiyonlu zaman röleleri ön yüzdeki seçiciyle farklı davranışlara geçer. En sık kullanılanlar:</p><ul><li><b>E — çekmede gecikmeli</b>: ' + ZR_ACIK.E + '.</li><li><b>R — düşmede gecikmeli</b>: ' + ZR_ACIK.R + '.</li><li><b>Wu — tek darbe</b>: ' + ZR_ACIK.Wu + '.</li><li><b>Bl — flaşör</b>: ' + ZR_ACIK.Bl + '.</li></ul><p>Marka ve modele göre harf kodları değişir (A, B, C, D… veya E, R, Wu, Wa, Bp, Bl). Ön yüzdeki küçük zaman diyagramına mutlaka bak. Süre için iki ayar vardır: <b>kademe</b> (1 s, 10 s, 1 dk, 10 dk, 1 sa…) ve <b>ince ayar</b> (kademenin yüzdesi).</p>',
+    damar:[['Röle','A1 (L), A2 (N), B1 (kontrol), 15-16-18 kontak']],
+    malzeme:['Çok fonksiyonlu zaman rölesi (geniş besleme aralıklı: 12–240 V AC/DC)'],
+    adim:['Modu seç, kademeyi ve süreyi ayarla (enerjisizken).','Beslemeyi A1-A2’ye, gerekiyorsa kontrol sinyalini B1’e bağla.','Kısa süreyle deneyip gerçek süreye ayarla.'],
+    hata:ZR_GENEL.hata.concat(['B1’i farklı fazdan beslemek (bazı modeller B1 ile A1’in aynı fazda olmasını ister).']),
+    test:ZR_GENEL.test,
+    ilgili:['zr_cekme','zr_dusme','zr_flasor','zr_yd']
+  }
+});
+
+/* ───────────── D. KOMPRESÖR MARŞ RÖLELERİ ───────────── */
+const KOMP_GENEL = {
+  test:['Kompresör uçlarında direnç ölç: C-S > C-R ve S-R = C-S + C-R olmalı (en büyük değer S-R).','Gövdeye karşı izolasyon (megger 500 V) ≥ 2 MΩ.','Pens ampermetreyle kalkış ve çalışma akımını ölç; etiketteki LRA/RLA ile karşılaştır.']
+};
+
+/* D1 — Buzdolabı: PTC marş rölesi */
+sema({id:'mars_ptc', kat:'role', ikon:'🧊', ad:'PTC Marş Rölesi · Buzdolabı Kompresörü', ozet:'PTC soğukken iletir ve start sargısını devreye alır; ısınınca açılır. Kompresörü durdurup hemen çalıştırırsan PTC sıcak olduğu için kalkamaz.', etiket:['ptc marş rölesi','pozistör','buzdolabı rölesi','kompresör kalkmıyor','klixon','tık tık ses','rsir','start sargısı','c s r'],
+  w:600, h:400, minw:500, ipucu:'Termostata dokun: kompresör kalkar. Çalışırken termostatı kapatıp hemen aç: PTC sıcak, kompresör vızıldar, klixon atar.',
+  e:[['src','KL',60,60,{p:'L1', ad:'L', yon:'sol'}], ['sw','S1',120,60,{ad:'Termostat'}], ['komp','K',330,190,{ad:'Buzdolabı kompresörü', sogu:10}], ['ptc','P',300,290,{m:'K', sogu:0.15}],
+    ['src','KN',40,350,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 350, [60, 300, 360])],
+  t:[['KL.o','S1.a','L'], ['S1.b','K.C','L'], ['K.S','P.a','Ls'], ['P.b','NB.t1','N'], ['K.R','NB.t2','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'kopuk', ad:'PTC kopuk (açık devre)', o:{P:{kopuk:true}}, belirti:'Kompresör vızıldıyor, kalkamıyor; birkaç saniye sonra klixon “tık” diye atıyor, soğuyunca tekrar deniyor (tık-vızz-tık döngüsü).', bul:'PTC’yi sök, iki ucu arasını ölç: soğukken 5–50 Ω olmalı. Sonsuz (OL) ise kopuktur. Sallayınca tıkırdıyorsa içi kırıktır.'},
+    {id:'kisa', ad:'PTC kısa devre (iletimde kalmış)', o:{P:{yapisik:true}}, belirti:'Kompresör kalkar ama start sargısı devrede kaldığı için ısınır; çalışırken klixon atar.', bul:'PTC ısındığında direnci yükselmiyorsa (kΩ seviyesine çıkmıyorsa) arızalıdır.'}],
+  bilgi:{
+    nasil:'<p>Buzdolabı ve derin dondurucu kompresörlerinde (RSIR) start sargısını kısa süre devreye almak için <b>PTC (pozistör)</b> kullanılır. Soğuk PTC’nin direnci düşüktür (5–50 Ω): start sargısından akım geçer, motor kalkar. Akım PTC’yi 0,3–0,5 saniyede ısıtır, direnci kΩ’lara çıkar ve start sargısı fiilen devreden çıkar. Çalıştığı sürece küçük bir akımla sıcak kalır.</p><p>PTC’nin soğuması <b>3–5 dakika</b> sürer. Elektrik kesilip hemen gelirse veya termostat hemen tekrar açarsa PTC sıcak olduğu için kompresör kalkamaz; vızıldar, <b>klixon</b> (aşırı akım/ısı koruyucu) atar, soğuyunca tekrar dener. Bu normaldir ve birkaç dakika sonra düzelir.</p><p>Uçlar: <b>C</b> ortak, <b>S</b> start (yardımcı), <b>R</b> run (ana) sargı.</p>',
+    damar:[['Kompresör','C (klixon üzerinden L), R (N), S (PTC üzerinden)']],
+    malzeme:['Kompresöre uygun PTC marş rölesi (güce göre)','Klixon (aşırı yük koruyucu)'],
+    adim:['Kompresör uçlarını direnç ölçerek belirle (en büyük direnç S-R arası).','PTC’yi S ve R uçlarına, klixonu C ucuna tak.','Elektrik verince 1 sn içinde kalkmalı.'],
+    hata:['Kompresör kalkmıyor diye hemen değiştirmek (önce PTC ve klixonu ölç).','Farklı güçte PTC takmak.'],
+    test:KOMP_GENEL.test,
+    ilgili:['mars_akim','mars_pot','mot1f']
+  }
+});
+
+/* D2 — Akım tipi marş rölesi */
+sema({id:'mars_akim', kat:'role', ikon:'🧲', ad:'Akım Tipi (Amper) Marş Rölesi', ozet:'Bobini ana sargıya seri: kalkışta yüksek akım kontağı kapatır, start sargısı devreye girer; motor hızlanınca akım düşer, kontak açılır.', etiket:['akım rölesi','amper röle','marş rölesi','kompresör rölesi','buzdolabı','dik takılır','start rölesi'],
+  w:600, h:420, minw:500, ipucu:'Termostata dokun ve kalkışı izle: akım rölesinin kontağı kısa süre kapanıp açılıyor.',
+  e:[['src','KL',60,60,{p:'L1', ad:'L', yon:'sol'}], ['sw','S1',120,60,{ad:'Termostat'}], ['komp','K',330,170,{ad:'Kompresör', sogu:6}], ['akr','AR',330,300,{m:'K'}],
+    ['src','KN',40,380,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 380, [60, 330])],
+  t:[['KL.o','S1.a','L'], ['S1.b','K.C','L'], ['K.S','AR.S','Ls'], ['K.R','AR.M','N'], ['AR.L','NB.t1','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'ters', ad:'Röle ters (baş aşağı) takılmış', o:{AR:{ters:true}}, belirti:'Kompresör hiç kalkamıyor: vızıldıyor ve klixon atıyor.', bul:'Akım rölesinin kontağı ağırlıkla açılan bir çekirdekle çalışır; üzerindeki “TOP/ÜST” yönüne göre dik takılmalı.'},
+    {id:'yapisik', ad:'Röle kontağı yapışık', o:{AR:{yapisik:true}}, belirti:'Kompresör kalkıyor ama start sargısı devrede kalıyor; ısınıp klixon atıyor.', bul:'Röleyi sök: enerjisizken L-S arası açık olmalı. Sürekli iletiyorsa değiştir.'}],
+  bilgi:{
+    nasil:'<p>Akım rölesinin bobini <b>ana (run) sargıya seri</b> bağlıdır. Kalkış anında motor durduğu için akım çok yüksektir (5–7 katı): bobin çekirdeği yukarı çeker ve <b>start kontağını kapatır</b>. Motor hızlandıkça akım düşer, çekirdek ağırlığıyla aşağı iner ve start sargısı devreden çıkar.</p><p>Bu yüzden röle <b>belirtilen yönde (dik)</b> takılmalıdır. Kompresör gücüne (akımına) uygun röle kullanılmalıdır: küçük röle hiç bırakmaz, büyük röle hiç çekmez.</p>',
+    damar:[['Röle','L (hat), M (ana sargıya), S (start sargısına)']],
+    malzeme:['Kompresör gücüne uygun akım rölesi','Klixon'],
+    adim:['Röleyi kompresör uçlarına dik konumda tak.','L ucunu hatta, M’yi R’ye, S’yi S’ye bağla.','Kalkış süresini ve akımı kontrol et.'],
+    hata:['Ters veya yatık takmak.','Farklı güçte röle kullanmak.'],
+    test:KOMP_GENEL.test,
+    ilgili:['mars_ptc','mars_pot']
+  }
+});
+
+/* D3 — Potansiyel röle + kalkış kondansatörü (CSR) */
+sema({id:'mars_pot', kat:'role', ikon:'🔋', ad:'Potansiyel Röle + Kalkış Kondansatörü (CSR)', ozet:'Klima ve soğuk oda kompresörü: daimi kondansatör + kalkış kondansatörü. Röle bobini (2-5) start sargısındaki gerilim yükselince 1-2 kontağını açar.', etiket:['potansiyel röle','gerilim rölesi','kalkış kondansatörü','start kondansatörü','csr','soğuk oda','1 2 5','kompresör kalkmıyor'],
+  w:600, h:420, minw:500, ipucu:'Termostata dokun ve kalkışı izle. Sonra kapat ve hemen aç: kalkış kondansatörü sayesinde dengesiz basınçta bile kalkar.',
+  e:[['src','KL',60,60,{p:'L1', ad:'L', yon:'sol'}], ['sw','S1',120,60,{ad:'Termostat'}], ['j','J',330,100], ['komp','K',330,170,{ad:'Kompresör (soğuk oda)', denge:6, sogu:6}],
+    ['j','JS',300,280], ['j','JS2',300,334], ['kap','CR',330,280,{yatay:true, tip:'run', uf:'35 µF'}], ['j','JR',360,280],
+    ['potr','PR',160,200,{m:'K'}], ['kap','CS',134,300,{tip:'start', uf:'88–108 µF'}], ['src','KN',40,380,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 380, [60, 134, 360])],
+  t:[['KL.o','S1.a','L'], ['S1.b','J.o','L'], ['J.o','K.C','L'], ['K.S','JS.o','Ls'], ['JS.o','JS2.o','Ls'], ['JS.o','CR.a','Ls'], ['CR.b','JR.o','N'], ['K.R','JR.o','N'], ['JR.o','NB.t2','N'],
+    ['PR.2','JS2.o','Ls',[[160,334]]], ['PR.5','J.o','L',[[186,246],[220,246],[220,100]],'w5'], ['PR.1','CS.a','Ls',null,'wcs1'], ['CS.b','NB.t1','N',null,'wcs'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'yapisik', ad:'Potansiyel röle kontağı (1-2) yapışık', o:{PR:{yapisik:true}}, belirti:'Kompresör kalkıyor ama kalkış kondansatörü devrede kalıyor; kondansatör ısınır/şişer, klixon atar.', bul:'Enerjisizken 1-2 kapalı olmalı (normal); çalışırken 1-2 arasında gerilim farkı ölçülmeli. Kontak açılmıyorsa röleyi değiştir, kalkış kondansatörünü de kontrol et.'},
+    {id:'cs', ad:'Kalkış kondansatörü kopuk/bozuk', kop:['wcs'], belirti:'Normal kalkışta sorun yok gibi; ama durup hemen tekrar çalışınca kompresör kalkamıyor, vızıldıyor.', bul:'Kalkış kondansatörünü sökerek kapasite ölç (µF). Üzerinde şişme, sızıntı varsa değiştir.'},
+    {id:'bobin', ad:'Röle bobini (5) bağlanmamış', kop:['w5'], belirti:'Kompresör kalkıyor ama kalkış kondansatörü devreden çıkmıyor; ısınma ve klixon.', bul:'Bobin 2-5 arasında, start sargısına (S-C) paralel olmalı. 5 numaralı ucun C’ye gittiğini kontrol et.'}],
+  bilgi:{
+    nasil:'<p>Daha büyük kompresörlerde (klima, soğuk oda, ticari dolap) kalkış momentini artırmak için <b>kalkış kondansatörü</b> (elektrolitik, 80–300 µF) kısa süre devreye alınır. Onu devreden çıkaran eleman <b>potansiyel (gerilim) rölesidir</b>:</p><ul><li><b>Bobin 2-5</b>: start sargısına (S-C) paralel. Motor hızlandıkça start sargısında indüklenen gerilim yükselir.</li><li>Gerilim belirli değere ulaşınca bobin çeker, <b>NC kontak 1-2</b> açılır ve kalkış kondansatörü devreden çıkar.</li><li>Motor durana kadar bobin çekili kalır; durunca kontak tekrar kapanır.</li></ul><p><b>Daimi kondansatör</b> (yağlı, 20–60 µF) ise S-R arasında sürekli kalır ve verimi artırır.</p>',
+    damar:[['Röle','1 → kalkış kond., 2 → S, 5 → C']],
+    malzeme:['Potansiyel röle (kompresör üreticisinin önerdiği kod)','Kalkış kondansatörü (boşaltma direnci ile)','Daimi kondansatör'],
+    adim:['Bobin ucu 5’i C’ye, 2’yi S’ye bağla.','1’i kalkış kondansatörüne, kondansatörün diğer ucunu R (veya hat) tarafına bağla.','Kondansatörleri bağlamadan önce mutlaka boşalt.'],
+    hata:['Kondansatörü boşaltmadan dokunmak.','Röle kodunu (çekme gerilimi) rastgele seçmek.','Kalkış kondansatörünü daimi kondansatör yerine kullanmak (patlar).'],
+    test:KOMP_GENEL.test.concat(['Kondansatörleri kapasite kademesinde ölç: etiket değerinin ±%10’u.']),
+    ilgili:['hard_start','mars_ptc','mars_akim','klima_dis']
+  }
+});
+
+/* D4 — Hard start kiti */
+sema({id:'hard_start', kat:'role', ikon:'🚀', ad:'Hard Start Kiti · Klima Kompresörü Zor Kalkış', ozet:'PSC klima kompresörü durup hemen çalışırsa basınç dengelenmediği için kalkamaz. Hard start kiti kısa süreli ek kalkış kondansatörü verir.', etiket:['hard start','kalkış kiti','klima kompresörü kalkmıyor','zor kalkış','psc','kalkış kondansatörü','klima vızıldıyor'],
+  w:600, h:470, minw:500, ipucu:'Klimayı çalıştır, kapat ve 6 sn içinde tekrar aç: kalkamaz. Kit bağlantısını (S2) kapatıp tekrar dene.',
+  e:[['src','KL',60,60,{p:'L1', ad:'L', yon:'sol'}], ['sw','S1',120,60,{ad:'Klima kumandası'}], ['komp','K',330,170,{ad:'Klima kompresörü', denge:7, sogu:6}],
+    ['j','JS',300,280], ['j','JS2',300,330], ['kap','CR',330,280,{yatay:true, tip:'run', uf:'35 µF'}], ['j','JR',360,280],
+    ['sw','S2',200,330,{ad:'Kit bağlantısı'}], ['ptc','HS',180,390,{m:'K', kap:true, pot:true, ad:'Hard start kiti'}], ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 180, 360])],
+  t:[['KL.o','S1.a','L'], ['S1.b','K.C','L'], ['K.S','JS.o','Ls'], ['JS.o','CR.a','Ls'], ['CR.b','JR.o','N'], ['K.R','JR.o','N'], ['JR.o','NB.t2','N'], ['JS.o','JS2.o','Ls'], ['JS2.o','S2.b','Ls'], ['S2.a','HS.a','Ls'], ['HS.b','NB.t1','N'], ['KN.o','NB.t0','N']],
+  bilgi:{
+    nasil:'<p>Split klimaların çoğu <b>PSC</b> (daimi kondansatörlü) kompresör kullanır: kalkış momenti düşüktür. Kompresör durduğunda yüksek ve alçak basınç tarafının dengelenmesi 2–3 dakika sürer. Bu sürede tekrar çalıştırılırsa motor kalkamaz, vızıldar ve klixon atar. Kartlar bu yüzden 3 dakika gecikme uygular; ama elektrik kesintisi, voltaj düşüklüğü, zayıflamış daimi kondansatör, uzun boru hattı kalkışı zorlaştırır.</p><p><b>Hard start kiti</b> = kalkış kondansatörü + PTC veya potansiyel röle. Daimi kondansatörün iki ucuna (HERM ve C) paralel bağlanır; kalkışta 0,5–1 sn ek kapasite vererek momenti 2–3 kat artırır, sonra devreden çıkar.</p><p>Kit bir “çare” değil yardımcıdır: önce daimi kondansatörü, gerilimi ve gaz basınçlarını kontrol et.</p>',
+    damar:[['Kit','2 uç: daimi kondansatörün HERM ve C (ortak) uçlarına paralel']],
+    malzeme:['Kompresör tonajına uygun hard start kiti','Gerekirse yeni daimi kondansatör'],
+    adim:['Enerjiyi kes, kondansatörleri boşalt.','Daimi kondansatörü ölç; zayıfsa önce onu değiştir.','Kiti daimi kondansatörün HERM ve C uçlarına paralel bağla.','Kalkış akımını pens ampermetreyle kontrol et.'],
+    hata:['Daimi kondansatörü kontrol etmeden kit takıp sorunu gizlemek.','Kiti yanlış uçlara (FAN ucu) bağlamak.'],
+    test:KOMP_GENEL.test,
+    ilgili:['mars_pot','klima','klima_dis']
+  }
+});
+
+/* ───────────── E. DİĞER SIK BAĞLANAN RÖLELER ───────────── */
+
+/* E1 — Elektrotlu seviye rölesi */
+sema({id:'seviye_role', kat:'role', ikon:'💧', ad:'Elektrotlu (Sondalı) Seviye Rölesi · Doldurma / Boşaltma', ozet:'H (üst), L (alt) ve C (ortak) sondalarla depo doldurma veya kuyu kuru çalışma koruması. Mod seçiciyle iki uygulamayı da dene.', etiket:['seviye rölesi','sıvı seviye rölesi','elektrot','sonda','h l c','depo doldurma','kuyu kuru çalışma','dalgıç pompa','flotörsüz'],
+  w:700, h:470, minw:560, ipucu:'Doldurma modunda “su kullan” ile depoyu boşalt: alt sondaya inince pompa çalışır, üst sondaya gelince durur. Mod’a dokunarak kuyu (boşaltma) moduna geç.',
+  e:[['src','KL',40,40,{p:'L1', ad:'L', yon:'sol'}], bara('LB', 60, 40, [60, 120, 480, 600]), ['svr','SV',220,200,{mod:'dol', m:'P', sev:0.45}],
+    ['kco','SVk',480,100,{r:'SV', n:['15','16','18'], ad:'Seviye rölesi'}], ['bob','KM',494,240,{ad:'KM'}], ['kon','KMk',600,100,{r:'KM', ad:'KM'}], ['yuk','P',600,260,{dik:true, w:56, h:30, ad:'Pompa', ikon:'💧'}],
+    ['src','KN',40,440,{p:'N', ad:'N', yon:'sol'}], bara('NB', 60, 440, [60, 150, 494, 600])],
+  t:[['KL.o','LB.t0','L'], ['LB.t1','SV.A1','L','vh'], ['SV.A2','NB.t1','N',[[150,212]]], ['LB.t2','SVk.c','L'], ['SVk.no','KM.A1','K'], ['KM.A2','NB.t2','N'], ['LB.t3','KMk.a','L'], ['KMk.b','P.a','L'], ['P.b','NB.t3','N'], ['KN.o','NB.t0','N']],
+  ariza:[{id:'cyok', ad:'C (ortak) sondası bağlanmamış', o:{SV:{cyok:true}}, belirti:'Doldurma modunda pompa hiç durmuyor, depo taşıyor. Kuyu modunda pompa hiç çalışmıyor.', bul:'Röle suyu C ile H/L arasındaki akımdan algılar. C kablosu kopuksa veya sonda kireçlenmişse “su yok” sanar. Metal depoda depo gövdesi C olarak kullanılabilir.'},
+    {id:'ters', ad:'H ve L sonda kabloları karışık', o:{SV:{ters:true}}, belirti:'Pompa çok sık devreye girip çıkıyor (birkaç saniyede bir), depo hep alt seviyede kalıyor.', bul:'Uzun sonda (en alt) C, orta L, kısa (üst) H’ye gider. Kablo uçlarını işaretle.'}],
+  bilgi:{
+    nasil:'<p>Elektrotlu seviye rölesi sondalar arasından çok küçük bir AC akım geçirerek suyu algılar (flotör yok, hareketli parça yok). Üç sonda kullanılır: <b>C</b> ortak (en uzun), <b>L</b> alt seviye, <b>H</b> üst seviye. İki seviye arasındaki fark histerezis sağlar: pompa sık devreye girip çıkmaz.</p><ul><li><b>Doldurma (depo)</b>: su L’nin altına inince röle çeker, pompa doldurur; su H’ye değince bırakır.</li><li><b>Boşaltma (kuyu, kuru çalışma koruması)</b>: su H’ye ulaşınca pompaya izin verir; L’nin altına inince keser.</li></ul><p>Röle kontağı genellikle 15-16-18 (C/O) ve 5–8 A’dir: pompa kontaktörünü sürer. Hassasiyet ayarı su iletkenliğine göre yapılır (yumuşak su, kuyu, atık su).</p>',
+    damar:[['Sondalar','3 damarlı kablo (H, L, C), sonda kablosu 0,75–1 mm², 100 m’ye kadar'], ['Kontak','15-18 → kontaktör bobini']],
+    malzeme:['Seviye rölesi (doldurma/boşaltma seçilebilir)','3 adet paslanmaz sonda veya sonda tutucu','Pompa kontaktörü ve termiği'],
+    adim:['Sondaları seviyelere göre as: C en altta, L alt seviye, H üst seviye.','Kabloları rölenin H, L, C klemenslerine bağla.','Mod seçiciyi uygulamaya göre ayarla, hassasiyeti ayarla.','Röle kontağını pompa kontaktörünün bobin yoluna koy.'],
+    hata:['C sondasını bağlamamak (metal olmayan depoda).','H ve L’yi karıştırmak.','Sondaları kireç ve yosuna karşı periyodik temizlememek.'],
+    test:['Sondaları suya daldırıp çıkararak röle LED’ini izle.','Sonda uçları arasında AC gerilim olmalı (DC elektroliz yapar).'],
+    hesap:['pompa'], ilgili:['depo','dalgic','depo_hidrofor']
+  }
+});
+
+/* E2 — PTC termistör motor koruma rölesi */
+sema({id:'termistor_role', kat:'role', ikon:'🌡️', ad:'PTC Termistör Motor Koruma Rölesi', ozet:'Motor sargısına gömülü PTC sensör aşırı ısınmayı doğrudan ölçer. Fan tıkanması, sık kalkış, yüksek ortam sıcaklığında termiğin göremediğini görür.', etiket:['termistör rölesi','ptc rölesi','motor sıcaklık koruma','t1 t2','sargı sensörü','frekans sürücülü motor','fail safe'],
+  w:720, h:470, ipucu:'Motoru çalıştır, sonra sargıyı “aşırı ısıt”: PTC rölesi motoru durdurur. Soğut ve RESET’e bas.',
+  e:GUC3(68, 'KM').concat([['ptcs','PT',170,410,{ad:'PTC (sargı içinde)'}], ['ptcr','PR',320,250,{s:'PT', ad:'PTC rölesi'}],
+    ['src','KL',440,24,{p:'L1', ad:'L1', yon:'ust'}], ['mcb','F1',440,40,{ad:'B6', kademe:1}], ['j','J0',440,90], ['kon','F2k',440,100,{r:'F2', tip:'nc', ad:'F2', no:'95-96'}], ['kon','PRk',440,146,{r:'PR', tip:'nc', ad:'PTC', no:'95-96'}],
+    ['btn','S0',440,194,{dik:true, nc:true, ad:'STOP', renk:'kirmizi'}], ['j','J1',440,244], ['j','J1b',520,244], ['btn','S1',440,254,{dik:true, ad:'START', renk:'yesil'}], ['kon','KMh',520,254,{r:'KM', ad:'KM', no:'13-14'}], ['j','J2',440,310],
+    ['bob','KM',440,360,{ad:'KM'}], ['kon','PRa',620,100,{r:'PR', tip:'no', ad:'PTC', no:'97-98'}], ['lamba','H2',620,360,{dik:true}],
+    bara('NB', 380, 430, [380, 440, 620, 680]), ['src','KN',680,450,{p:'N', ad:'N', yon:'alt'}]]),
+  t:GUC3T(68).concat([['PR.T1','PT.a','S',[[298,350],[156,350]]], ['PR.T2','PT.b','S',[[342,364],[184,364]],'wt2'],
+    ['KL.o','F1.a1','K'], ['F1.b1','J0.o','K'], ['J0.o','PR.A1','K',[[298,90]]], ['PR.A2','NB.t0','N',[[342,200],[380,200]]], ['J0.o','F2k.a','K'], ['F2k.b','PRk.a','K'], ['PRk.b','S0.a','K'], ['S0.b','J1.o','K'], ['J1.o','S1.a','K'], ['J1.o','J1b.o','K'], ['J1b.o','KMh.a','K'],
+    ['S1.b','J2.o','K'], ['KMh.b','J2.o','K',[[520,310]]], ['J2.o','KM.A1','K'], ['KM.A2','NB.t1','N'], ['J0.o','PRa.a','K',[[620,90]]], ['PRa.b','H2.a','K'], ['H2.b','NB.t2','N'], ['KN.o','NB.t3','N']]),
+  bolge:[[30, 6, 360, 450, 'Güç + motor sensörü', 'alt'], [400, 6, 300, 450, 'Kumanda', 'alt']],
+  yazi:[[640, 364, 'PTC arıza', {a:'start', s:9}]],
+  ariza:[{id:'kopuk', ad:'Termistör kablosu kopuk', kop:['wt2'], belirti:'Motor hiç çalışmıyor; PTC rölesinin arıza LED’i sürekli yanıyor, RESET işe yaramıyor.', bul:'T1-T2 arasını ölç (motor soğukken 50–1500 Ω arası normal, sonsuz = kopuk). Röle “güvenli arıza” prensibiyle kopuk kabloyu da arıza sayar.'},
+    {id:'kopru', ad:'T1-T2 köprülenmiş (koruma iptal edilmiş)', ekle:[['PR.T1','PR.T2','S',[[298,300],[342,300]]]], belirti:'Motor her koşulda çalışıyor; sargı aşırı ısınsa da koruma devreye girmiyor.', bul:'Arızalı sensör yüzünden T1-T2’nin köprülendiği çok görülür; motor korumasız kalır. Sensörü ölç ve köprüyü kaldır.'}],
+  bilgi:{
+    nasil:'<p>Motor sargılarına üretimde gömülen <b>PTC termistörler</b> (genellikle 3 adet seri) normal sıcaklıkta düşük dirençlidir (toplam 50–1500 Ω). Sargı sıcaklığı sensör değerine (ör. 130–155 °C) ulaşınca direnç hızla kΩ’lara çıkar. <b>PTC rölesi</b> bu artışı algılar ve kontağını açar.</p><p>Termik akımı ölçer; PTC rölesi doğrudan <b>sıcaklığı</b> ölçer. Fan kapağı tıkanması, frekans sürücüyle düşük devirde çalışma, çok sık kalkış, sıcak ortam gibi durumlarda termik atmasa da motor yanabilir; PTC rölesi korur.</p><p>Röleler “fail-safe” çalışır: sensör kablosu kopar veya kısa devre olursa da arızaya geçer. Çoğunda manuel reset ve hafıza vardır.</p>',
+    damar:[['Sensör','motor klemens kutusundaki T1-T2 (veya TP1-TP2) uçlarından röleye, ayrı ve mümkünse ekranlı kablo'], ['Kontak','95-96 kumandaya seri, 97-98 alarm']],
+    malzeme:['PTC termistör rölesi','Sensörlü motor (klemens kutusunda T1-T2)'],
+    adim:['Motor klemens kutusunda T1-T2 uçlarını bul.','Sensör kablosunu güç kablosundan ayrı çek.','Röle beslemesini (A1-A2) bağla; 95-96’yı kumandaya seri koy.','Soğuk motorda T1-T2 direncini ölçüp kaydet.'],
+    hata:['T1-T2’ye megger veya yüksek gerilim uygulamak (sensör bozulur).','Sensör uçlarını köprüleyip korumayı iptal etmek.','Sensör kablosunu güç kablosuyla aynı kanaldan çekmek (parazit).'],
+    test:['Soğukken T1-T2: 50–1500 Ω. Kopuk: ∞. Kısa devre: <20 Ω.'],
+    hesap:['motor'], ilgili:['termik_ayar','vfd','mpcb_kont']
   }
 });
 

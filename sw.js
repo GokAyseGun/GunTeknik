@@ -1,5 +1,5 @@
 // Gün Teknik ERP — Service Worker
-const CACHE = 'gunteknik-v9';
+const CACHE = 'gunteknik-v10';
 // El Kitabı sahada çekim yokken de açılsın diye kurulumda önbelleğe alınır
 const ELKITABI = ['elkitabi/index.html','elkitabi/hesap.html','elkitabi/semalar.html','elkitabi/teori.html','elkitabi/ortak.css','elkitabi/ortak.js'];
 
