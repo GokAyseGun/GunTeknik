@@ -1661,7 +1661,7 @@ function semaGoster(id){
   const tablo = L => L && L.length ? `<table class="ek-tablo"><thead><tr><th>Bölüm</th><th>Kablo / damar</th></tr></thead><tbody>${L.map(r => `<tr><td>${r[0]}</td><td style="white-space:normal">${r[1]}</td></tr>`).join('')}</tbody></table>` : '';
   const bag = [].concat((b.hesap || []).map(h => `<a class="ek-btn kucuk" href="hesap.html#${h.split('?')[0]}${h.includes('?') ? '?' + h.split('?')[1] : ''}">🔢 ${HESAP_AD[h.split('?')[0]] || h}</a>`)).concat((b.ilgili || []).map(i => SM.harita[i] ? `<a class="ek-btn kucuk" href="#${i}">${SM.harita[i].ikon || '📐'} ${SM.harita[i].ad}</a>` : '')).join('');
   $s('sm-detay').innerHTML = `
-    <div class="ek-arac-bas sm-k-${d.kat}"><div class="ek-arac-ikon">${d.ikon || k.ikon}</div><div style="min-width:0"><h2>${d.ad}</h2><p>${d.ozet || ''}</p></div></div>
+    <div class="ek-arac-bas sm-k-${d.kat}"><div class="ek-arac-ikon">${d.ikon || k.ikon}</div><div style="min-width:0"><h2>${d.ad}</h2><p>${d.ozet || ''}</p></div>${EK.favBtn('s', d.id)}</div>
     <div class="ek-kart sm-sahne">
       <div class="sm-arac-cubuk">
         <button class="ek-btn kucuk" onclick="semaSifirla()">↺ Başa al</button>
@@ -1689,7 +1689,7 @@ function semaGoster(id){
   semaCiz();
   window.scrollTo(0, 0);
   document.title = d.ad + ' · Şemalar · Gün Teknik';
-  const kul = EK.oku('ekh_sema_kul', {}); kul[id] = (kul[id] || 0) + 1; EK.yaz('ekh_sema_kul', kul);
+  const kul = EK.oku('ekh_sema_kul', {}); kul[id] = (kul[id] || 0) + 1; EK.yaz('ekh_sema_kul', kul); EK.sonEkle('s', id);
 }
 const HESAP_AD = {kablo:'Kablo kesiti ve sigorta', gd:'Gerilim düşümü', kisadevre:'Kısa devre kontrolü', kacak:'Kaçak akım rölesi seçimi', topraklama:'Topraklama direnci', yuk:'Toplam güç', proje:'Proje modu', jenerator:'Jeneratör seçimi', ups:'UPS / akü süresi', gunes:'Güneş sistemi', klima_btu:'Klima BTU', klima_tesisat:'Klima montaj', pompa:'Pompa ve hidrofor', motor:'Motor akımı', uydu:'Uydu sinyal bütçesi', fiber:'Fiber kayıp', ag:'Ağ ve PoE', aydinlatma:'Aydınlatma hesabı', boru:'Boru doluluk', ev:'Araç şarjı', kompanzasyon:'Kompanzasyon', kesit:'Kablo kesit doğrulama', maliyet:'Elektrik maliyeti', enerji:'Enerji/kondansatör', guc:'Güç hesabı'};
 function semaSifirla(){ const d = SM.aktif; if(!d) return; if(d.ozel) SM.ost = d.ozel.ilk ? d.ozel.ilk() : {}; else SM.R = kur(d, SM.ariza); semaCiz(); }

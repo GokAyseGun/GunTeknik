@@ -391,17 +391,17 @@ function aracGoster(id, sorgu){
   const on = Object.assign({}, sorgu || {}, H.bekleyen || {}); H.bekleyen = null;
   for(const k in on){ if(k in vars && !Array.isArray(vars[k])) vars[k] = typeof vars[k] === 'boolean' ? !!on[k] : String(on[k]); }
   H.d = vars;
-  const kul = EK.oku('ekh_kullanim', {}); kul[id] = (kul[id] || 0) + 1; EK.yaz('ekh_kullanim', kul);
+  const kul = EK.oku('ekh_kullanim', {}); kul[id] = (kul[id] || 0) + 1; EK.yaz('ekh_kullanim', kul); EK.sonEkle('h', id);
   $('ek-top-h1').textContent = t.ad; $('ek-top-p').textContent = KATLAR.find(k => k.id === t.kat).ad;
   $('ek-geri').textContent = '←'; $('ek-geri').title = 'Araç listesine dön';
   $('ek-ana').style.display = 'none'; $('ek-arac').style.display = '';
   if(t.ozel){
-    $('ek-arac').innerHTML = `<div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div></div><div class="k-${t.kat}" style="max-width:640px">${t.ozel.html()}</div>`;
+    $('ek-arac').innerHTML = `<div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div>${EK.favBtn('h', t.id)}</div><div class="k-${t.kat}" style="max-width:640px">${t.ozel.html()}</div>`;
     $('ek-ozet-serit').classList.remove('goster');
     t.ozel.bagla(); window.scrollTo(0, 0); document.title = t.ad + ' · Hesap · Gün Teknik'; return;
   }
   $('ek-arac').innerHTML = `
-    <div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div></div>
+    <div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div>${EK.favBtn('h', t.id)}</div>
     <div class="ek-duzen k-${t.kat}">
       <div class="ek-kart"><div class="ek-form" id="ek-form"></div>
         <div class="ek-eylemler" style="margin-top:16px"><button class="ek-btn kucuk" onclick="aracSifirla()">↺ Varsayılana dön</button></div>

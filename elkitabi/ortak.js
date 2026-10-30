@@ -115,6 +115,31 @@
   EK.modalKapat = function(){ const ov = document.getElementById('ek-modal-ov'); if(ov) ov.classList.remove('acik'); };
   document.addEventListener('keydown', e => { if(e.key === 'Escape') EK.modalKapat(); });
 
+  /* ── Favoriler (t: h hesap, s şema, t teori) ── */
+  EK.favListe = function(){ return EK.oku('ekh_fav', []); };
+  EK.favMi = function(t, id){ return EK.favListe().some(f => f.t === t && f.id === id); };
+  EK.favDegis = function(t, id){
+    let L = EK.favListe(); const var_ = L.some(f => f.t === t && f.id === id);
+    L = var_ ? L.filter(f => !(f.t === t && f.id === id)) : [{t, id}].concat(L);
+    EK.yaz('ekh_fav', L.slice(0, 60));
+    document.querySelectorAll('[data-fav="' + t + ':' + id + '"]').forEach(b => { b.classList.toggle('aktif', !var_); b.textContent = var_ ? '☆' : '★'; b.title = var_ ? 'Favorilere ekle' : 'Favorilerden çıkar'; });
+    EK.toast(var_ ? '☆ Favorilerden çıkarıldı' : '★ Favorilere eklendi · El Kitabı ana sayfasında');
+    if(typeof EK.favDegisti === 'function') EK.favDegisti();
+    return !var_;
+  };
+  EK.favBtn = function(t, id, etiket){
+    const f = EK.favMi(t, id);
+    return `<${etiket || 'button'} class="ek-fav-btn${f ? ' aktif' : ''}" data-fav="${t}:${id}" role="button" title="${f ? 'Favorilerden çıkar' : 'Favorilere ekle'}" aria-label="Favori" onclick="event.preventDefault();event.stopPropagation();EK.favDegis('${t}','${id}')">${f ? '★' : '☆'}</${etiket || 'button'}>`;
+  };
+  /* ── Son bakılanlar (ana sayfa için) ── */
+  EK.sonEkle = function(t, id){
+    const L = EK.oku('ekh_son_liste', []).filter(x => !(x.t === t && x.id === id));
+    L.unshift({t, id, z:Date.now()}); EK.yaz('ekh_son_liste', L.slice(0, 24));
+  };
+
+  /* ── Çevrimdışı çalışma: ERP ile aynı service worker (kapsam: uygulamanın kökü) ── */
+  try{ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('../sw.js', {scope:'../'}).catch(()=>{}); }catch(e){}
+
   /* ── Alt menü ── */
   EK.navCiz = function(aktif){
     const n = document.getElementById('ek-nav'); if(!n) return;
