@@ -1382,6 +1382,28 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 @media(min-width:900px){#page-dashboard.dash-kucuk>#dash-bakis{grid-template-rows:minmax(0,1fr) auto auto;}
   #page-dashboard.dash-kucuk .db-gd30{padding:9px 14px;}
   #page-dashboard.dash-buyuk>#dash-bakis{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+/* ── RENK TASARIMI: kutu çizgisi + aynı renkte, çizgiden uzaklaştıkça azalan gradyen ── */
+.db-k.r-kirmizi{border-left:4px solid var(--red);background:linear-gradient(90deg,var(--red-lt),var(--surface) 60%);}
+.db-k.r-sari{border-left:4px solid var(--amber);background:linear-gradient(90deg,var(--amber-lt),var(--surface) 60%);}
+.db-k.r-turuncu{border-left:4px solid #f97316;background:linear-gradient(90deg,rgba(249,115,22,.10),var(--surface) 60%);}
+.db-k.r-yesil{border-left:4px solid var(--green);background:linear-gradient(90deg,var(--green-lt),var(--surface) 60%);}
+.db-sat.sari{border-left-color:var(--amber);}.db-sat.turuncu{border-left-color:#f97316;}
+.db-ev{background:linear-gradient(90deg,var(--amber-lt),var(--bg2) 60%);}
+.db-ev.gec{background:linear-gradient(90deg,var(--red-lt),var(--bg2) 60%);}
+.card.kr-art::before,.card.kr-eks::before,.card.kr-sif::before{opacity:1;height:3px;}
+.card.kr-art::before{background:var(--green);}
+.card.kr-eks::before{background:var(--red);}
+.card.kr-sif::before{background:var(--border2);}
+.card.kr-art{background:linear-gradient(180deg,var(--green-lt),var(--surface) 60%);}
+.card.kr-eks{background:linear-gradient(180deg,var(--red-lt),var(--surface) 60%);}
+.stagger-item.isl-art{border-left:4px solid var(--green);background:linear-gradient(90deg,var(--green-lt),var(--surface) 60%);}
+.stagger-item.isl-eks{border-left:4px solid var(--red);background:linear-gradient(90deg,var(--red-lt),var(--surface) 60%);}
+.stagger-item.isl-sif{border-left:4px solid var(--border2);}
+.ev-kart.r-kirmizi{border-left-color:var(--red);background:linear-gradient(90deg,var(--red-lt),var(--surface) 60%);}
+.ev-kart.r-sari{border-left-color:var(--amber);background:linear-gradient(90deg,var(--amber-lt),var(--surface) 60%);}
+.ev-kart.r-yesil{border-left-color:var(--green);background:linear-gradient(90deg,var(--green-lt),var(--surface) 60%);}
+.ev-kart.r-pasif{border-left-color:var(--text3);background:linear-gradient(90deg,var(--surface2),var(--surface) 60%);}
 </style>
 </head>
 <body>
@@ -4881,7 +4903,7 @@ function renderDashBugun(){
   if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Bugün işlem yok</div></div>';return;}
   el.innerHTML=list.map((i,idx)=>{
     const k=getKisi(i.kisiId);const _y=kasaYon(i);const pos=_y>0;const renk=_y>0?'var(--green)':_y<0?'var(--red)':'var(--text3)';
-    return `<div class="stagger-item" style="animation-delay:${idx*0.06}s;" onclick="showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${k?.isim||i.kat||'—'}</div><div style="font-size:11px;color:var(--text2);">${i.tip} · ${i.odemeYontemi||'Nakit'}</div></div><div style="font-weight:700;font-size:14px;color:${renk};" class="num">${_y>0?'+':_y<0?'−':''}${fmt(i.tutar)}</div></div></div>`;
+    return `<div class="stagger-item ${_y>0?'isl-art':_y<0?'isl-eks':'isl-sif'}" style="animation-delay:${idx*0.06}s;" onclick="showIslemDetay(${i.id})"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${k?.isim||i.kat||'—'}</div><div style="font-size:11px;color:var(--text2);">${i.tip} · ${i.odemeYontemi||'Nakit'}</div></div><div style="font-weight:700;font-size:14px;color:${renk};" class="num">${_y>0?'+':_y<0?'−':''}${fmt(i.tutar)}</div></div></div>`;
   }).join('');
   setStagger(el.querySelectorAll('.stagger-item'));
 }
@@ -8381,7 +8403,7 @@ function renderIslemler(){
     const editBtn=USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="editIslem(${i.id},event)" style="width:28px;height:28px;font-size:14px;">✏️</button>`:'';
     const delBtn=USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteIslem(${i.id},event)" style="width:28px;height:28px;font-size:14px;color:var(--red);">🗑</button>`:'';
     const tahsilBtn=i.statu==='Bekliyor'&&USER_ROL!=='goruntule'?`<button class="btn btn-sm" style="background:var(--amber-lt);color:var(--amber);border:1px solid rgba(240,196,114,0.3);font-size:11px;padding:5px 8px;" onclick="statuDegistir(${i.id},event)">Tahsil Et</button>`:'';
-    return `<div class="stagger-item" style="animation-delay:${Math.min(idx,20)*0.05}s;" onclick="showIslemDetay(${i.id})">
+    return `<div class="stagger-item ${pos?'isl-art':'isl-eks'}" style="animation-delay:${Math.min(idx,20)*0.05}s;" onclick="showIslemDetay(${i.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;">
           <div style="font-size:11px;color:var(--text2);margin-bottom:3px;">${dtS(i.tarih)} <span class="id-badge">${fmtId(i.id)}</span></div>
@@ -11913,7 +11935,7 @@ function rkDashHtml(){
   const elle=rkMan().filter(r=>r.tip==='ads_arama'&&String(r.tarih).slice(0,7)===ayBas.slice(0,7)).reduce((s,r)=>s+(parseInt(r.deger)||0),0);
   let uy='';try{const U=rkUyarilar().filter(u=>u.k!=='veri');if(U.length)uy=`<div class="db-rk-uyari">${U[0].m}${U.length>1?` <small>(+${U.length-1})</small>`:''}</div>`;}catch(e){}
   const dun=gfGunEkle(localToday(),-1);const eski=D&&D.son&&D.son<dun;
-  return `<div class="db-k db-reklam${eski?' r-kirmizi':''}" onclick="goPage('reklam')"><div class="db-b">📈 Reklam <small>${ay}${eski?' · <span style="color:var(--red)">veri '+gfTrTarih(D.son)+'\'den beri yok</span>':''}</small></div>
+  return `<div class="db-k db-reklam r-kirmizi" onclick="goPage('reklam')"><div class="db-b">📈 Reklam <small>${ay}${eski?' · <span style="color:var(--red)">veri '+gfTrTarih(D.son)+'\'den beri yok</span>':''}</small></div>
     <div class="db-rk"><div><small>Harcama</small><b class="num">${D?'−'+fmt(h):'…'}</b></div><div><small>Tıklama</small><b class="num">${D?rkSayi(t):'…'}</b></div><div><small>Arama</small><b class="num">${elle}${D&&g?` <small>· Google ${g}</small>`:''}</b></div>
     ${USER_ROL!=='goruntule'?`<button type="button" class="db-rk-btn" onclick="event.stopPropagation();rkAramaGirAc()">📞 Arama gir</button>`:''}</div>${uy}</div>`;
 }
@@ -15658,7 +15680,9 @@ function gfTutamakBagla(){
 // İşlem formu açılınca davranış panelini sıfırla
 (function(){try{const _o=openIslemModal;openIslemModal=function(){const r=_o.apply(this,arguments);try{psFormSifirla(null);}catch(e){}return r;};
   const _e=editIslem;editIslem=async function(id){const r=await _e.apply(this,arguments);try{psFormSifirla(id);}catch(e){}return r;};}catch(e){console.warn('form sarmalayıcı',e);}})();
-function ozKartSayi(el,v){if(!el)return;animateCount(el,v);el.style.color=v<0?'var(--red)':v>0?'var(--green)':'var(--text3)';}
+function ozKartSayi(el,v){if(!el)return;animateCount(el,v);el.style.color=v<0?'var(--red)':v>0?'var(--green)':'var(--text3)';kartIsaret(el.closest('.card'),v);}
+// kutu rengi: artı yeşil, eksi kırmızı, sıfır nötr (üstte çizgi + aşağı doğru aynı renkte gradyen)
+function kartIsaret(k,v){if(!k)return;k.classList.remove('kr-art','kr-eks','kr-sif');k.classList.add(v<0?'kr-eks':v>0?'kr-art':'kr-sif');}
 
 // ============================================================ REHBER: YAPILANDIRILMIŞ ADRES · KONUM · GOOGLE MAPS
 var HR={adresYok:false,veri:null,yukleniyor:null,form:[],formKisi:null,gm:null,gmHata:null,secici:null,harita:null,katman:{musteri:true,firma:false},bolge:null,isaretler:[],daireler:[],bilgi:null};
@@ -17161,7 +17185,7 @@ function dashBakisCiz(c){
     const sim=new Date();const ss=String(sim.getHours()).padStart(2,'0')+':'+String(sim.getMinutes()).padStart(2,'0');
     const sir=O.filter(o=>o.gun>bg||!o.t.saat||o.t.saat>=ss);const y=sir[0]||O[0];
     if(O.length){const sat=o=>{const g=String(o.gun).slice(0,10);const k=o.t.kisiId?getKisi(o.t.kisiId):null;const gun=g===bg?'Bugün':g===gfGunEkle(bg,1)?'Yarın':evKisa(g);
-        return `<div class="db-sat"><b>${gun}${o.t.saat?' '+o.t.saat.slice(0,5):''}</b><span>${_esc(o.t.baslik||'')}${k?' · '+_esc(k.isim):''}</span></div>`;};
+        return `<div class="db-sat${g===bg?' turuncu':' sari'}"><b>${gun}${o.t.saat?' '+o.t.saat.slice(0,5):''}</b><span>${_esc(o.t.baslik||'')}${k?' · '+_esc(k.isim):''}</span></div>`;};
       const ilk3=[y].concat(sir.filter(o=>o!==y)).slice(0,5);
       ry=`<b class="db-say">${O.length}</b><div class="db-alt">gelecek randevu${bugunN?' · <span style="color:#f97316">bugün '+bugunN+'</span>':''}${gec?' · <span style="color:var(--red)">'+gec+' geçmiş açık</span>':''}</div>${ilk3.map(sat).join('')}`;}}catch(e){}
   // Evrak
@@ -17169,7 +17193,7 @@ function dashBakisCiz(c){
   try{const R=(DB.evraklar||[]).map(evDurum).filter(r=>r.renk==='kirmizi'||r.renk==='sari');
     if(R.length){const kir=R.filter(r=>r.renk==='kirmizi');evRenk=kir.length?'kirmizi':'sari';
       const sar=R.filter(r=>r.renk==='sari');kir.sort((a,b)=>a.gecikmis[0].son.localeCompare(b.gecikmis[0].son));sar.sort((a,b)=>a.simdiki.son.localeCompare(b.simdiki.son));
-      const sat=r=>`<div class="db-sat${r.renk==='kirmizi'?' kirmizi':''}"><b>${evIk(r.e)} ${_esc(evAd(r.e))}</b><span>${_esc(r.metin)}</span></div>`;
+      const sat=r=>`<div class="db-sat${r.renk==='kirmizi'?' kirmizi':' sari'}"><b>${evIk(r.e)} ${_esc(evAd(r.e))}</b><span>${_esc(r.metin)}</span></div>`;
       ev=`<b class="db-say">${R.length}</b><div class="db-alt">${kir.length?'<span style="color:var(--red)">'+kir.length+' gecikmiş</span>':''}${kir.length&&sar.length?' · ':''}${sar.length?sar.length+' dönem içi':''}</div>${kir.concat(sar).slice(0,5).map(sat).join('')}${R.length>5?`<div class="db-alt">+${R.length-5} evrak daha</div>`:''}`;}}catch(e){}
   const gelir=(c.isGelir||0)+(c.shGelir||0),gider=(c.isGider||0)+(c.shGider||0);const donem=getMonth()?isfAyAdi(getMonth()):'Tüm zamanlar';
   el.innerHTML=`
@@ -17194,7 +17218,7 @@ function dashEvrakListeCiz(){
 // ---------- faturalar & sabit giderler kartları
 function dashSabitCiz(){
   const el=document.getElementById('dash-sabit');if(!el)return;const S=evSabitOzet();const A=evAnomaliler();
-  const kart=(lbl,v,alt,fn)=>`<div class="card" onclick="${fn}"><div class="lbl">${lbl}</div><div class="val num" data-isr-yok style="color:${v<0?'var(--red)':'var(--text3)'}">${v<0?'≈ −'+fmt(v):'0 ₺'}</div>${alt?`<div class="db-kalt">${alt}</div>`:''}</div>`;
+  const kart=(lbl,v,alt,fn)=>`<div class="card ${v<0?'kr-eks':'kr-sif'}" onclick="${fn}"><div class="lbl">${lbl}</div><div class="val num" data-isr-yok style="color:${v<0?'var(--red)':'var(--text3)'}">${v<0?'≈ −'+fmt(v):'0 ₺'}</div>${alt?`<div class="db-kalt">${alt}</div>`:''}</div>`;
   const sy=v=>v==null?'—':v.toFixed(v<10?1:0).replace('.',',');
   el.innerHTML=`<div class="cards">${kart('📌 Aylık sabit gider',-S.aylik,'ort. tahmin · evrakların aylık karşılığı',"goPage('evrak')")}${kart('🧾 Bu ay kalan',-(S.kalan+S.gec),'ort. tahmin · '+(S.kalanN+S.gecN)+' ödeme'+(S.gecN?' · '+S.gecN+' gecikmiş':''),"goPage('evrak');setTimeout(()=>evFiltre('sari'),200)")}
     <div class="card" style="grid-column:span 2;cursor:default"><div class="lbl">⏱️ Kazançla karşılaştır</div><div class="db-oran">
@@ -17411,7 +17435,7 @@ function gd30DashHtml(){
   let G;try{G=gd30();}catch(e){console.warn('gider tahmini',e);return '';}
   const p=(R,k)=>`<div class="gd-p${k==='bu'&&R.gecTop>0?' gec':''}" onclick="event.stopPropagation();gd30Ac('${k}')"><div class="gd-p-b">${k==='bu'?'Bu ay':R.ad} <small>${k==='bu'?`${gfTrTarih(R.bas).slice(0,5)}–${gfTrTarih(R.bit).slice(0,5)} · ${R.gunSay} gün`:'tamamı · '+R.gunSay+' gün'}</small></div>
     <b class="num">≈ −${fmt(R.toplam)}</b><small>kesin −${gfKisa(R.kesTop)} · tahmini −${gfKisa(R.tahTop)}${R.gecTop>0?` · <span style="color:var(--red)">gecikmiş −${gfKisa(R.gecTop)}</span>`:''}</small></div>`;
-  return `<div class="db-k db-gd30" onclick="gd30Ac('bu')"><div class="db-b">📉 Gider tahmini</div><div class="db-gd2">${p(G.bu,'bu')}${p(G.ga,'ga')}</div></div>`;
+  return `<div class="db-k db-gd30 r-kirmizi" onclick="gd30Ac('bu')"><div class="db-b">📉 Gider tahmini</div><div class="db-gd2">${p(G.bu,'bu')}${p(G.ga,'ga')}</div></div>`;
 }
 
 // ---------- ayrıntı penceresi
