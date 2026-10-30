@@ -13,6 +13,39 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="ortak.css">
 <script src="ortak.js"></script>
+<style>
+.hz{padding:14px;}
+.hz-tur{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.hz-tur button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);}
+.hz-tur button b{font-size:13.5px;font-weight:700;color:inherit;}
+.hz-tur button span{font-size:10.5px;color:var(--text3);line-height:1.25;text-align:center;}
+.hz-tur button.aktif{border-color:var(--mg-md);background:var(--mg-lt);color:var(--mg);}
+.hz-cos{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;}
+.hz-cos>span{width:100%;font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;}
+.hz-cos button{padding:7px 10px;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;}
+.hz-cos button i{font-style:normal;font-family:var(--fm);color:var(--text3);margin-left:3px;}
+.hz-cos button.aktif{border-color:var(--cy-md);background:var(--cy-lt);color:var(--text);}
+.hz-cos-in{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);}
+.hz-cos-in input{width:62px;padding:7px 8px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:var(--fm);font-size:13px;outline:none;}
+.hz-izgara{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.hz-kutu{display:flex;flex-direction:column;gap:6px;padding:12px 12px 10px;border-radius:var(--r-md);border:1.5px solid var(--border2);background:var(--bg2);cursor:text;transition:border-color .25s var(--ease),background .25s var(--ease);}
+.hz-kutu:focus-within{border-color:var(--mg-md);box-shadow:0 0 0 3px var(--mg-lt);}
+.hz-ust{display:flex;justify-content:space-between;gap:6px;align-items:baseline;}
+.hz-ad{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
+.hz-durum{font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;}
+.hz-in{display:flex;align-items:baseline;gap:6px;}
+.hz-in input{flex:1;min-width:0;width:100%;border:none;background:transparent;outline:none;color:var(--text);font-family:var(--fm);font-size:26px;font-weight:700;padding:0;}
+.hz-in input::placeholder{color:var(--border2);}
+.hz-b{font-size:15px;font-weight:700;color:var(--text3);}
+.hz-kutu.hesap{border-style:dashed;border-color:var(--green-md);background:var(--green-lt);}
+.hz-kutu.hesap input{color:var(--green);}
+.hz-kutu.hesap .hz-durum{color:var(--green);}
+.hz-kutu.kilit{cursor:default;}
+.hz-ipucu{margin-top:12px;font-size:12.5px;color:var(--text3);text-align:center;line-height:1.5;}
+#hz-ek .ek-satirlar{margin-top:12px;}
+.hz-not{margin-top:12px;}
+@media(max-width:380px){.hz-in input{font-size:22px;}.hz-tur button span{display:none;}}
+</style>
 </head>
 <body>
 <header class="ek-top">
@@ -362,6 +395,11 @@ function aracGoster(id, sorgu){
   $('ek-top-h1').textContent = t.ad; $('ek-top-p').textContent = KATLAR.find(k => k.id === t.kat).ad;
   $('ek-geri').textContent = '←'; $('ek-geri').title = 'Araç listesine dön';
   $('ek-ana').style.display = 'none'; $('ek-arac').style.display = '';
+  if(t.ozel){
+    $('ek-arac').innerHTML = `<div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div></div><div class="k-${t.kat}" style="max-width:640px">${t.ozel.html()}</div>`;
+    $('ek-ozet-serit').classList.remove('goster');
+    t.ozel.bagla(); window.scrollTo(0, 0); document.title = t.ad + ' · Hesap · Gün Teknik'; return;
+  }
   $('ek-arac').innerHTML = `
     <div class="ek-arac-bas k-${t.kat}"><div class="ek-arac-ikon">${t.ikon}</div><div style="min-width:0"><h2>${t.ad}</h2><p>${t.aciklama}</p></div></div>
     <div class="ek-duzen k-${t.kat}">
@@ -590,71 +628,116 @@ const GD_TIPLERI = [['1.5','%1,5 · Aydınlatma ve priz (İç Tesisler Yön. md.
    TEMEL HESAPLAR
    ============================================================ */
 
-/* ── Hızlı hesap: Ohm + güç ── */
+/* ── Hızlı hesap: Ohm + güç (özel, sade arayüz) ── */
+const HZ = {tur:'1f', cos:1, d:{U:'230', I:'', P:'2000', R:''}, girilen:['U','P']};
+const HZ_ALAN = [['U','Gerilim','V'],['I','Akım','A'],['P','Güç','W'],['R','Direnç','Ω']];
+function hzKur(){
+  const s = EK.oku('ekh_son_hizli2', null);
+  if(s && s.d && s.girilen){ Object.assign(HZ, s); }
+}
+function hzKaydet(){ EK.yaz('ekh_son_hizli2', {tur:HZ.tur, cos:HZ.cos, d:HZ.d, girilen:HZ.girilen}); }
+function hzHesap(){
+  const ac = HZ.tur !== 'dc', uc = HZ.tur === '3f', k = uc ? Math.sqrt(3) : 1, c = ac ? HZ.cos : 1;
+  const rKullan = !ac || (c === 1 && !uc);
+  const g = {}; HZ.girilen.forEach(x => { const v = EK.sayiOku(HZ.d[x]); if(isFinite(v) && v > 0) g[x] = v; });
+  const bil = Object.keys(g);
+  if(bil.length < 2) return {eksik:true};
+  let {U, I, P, R} = g; const adim = [];
+  const ks = uc ? '√3 × ' : '', cs = ac && c !== 1 ? ' × cosφ' : '';
+  const ikili = ['U','I','P','R'].filter(x => g[x] != null).join('');
+  // R (direnç/empedans) her zaman faz başına: Z = Uf / I
+  const Uf = u => uc ? u / Math.sqrt(3) : u;
+  switch(ikili){
+    case 'UI': P = k * U * I * c; adim.push(`P = ${ks}U × I${cs} = ${fx(P)} W`); break;
+    case 'UP': I = P / (k * U * c); adim.push(`I = P / (${ks}U${cs}) = ${fx(I)} A`); break;
+    case 'IP': U = P / (k * I * c); adim.push(`U = P / (${ks}I${cs}) = ${fx(U)} V`); break;
+    case 'UR': I = Uf(U) / R; P = k * U * I * c; adim.push(`I = U${uc ? '<sub>f</sub>' : ''} / R = ${fx(I)} A`, `P = ${ks}U × I${cs} = ${fx(P)} W`); break;
+    case 'IR': U = I * R * (uc ? Math.sqrt(3) : 1); P = k * U * I * c; adim.push(`U = I × R${uc ? ' × √3' : ''} = ${fx(U)} V`, `P = ${ks}U × I${cs} = ${fx(P)} W`); break;
+    case 'PR': I = Math.sqrt(P / ((uc ? 3 : 1) * R * c)); U = P / (k * I * c); adim.push(`I = √(P / (${uc ? '3 × ' : ''}R${cs})) = ${fx(I)} A`, `U = P / (${ks}I${cs}) = ${fx(U)} V`); break;
+  }
+  if(R == null){ R = Uf(U) / I; adim.push(`${rKullan ? 'R' : 'Z'} = U${uc ? '<sub>f</sub>' : ''} / I = ${EK.si(R, 'Ω')}`); }
+  return {U, I, P, R, ac, uc, c, rKullan, adim};
+}
+function hzBicim(x, v){
+  if(v == null || !isFinite(v)) return '';
+  if(x === 'R') return v >= 1e6 ? EK.tr(v / 1e6, 3) + ' M' : v >= 1e4 ? EK.tr(v / 1e3, 3) + ' k' : EK.tr(v, v < 10 ? 3 : 2);
+  return EK.tr(v, Math.abs(v) < 1 ? 4 : Math.abs(v) < 100 ? 3 : 1).replace(/\./g, '');
+}
+function hzCiz(){
+  const r = hzHesap(), ac = HZ.tur !== 'dc';
+  HZ_ALAN.forEach(([x, ad, b]) => {
+    const kutu = document.querySelector(`.hz-kutu[data-x="${x}"]`); if(!kutu) return;
+    const inp = kutu.querySelector('input'), gir = HZ.girilen.includes(x);
+    kutu.classList.toggle('hesap', !gir && !r.eksik);
+    const rAd = x === 'R' ? (ac && !(HZ.cos === 1 && HZ.tur === '1f') ? 'Empedans' : 'Direnç') : ad;
+    kutu.querySelector('.hz-ad').textContent = rAd;
+    kutu.querySelector('.hz-durum').textContent = gir ? '✎ girdin' : r.eksik ? '' : 'hesaplandı';
+    if(!gir && document.activeElement !== inp) inp.value = r.eksik ? '' : hzBicim(x, r[x]);
+    if(x === 'R') kutu.querySelector('.hz-b').textContent = 'Ω';
+  });
+  const ek = document.getElementById('hz-ek');
+  if(r.eksik){ ek.innerHTML = '<div class="hz-ipucu">Herhangi <b>iki</b> kutuya değer yaz; diğer ikisi kendiliğinden hesaplanır.</div>'; return; }
+  const S = (HZ.tur === '3f' ? Math.sqrt(3) : 1) * r.U * r.I, Q = S * Math.sqrt(Math.max(0, 1 - r.c * r.c));
+  const sat = [];
+  if(r.I < 1) sat.push(['Akım (mA)', EK.tr(r.I * 1000, 1) + ' mA']);
+  if(r.P >= 1000) sat.push(['Güç (kW)', EK.tr(r.P / 1000, 3) + ' kW']);
+  if(ac && r.c < 1) sat.push(['Görünür güç S', EK.tr(S / 1000, 3) + ' kVA'], ['Reaktif güç Q', EK.tr(Q / 1000, 3) + ' kVAr']);
+  if(HZ.tur === '3f') sat.push(['Faz-nötr gerilimi', EK.tr(r.U / Math.sqrt(3), 1) + ' V']);
+  sat.push(['1 saat çalışırsa', EK.tr(r.P / 1000, 3) + ' kWh']);
+  const sig = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125].find(s => s >= r.I);
+  if(ac && sig) sat.push(['En küçük uygun sigorta', sig + ' A (kesit ayrıca kontrol edilir)']);
+  ek.innerHTML = `<div class="ek-satirlar">${sat.map(s => `<div class="ek-kv"><span>${s[0]}</span><span>${s[1]}</span></div>`).join('')}</div>` +
+    `<details class="ek-adim"><summary>Nasıl hesaplandı?</summary><ol>${r.adim.map(a => `<li>${a}</li>`).join('')}</ol></details>` +
+    `<div class="ek-eylemler"><button class="ek-btn kucuk" onclick="hzMetin(1)">📋 Kopyala</button><button class="ek-btn kucuk" onclick="hzMetin(2)">💬 WhatsApp</button><button class="ek-btn kucuk" onclick="hzTemizle()">🗑 Temizle</button></div>`;
+}
+function hzMetin(n){
+  const r = hzHesap(); if(r.eksik) return;
+  const tur = {dc:'DC', '1f':'AC tek faz', '3f':'AC üç faz'}[HZ.tur];
+  const m = `🔢 Gün Teknik · Hızlı Hesap (${tur}${HZ.tur !== 'dc' ? ', cosφ ' + EK.tr(HZ.cos, 2) : ''})\nGerilim: ${hzBicim('U', r.U)} V\nAkım: ${hzBicim('I', r.I)} A\nGüç: ${hzBicim('P', r.P)} W\n${r.rKullan ? 'Direnç' : 'Empedans'}: ${hzBicim('R', r.R)} Ω`;
+  if(n === 1) EK.kopyala(m); else EK.whatsapp(m);
+}
+function hzTemizle(){ HZ.d = {U:'', I:'', P:'', R:''}; HZ.girilen = []; hzKaydet(); hzFormCiz(); }
+function hzFormCiz(){
+  const ac = HZ.tur !== 'dc', rKapali = ac && !(HZ.cos === 1 && HZ.tur === '1f');
+  if(rKapali && HZ.girilen.includes('R')){ HZ.girilen = HZ.girilen.filter(x => x !== 'R'); HZ.d.R = ''; }
+  const el = document.getElementById('hz-govde');
+  el.innerHTML = `
+    <div class="hz-tur" role="group">${[['dc','⎓ DC','akü, panel, adaptör'],['1f','∿ AC tek faz','230 V priz, cihaz'],['3f','∿ AC üç faz','400 V motor, ocak']].map(([k, a, alt]) => `<button type="button" data-tur="${k}" class="${HZ.tur === k ? 'aktif' : ''}"><b>${a}</b><span>${alt}</span></button>`).join('')}</div>
+    ${ac ? `<div class="hz-cos"><span>Yük tipi (cosφ)</span>${[[1,'Isıtıcı · lamba','1'],[0.95,'LED · adaptör','0,95'],[0.85,'Motor · pompa','0,85'],[0.8,'Eski motor · kaynak','0,8']].map(([v, a, n]) => `<button type="button" data-cos="${v}" class="${HZ.cos === v ? 'aktif' : ''}">${a} <i>${n}</i></button>`).join('')}<label class="hz-cos-in">diğer <input inputmode="decimal" id="hz-cos" value="${EK.tr(HZ.cos, 2)}"></label></div>` : ''}
+    <div class="hz-izgara">${HZ_ALAN.map(([x, ad, b]) => `<label class="hz-kutu${x === 'R' && rKapali ? ' kilit' : ''}" data-x="${x}"><span class="hz-ust"><span class="hz-ad">${ad}</span><span class="hz-durum"></span></span><span class="hz-in"><input type="text" inputmode="decimal" autocomplete="off" data-hz="${x}" value="${HZ.girilen.includes(x) ? HZ.d[x] : ''}" placeholder="—"${x === 'R' && rKapali ? ' readonly' : ''}><span class="hz-b">${b}</span></span></label>`).join('')}</div>
+    ${HZ.tur === '3f' ? '<div class="hz-ipucu" style="margin-top:8px">Üç fazda gerilim <b>fazlar arası</b> (400 V), akım <b>hat akımı</b>, empedans <b>faz başına</b> değerdir. Güç toplam aktif güçtür.</div>' : ac && HZ.cos !== 1 ? '<div class="hz-ipucu" style="margin-top:8px">Güç, cihaz etiketindeki <b>aktif güç</b> (W) değeridir.</div>' : ''}
+    <div id="hz-ek"></div>`;
+  hzCiz();
+}
+function hzBagla(){
+  const el = document.getElementById('hz-govde');
+  el.addEventListener('input', e => {
+    const x = e.target.dataset.hz;
+    if(x){ HZ.d[x] = e.target.value;
+      if(e.target.value.trim() === ''){ HZ.girilen = HZ.girilen.filter(y => y !== x); }
+      else if(!HZ.girilen.includes(x)){ HZ.girilen.push(x); if(HZ.girilen.length > 2) HZ.girilen.shift(); }
+      else { HZ.girilen = HZ.girilen.filter(y => y !== x).concat(x); }
+      hzKaydet(); hzCiz(); return; }
+    if(e.target.id === 'hz-cos'){ const v = EK.sayiOku(e.target.value); if(v > 0 && v <= 1){ HZ.cos = v; hzKaydet(); document.querySelectorAll('.hz-cos button').forEach(b => b.classList.toggle('aktif', +b.dataset.cos === v)); hzCiz(); } }
+  });
+  el.addEventListener('focusout', e => { if(e.target.id === 'hz-cos') hzFormCiz(); else if(e.target.dataset.hz) hzCiz(); });
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    if(b.dataset.tur){ HZ.tur = b.dataset.tur; if(HZ.tur === 'dc') HZ.cos = 1; if(HZ.tur === '3f' && HZ.d.U === '230' && HZ.girilen.includes('U')) HZ.d.U = '400'; if(HZ.tur !== '3f' && HZ.d.U === '400' && HZ.girilen.includes('U')) HZ.d.U = '230'; hzKaydet(); hzFormCiz(); }
+    else if(b.dataset.cos){ HZ.cos = +b.dataset.cos; hzKaydet(); hzFormCiz(); }
+  });
+}
 arac({
   id:'hizli', kat:'temel', ikon:'⚡', ad:'Hızlı Hesap · Ohm ve Güç',
-  aciklama:'Gerilim, akım, güç, direnç — herhangi ikisini gir, kalanlar hesaplansın.',
-  etiket:['ohm','volt','amper','watt','direnç','güç','v=ir','p=ui'],
-  alanlar:[
-    {k:'mod', ad:'Devre türü', t:'seg', s:[['dc','DC / rezistif (ısıtıcı, akkor lamba)'],['ac','AC · cosφ ile']], v:'dc'},
-    {k:'sis', ad:'Sistem', t:'seg', s:SIS2, v:'1f', gizle:v => v.mod !== 'ac'},
-    {k:'cos', ad:'Güç faktörü cosφ', t:'sayi', v:1, min:0.05, max:1, gizle:v => v.mod !== 'ac', ipucu:'rezistif = 1'},
-    {k:'U', ad:v => v.mod === 'ac' && v.sis === '3f' ? 'Gerilim (faz-faz)' : 'Gerilim', t:'sayi', birim:'V', bos:true, ph:'—', v:230},
-    {k:'I', ad:'Akım', t:'sayi', birim:'A', bos:true, ph:'—'},
-    {k:'P', ad:'Güç (aktif)', t:'sayi', birim:'W', bos:true, ph:'—', v:2000},
-    {k:'R', ad:'Direnç', t:'sayi', birim:'Ω', bos:true, ph:'—', gizle:v => v.mod === 'ac'}
-  ],
-  bilgi:'İki değer yazman yeterli. Üç değer yazarsan ilk iki bilinen değer esas alınır ve üçüncüsü kontrol edilir.',
-  hesap(v){
-    const has = k => !isNaN(v[k]) && v[k] > 0;
-    const adim = [];
-    let U = v.U, I = v.I, P = v.P, R = v.R;
-    if(v.mod === 'dc'){
-      const bil = ['U','I','P','R'].filter(has);
-      if(bil.length < 2) return {bekle:'Herhangi <b>iki</b> değeri gir: gerilim, akım, güç veya direnç.'};
-      const ikili = bil.slice(0, 2).join('');
-      const fazla = bil.slice(2);
-      switch(ikili){
-        case 'UI': P = U * I; R = U / I; adim.push(`P = U × I = ${fx(U)} × ${fx(I)} = ${fx(P)} W`, `R = U / I = ${fx(U)} / ${fx(I)} = ${fx(R)} Ω`); break;
-        case 'UP': I = P / U; R = U * U / P; adim.push(`I = P / U = ${fx(P)} / ${fx(U)} = ${fx(I)} A`, `R = U² / P = ${fx(U)}² / ${fx(P)} = ${fx(R)} Ω`); break;
-        case 'UR': I = U / R; P = U * U / R; adim.push(`I = U / R = ${fx(I)} A`, `P = U² / R = ${fx(P)} W`); break;
-        case 'IP': U = P / I; R = P / (I * I); adim.push(`U = P / I = ${fx(U)} V`, `R = P / I² = ${fx(R)} Ω`); break;
-        case 'IR': U = I * R; P = I * I * R; adim.push(`U = I × R = ${fx(U)} V`, `P = I² × R = ${fx(P)} W`); break;
-        case 'PR': U = Math.sqrt(P * R); I = Math.sqrt(P / R); adim.push(`U = √(P × R) = ${fx(U)} V`, `I = √(P / R) = ${fx(I)} A`); break;
-      }
-      const uy = [];
-      const hesaplanan = {U, I, P, R};
-      fazla.forEach(k => { const g = v[k], h = hesaplanan[k]; if(Math.abs(g - h) / h > 0.01) uy.push(['uyari', `Girdiğin ${k} = ${fx(g)} tutarsız; ilk iki değere göre ${fx(h)} olmalı.`]); });
-      return {
-        ana:[{ad:'Gerilim', d:fx(U), b:'V', r:'amber'}, {ad:'Akım', d:fx(I), b:'A', r:'cy', alt:I < 1 ? fx(I * 1000) + ' mA' : ''},
-             {ad:'Güç', d:P >= 1000 ? fx(P / 1000) : fx(P), b:P >= 1000 ? 'kW' : 'W', r:'mg', alt:P >= 1000 ? fx(P) + ' W' : ''}, {ad:'Direnç', d:EK.si(R, 'Ω'), r:'purple'}],
-        satir:[['Günlük 1 saat çalışırsa', fx(P / 1000, 3) + ' kWh'], ['Isı (1 saatte)', fx(P * 3600 / 4186.8, 0) + ' kcal']],
-        uyari:uy, adim
-      };
-    }
-    // AC
-    const k = v.sis === '3f' ? Math.sqrt(3) : 1, cos = v.cos;
-    const bil = ['U','I','P'].filter(has);
-    if(bil.length < 2) return {bekle:'Herhangi <b>iki</b> değeri gir: gerilim, akım veya güç.'};
-    const ikili = bil.slice(0, 2).join('');
-    const ks = v.sis === '3f' ? '√3 × ' : '';
-    if(ikili === 'UI'){ P = k * U * I * cos; adim.push(`P = ${ks}U × I × cosφ = ${fx(P)} W`); }
-    else if(ikili === 'UP'){ I = P / (k * U * cos); adim.push(`I = P / (${ks}U × cosφ) = ${fx(I)} A`); }
-    else { U = P / (k * I * cos); adim.push(`U = P / (${ks}I × cosφ) = ${fx(U)} V`); }
-    const S = k * U * I, Q = S * Math.sqrt(1 - cos * cos);
-    adim.push(`S = ${ks}U × I = ${fx(S)} VA`, `Q = S × sinφ = ${fx(Q)} VAr`);
-    const uy = [];
-    if(bil.length === 3){ const h = k * U * I * cos; if(Math.abs(v.P - h) / h > 0.01) uy.push(['uyari', `Girdiğin güç tutarsız; U ve I'ya göre ${fx(h)} W olmalı.`]); }
-    return {
-      ana:[{ad:'Gerilim', d:fx(U), b:'V', r:'amber', alt:v.sis === '3f' ? 'faz-nötr ' + fx(U / Math.sqrt(3)) + ' V' : ''}, {ad:v.sis === '3f' ? 'Hat akımı' : 'Akım', d:fx(I), b:'A', r:'cy'},
-           {ad:'Aktif güç P', d:P >= 1000 ? fx(P / 1000) : fx(P), b:P >= 1000 ? 'kW' : 'W', r:'mg'}, {ad:'Görünür güç S', d:fx(S / 1000, 3), b:'kVA', r:'purple'}],
-      satir:[['Reaktif güç Q', fx(Q) + ' VAr'], ['Empedans (faz başına)', EK.si((v.sis === '3f' ? U / Math.sqrt(3) : U) / I, 'Ω')]],
-      uyari:uy, adim
-    };
+  aciklama:'Gerilim, akım, güç, direnç: herhangi ikisini yaz, diğer ikisi hesaplansın.',
+  etiket:['ohm','volt','amper','watt','direnç','güç','v=ir','p=ui','dc','ac'],
+  alanlar:[],
+  ozel:{
+    html:() => `<div class="ek-kart hz" id="hz-govde"></div><div class="ek-not hz-not"><b>Hangi türü seçmeliyim?</b> Akü, güneş paneli, adaptör çıkışı gibi doğru akımda <b>DC</b>; prizdeki cihazlarda <b>AC</b> seç. AC’de ısıtıcı ve akkor lamba gibi saf dirençli yüklerde cosφ = 1’dir ve hesap DC ile aynıdır. Motor, pompa, klima, LED sürücü gibi yüklerde akımın bir kısmı iş yapmaz (cosφ &lt; 1); bu yüzden aynı güç için daha çok akım çekilir ve “direnç” yerine “empedans” hesaplanır.</div>`,
+    bagla:() => { hzKur(); hzBagla(); hzFormCiz(); }
   }
 });
 
-/* ── AC güç ── */
 arac({
   id:'guc', kat:'temel', ikon:'💡', ad:'Güç Hesabı · 1Φ / 3Φ',
   aciklama:'Akımdan güç, güçten akım, güç üçgeni (P, Q, S), motor verimi dahil.',
