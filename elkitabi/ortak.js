@@ -14,6 +14,12 @@
   EK.temaAl = function(){ try{ return localStorage.getItem('gt_tema') || 'koyu'; }catch(e){ return 'koyu'; } };
   EK.temaUygula = function(t){
     const r = document.documentElement;
+    if(t === 'zarif' || t === 'chill'){
+      r.setAttribute('data-tema', t);
+      const b = document.getElementById('ek-tema-btn'); if(b) b.textContent = t === 'chill' ? '🌙' : '☀️';
+      const m = document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content', t === 'chill' ? '#E6D7B8' : '#111316');
+      return;
+    }
     let acik = t === 'acik';
     if(t === 'sistem') acik = !(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
     if(acik) r.setAttribute('data-tema','acik'); else r.removeAttribute('data-tema');
