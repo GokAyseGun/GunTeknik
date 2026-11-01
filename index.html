@@ -11777,9 +11777,11 @@ function rkGrafikCiz(){
   const kopyaSeg=(k,dash)=>V.kopya>=0&&RK_ADS_M.includes(k)?{borderDash:c=>c.p1DataIndex===V.kopya?[4,4]:dash}:undefined;
   if(!verim){
     RK.metrikler.forEach(k=>{const m=RK_METRIK[k];const ax=ekseni(m);
-      if(V.M){ekle({type:RK.tip==='bar'?'bar':'line',label:m.ad+' (günlük)',rk:k,data:V.S[k],borderColor:m.renk+'88',backgroundColor:m.renk+(RK.tip==='bar'?'55':'00'),yAxisID:ax,tension:0,pointRadius:0,pointHoverRadius:4,borderWidth:1,segment:kopyaSeg(k)});
-        ekle({type:'line',label:m.ad+' (7 gün ort.)',rk:k,ort:true,data:V.M[k],borderColor:m.renk,backgroundColor:m.renk+'22',fill:RK.metrikler.length===1&&RK.tip!=='bar',yAxisID:ax,cubicInterpolationMode:'monotone',pointRadius:0,pointHoverRadius:4,borderWidth:2.6,borderDash:m.yuzde?[5,3]:[],segment:kopyaSeg(k,m.yuzde?[5,3]:undefined)});}
-      else ekle({type:RK.tip==='bar'?'bar':'line',label:m.ad,rk:k,data:V.S[k],borderColor:m.renk,backgroundColor:m.renk+(RK.tip==='bar'?'aa':'22'),fill:RK.tip!=='bar'&&RK.metrikler.length===1,yAxisID:ax,cubicInterpolationMode:'monotone',pointRadius:V.K.length<=14?3:0,pointHoverRadius:5,borderWidth:2,borderDash:m.yuzde?[5,3]:[],segment:kopyaSeg(k,m.yuzde?[5,3]:undefined)});
+      // elle arama: girilmeyen günler boşluk olduğundan tek tek günler çizgi oluşturmaz → her girilen gün nokta olarak görünsün
+      const nk=(d,r)=>k==='elle'?d.map(v=>v!=null?r:0):null;
+      if(V.M){ekle({type:RK.tip==='bar'?'bar':'line',label:m.ad+' (günlük)',rk:k,data:V.S[k],borderColor:m.renk+'88',backgroundColor:m.renk+(RK.tip==='bar'?'55':'00'),yAxisID:ax,tension:0,pointRadius:nk(V.S[k],3)||0,pointBackgroundColor:m.renk,pointHoverRadius:4,borderWidth:1,segment:kopyaSeg(k)});
+        ekle({type:'line',label:m.ad+' (7 gün ort.)',rk:k,ort:true,data:V.M[k],borderColor:m.renk,backgroundColor:m.renk+'22',fill:RK.metrikler.length===1&&RK.tip!=='bar',yAxisID:ax,cubicInterpolationMode:'monotone',pointRadius:nk(V.M[k],2)||0,pointBackgroundColor:m.renk,pointHoverRadius:4,borderWidth:2.6,borderDash:m.yuzde?[5,3]:[],segment:kopyaSeg(k,m.yuzde?[5,3]:undefined)});}
+      else ekle({type:RK.tip==='bar'?'bar':'line',label:m.ad,rk:k,data:V.S[k],borderColor:m.renk,backgroundColor:m.renk+(RK.tip==='bar'?'aa':'22'),fill:RK.tip!=='bar'&&RK.metrikler.length===1,yAxisID:ax,cubicInterpolationMode:'monotone',pointRadius:nk(V.S[k],4.5)||(V.K.length<=14?3:0),pointBackgroundColor:m.renk,pointHoverRadius:5,borderWidth:2,borderDash:m.yuzde?[5,3]:[],segment:kopyaSeg(k,m.yuzde?[5,3]:undefined)});
       if(O){const d=(O.M||O.S)[k].slice(0,V.K.length);while(d.length<V.K.length)d.push(null);ekle({type:'line',label:m.ad+' (önceki dönem)',rk:k,once:true,data:d,borderColor:m.renk+'77',backgroundColor:'transparent',yAxisID:ax,cubicInterpolationMode:'monotone',pointRadius:0,pointHoverRadius:3,borderWidth:1.4,borderDash:[3,4]});}});
   }else{
     const ort=V.M&&!RK.birikimli;
