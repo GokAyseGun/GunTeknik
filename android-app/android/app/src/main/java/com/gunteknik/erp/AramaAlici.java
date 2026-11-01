@@ -17,7 +17,8 @@ import androidx.core.content.ContextCompat;
 
 /**
  * Telefon görüşmesi bitince (IDLE) arama kaydına bakar.
- * Gelen ve cevaplanmış arama + numara rehberde yok ya da "GT" ile kayıtlıysa arama penceresini açar.
+ * Gelen ve cevaplanmış arama + yeni numara ise arama penceresini açar.
+ * Yeni sayılmayanlar: rehberde kayıtlı her numara, 850 / 444 / 800 numaraları ve şehir alan kodlu sabit hatlar.
  * Rehberdeki diğer kişiler (özel kayıtlar) için pencere açılmaz.
  */
 public class AramaAlici extends BroadcastReceiver {
@@ -87,8 +88,10 @@ public class AramaAlici extends BroadcastReceiver {
         if (p.getLong("sonKayit", 0) == zaman) { iz(c, "Aynı görüşme ikinci kez bildirildi"); return; }
         p.edit().putLong("sonKayit", zaman).apply();
 
+        String kurum = kurumsalNumara(numara);
+        if (kurum != null) { iz(c, kurum + " (" + numara + ") — kaydedilmez"); return; }
         String ad = rehberAd(c, numara);
-        if (ad != null && !gtMi(ad)) { iz(c, "Rehberde özel kayıt (" + ad + ") — pencere açılmaz"); return; }
+        if (ad != null) { iz(c, "Rehberde kayıtlı (" + ad + ") — yeni numara değil, kaydedilmez"); return; }
 
         Intent pen = new Intent(c, AramaPenceresi.class)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -109,6 +112,38 @@ public class AramaAlici extends BroadcastReceiver {
             iz(c, "Üstte gösterme izni yok — bildirim gönderildi: " + kim);
         }
         Bildirimci.aramaBekliyor(c, pen, kim);
+    }
+
+    /**
+     * Türkiye numarası ise ulusal 10 haneye indirip türüne bakar.
+     * 850 / 444 / 800 / 900 hatları ve 2xx-3xx-4xx şehir alan kodlu sabit hatlar → sebep metni; cep (5xx) ve yabancı numaralar → null.
+     */
+    static String kurumsalNumara(String numara) {
+        if (numara == null) return null;
+        String n = numara.trim();
+        boolean arti = n.startsWith("+");
+        String d = n.replaceAll("[^0-9]", "");
+        if (d.isEmpty()) return null;
+        if (d.startsWith("444") && d.length() <= 8) return "444'lü numara";
+        String ulusal;
+        if (arti || d.startsWith("00")) {
+            String u = arti ? d : d.substring(2);
+            if (!u.startsWith("90")) return null;            // yabancı numara: kaydedilir
+            ulusal = u.substring(2);
+        } else if (d.startsWith("0")) {
+            ulusal = d.substring(1);
+        } else if (d.length() == 12 && d.startsWith("90")) {
+            ulusal = d.substring(2);
+        } else {
+            ulusal = d;
+        }
+        if (ulusal.startsWith("444")) return "444'lü numara";
+        if (ulusal.length() != 10) return null;
+        char ilk = ulusal.charAt(0);
+        if (ulusal.startsWith("850")) return "850'li numara";
+        if (ilk == '8' || ilk == '9') return "Kurumsal/özel servis numarası";
+        if (ilk == '2' || ilk == '3' || ilk == '4') return "Sabit hat (alan kodu " + ulusal.substring(0, 3) + ")";
+        return null;
     }
 
     static String rehberAd(Context c, String numara) {

@@ -142,6 +142,12 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6h. Yeni numara kuralı + sayfa düzeni (1 Kasım 2026)
+- **AramaAlici**: yalnızca *yeni numara* işlenir. Kaydedilmeyenler: rehberde kayıtlı her numara (GT'li müşteriler dahil), 850 / 444 / 800 / 9xx hatları, şehir alan kodlu sabit hatlar (2xx-3xx-4xx). Cep (5xx) ve yabancı numaralar işlenir. `kurumsalNumara()` sebebi tanı satırına yazar.
+- Reklam sayfası sırası: KPI → ana grafik → arama takibi → müşteri kazanımı → gün ve saat → (aylık | kanal) → (sektör | Google aramaları) → (terimler | kelimeler) → (bütçe | konum) → kampanyalar.
+- Arama takibi içinde: ısı haritası → aylara göre → görüşme süresi → kıyas → neden olmadı.
+- Özet sayfası reklam kutusu: bu ayın harcama / gösterim / tıklama / elle arama; uyarılar tek satır ve küçük; kutu rengi sabit hardal (`r-hardal`). Gider tahmini kutusu sabit cam mavisi (`r-cam`), değerler kırmızı kalır.
+
 ## 6g. Arama takibi kartı + analiz (1 Kasım 2026)
 - Kart reklam sayfasının döneminden bağımsız: kendi dönem seçici (Bu ay / 30 / 90 / Tümü / Reklam dönemi; `AT.donem`, localStorage `at_donem`, varsayılan Tümü). `atYukle` artık tarih sınırı olmadan tüm kayıtları çeker.
 - Analizler: 9 KPI (önceki döneme fark), sonuca göre yığılı trend grafiği (Chart.js, gün/hafta/ay kovası, dönüşüm % çizgisi, Google'ın saydığı reklam araması kesikli çizgi), arama hunisi, kaynak/sektör sonuç çubukları (dokununca liste süzülür), sektör × kaynak matrisi, gün × saat ısı haritası + saat çubukları, neden olmadı, ortalama görüşme süresi, önceki dönemle kıyas tablosu, aylık tablo (Ads arama/iş başı maliyet).
