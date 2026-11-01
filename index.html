@@ -293,6 +293,18 @@ input[type="month"].month-input:focus{border-color:var(--blue);}
 /* kaldırıldı */.card .ai-abs-btn-yok{position:absolute;top:8px;right:8px;background:rgba(124,77,255,0.18);border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:var(--purple);z-index:2;transition:background 0.2s;}:where([data-tema="zarif"]) .card .ai-abs-btn-yok{background:rgba(142,124,230,0.18);}:where([data-tema="chill"]) .card .ai-abs-btn-yok{background:rgba(130,112,168,0.18);}
 .card .ai-abs-btn:hover{background:rgba(124,77,255,0.32);}:where([data-tema="zarif"]) .card .ai-abs-btn:hover{background:rgba(142,124,230,0.32);}:where([data-tema="chill"]) .card .ai-abs-btn:hover{background:rgba(130,112,168,0.32);}
 .card .lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:8px;letter-spacing:0.3px;}
+.is-adet-kart{border-top:2px solid var(--cy);}
+.is-adet{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.is-adet-ana{display:flex;align-items:baseline;gap:8px;}
+.is-adet-ana b{font-size:26px;color:var(--cy);line-height:1;}
+.is-adet-ana span{font-size:11px;color:var(--text3);}
+.is-adet-alt{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--text2);}
+.is-adet-alt b{color:var(--text);}
+.is-ay{display:flex;flex-direction:column;gap:4px;margin:8px 0 12px;}
+.is-ay-s{display:grid;grid-template-columns:52px minmax(0,1fr) 30px;gap:8px;align-items:center;font-size:12px;}
+.is-ay-s div{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.is-ay-s i{display:block;height:100%;background:var(--cy);border-radius:4px;}
+.is-ay-s b{text-align:right;}
 .card .val{font-size:22px;font-weight:700;letter-spacing:-0.8px;font-family:var(--fm);color:var(--text);}
 
 /* STAGGER LİSTE */
@@ -1793,6 +1805,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <div class="card accent-blue" onclick="showDashDetay('isGelir')"><div class="lbl">📈 Dönem Geliri</div><div class="val c-blue num" id="d-is-gelir">0 ₺</div></div>
         <div class="card accent-red" onclick="showDashDetay('isGider')"><div class="lbl">📉 Dönem Gideri</div><div class="val c-red num" id="d-is-gider">0 ₺</div></div>
         <div class="card accent-green" style="grid-column:span 2" onclick="showDashDetay('isKar')"><div class="lbl">🏆 Net İşletme Kârı</div><div class="val c-green num" id="d-is-kar">0 ₺</div></div>
+        <div class="card is-adet-kart" style="grid-column:span 2" onclick="showDashDetay('isAdet')"><div class="lbl">🧰 Yapılan İş</div><div class="is-adet" id="d-is-adet"><b class="num">—</b></div></div>
       </div>
 
       </section>
@@ -5659,6 +5672,7 @@ function renderAll(){
     if(e('d-is-gelir'))ozKartSayi(e('d-is-gelir'),c.isGelir);
     if(e('d-is-gider'))ozKartSayi(e('d-is-gider'),-c.isGider);
     if(e('d-is-kar'))ozKartSayi(e('d-is-kar'),c.isKar);
+    try{isAdetCiz();}catch(er){console.warn('iş adedi',er);}
     if(e('d-sh-gelir'))ozKartSayi(e('d-sh-gelir'),c.shGelir);
     if(e('d-sh-gider'))ozKartSayi(e('d-sh-gider'),-c.shGider);
     if(e('d-sh-net'))ozKartSayi(e('d-sh-net'),c.shNet);
@@ -9145,10 +9159,38 @@ function reklamKaynakSec(btn){
 }
 
 // Dashboard detay modalı
+// ---- Yapılan iş sayısı: her "İşletme Geliri" işlemi bir iştir (İptal hariç, tahsil bekleyen dahil);
+// aynı projeye bağlı birden fazla işlem tek iş sayılır.
+function isListesi(ay){
+  const G=new Map();
+  (DB.islemler||[]).forEach(i=>{if(i.tip!=='Gelir'||i.kat!=='İşletme Geliri'||i.statu==='İptal')return;
+    const tr=localDateStr(i.tarih)||'';if(ay&&!tr.startsWith(ay))return;
+    const k=i.projeId?'p'+i.projeId:'i'+i.id;const o=G.get(k);const t=parseFloat(i.tutar)||0;
+    if(o){o.tutar+=t;o.islemler.push(i);if(tr<o.tarih)o.tarih=tr;if(i.statu!=='Tamamlandı')o.bekliyor=true;}
+    else G.set(k,{tarih:tr,tutar:t,islemler:[i],kisiId:i.kisiId,bekliyor:i.statu!=='Tamamlandı'});});
+  return [...G.values()].sort((a,b)=>b.tarih.localeCompare(a.tarih));
+}
+function isAdetCiz(){
+  const el=document.getElementById('d-is-adet');if(!el)return;const ay=getMonth();const buAy=localToday().slice(0,7);
+  const T=isListesi(''),D=ay?isListesi(ay):T,B=isListesi(buAy);
+  const ort=D.length?D.reduce((s,x)=>s+x.tutar,0)/D.length:0;const bek=D.filter(x=>x.bekliyor).length;
+  let ayAd='';try{ayAd=ay?GF_AYLAR_UZUN[parseInt(ay.slice(5,7))-1]+' '+ay.slice(0,4):'';}catch(e){}
+  el.innerHTML=`<div class="is-adet-ana"><b class="num">${D.length}</b><span>${ay?_esc(ayAd):'tüm zamanlar'}</span></div>
+    <div class="is-adet-alt"><span>Toplam <b class="num">${T.length}</b></span>${ay!==buAy?`<span>Bu ay <b class="num">${B.length}</b></span>`:''}<span>İş başı ort. <b class="num">${fmt(ort)}</b></span>${bek?`<span style="color:var(--amber)">${bek} tahsil bekliyor</span>`:''}</div>`;
+}
 function showDashDetay(tip){
   const c=calcFinans();const fDate=getMonth();
   let title='',items=[];
   const oyIcon={Nakit:'💵',Kart:'💳','İBAN':'🏦'};
+  if(tip==='isAdet'){
+    const L=isListesi(fDate);const T=isListesi('');
+    const ort=L.length?L.reduce((s,x)=>s+x.tutar,0)/L.length:0;
+    const ayG={};T.forEach(x=>{const a=x.tarih.slice(0,7);ayG[a]=(ayG[a]||0)+1;});const aylar=Object.keys(ayG).sort();const mx=Math.max(1,...Object.values(ayG));
+    let h=`<div class="gf-not">Her <b>İşletme Geliri</b> işlemi bir iş sayılır (tahsil bekleyenler dahil, iptaller hariç); aynı projeye bağlı işlemler tek iş. ${fDate?'Dönem: <b>'+_esc(fDate)+'</b> · ':''}<b>${L.length}</b> iş · iş başı ort. <b>${fmt(ort)}</b> · tüm zamanlar <b>${T.length}</b></div>`;
+    h+=`<div class="is-ay">${aylar.map(a=>`<div class="is-ay-s"><span>${GF_AYLAR_UZUN[parseInt(a.slice(5,7))-1].slice(0,3)} ${a.slice(2,4)}</span><div><i style="width:${ayG[a]/mx*100}%"></i></div><b class="num">${ayG[a]}</b></div>`).join('')}</div>`;
+    h+=L.map(x=>{const k=getKisi(x.kisiId);const i0=x.islemler[0];return `<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;cursor:pointer;" onclick="closeModal('modal-dash-detay');showIslemDetay(${i0.id})"><div style="min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc((k&&k.isim)||'Kişi yok')}</div><div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${gfTrTarih(x.tarih)} · ${_esc(String(i0.altKat||'').replace(/\|/g,' · ')||'—')}${x.islemler.length>1?' · '+x.islemler.length+' işlem':''}${x.bekliyor?' · <span style="color:var(--amber)">tahsil bekliyor</span>':''}</div></div><b class="num" style="color:var(--green);white-space:nowrap">${fmt(x.tutar)}</b></div>`;}).join('')||'<div class="empty-state"><div class="empty-title">Bu dönemde iş yok</div></div>';
+    document.getElementById('dash-detay-title').textContent='🧰 Yapılan işler';document.getElementById('dash-detay-content').innerHTML=h;openModal('modal-dash-detay');return;
+  }
   if(tip==='isGelir'){
     title='Dönem İşletme Gelirleri';
     items=DB.islemler.filter(i=>i.tip==='Gelir'&&i.kat==='İşletme Geliri'&&(!fDate||(i.tarih||'').startsWith(fDate)));

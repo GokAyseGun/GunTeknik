@@ -142,6 +142,9 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6i. Yapılan iş sayısı (1 Kasım 2026)
+- Özet → İşletme Özeti'ne "🧰 Yapılan İş" kartı: dönem (global-month) iş adedi, toplam, bu ay, iş başı ortalama, tahsil bekleyen. Tanım (`isListesi`): her İşletme Geliri işlemi bir iş; İptal hariç, Bekliyor dahil; aynı `projeId`'li işlemler tek iş. Karta dokununca aylık dağılım + iş listesi (`showDashDetay('isAdet')`).
+
 ## 6h. Yeni numara kuralı + sayfa düzeni (1 Kasım 2026)
 - **AramaAlici**: yalnızca *yeni numara* işlenir. Kaydedilmeyenler: rehberde kayıtlı her numara (GT'li müşteriler dahil), 850 / 444 / 800 / 9xx hatları, şehir alan kodlu sabit hatlar (2xx-3xx-4xx). Cep (5xx) ve yabancı numaralar işlenir. `kurumsalNumara()` sebebi tanı satırına yazar.
 - Reklam sayfası sırası: KPI → ana grafik → arama takibi → müşteri kazanımı → gün ve saat → (aylık | kanal) → (sektör | Google aramaları) → (terimler | kelimeler) → (bütçe | konum) → kampanyalar.
