@@ -28,6 +28,7 @@ public class AramaAlici extends BroadcastReceiver {
         String durum = i.getStringExtra(TelephonyManager.EXTRA_STATE);
         final Context c = ctx.getApplicationContext();
         SharedPreferences p = c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE);
+        iz(c, "Telefon durumu alındı: " + durum);
 
         if (TelephonyManager.EXTRA_STATE_RINGING.equals(durum) || TelephonyManager.EXTRA_STATE_OFFHOOK.equals(durum)) {
             if (!p.getBoolean("aktif", false)) p.edit().putBoolean("aktif", true).putLong("bas", System.currentTimeMillis()).apply();
@@ -40,7 +41,6 @@ public class AramaAlici extends BroadcastReceiver {
         final PendingResult pr = goAsync();
         new Thread(() -> {
             try {
-                Thread.sleep(1800); // arama kaydının yazılmasını bekle
                 isle(c, bas);
             } catch (Exception ignored) {
             } finally {
@@ -49,31 +49,46 @@ public class AramaAlici extends BroadcastReceiver {
         }).start();
     }
 
-    private static void isle(Context c, long bas) {
-        if (Ayar.cihaz(c) == null) return;
-        if (ContextCompat.checkSelfPermission(c, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) return;
+    /** Son algılama adımını sakla (ERP → Ayarlar → Android kartında görünür; sorun ayıklamak için). */
+    static void iz(Context c, String sonuc) {
+        c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE).edit()
+            .putLong("sonOlay", System.currentTimeMillis()).putString("sonSonuc", sonuc).apply();
+    }
 
-        String numara; int tip; long sure, zaman;
-        try (Cursor cur = c.getContentResolver().query(CallLog.Calls.CONTENT_URI,
-                new String[]{CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.DURATION, CallLog.Calls.DATE},
-                null, null, CallLog.Calls.DATE + " DESC")) {
-            if (cur == null || !cur.moveToFirst()) return;
-            numara = cur.getString(0);
-            tip = cur.getInt(1);
-            sure = cur.getLong(2);
-            zaman = cur.getLong(3);
-        } catch (Exception e) {
-            return;
+    private static void isle(Context c, long bas) throws InterruptedException {
+        if (Ayar.cihaz(c) == null) { iz(c, "Cihaz kaydı yok — uygulamada ERP'ye giriş yap"); return; }
+        if (ContextCompat.checkSelfPermission(c, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) { iz(c, "Arama kaydı izni yok"); return; }
+
+        // Arama kaydı bazı telefonlarda birkaç saniye geç yazılır: 4 kez dene
+        String numara = null; int tip = 0; long sure = 0, zaman = 0;
+        boolean bulundu = false;
+        for (int deneme = 0; deneme < 4 && !bulundu; deneme++) {
+            Thread.sleep(deneme == 0 ? 1500 : 1700);
+            try (Cursor cur = c.getContentResolver().query(CallLog.Calls.CONTENT_URI,
+                    new String[]{CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.DURATION, CallLog.Calls.DATE},
+                    null, null, CallLog.Calls.DATE + " DESC")) {
+                if (cur == null || !cur.moveToFirst()) continue;
+                zaman = cur.getLong(3);
+                if (zaman < bas - 90_000L) continue;                 // henüz bu görüşme yazılmamış
+                numara = cur.getString(0);
+                tip = cur.getInt(1);
+                sure = cur.getLong(2);
+                bulundu = true;
+            } catch (Exception e) {
+                iz(c, "Arama kaydı okunamadı: " + e.getMessage());
+                return;
+            }
         }
-        if (zaman < bas - 90_000L) return;                          // bu görüşmeye ait değil
-        if (tip != CallLog.Calls.INCOMING_TYPE || sure <= 0) return; // yalnızca gelen + cevaplanmış
+        if (!bulundu) { iz(c, "Görüşme arama kaydında bulunamadı"); return; }
+        if (tip != CallLog.Calls.INCOMING_TYPE) { iz(c, (tip == CallLog.Calls.OUTGOING_TYPE ? "Giden arama" : "Cevapsız/reddedilen arama") + " — pencere açılmaz"); return; }
+        if (sure <= 0) { iz(c, "Gelen arama 0 sn — pencere açılmaz"); return; }
 
         SharedPreferences p = c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE);
-        if (p.getLong("sonKayit", 0) == zaman) return;               // aynı arama ikinci kez
+        if (p.getLong("sonKayit", 0) == zaman) { iz(c, "Aynı görüşme ikinci kez bildirildi"); return; }
         p.edit().putLong("sonKayit", zaman).apply();
 
         String ad = rehberAd(c, numara);
-        if (ad != null && !gtMi(ad)) return;                         // özel kayıt
+        if (ad != null && !gtMi(ad)) { iz(c, "Rehberde özel kayıt (" + ad + ") — pencere açılmaz"); return; }
 
         Intent pen = new Intent(c, AramaPenceresi.class)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -85,8 +100,13 @@ public class AramaAlici extends BroadcastReceiver {
         if (Settings.canDrawOverlays(c)) {
             try {
                 c.startActivity(pen);
+                iz(c, "Pencere açıldı: " + kim);
                 return;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                iz(c, "Pencere açılamadı (" + e.getClass().getSimpleName() + ") — bildirim gönderildi: " + kim);
+            }
+        } else {
+            iz(c, "Üstte gösterme izni yok — bildirim gönderildi: " + kim);
         }
         Bildirimci.aramaBekliyor(c, pen, kim);
     }

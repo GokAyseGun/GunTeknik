@@ -142,6 +142,13 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6f. Arama algılama tanısı + Google "bağlanmadı" uyarısı (1 Kasım 2026)
+- **AramaAlici** her adımı `gt_arama` prefs'e yazar (`sonOlay`, `sonSonuc`): "Telefon durumu alındı", "Arama kaydı izni yok", "Cihaz kaydı yok", "Giden arama", "Cevapsız/reddedilen", "0 sn", "Rehberde özel kayıt", "Pencere açıldı", "Üstte gösterme izni yok — bildirim gönderildi"… Arama kaydı geç yazılan telefonlar için 4 deneme (~6.5 sn).
+- `izinDurum` artık `aramaSonZaman`, `aramaSonuc`, `pil` (pil kısıtlamasından muaf mı), `uretici` döndürür; yeni yöntemler `pilIzni` (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) ve `uygulamaAyarlari` (Xiaomi vb. otomatik başlat için).
+- ERP → Ayarlar → Android kartı: "Son arama algılama" satırı + 🔋 Pil izni / ⚙️ Uygulama ayarları düğmeleri (yalnız yeni sürümde görünür).
+- **push_sunucu_kontrol**: son 24 saatte Google'ın MISSED kaydettiği, aynı kampanyada 3 dk içinde RECEIVED olmayan arama grubu (2 dk içindeki tekrarlar tek arama) → `gkacan:<arama_id>` bildirimi (öncelik 2). Google verisi saatlik geldiği için uyarı en geç ~1 saat gecikir.
+- Reklam KPI'si "Kaydedilen reklam araması (dönem)" adını aldı; dokununca liste aynı dönem + Google Ads süzgeciyle açılır (`atListeAc({donem:'ozel',bas,bit,…})`). Arama takibindeki düğme "tüm zamanlar, N kayıt" der. `atListeAc()` her açılışta süzgeci sıfırlar.
+
 ## 6c. Tek arama kaydı (1 Kasım 2026)
 - Eski hızlı sayaç ("Arama gir" → yalnızca `reklam_manuel` +1) kaldırıldı.
 - **ERP:** `rkAramaGirAc(tarih)` artık `atEkleAc(null,null,{tarih})` açıyor. Buna reklam sayfası, özet şeridi, bildirimdeki `?arama=` ve kısayol dahil. Eski pencere `rkAramaGirAcEski` adıyla duruyor ama kullanılmıyor.

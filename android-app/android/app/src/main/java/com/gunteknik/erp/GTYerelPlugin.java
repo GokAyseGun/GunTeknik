@@ -106,7 +106,39 @@ public class GTYerelPlugin extends Plugin {
         r.put("bildirim", Build.VERSION.SDK_INT < 33 || izin(Manifest.permission.POST_NOTIFICATIONS));
         r.put("ustte", Settings.canDrawOverlays(getContext()));
         r.put("cihaz", Ayar.cihaz(getContext()) != null);
+        android.content.SharedPreferences ap = getContext().getSharedPreferences("gt_arama", android.content.Context.MODE_PRIVATE);
+        r.put("aramaSonZaman", ap.getLong("sonOlay", 0));
+        r.put("aramaSonuc", ap.getString("sonSonuc", ""));
+        android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(android.content.Context.POWER_SERVICE);
+        r.put("pil", pm != null && pm.isIgnoringBatteryOptimizations(getContext().getPackageName()));
+        r.put("uretici", Build.MANUFACTURER);
         call.resolve(r);
+    }
+
+    /** Pil kısıtlamasından muaf tutma (arama algılama ve bildirimler arka planda kesilmesin). */
+    @PluginMethod
+    public void pilIzni(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getContext().getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+        } catch (Exception e) {
+            try {
+                getContext().startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (Exception ignored) {}
+        }
+        call.resolve();
+    }
+
+    /** Uygulama ayrıntıları (Xiaomi vb.: "Otomatik başlat", pil, arka plan izinleri buradan). */
+    @PluginMethod
+    public void uygulamaAyarlari(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getContext().getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+        } catch (Exception ignored) {}
+        call.resolve();
     }
 
     @PluginMethod
