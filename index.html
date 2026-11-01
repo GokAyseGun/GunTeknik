@@ -12070,7 +12070,7 @@ function rkBos(){return {gosterim:0,tiklama:0,harcama:0,donusum:0,telefonM:0,deg
 function rkTopla(A,once){
   const o=rkBos();
   RK.m.forEach(r=>{if(!rkKf(r)||!rkIcinde(r.tarih,A,once))return;o.gosterim+=+r.gosterim||0;o.tiklama+=+r.tiklama||0;o.harcama+=+r.harcama||0;o.donusum+=+r.donusum||0;o.telefonM+=+r.telefon_aramasi||0;o.deger+=+r.donusum_degeri||0;});
-  RK.a.forEach(a=>{if(!rkKf(a))return;const g=rkAramaGun(a);if(!g||!rkIcinde(g,A,once))return;o.arama++;if(a.durum==='MISSED')o.cevapsiz++;});
+  {const H=RK.a.filter(a=>{if(!rkKf(a))return false;const g=rkAramaGun(a);return g&&rkIcinde(g,A,once);});o.aramaHam=H.length;rkAramaGrupla(H).forEach(g=>{o.arama++;if(g.durum==='MISSED')o.cevapsiz++;});}
   o.telefon=rkAramaVar()?o.arama:o.telefonM;
   o.ctr=o.gosterim?o.tiklama/o.gosterim*100:0;o.cpc=o.tiklama?o.harcama/o.tiklama:0;o.dm=o.donusum?o.harcama/o.donusum:0;
   return o;
@@ -12162,7 +12162,7 @@ function rkKpiHtml(A){
     k('Tıklama oranı',rkYuzde(T.ctr/100,2),rkFark(T.ctr,O.ctr,true),'tıklama / gösterim','#f0c472')+
     k('Ort. TBM',fmt(T.cpc),rkFark(T.cpc,O.cpc,false),'tıklama başına maliyet','#f08080')+
     (()=>{const E=rkElleArama(A),EO=rkElleArama(A,true);const GV=rkGunVeri(A.bas,A.bit);let gs=0,es=0,gn=0,tg=0;Object.values(GV).forEach(o=>{tg++;if(o.elleVar){gs+=o.telefon;es+=o.elle;gn++;}});
-      return k('Elle girilen arama',rkSayi(E.n),rkFark(E.n,EO.n,true),`📞 ${E.K.tel} · 💬 ${E.K.wa}${E.n&&T.harcama?' · arama başı '+fmt(T.harcama/E.n):''}<br>${gn?`Girilen ${gn}/${tg} günde: sen ${es} · Google ${gs}`:`Google: ${rkSayi(T.telefon)}`}${rkAramaVar()&&T.cevapsiz?' · '+T.cevapsiz+' cevapsız':''}`,'#D9A441','rkAramaGirAc()');})()+
+      return k('Kaydedilen reklam araması',rkSayi(E.n),rkFark(E.n,EO.n,true),`📞 ${E.K.tel} · 💬 ${E.K.wa}${E.n&&T.harcama?' · arama başı '+fmt(T.harcama/E.n):''}<br>${gn?`Girilen ${gn}/${tg} günde: sen ${es} · Google ${gs}`:`Google: ${rkSayi(T.telefon)}`}${rkAramaVar()&&T.cevapsiz?' · '+T.cevapsiz+' cevapsız':''}`,'#D9A441','AT.f.kaynak=\'Google Ads\';atListeAc()');})()+
     k('Dönüşüm',T.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),rkFark(T.donusum,O.donusum,true),T.donusum?`dönüşüm başı ${fmt(T.dm)}`:'Google\'ın saydığı','#7ecec4')+
     k('Ads işleri',`${adsL.length} iş`,rkFark(adsL.length,adsO.length,true),`+${fmt(ciro)} ciro`,'#4488ff')+
     k('Reklam getirisi',T.harcama?getiri.toFixed(1).replace('.',',')+'×':'—',rkFark(getiri,getiriO,true),T.harcama?`1 ₺ reklam → ${fmt(getiri)} ciro`:'harcama yok','#00e676')+
@@ -12423,19 +12423,34 @@ function rkIsiHtml(A){
 }
 
 // ---------- telefon aramaları
+// Google Ads arama ayrıntısı (call view): reklamdaki "Ara" düğmesiyle Google'ın yönlendirme numarası üzerinden gelen aramalar.
+// Telefonundaki arama kaydı DEĞİLDİR. Aynı kişinin birkaç saniye arayla tekrar tekrar denemesi Google'da ayrı satır olarak gelir;
+// 2 dakika içindeki art arda denemeler tek "arama" sayılır (biri cevaplandıysa cevaplanmış).
+function rkAramaGrupla(L){
+  const S=L.slice().sort((a,b)=>String(a.baslangic).localeCompare(String(b.baslangic)));const G=[];
+  S.forEach(a=>{const bas=new Date(a.baslangic).getTime();const bit=a.bitis?new Date(a.bitis).getTime():bas;const g=G[G.length-1];
+    const ayniKisi=g&&(!g.alan||!a.alan_kodu||g.alan===a.alan_kodu)&&String(g.kampanya)===String(a.kampanya_id);
+    if(g&&ayniKisi&&bas-g.sonZ<=120000){g.deneme++;g.sonZ=Math.max(g.sonZ,bit);if(a.durum!=='MISSED'){g.durum='RECEIVED';g.sure+=(+a.sure_sn||0);}if(!g.alan&&a.alan_kodu)g.alan=a.alan_kodu;return;}
+    G.push({baslangic:a.baslangic,sonZ:bit,durum:a.durum==='MISSED'?'MISSED':'RECEIVED',sure:a.durum==='MISSED'?0:(+a.sure_sn||0),deneme:1,alan:a.alan_kodu||'',kampanya:a.kampanya_id,kampanya_adi:a.kampanya_adi});});
+  return G;
+}
 function rkAramalarHtml(A){
-  let h=`<div class="rk-b">📞 Reklamdan gelen aramalar</div>`;
+  let h=`<div class="rk-b">📞 Google'ın kaydettiği reklam aramaları</div>`;
   if(RK.tabloYok.google_ads_aramalar)return h+`<div class="gf-not">Arama ayrıntısı için reklam_kurulum.sql çalıştırılmalı.</div>`;
   if(!rkAramaVar()){const T=rkTopla(A);return h+`<div class="gf-not">Arama ayrıntısı yok.${T.telefonM?` Google bu dönemde ${T.telefonM} arama saydı ama ayrıntı gelmiyor.`:''} Google Ads → Yönetici → Hesap ayarları → <b>Arama raporlama</b> açık olmalı; açıldıktan sonra gelen aramaların saati, süresi ve cevapsız olanlar burada listelenir.</div>`;}
-  const L=RK.a.filter(a=>rkKf(a)&&rkIcinde(rkAramaGun(a),A));const T=rkTopla(A);
-  if(!L.length)return h+`<div class="gf-not">Bu dönemde reklamdan arama gelmedi.</div>`;
-  const cev=L.filter(a=>a.durum!=='MISSED');const kac=L.filter(a=>a.durum==='MISSED');const ortS=cev.length?gfOrt(cev.map(a=>+a.sure_sn||0)):0;
+  const H=RK.a.filter(a=>rkKf(a)&&rkIcinde(rkAramaGun(a),A));const T=rkTopla(A);
+  if(!H.length)return h+`<div class="gf-not">Bu dönemde Google reklamdan gelen arama kaydetmedi.</div>`;
+  const L=rkAramaGrupla(H);
+  const cev=L.filter(a=>a.durum!=='MISSED');const kac=L.filter(a=>a.durum==='MISSED');const ortS=cev.length?gfOrt(cev.map(a=>a.sure)):0;
   const mesaiDisi=kac.filter(a=>{const s=new Date(a.baslangic).getHours();return s<8||s>=19;}).length;
   const sure=s=>{s=Math.round(+s||0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
-  h+=`<div class="rk-bt"><div><small>Toplam</small><b class="num">${L.length}</b></div><div><small>Cevapsız</small><b class="num" style="color:${kac.length?'var(--red)':'inherit'}">${kac.length}</b></div><div><small>Ort. süre</small><b class="num">${sure(ortS)}</b></div><div><small>Arama başı</small><b class="num">${T.harcama?fmt(T.harcama/L.length):'—'}</b></div></div>`;
-  if(kac.length)h+=`<div class="gf-risk ${kac.length/L.length>0.2?'yuksek':'orta'}">❌ Aramaların <b>%${Math.round(kac.length/L.length*100)}</b>'i cevapsız kaldı${mesaiDisi?` (${mesaiDisi} tanesi 19:00–08:00 arası)`:''}. Her biri reklama ödenmiş bir müşteri adayı; Google arayanın numarasını vermez, sadece alan kodunu verir.${mesaiDisi>=2?' Mesai dışında reklamı kapatmak ya da arama düğmesini mesai saatlerine sınırlamak düşünülebilir.':''}</div>`;
-  const kisa=L.filter(a=>a.durum!=='MISSED'&&(+a.sure_sn||0)<20).length;if(kisa>=2)h+=`<div class="gf-ipucu">${kisa} arama 20 saniyeden kısa sürdü (yanlış arama ya da hemen kapatma olabilir).</div>`;
-  h+=`<div class="rk-liste">`+L.slice(0,25).map(a=>{const dt=new Date(a.baslangic);return `<div class="rk-ar${a.durum==='MISSED'?' kacan':''}"><span>${a.durum==='MISSED'?'❌':'✅'} ${dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'})} ${dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}<small>${a.alan_kodu?' · '+_esc(a.alan_kodu):''}${a.kampanya_adi&&!RK.kampanya?' · '+_esc(a.kampanya_adi):''}</small></span><b class="num">${a.durum==='MISSED'?'cevapsız':sure(a.sure_sn)}</b></div>`;}).join('')+`</div>`;
+  h+=`<div class="gf-ipucu">Reklamdaki <b>Ara</b> düğmesine basılınca Google'ın yönlendirme numarasından geçen aramalar. Telefonundaki arama listesi değil; aramayı reklama tıklamadan, numaranı elle çevirerek yapanlar burada görünmez. Aynı kişinin birkaç saniye arayla tekrar denemeleri tek arama sayılır (${H.length} kayıt → ${L.length} arama).</div>`;
+  h+=`<div class="rk-bt"><div><small>Arama</small><b class="num">${L.length}</b></div><div><small>Cevapsız</small><b class="num" style="color:${kac.length?'var(--red)':'inherit'}">${kac.length}</b></div><div><small>Ort. süre</small><b class="num">${sure(ortS)}</b></div><div><small>Arama başı</small><b class="num">${T.harcama?fmt(T.harcama/L.length):'—'}</b></div></div>`;
+  if(kac.length)h+=`<div class="gf-risk ${kac.length/L.length>0.2?'yuksek':'orta'}">❌ ${kac.length} arama hiç bağlanmadı${mesaiDisi?` (${mesaiDisi} tanesi 19:00–08:00 arası)`:''}. Süresi 0 sn ve art arda birkaç deneme varsa arayan sana hiç ulaşamamış olabilir: o saatte telefonunda cevapsız arama görünmüyorsa Google'ın yönlendirmesi telefonuna düşmüyor demektir — Google Ads → Öğeler → Arama öğesindeki numarayı kontrol et.</div>`;
+  const kisa=cev.filter(a=>a.sure<20).length;if(kisa>=2)h+=`<div class="gf-ipucu">${kisa} arama 20 saniyeden kısa sürdü (yanlış arama ya da hemen kapatma olabilir).</div>`;
+  try{const ben=(AT.liste||[]).filter(r=>r.kaynak==='Google Ads'&&r.tarih>=A.bas&&r.tarih<=A.bit).length;
+    h+=`<div class="gf-not">Senin kaydettiğin Google Ads araması bu dönemde <b>${ben}</b>${ben>L.length?` — Google'ın gördüğünden ${ben-L.length} fazla: bunlar numaranı reklamda görüp elle arayanlar ya da WhatsApp'tan yazanlar`:ben<cev.length?` — Google'ın cevaplanmış ${cev.length} aramasından az: eksik kayıt olabilir`:''}.</div>`;}catch(e){}
+  h+=`<div class="rk-liste">`+L.slice().reverse().slice(0,25).map(a=>{const dt=new Date(a.baslangic);return `<div class="rk-ar${a.durum==='MISSED'?' kacan':''}"><span>${a.durum==='MISSED'?'❌':'✅'} ${dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'})} ${dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}<small>${a.deneme>1?' · '+a.deneme+' deneme':''}${a.alan?' · '+_esc(a.alan):''}${a.kampanya_adi&&!RK.kampanya?' · '+_esc(a.kampanya_adi):''}</small></span><b class="num">${a.durum==='MISSED'?'bağlanmadı':sure(a.sure)}</b></div>`;}).join('')+`</div>`;
   if(L.length>25)h+=`<div class="gf-ipucu">Son 25 arama gösteriliyor (dönemde ${L.length}).</div>`;
   return h;
 }

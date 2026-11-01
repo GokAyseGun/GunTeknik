@@ -134,6 +134,14 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **Güncelleme yalnızca elle (Gökay'ın isteği):** ERP → Ayarlar → Android → ⬆️ Güncelleme (`andGuncelle` → `guncellemeDenetle`). Sürüm güncelse "güncel" der, yeniyse indirip hemen kurar. Kurulum izni yoksa ayar ekranını açar. Açılışta, widget'ta ya da sunucudan otomatik denetim **yok**: `android-surum` cron'u kaldırıldı; `push-gonder?surum=1` kodu duruyor ama çağrılmıyor.
 - **Görüşme sonrası pencere:** Arama kaydına telefon rehberindeki "GT Ahmet" yerine ERP'deki ad yazılır (`erpAd`, yoksa `gtsiz`).
 
+## 6e. Arama verisi tek kaynakta (1 Kasım 2026)
+- **Eski kayıtların aktarımı:** Hızlı sayaçla girilmiş 61 `reklam_manuel` ads_arama satırı (toplam 68 arama) `arama_takip`'e tek tek aktarıldı: kaynak Google Ads, sonuç boş, not "Eski hızlı girişten aktarıldı". Geçersiz sektörler (ör. "Montaj İşleri") nota taşındı.
+  - Yedek: `reklam_manuel_yedek_20261101`.
+  - Artık `reklam_manuel` ads_arama = `arama_takip` (kaynak Google Ads) ile 1:1.
+- **Google arama kayıtları:** `google_ads_aramalar` Ads betiğinden gelir (callView): reklamdaki "Ara" düğmesiyle Google yönlendirme numarasından geçen aramalar; telefon kaydı değil. Süre ve durum (RECEIVED/MISSED) Google'dan gelir.
+  - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
+- **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
+
 ## 6c. Tek arama kaydı (1 Kasım 2026)
 - Eski hızlı sayaç ("Arama gir" → yalnızca `reklam_manuel` +1) kaldırıldı.
 - **ERP:** `rkAramaGirAc(tarih)` artık `atEkleAc(null,null,{tarih})` açıyor. Buna reklam sayfası, özet şeridi, bildirimdeki `?arama=` ve kısayol dahil. Eski pencere `rkAramaGirAcEski` adıyla duruyor ama kullanılmıyor.
