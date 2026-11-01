@@ -57,25 +57,6 @@ public final class WidgetCizici {
         }
     }
 
-    /** Sektöre dokununca sunucu yanıtını beklemeden sayıyı artır. */
-    public static void iyimserArti(Context c, String sektor) {
-        try {
-            JSONObject v = Veri.oku(c);
-            if (v == null) return;
-            JSONObject a = aramaBugun(v);
-            if (a == null) return;
-            a.put("reklam", a.optInt("reklam") + 1);
-            a.put("toplam", a.optInt("toplam") + 1);
-            String k = "wa".equals(Ayar.kanal(c)) ? "wa" : "tel";
-            a.put(k, a.optInt(k) + 1);
-            JSONObject s = a.optJSONObject("sektor");
-            if (s == null) { s = new JSONObject(); a.put("sektor", s); }
-            s.put(sektor, s.optInt(sektor) + 1);
-            Ayar.veriYerel(c, v.toString());
-            hepsi(c);
-        } catch (Exception ignored) {}
-    }
-
     // ---------------------------------------------------------------- 1) Arama +1
     public static RemoteViews arama(Context c, JSONObject v, Bundle o) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.w_arama);
@@ -83,7 +64,6 @@ public final class WidgetCizici {
         rv.setTextViewText(R.id.w_sayi, String.valueOf(a != null ? a.optInt("toplam") : 0));
         rv.setOnClickPendingIntent(R.id.w_baslik, sihirbaz(c, 1001));
         rv.setOnClickPendingIntent(R.id.w_sayi, Bildirimci.ac(c, "./?sayfa=reklam", 1002));
-        rv.setOnClickPendingIntent(R.id.w_yeni, sihirbaz(c, 1006));
         sektorBagla(c, rv, a, 1000);
         kanalBagla(c, rv, 1003);
         rv.setTextViewText(R.id.w_alt, aramaAlt(c, a));
@@ -279,7 +259,6 @@ public final class WidgetCizici {
         rv.setTextViewText(R.id.w_alt, Ayar.cihaz(c) == null ? "Uygulamayı açıp ERP'ye giriş yap" : "↻ " + guncel(c));
         rv.setOnClickPendingIntent(R.id.w_alt, yayin(c, EylemAlici.YENILE, 6003, null, null));
         rv.setOnClickPendingIntent(R.id.w_geri, yayin(c, EylemAlici.GERI, 6004, null, null));
-        rv.setOnClickPendingIntent(R.id.w_yeni, sihirbaz(c, 6010));
 
         JSONObject a = aramaBugun(v);
         JSONObject snap = snap(v);

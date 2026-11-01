@@ -34,6 +34,8 @@ import java.util.List;
 public class MainActivity extends BridgeActivity {
 
     private static final int IZIN_ISTEK = 77;
+    /** Uygulama ekranda mı? (güncelleme ekrandayken kurulmaz) */
+    public static volatile boolean onde = false;
     private String koprBetigi;
 
     @Override
@@ -57,10 +59,44 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        onde = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        onde = false;
+        // indirilmiş güncelleme varsa uygulama arka plana geçince kur
+        new Thread(() -> GuncellemeDenetci.bekleyeniKur(getApplicationContext(), false)).start();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         GuncellemeDenetci.denetle(this, false);
         Veri.arkaplanda(this);
+        kurulumIzniKontrol();
+    }
+
+    /** İndirilmiş güncelleme var ama "bilinmeyen uygulamaları yükle" izni yoksa bir kez sor. */
+    private void kurulumIzniKontrol() {
+        int n = GuncellemeDenetci.bekleyen(this);
+        if (n <= 0 || GuncellemeDenetci.kurIzniVar(this)) return;
+        String anahtar = "kurIzniSoruldu" + n;
+        if (Ayar.bayrak(this, anahtar)) return;
+        Ayar.bayrak(this, anahtar, true);
+        new AlertDialog.Builder(this)
+            .setTitle("Otomatik güncelleme")
+            .setMessage("Gün Teknik'in yeni sürümleri kendisi kurabilmesi için bir sonraki ekranda \"Bu kaynaktan izin ver\" seçeneğini aç. Bir kez yapman yeterli.")
+            .setPositiveButton("Ayarları aç", (d, w) -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+                } catch (Exception ignored) {}
+            })
+            .setNegativeButton("Sonra", null)
+            .show();
     }
 
     @Override

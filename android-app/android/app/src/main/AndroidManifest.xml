@@ -59,6 +59,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Kendi kendine güncelleme -->
+        <receiver
+            android:name=".KurulumAlici"
+            android:exported="false" />
+        <receiver
+            android:name=".GuncellendiAlici"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Bildirim ve widget düğmeleri -->
         <receiver
             android:name=".EylemAlici"
@@ -158,6 +170,9 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Kendi kendine güncelleme -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 

@@ -110,6 +110,30 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - Reklam sayfasında **Arama takibi** kartı (`#at-kart`, `atHtml`): kaynak ve sektöre göre dönüşüm, oluşmama sebepleri, takip listesi, "+ Kayıt" (WhatsApp için).
 - Sıradaki fikirler: arama penceresine "iş alındı" seçilince ERP'de işlem açma; ERP'den widget teması.
 
+## 6d. Kaynak kişide + müşteri ölçüleri + kendi kendine güncelleme (1 Kasım 2026)
+- **Kişi kaynağı:**
+  - Kolonlar: `kisiler.kaynak` (Google Ads | Armut | Dışarıdan | Eski Müşteri | Tavsiye), `tavsiye_eden_id` (rehberden) ya da `tavsiye_eden_ad` (rehberde yoksa).
+  - Kaynak yalnızca **Müşteri** kategorisinde tutulur ve orada zorunludur (`mkKaynakOku`). Diğer kategorilerde sorulmaz.
+  - Mevcut müşteriler dolduruldu: ilk işleminde Armut/Dışarıdan yazanlar öyle kaldı, kalanı Google Ads oldu (49 Google Ads, 5 Armut, 1 Dışarıdan).
+- **İşlem / proje / teklif kaynağı:** Artık seçilmiyor; loadDB'de `kaynakTuret` ile kişiden türetiliyor. `Evrak` işareti korunuyor; ham değer `islemKaynagiHam`'da. Böylece rkErpIsler, rkAdsIsler, grafik ve özet raporları kendiliğinden kişi kaynağını kullanıyor. İşlem formunda yalnızca salt-okunur etiket var (`miKaynakEtiket`).
+- **Kişi kartı:** `kisiKaynakRozet` kaynağı, tavsiye edeni ve "Tavsiye ettikleri: N kişi · ₺" bilgisini gösteriyor.
+- **Reklam sayfası:** `#rk-musteri` / `rkMusteriHtml` eklendi:
+  - Google Ads ve Armut için yeni müşteri, yeni müşteri başı maliyet, müşteri değeri ve geri dönüş (ilk iş + tekrar iş)
+  - Kaynağa göre müşteri tablosu ve tavsiye edenler listesi
+  - `RK_KAYNAKLAR`'a Tavsiye eklendi.
+- **Arama takibi:**
+  - Kaynak listesi rehberle aynı (+ Bilinmiyor); eski kayıtlar dönüştürüldü. `_arama_reklam_esle` artık `kaynak='Google Ads'` ile çalışıyor.
+  - Numara rehberdeyse ad ve kaynak kendiliğinden dolar: ERP'de `atNumaraDegisti`, Android'de `arama_kisi_bul`.
+  - "İş alındı" + rehberde yok → "Rehbere ekle" önerisi (`atRehbereEkle`).
+- **Eski hızlı sayaç penceresi silindi:** rkAgCiz, rkAgEkle, rkAgEksi, rkAgKanal, rkAramaGirAcEski, rkAramaSil. `rkAgYok` kaldı (Arama gir formundaki "📵 arama gelmedi" düğmesi kullanıyor).
+- **Widget:** "+ Arama kaydet" düğmesi kaldırıldı (kutular ve başlık zaten kaydı açıyor); ↶ kaldı. Eski tek dokunuş +1 kodu (EylemAlici.SEKTOR, iyimserArti) silindi.
+- **Kendi kendine güncelleme (`GuncellemeDenetci`):**
+  - Son sürümü `github.com/.../releases/latest` yönlendirmesinden okur, APK'yı `filesDir/guncelleme`'ye indirir ve PackageInstaller ile kurar.
+  - Android 12+'da `USER_ACTION_NOT_REQUIRED`, 14+'da update ownership kullanılır.
+  - Uygulama ekrandayken (`MainActivity.onde`) kurmaz; `onStop`'ta kurar. "Bilinmeyen uygulamaları yükle" izni yoksa bir kez sorar.
+  - Alıcılar: `KurulumAlici` (onay gerekirse ekran ya da bildirim), `GuncellendiAlici` (MY_PACKAGE_REPLACED → temizlik + bildirim).
+- **Sunucu:** `android-surum` cron'u 10 dk'da bir `push-gonder?surum=1` çağırır. Yeni etiket varsa (`push_gizli.android_surum`) FCM `tip=guncelle` gönderir ve telefon hemen indirir.
+
 ## 6c. Tek arama kaydı (1 Kasım 2026)
 - Eski hızlı sayaç ("Arama gir" → yalnızca `reklam_manuel` +1) kaldırıldı.
 - **ERP:** `rkAramaGirAc(tarih)` artık `atEkleAc(null,null,{tarih})` açıyor. Buna reklam sayfası, özet şeridi, bildirimdeki `?arama=` ve kısayol dahil. Eski pencere `rkAramaGirAcEski` adıyla duruyor ama kullanılmıyor.

@@ -1,105 +1,187 @@
 package com.gunteknik.erp;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 
-import androidx.appcompat.app.AlertDialog;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * GitHub Releases'taki en son "android-vN" sürümüne bakar; N bu APK'nın sürüm
- * kodundan büyükse güncellemeyi önerir. Yerel parçalar değişince GitHub Actions
- * yeni APK'yı derleyip Releases'a koyar; burası onu bulur.
+ * Kendi kendine güncelleme.
+ * 1) GitHub'daki son "android-vN" sürümüne bakar (releases/latest yönlendirmesi; API sınırı yok).
+ * 2) N bu kurulumdan büyükse APK'yı uygulamanın kendi klasörüne indirir.
+ * 3) Uygulama ekranda değilse Android'in kurulum sistemiyle (PackageInstaller) kurar.
+ *    Android 12+ : uygulama kendini bir kez güncelledikten sonra sonraki güncellemeler genellikle onay istemez.
+ * Tetikleyiciler: FCM "guncelle" sinyali (Supabase 10 dk'da bir GitHub'a bakar), uygulama açılışı, widget yenilemesi.
  */
 public final class GuncellemeDenetci {
 
-    private static final String API = "https://api.github.com/repos/GokAyseGun/GunTeknik/releases/latest";
-    private static final String ETIKET_ON = "android-v";
-    private static final long ARALIK_MS = 6L * 60 * 60 * 1000; // 6 saatte bir
+    private static final String SAYFA = "https://github.com/GokAyseGun/GunTeknik/releases/latest";
+    private static final String INDIR = "https://github.com/GokAyseGun/GunTeknik/releases/download/%s/GunTeknik.apk";
+    private static final Pattern ETIKET = Pattern.compile("/tag/(android-v(\\d+))");
+    private static final long ARALIK_MS = 60L * 60 * 1000; // zorlanmadıkça saatte bir
 
     private static volatile boolean calisiyor = false;
 
     private GuncellemeDenetci() {}
 
-    public static void denetle(final Activity a, boolean zorla) {
+    private static SharedPreferences p(Context c) {
+        return c.getApplicationContext().getSharedPreferences("gt_guncelleme", Context.MODE_PRIVATE);
+    }
+
+    /** Eski çağrı: uygulama açılışında. */
+    public static void denetle(Activity a, boolean zorla) {
+        arkaplan(a.getApplicationContext(), zorla, false);
+    }
+
+    /** Arka planda denetle / indir / (uygun anda) kur. */
+    public static void arkaplan(Context c, boolean zorla, boolean hemenKur) {
+        final Context a = c.getApplicationContext();
         if (calisiyor) return;
-        final SharedPreferences p = a.getSharedPreferences("gt_guncelleme", Context.MODE_PRIVATE);
-        long simdi = System.currentTimeMillis();
-        if (!zorla && simdi - p.getLong("son", 0) < ARALIK_MS) return;
+        if (!zorla && System.currentTimeMillis() - p(a).getLong("son", 0) < ARALIK_MS) {
+            // denetim zamanı gelmedi ama indirilmiş bekleyen varsa ve uygulama kapalıysa kur
+            if (!MainActivity.onde) new Thread(() -> bekleyeniKur(a, false)).start();
+            return;
+        }
+        new Thread(() -> simdi(a, hemenKur)).start();
+    }
+
+    /** Eşzamanlı (FCM servisinden çağrılır). */
+    public static void simdi(Context c, boolean hemenKur) {
+        final Context a = c.getApplicationContext();
+        if (calisiyor) return;
         calisiyor = true;
-
-        new Thread(() -> {
-            try {
-                HttpURLConnection c = (HttpURLConnection) new URL(API).openConnection();
-                c.setConnectTimeout(10000);
-                c.setReadTimeout(10000);
-                c.setRequestProperty("Accept", "application/vnd.github+json");
-                c.setRequestProperty("User-Agent", "GunTeknik-Android");
-                if (c.getResponseCode() != 200) return;
-
-                StringBuilder sb = new StringBuilder();
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream(), StandardCharsets.UTF_8))) {
-                    String satir;
-                    while ((satir = r.readLine()) != null) sb.append(satir);
-                }
-                p.edit().putLong("son", System.currentTimeMillis()).apply();
-
-                JSONObject j = new JSONObject(sb.toString());
-                String etiket = j.optString("tag_name", "");
-                if (!etiket.startsWith(ETIKET_ON)) return;
-                final int yeni = Integer.parseInt(etiket.substring(ETIKET_ON.length()).trim());
-                if (yeni <= surumKodu(a)) return;
-
-                String apk = null;
-                JSONArray varliklar = j.optJSONArray("assets");
-                if (varliklar != null) {
-                    for (int i = 0; i < varliklar.length(); i++) {
-                        JSONObject v = varliklar.getJSONObject(i);
-                        if (v.optString("name").endsWith(".apk")) {
-                            apk = v.optString("browser_download_url");
-                            break;
-                        }
-                    }
-                }
-                final String indir = apk != null ? apk : j.optString("html_url");
-                final String notlar = j.optString("body", "").trim();
-
-                a.runOnUiThread(() -> {
-                    if (a.isFinishing() || a.isDestroyed()) return;
-                    String mesaj = "Sürüm " + yeni + " hazır (sende: " + surumKodu(a) + ").";
-                    if (!notlar.isEmpty()) mesaj += "\n\n" + notlar;
-                    mesaj += "\n\nİndirdikten sonra dosyaya dokunup \"Güncelle\"yi seç.";
-                    new AlertDialog.Builder(a)
-                        .setTitle("Gün Teknik güncellemesi")
-                        .setMessage(mesaj)
-                        .setPositiveButton("İndir", (d, w) -> {
-                            try {
-                                a.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(indir)));
-                            } catch (Exception ignored) {}
-                        })
-                        .setNegativeButton("Sonra", null)
-                        .show();
-                });
-            } catch (Exception ignored) {
-                // Ağ yoksa sessizce geç; bir sonraki açılışta yeniden bakılır.
-            } finally {
-                calisiyor = false;
+        try {
+            p(a).edit().putLong("son", System.currentTimeMillis()).apply();
+            String[] e = sonEtiket();
+            if (e == null) return;
+            int yeni = Integer.parseInt(e[1]);
+            if (yeni <= surumKodu(a)) { temizle(a, -1); return; }
+            File f = apk(a, yeni);
+            if (!f.exists() || f.length() < 200_000) {
+                temizle(a, yeni);
+                indir(String.format(INDIR, e[0]), f);
             }
-        }).start();
+            p(a).edit().putInt("bekleyen", yeni).apply();
+            if (hemenKur || !MainActivity.onde) kur(a, f);
+        } catch (Exception ignored) {
+        } finally {
+            calisiyor = false;
+        }
+    }
+
+    /** İndirilmiş bir güncelleme varsa kur (uygulama arka plana geçince). */
+    public static void bekleyeniKur(Context c, boolean zorla) {
+        Context a = c.getApplicationContext();
+        int n = p(a).getInt("bekleyen", 0);
+        if (n <= surumKodu(a)) return;
+        File f = apk(a, n);
+        if (!f.exists() || f.length() < 200_000) return;
+        if (!zorla && MainActivity.onde) return;
+        try {
+            kur(a, f);
+        } catch (Exception ignored) {}
+    }
+
+    public static boolean kurIzniVar(Context c) {
+        return Build.VERSION.SDK_INT < 26 || c.getPackageManager().canRequestPackageInstalls();
+    }
+
+    public static int bekleyen(Context c) {
+        int n = p(c).getInt("bekleyen", 0);
+        return n > surumKodu(c) ? n : 0;
+    }
+
+    // ---------------------------------------------------------------- iç işler
+    private static String[] sonEtiket() throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(SAYFA).openConnection();
+        try {
+            c.setInstanceFollowRedirects(false);
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(10000);
+            c.setRequestProperty("User-Agent", "GunTeknik-Android");
+            c.getResponseCode();
+            String yer = c.getHeaderField("Location");
+            if (yer == null) return null;
+            Matcher m = ETIKET.matcher(yer);
+            return m.find() ? new String[]{m.group(1), m.group(2)} : null;
+        } finally {
+            c.disconnect();
+        }
+    }
+
+    private static void indir(String adres, File hedef) throws Exception {
+        File gecici = new File(hedef.getPath() + ".parca");
+        HttpURLConnection c = (HttpURLConnection) new URL(adres).openConnection();
+        try {
+            c.setInstanceFollowRedirects(true);
+            c.setConnectTimeout(15000);
+            c.setReadTimeout(30000);
+            c.setRequestProperty("User-Agent", "GunTeknik-Android");
+            if (c.getResponseCode() != 200) throw new Exception("İndirme " + c.getResponseCode());
+            try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(gecici)) {
+                byte[] b = new byte[64 * 1024];
+                int n;
+                while ((n = in.read(b)) > 0) out.write(b, 0, n);
+            }
+        } finally {
+            c.disconnect();
+        }
+        if (!gecici.renameTo(hedef)) throw new Exception("Dosya taşınamadı");
+    }
+
+    private static void kur(Context c, File f) throws Exception {
+        if (!kurIzniVar(c)) {
+            p(c).edit().putBoolean("izinGerekli", true).apply();
+            return;
+        }
+        PackageInstaller pi = c.getPackageManager().getPackageInstaller();
+        PackageInstaller.SessionParams sp = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        sp.setAppPackageName(c.getPackageName());
+        sp.setSize(f.length());
+        if (Build.VERSION.SDK_INT >= 31) sp.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+        if (Build.VERSION.SDK_INT >= 34) sp.setRequestUpdateOwnership(true);
+        int id = pi.createSession(sp);
+        try (PackageInstaller.Session s = pi.openSession(id)) {
+            try (InputStream in = new FileInputStream(f); OutputStream out = s.openWrite("gunteknik", 0, f.length())) {
+                byte[] b = new byte[64 * 1024];
+                int n;
+                while ((n = in.read(b)) > 0) out.write(b, 0, n);
+                s.fsync(out);
+            }
+            Intent i = new Intent(c, KurulumAlici.class).setAction("com.gunteknik.erp.KURULUM");
+            int bayrak = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+            PendingIntent pend = PendingIntent.getBroadcast(c, 7700, i, bayrak);
+            s.commit(pend.getIntentSender());
+        }
+    }
+
+    private static File apk(Context c, int surum) {
+        File d = new File(c.getFilesDir(), "guncelleme");
+        if (!d.exists()) d.mkdirs();
+        return new File(d, "gunteknik-" + surum + ".apk");
+    }
+
+    /** "tut" dışındaki indirilmiş dosyaları sil (-1: hepsini). */
+    static void temizle(Context c, int tut) {
+        File d = new File(c.getApplicationContext().getFilesDir(), "guncelleme");
+        File[] L = d.listFiles();
+        if (L == null) return;
+        for (File f : L) if (tut < 0 || !f.getName().contains("-" + tut + ".apk")) f.delete();
     }
 
     public static long surumKodu(Context c) {

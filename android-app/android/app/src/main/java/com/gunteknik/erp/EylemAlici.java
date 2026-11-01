@@ -17,7 +17,6 @@ public class EylemAlici extends BroadcastReceiver {
 
     public static final String ARAMA_YOK = "com.gunteknik.erp.ARAMA_YOK";
     public static final String TAKIP = "com.gunteknik.erp.TAKIP";
-    public static final String SEKTOR = "com.gunteknik.erp.SEKTOR";
     public static final String KANAL = "com.gunteknik.erp.KANAL";
     public static final String GERI = "com.gunteknik.erp.GERI";
     public static final String YENILE = "com.gunteknik.erp.YENILE";
@@ -41,15 +40,12 @@ public class EylemAlici extends BroadcastReceiver {
             WidgetCizici.hepsi(c);
             return;
         }
-        if (SEKTOR.equals(eylem)) WidgetCizici.iyimserArti(c, e.getString("sektor", "Diğer"));
-
         final PendingResult pr = goAsync();
         new Thread(() -> {
             try {
                 isle(c, eylem, e);
             } catch (Exception x) {
                 tost(c, x.getMessage() != null ? x.getMessage() : "İşlem yapılamadı");
-                if (SEKTOR.equals(eylem)) Veri.yenile(c);
             } finally {
                 pr.finish();
             }
@@ -70,15 +66,6 @@ public class EylemAlici extends BroadcastReceiver {
                 Islem.aramaGuncelle(c, e.getLong("id"), new JSONObject().put("sonuc", sonuc));
                 iptal(c, e);
                 tost(c, "is_alindi".equals(sonuc) ? "✅ İş alındı olarak kaydedildi" : "Kaydedildi: iş oluşmadı");
-                Veri.yenile(c);
-                break;
-            }
-            case SEKTOR: {
-                String s = e.getString("sektor", "Diğer");
-                String k = Ayar.kanal(c);
-                JSONObject p = new JSONObject().put("kaynak", "reklam").put("sektor", s).put("kanal", k).put("yon", "manuel");
-                Islem.aramaKaydet(c, p);
-                tost(c, "+1 " + s + ("wa".equals(k) ? " 💬" : " 📞"));
                 Veri.yenile(c);
                 break;
             }

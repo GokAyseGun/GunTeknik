@@ -36,8 +36,9 @@ public class AramaPenceresi extends AppCompatActivity {
     private static final int METIN = 0xFFF0F0F0, METIN2 = 0xFFB0B0B0, METIN3 = 0xFF808080;
     private static final int CYAN = 0xFF00E5FF, MG = 0xFFE8197A;
 
-    static final String[] KAYNAK = {"reklam", "tavsiye", "eski", "bilinmiyor"};
-    static final String[] KAYNAK_AD = {"📢 Reklam", "🤝 Tavsiye", "🔁 Eski müşteri", "❔ Bilinmiyor"};
+    // Rehberdeki kişi kaynaklarıyla aynı liste (+ Bilinmiyor)
+    static final String[] KAYNAK = {"Google Ads", "Armut", "Dışarıdan", "Eski Müşteri", "Tavsiye", "Bilinmiyor"};
+    static final String[] KAYNAK_AD = {"📢 Google Ads", "🍑 Armut", "🚪 Dışarıdan", "🔁 Eski müşteri", "🤝 Tavsiye", "❔ Bilinmiyor"};
     static final String[] SONUC = {"potansiyel", "is_alindi", "yanlis", "olusmadi"};
     static final String[] SONUC_AD = {"🟡 Potansiyel müşteri", "✅ İş alındı", "📵 Yanlış arama", "⛔ İş oluşmadı"};
     static final String[] SEBEP = {"fiyat", "uzak", "vazgecti", "baska_usta", "diger"};
@@ -52,7 +53,7 @@ public class AramaPenceresi extends AppCompatActivity {
     private boolean gonderiliyor;
 
     private LinearLayout govde, kanalSatir;
-    private TextView ozet, geri, adimBaslik;
+    private TextView ozet, geri, adimBaslik, rehberBilgi;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -82,6 +83,37 @@ public class AramaPenceresi extends AppCompatActivity {
         gonderiliyor = false;
         setContentView(arayuz());
         adimCiz();
+        if (gorusme && numara != null && !numara.isEmpty()) rehberdenBul();
+    }
+
+    /** Numara ERP rehberinde kayıtlıysa kaynağını kendiliğinden seç (değiştirilebilir). */
+    private void rehberdenBul() {
+        final String no = numara;
+        new Thread(() -> {
+            try {
+                String t = Ayar.cihaz(this);
+                if (t == null) return;
+                String r = Sunucu.rpc("arama_kisi_bul", new JSONObject().put("p_token", t).put("p_numara", no));
+                if (r == null || r.trim().isEmpty() || r.trim().equals("null")) return;
+                JSONObject k = new JSONObject(r);
+                final String isim = k.optString("isim", "");
+                final String ky = k.optString("kaynak", "");
+                runOnUiThread(() -> {
+                    if (isFinishing() || !no.equals(numara)) return;
+                    if (rehberBilgi != null && !isim.isEmpty()) {
+                        rehberBilgi.setText("👤 Rehberde: " + isim + (ky.isEmpty() || "null".equals(ky) ? "" : "  ·  " + ky));
+                        rehberBilgi.setVisibility(View.VISIBLE);
+                    }
+                    boolean gecerli = false;
+                    for (String x : KAYNAK) if (x.equals(ky)) gecerli = true;
+                    if (gecerli && adim == 0 && kaynak == null && !gonderiliyor) {
+                        kaynak = ky;
+                        adim = 1;
+                        adimCiz();
+                    }
+                });
+            } catch (Exception ignored) {}
+        }).start();
     }
 
     // ---------------------------------------------------------------- iskelet
@@ -97,6 +129,9 @@ public class AramaPenceresi extends AppCompatActivity {
             TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
             alt.setPadding(0, dp(2), 0, dp(2));
             kok.addView(alt);
+            rehberBilgi = metin("", 12, 0xFF00E676, false);
+            rehberBilgi.setVisibility(View.GONE);
+            kok.addView(rehberBilgi);
         } else {
             kanalSatir = new LinearLayout(this);
             kanalSatir.setOrientation(LinearLayout.HORIZONTAL);

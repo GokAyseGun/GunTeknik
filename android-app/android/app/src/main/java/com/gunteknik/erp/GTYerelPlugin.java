@@ -195,9 +195,13 @@ public class GTYerelPlugin extends Plugin {
     /** Yeni APK sürümü var mı? (Uygulama zaten günde birkaç kez kendisi bakar.) */
     @PluginMethod
     public void guncellemeDenetle(PluginCall call) {
-        Activity a = getActivity();
-        if (a != null) GuncellemeDenetci.denetle(a, true);
-        call.resolve();
+        // Kullanıcı istedi: denetle, indir ve ekranda olsa bile hemen kur
+        GuncellemeDenetci.arkaplan(getContext(), true, true);
+        JSObject r = new JSObject();
+        r.put("surumKodu", GuncellemeDenetci.surumKodu(getContext()));
+        r.put("bekleyen", GuncellemeDenetci.bekleyen(getContext()));
+        r.put("kurIzni", GuncellemeDenetci.kurIzniVar(getContext()));
+        call.resolve(r);
     }
 
     /** ERP'nin indirdiği dosyaları (Excel, PDF, CSV, yedek…) İndirilenler/GunTeknik'e kaydeder ve açar. */

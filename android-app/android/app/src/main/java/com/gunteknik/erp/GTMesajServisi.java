@@ -25,7 +25,12 @@ public class GTMesajServisi extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage m) {
         Map<String, String> d = m.getData();
-        if ("bildirim".equals(d.get("tip"))) Bildirimci.goster(this, d);
+        String tip = d.get("tip");
+        if ("guncelle".equals(tip)) {
+            GuncellemeDenetci.simdi(this, false);
+            return;
+        }
+        if ("bildirim".equals(tip)) Bildirimci.goster(this, d);
         Veri.yenile(this);
     }
 }
