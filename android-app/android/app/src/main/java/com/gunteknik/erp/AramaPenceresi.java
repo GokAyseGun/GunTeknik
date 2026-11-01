@@ -4,12 +4,10 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -25,8 +23,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
-/** Arama bitince ekranın üstünde açılan küçük pencere: kaynak, sektör, sonuç. */
+/**
+ * Arama kaydı — adım adım: 1) Nereden geldi?  2) Sektör  3) Sonuç  (+ neden olmadı).
+ * İki yerden açılır: görüşme bitince (numara ile) ve widget'tan (numarasız, kanal seçilebilir).
+ * Son seçimde kendiliğinden kaydeder.
+ */
 public class AramaPenceresi extends AppCompatActivity {
 
     private static final int ZEMIN = 0xFF141414, KUTU = 0xFF1C1C1C, CIZGI = 0xFF333333;
@@ -38,102 +41,185 @@ public class AramaPenceresi extends AppCompatActivity {
     static final String[] SONUC = {"potansiyel", "is_alindi", "yanlis", "olusmadi"};
     static final String[] SONUC_AD = {"🟡 Potansiyel müşteri", "✅ İş alındı", "📵 Yanlış arama", "⛔ İş oluşmadı"};
     static final String[] SEBEP = {"fiyat", "uzak", "vazgecti", "baska_usta", "diger"};
-    static final String[] SEBEP_AD = {"Fiyat", "Uzak", "Vazgeçti", "Başka usta", "Diğer"};
+    static final String[] SEBEP_AD = {"💸 Fiyat", "📍 Uzak", "↩️ Vazgeçti", "🔧 Başka usta", "❔ Diğer"};
 
-    private final Secim kaynak = new Secim(), sektor = new Secim(), sonuc = new Secim(), sebep = new Secim();
-    private LinearLayout sebepKutu;
-    private EditText not;
-    private TextView kaydet;
-    private String numara, ad;
+    private String numara, ad, kanal;
     private int sure;
     private long zaman;
+    private boolean gorusme;          // true: görüşme bitince açıldı
+    private int adim;                 // 0 kaynak, 1 sektör, 2 sonuç, 3 sebep
+    private String kaynak, sektor, sonuc, sebep;
     private boolean gonderiliyor;
+
+    private LinearLayout govde, kanalSatir;
+    private TextView ozet, geri, adimBaslik;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        Intent i = getIntent();
+        setFinishOnTouchOutside(false);
+        hazirla(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        hazirla(intent);
+    }
+
+    private void hazirla(Intent i) {
         numara = i.getStringExtra("numara");
         ad = i.getStringExtra("ad");
         sure = i.getIntExtra("sure", 0);
-        zaman = i.getLongExtra("zaman", System.currentTimeMillis());
+        zaman = i.getLongExtra("zaman", 0);
+        gorusme = zaman > 0;
+        kanal = gorusme ? "tel" : Ayar.kanal(this);
         int bildirim = i.getIntExtra("bildirim", 0);
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
-        setFinishOnTouchOutside(false);
+        adim = 0;
+        kaynak = sektor = sonuc = sebep = null;
+        gonderiliyor = false;
         setContentView(arayuz());
+        adimCiz();
     }
 
-    // ---------------------------------------------------------------- arayüz
+    // ---------------------------------------------------------------- iskelet
     private View arayuz() {
         LinearLayout kok = dikey();
         kok.setPadding(dp(18), dp(16), dp(18), dp(14));
         kok.setBackground(yuvarlak(ZEMIN, CIZGI, 22));
 
-        TextView bas = metin("📞 Az önceki arama", 18, METIN, true);
-        kok.addView(bas);
-        String kim = ad != null && !ad.isEmpty() ? ad + (numara != null ? "  ·  " + numara : "") : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-        String ek = new SimpleDateFormat("HH:mm", Locale.US).format(new Date(zaman)) + (sure > 0 ? "  ·  " + sureYaz(sure) : "");
-        TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
-        alt.setPadding(0, dp(2), 0, dp(4));
-        kok.addView(alt);
+        kok.addView(metin(gorusme ? "📞 Az önceki arama" : "📞 Arama kaydet", 18, METIN, true));
+        if (gorusme) {
+            String kim = ad != null && !ad.isEmpty() ? ad + (numara != null ? "  ·  " + numara : "") : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
+            String ek = new SimpleDateFormat("HH:mm", Locale.US).format(new Date(zaman)) + (sure > 0 ? "  ·  " + sureYaz(sure) : "");
+            TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
+            alt.setPadding(0, dp(2), 0, dp(2));
+            kok.addView(alt);
+        } else {
+            kanalSatir = new LinearLayout(this);
+            kanalSatir.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams kp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            kp.topMargin = dp(8);
+            kok.addView(kanalSatir, kp);
+            kanalCiz();
+        }
 
-        kok.addView(baslik("Nereden geldi?"));
-        kok.addView(izgara(KAYNAK_AD, KAYNAK, 2, kaynak, null));
-        kok.addView(baslik("Sektör"));
-        kok.addView(izgara(Ayar.SEKTOR_KISA, Ayar.SEKTORLER, 4, sektor, null));
-        kok.addView(baslik("Sonuç"));
-        kok.addView(izgara(SONUC_AD, SONUC, 2, sonuc, () -> sebepKutu.setVisibility("olusmadi".equals(sonuc.deger) ? View.VISIBLE : View.GONE)));
+        ozet = metin("", 12, CYAN, false);
+        ozet.setPadding(0, dp(8), 0, 0);
+        kok.addView(ozet);
 
-        sebepKutu = dikey();
-        sebepKutu.addView(baslik("Neden olmadı?"));
-        sebepKutu.addView(izgara(SEBEP_AD, SEBEP, 3, sebep, null));
-        sebepKutu.setVisibility(View.GONE);
-        kok.addView(sebepKutu);
+        adimBaslik = metin("", 11, METIN3, true);
+        adimBaslik.setLetterSpacing(0.06f);
+        adimBaslik.setPadding(0, dp(12), 0, dp(6));
+        kok.addView(adimBaslik);
 
-        not = new EditText(this);
-        not.setHint("Not (isteğe bağlı)");
-        not.setHintTextColor(METIN3);
-        not.setTextColor(METIN);
-        not.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        not.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        not.setBackground(yuvarlak(KUTU, CIZGI, 12));
-        not.setPadding(dp(12), dp(10), dp(12), dp(10));
-        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        np.topMargin = dp(12);
-        kok.addView(not, np);
+        govde = dikey();
+        kok.addView(govde);
 
-        LinearLayout dugmeler = new LinearLayout(this);
-        dugmeler.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams dp0 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dp0.topMargin = dp(14);
-        TextView atla = dugme("Atla", KUTU, METIN2);
-        atla.setOnClickListener(v -> finish());
-        kaydet = dugme("Kaydet", CYAN, 0xFF06121A);
-        kaydet.setTypeface(Typeface.DEFAULT_BOLD);
-        kaydet.setOnClickListener(v -> kaydet());
-        LinearLayout.LayoutParams a = new LinearLayout.LayoutParams(0, dp(48), 1f);
-        a.rightMargin = dp(6);
-        LinearLayout.LayoutParams k = new LinearLayout.LayoutParams(0, dp(48), 2f);
-        k.leftMargin = dp(6);
-        dugmeler.addView(atla, a);
-        dugmeler.addView(kaydet, k);
-        kok.addView(dugmeler, dp0);
+        LinearLayout alt = new LinearLayout(this);
+        alt.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ap.topMargin = dp(12);
+        geri = dugme("← Geri", KUTU, METIN2);
+        geri.setOnClickListener(v -> {
+            if (gonderiliyor || adim == 0) return;
+            adim = adim == 3 ? 2 : adim - 1;
+            if (adim <= 2) sebep = null;
+            if (adim <= 1) sonuc = null;
+            if (adim == 0) sektor = null;
+            adimCiz();
+        });
+        TextView iptal = dugme(gorusme ? "Atla" : "İptal", KUTU, METIN2);
+        iptal.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams g1 = new LinearLayout.LayoutParams(0, dp(46), 1f);
+        g1.rightMargin = dp(6);
+        LinearLayout.LayoutParams g2 = new LinearLayout.LayoutParams(0, dp(46), 1f);
+        g2.leftMargin = dp(6);
+        alt.addView(geri, g1);
+        alt.addView(iptal, g2);
+        kok.addView(alt, ap);
 
         ScrollView sv = new ScrollView(this);
-        sv.setFillViewport(false);
         sv.addView(kok);
         return sv;
     }
 
-    private TextView baslik(String s) {
-        TextView t = metin(s.toUpperCase(new Locale("tr", "TR")), 11, METIN3, true);
-        t.setLetterSpacing(0.06f);
-        t.setPadding(0, dp(12), 0, dp(6));
-        return t;
+    private void kanalCiz() {
+        if (kanalSatir == null) return;
+        kanalSatir.removeAllViews();
+        String[] k = {"tel", "wa"};
+        String[] e = {"📞 Telefon", "💬 WhatsApp"};
+        for (int i = 0; i < 2; i++) {
+            final String d = k[i];
+            boolean on = d.equals(kanal);
+            TextView t = metin(e[i], 13, on ? 0xFFFFFFFF : METIN2, on);
+            t.setGravity(Gravity.CENTER);
+            t.setPadding(dp(4), dp(8), dp(4), dp(8));
+            t.setBackground(on ? yuvarlak(0x3300E5FF, CYAN, 12) : yuvarlak(KUTU, CIZGI, 12));
+            t.setOnClickListener(v -> {
+                kanal = d;
+                Ayar.kanal(this, d);
+                kanalCiz();
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            lp.setMargins(i == 0 ? 0 : dp(4), 0, i == 0 ? dp(4) : 0, 0);
+            kanalSatir.addView(t, lp);
+        }
     }
 
-    private LinearLayout izgara(String[] etiket, String[] deger, int sutun, Secim s, Runnable degisti) {
-        s.degerler = deger;
+    // ---------------------------------------------------------------- adımlar
+    private void adimCiz() {
+        govde.removeAllViews();
+        geri.setVisibility(adim > 0 ? View.VISIBLE : View.INVISIBLE);
+        ozetYaz();
+        switch (adim) {
+            case 0:
+                adimBaslik.setText("1 / 3  ·  NEREDEN GELDİ?");
+                govde.addView(izgara(KAYNAK_AD, KAYNAK, 2, kaynak, v -> { kaynak = v; adim = 1; adimCiz(); }));
+                break;
+            case 1: {
+                adimBaslik.setText("2 / 3  ·  SEKTÖR");
+                String[] e = new String[Ayar.SEKTOR_KISA.length + 1];
+                String[] d = new String[Ayar.SEKTORLER.length + 1];
+                System.arraycopy(Ayar.SEKTOR_KISA, 0, e, 0, Ayar.SEKTOR_KISA.length);
+                System.arraycopy(Ayar.SEKTORLER, 0, d, 0, Ayar.SEKTORLER.length);
+                e[e.length - 1] = "❔ Belli değil";
+                d[d.length - 1] = "";
+                govde.addView(izgara(e, d, 3, sektor == null ? null : sektor, v -> { sektor = v.isEmpty() ? null : v; adim = 2; adimCiz(); }));
+                break;
+            }
+            case 2:
+                adimBaslik.setText("3 / 3  ·  SONUÇ");
+                govde.addView(izgara(SONUC_AD, SONUC, 2, sonuc, v -> {
+                    sonuc = v;
+                    if ("olusmadi".equals(v)) { adim = 3; adimCiz(); }
+                    else kaydet();
+                }));
+                break;
+            default:
+                adimBaslik.setText("NEDEN OLMADI?");
+                govde.addView(izgara(SEBEP_AD, SEBEP, 2, sebep, v -> { sebep = v; kaydet(); }));
+                break;
+        }
+    }
+
+    private void ozetYaz() {
+        List<String> L = new ArrayList<>();
+        if (kaynak != null) L.add(ad(KAYNAK, KAYNAK_AD, kaynak));
+        if (adim >= 2) L.add(sektor == null ? "Sektör belli değil" : sektor);
+        if (sonuc != null && adim >= 3) L.add(ad(SONUC, SONUC_AD, sonuc));
+        ozet.setText(L.isEmpty() ? "" : android.text.TextUtils.join("  ›  ", L));
+        ozet.setVisibility(L.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private static String ad(String[] d, String[] e, String v) {
+        for (int i = 0; i < d.length; i++) if (d[i].equals(v)) return e[i];
+        return v;
+    }
+
+    private LinearLayout izgara(String[] etiket, String[] deger, int sutun, String secili, Consumer<String> secildi) {
         LinearLayout kap = dikey();
         LinearLayout satir = null;
         for (int i = 0; i < etiket.length; i++) {
@@ -142,22 +228,21 @@ public class AramaPenceresi extends AppCompatActivity {
                 satir.setOrientation(LinearLayout.HORIZONTAL);
                 kap.addView(satir, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
-            final int n = i;
-            TextView c = metin(etiket[i], 13, METIN, false);
+            final String d = deger[i];
+            boolean on = d.equals(secili);
+            TextView c = metin(etiket[i], 14, on ? 0xFFFFFFFF : METIN, on);
             c.setGravity(Gravity.CENTER);
-            c.setMinHeight(dp(44));
-            c.setPadding(dp(4), dp(8), dp(4), dp(8));
-            c.setBackground(yuvarlak(KUTU, CIZGI, 12));
+            c.setMinHeight(dp(56));
+            c.setPadding(dp(4), dp(10), dp(4), dp(10));
+            c.setBackground(on ? yuvarlak(0x33E8197A, MG, 14) : yuvarlak(KUTU, CIZGI, 14));
             c.setOnClickListener(v -> {
-                s.sec(n);
-                if (degisti != null) degisti.run();
+                if (gonderiliyor) return;
+                secildi.accept(d);
             });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
             lp.setMargins(dp(3), dp(3), dp(3), dp(3));
             satir.addView(c, lp);
-            s.ogeler.add(c);
         }
-        // son satırı boşlukla tamamla (hizalı dursun)
         int eksik = (sutun - etiket.length % sutun) % sutun;
         for (int i = 0; i < eksik && satir != null; i++) {
             View bos = new View(this);
@@ -168,61 +253,45 @@ public class AramaPenceresi extends AppCompatActivity {
         return kap;
     }
 
-    private class Secim {
-        String deger;
-        String[] degerler;
-        final List<TextView> ogeler = new ArrayList<>();
-
-        void sec(int n) {
-            String yeni = degerler[n];
-            deger = yeni.equals(deger) ? null : yeni;
-            for (int i = 0; i < ogeler.size(); i++) {
-                boolean on = degerler[i].equals(deger);
-                ogeler.get(i).setBackground(on ? yuvarlak(0x33E8197A, MG, 12) : yuvarlak(KUTU, CIZGI, 12));
-                ogeler.get(i).setTextColor(on ? 0xFFFFFFFF : METIN);
-                ogeler.get(i).setTypeface(on ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
-            }
-        }
-    }
-
     // ---------------------------------------------------------------- kaydet
     private void kaydet() {
         if (gonderiliyor) return;
-        if (kaynak.deger == null) { tost("Aramanın nereden geldiğini seç"); return; }
-        if (sonuc.deger == null) { tost("Sonucu seç"); return; }
-        if (sektor.deger == null && !"yanlis".equals(sonuc.deger)) { tost("Sektörü seç"); return; }
         if (Ayar.cihaz(this) == null) { tost("Önce uygulamayı açıp ERP'ye giriş yap"); return; }
-
         final JSONObject p = new JSONObject();
         try {
-            p.put("numara", numara == null ? "" : numara);
-            p.put("rehber_ad", ad == null ? "" : ad);
-            p.put("yon", "gelen");
-            p.put("sure_sn", String.valueOf(sure));
-            p.put("zaman", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).format(new Date(zaman)));
-            p.put("kanal", "tel");
-            p.put("kaynak", kaynak.deger);
-            p.put("sektor", sektor.deger == null ? "" : sektor.deger);
-            p.put("sonuc", sonuc.deger);
-            p.put("sebep", "olusmadi".equals(sonuc.deger) && sebep.deger != null ? sebep.deger : "");
-            p.put("aciklama", not.getText().toString().trim());
+            p.put("kanal", kanal);
+            p.put("kaynak", kaynak);
+            p.put("sektor", sektor == null ? "" : sektor);
+            p.put("sonuc", sonuc);
+            p.put("sebep", "olusmadi".equals(sonuc) && sebep != null ? sebep : "");
+            if (gorusme) {
+                p.put("yon", "gelen");
+                p.put("numara", numara == null ? "" : numara);
+                p.put("rehber_ad", ad == null ? "" : ad);
+                p.put("sure_sn", String.valueOf(sure));
+                p.put("zaman", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).format(new Date(zaman)));
+            } else {
+                p.put("yon", "manuel");
+            }
         } catch (Exception ignored) {}
 
         gonderiliyor = true;
-        kaydet.setText("Kaydediliyor…");
+        govde.removeAllViews();
+        geri.setVisibility(View.INVISIBLE);
+        adimBaslik.setText("KAYDEDİLİYOR…");
         new Thread(() -> {
             try {
                 Islem.aramaKaydet(getApplicationContext(), p);
                 Veri.yenile(getApplicationContext());
                 runOnUiThread(() -> {
-                    tost("Kaydedildi");
+                    tost("✓ Kaydedildi");
                     finish();
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     gonderiliyor = false;
-                    kaydet.setText("Kaydet");
                     tost("Kaydedilemedi: " + (e.getMessage() != null ? e.getMessage() : "bağlantı yok"));
+                    adimCiz();
                 });
             }
         }).start();
@@ -247,7 +316,7 @@ public class AramaPenceresi extends AppCompatActivity {
     private TextView dugme(String s, int zemin, int renk) {
         TextView t = metin(s, 15, renk, false);
         t.setGravity(Gravity.CENTER);
-        t.setBackground(yuvarlak(zemin, zemin == KUTU ? CIZGI : zemin, 14));
+        t.setBackground(yuvarlak(zemin, CIZGI, 14));
         return t;
     }
 

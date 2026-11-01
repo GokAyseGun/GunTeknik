@@ -1532,6 +1532,8 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 .at-form-2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .at-form-2 input,.at-form-not{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;outline:none;}
 .at-form-not{margin-top:6px;}
+.at-yok{margin-top:10px;}
+.at-link{background:none;border:0;color:var(--cy);cursor:pointer;font:inherit;padding:0;text-decoration:underline;}
 .push-davet{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border2);background:linear-gradient(90deg,rgba(91,163,217,.14),rgba(91,163,217,.02));}
 .push-davet>span:nth-child(2){flex:1;min-width:0;font-size:13px;}
 .push-davet small{display:block;font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35;}
@@ -4726,8 +4728,8 @@ function atHtml(A){
   const say=f=>L.filter(f).length;
   const n=L.length,pot=say(r=>r.sonuc==='potansiyel'),is=say(r=>r.sonuc==='is_alindi'),yan=say(r=>r.sonuc==='yanlis'),olm=say(r=>r.sonuc==='olusmadi'),bos=say(r=>!r.sonuc);
   const don=x=>{const g=x.filter(r=>r.sonuc&&r.sonuc!=='yanlis').length;const i=x.filter(r=>r.sonuc==='is_alindi').length;return g?Math.round(i/g*100)+'%':'—';};
-  const ust=`<div class="rk-b at-ust"><span>📞 Arama takibi${A?` <small>${_esc(A.ad||'')}</small>`:''}</span>${USER_ROL!=='goruntule'?'<button type="button" class="rk-ag-btn" onclick="atEkleAc()">+ Kayıt</button>':''}</div>`;
-  if(!n)return ust+`<div class="gf-not">Bu dönemde arama kaydı yok. Android uygulamasında görüşme bitince açılan pencere ya da widget'taki sektör düğmeleri buraya yazar; WhatsApp'tan gelenleri <b>+ Kayıt</b> ile girebilirsin.</div>`+atTakipHtml();
+  const ust=`<div class="rk-b at-ust"><span>📞 Arama takibi${A?` <small>${_esc(A.ad||'')}</small>`:''}</span>${USER_ROL!=='goruntule'?'<button type="button" class="rk-ag-btn" onclick="atEkleAc()">📞 Arama gir</button>':''}</div>`;
+  if(!n)return ust+`<div class="gf-not">Bu dönemde arama kaydı yok. Android uygulamasında görüşme bitince açılan pencere ya da widget'taki sektör düğmeleri buraya yazar; WhatsApp'tan gelenleri <b>📞 Arama gir</b> ile girebilirsin.</div>`+atTakipHtml();
   const k=(ad,v,renk,alt)=>`<div class="at-k"><b class="num" style="color:${renk}">${v}</b><span>${ad}</span>${alt?`<small>${alt}</small>`:''}</div>`;
   let h=ust+`<div class="at-kpi">${k('Arama',n,'var(--text)',bos?bos+' sonuçsuz':'')}${k('Potansiyel',pot,'var(--amber)','')}${k('İş alındı',is,'var(--green)','')}${k('Yanlış',yan,'var(--text3)','')}${k('Oluşmadı',olm,'var(--red)','')}${k('Dönüşüm',don(L),'var(--cy)','iş / gerçek arama')}</div>`;
   const tablo=(baslik,anahtar,etiket)=>{const G={};L.forEach(r=>{const a=anahtar(r);(G[a]=G[a]||[]).push(r);});const S=Object.entries(G).sort((a,b)=>b[1].length-a[1].length);
@@ -4756,48 +4758,84 @@ async function atGuncelle(id,p){
     showToast('Güncellendi','green');atSonra(p);}catch(e){showToast('Güncellenemedi: '+String(e.message||e).slice(0,60),'red');}
 }
 function atSonra(p){atCiz();if(!p||p.kaynak!==undefined||p.sektor!==undefined||p.kanal!==undefined||p.yeni){try{rkManuelYukle().then(()=>{try{rkAramaSonrasi();}catch(e){}});}catch(e){}}}
-// kayıt / düzenleme penceresi
-function atEkleAc(id,sonucOn){
+// kayıt / düzenleme penceresi — ERP'deki bütün "Arama gir" düğmeleri (reklam, özet, bildirim, kısayol) buraya gelir
+function rkAramaGirAc(tarih){atEkleAc(null,null,{tarih:typeof tarih==='string'?tarih:null});}
+function atEkleAc(id,sonucOn,opt){
   if(USER_ROL==='goruntule'){showToast('Görüntüleme yetkisiyle kayıt girilemez','amber');return;}
+  opt=opt||{};const bg=localToday();
   const r=id?AT.liste.find(x=>x.id===id):null;
-  AT.duzen={id:r?r.id:null,tarih:r?r.tarih:localToday(),kanal:r?r.kanal||'tel':((typeof RK_AG!=='undefined'&&RK_AG.kanal)||'tel'),kaynak:r?r.kaynak:null,sektor:r?r.sektor:null,
+  const tarih=(opt.tarih&&/^\d{4}-\d{2}-\d{2}$/.test(opt.tarih)&&opt.tarih<=bg)?opt.tarih:bg;
+  AT.duzen={id:r?r.id:null,tarih:r?r.tarih:tarih,kanal:r?r.kanal||'tel':((typeof RK_AG!=='undefined'&&RK_AG.kanal)||'tel'),kaynak:r?r.kaynak:(opt.kaynak||null),sektor:r?r.sektor:null,
     sonuc:sonucOn||(r?r.sonuc:null),sebep:r?r.sebep:null,numara:r?r.numara||'':'',ad:r?r.rehber_ad||'':'',not:r?r.aciklama||'':''};
   let m=document.getElementById('modal-at');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-at';m.innerHTML=`<div class="modal rk-ag-modal"><div class="modal-handle"></div><div class="modal-head"><h3 id="at-m-bas">📞 Arama kaydı</h3><button class="modal-close" onclick="closeModal('modal-at')">✕</button></div><div class="modal-body" id="at-m-body"></div><div class="modal-foot" id="at-m-foot"></div></div>`;document.body.appendChild(m);}
-  document.getElementById('at-m-bas').textContent=r?'📞 Aramayı düzenle':'📞 Yeni arama kaydı';
+  document.getElementById('at-m-bas').textContent=r?'📞 Aramayı düzenle':'📞 Arama gir';
   atFormCiz();openModal('modal-at');
+  const bekle=[];if(!AT.yuklu)bekle.push(atYukle());if(typeof RK!=='undefined'&&!RK.manuelYuklu)bekle.push(rkManuelYukle());
+  if(bekle.length)Promise.all(bekle).then(()=>{if(AT.duzen)atFormCiz();});
 }
 function atFormCiz(){
-  const D=AT.duzen;const el=document.getElementById('at-m-body');if(!el||!D)return;const q=x=>_esc(JSON.stringify(x));
+  const D=AT.duzen;const el=document.getElementById('at-m-body');if(!el||!D)return;const q=x=>_esc(JSON.stringify(x));const bg=localToday(),dun=gfGunEkle(bg,-1);
   const chips=(alan,S)=>`<div class="rk-ag-c">${Object.entries(S).map(([k,ad])=>`<button type="button" class="isf-chip${D[alan]===k?' on':''}" onclick="atSec('${alan}',${q(k)})">${_esc(ad)}</button>`).join('')}</div>`;
   const sek={};rkAgSektorler().forEach(s=>sek[s]=s);
-  el.innerHTML=`<div class="rk-ag-b">Tarih ve kanal</div><div class="rk-ag-t"><input type="date" value="${D.tarih}" max="${localToday()}" onchange="AT.duzen.tarih=this.value||AT.duzen.tarih">
-      <button type="button" class="isf-chip${D.kanal==='tel'?' on':''}" onclick="atSec('kanal','tel')">📞 Telefon</button><button type="button" class="isf-chip${D.kanal==='wa'?' on':''}" onclick="atSec('kanal','wa')">💬 WhatsApp</button></div>
-    <div class="rk-ag-b">Nereden geldi?</div>${chips('kaynak',AT_KAYNAK)}
-    <div class="rk-ag-b">Sektör</div>${chips('sektor',sek)}
-    <div class="rk-ag-b">Sonuç</div>${chips('sonuc',AT_SONUC)}
+  let ust;
+  if(!D.id){
+    let eks=[];try{eks=rkEksikGunler(7).filter(x=>x!==D.tarih);}catch(e){}
+    ust=`<div class="rk-ag-t"><input type="date" value="${D.tarih}" max="${bg}" onchange="if(this.value){AT.duzen.tarih=this.value;atFormCiz();}"><button type="button" class="isf-chip${D.tarih===bg?' on':''}" onclick="AT.duzen.tarih='${bg}';atFormCiz()">Bugün</button><button type="button" class="isf-chip${D.tarih===dun?' on':''}" onclick="AT.duzen.tarih='${dun}';atFormCiz()">Dün</button></div>
+      ${eks.length?`<div class="rk-ag-eksik"><span>⚠️ Reklam araması girilmemiş:</span>${eks.map(x=>`<button type="button" onclick="AT.duzen.tarih='${x}';atFormCiz()">${rkGunAd(x)}</button>`).join('')}</div>`:''}`;
+  }else ust=`<div class="gf-not">${gfTrTarih(D.tarih)}</div>`;
+  el.innerHTML=ust+`
+    <div class="rk-ag-kanal">${['tel','wa'].map(k=>`<button type="button" class="${D.kanal===k?'on':''}" onclick="atSec('kanal','${k}')">${RK_KANAL[k]}</button>`).join('')}</div>
+    <div class="rk-ag-b">1 · Nereden geldi?</div>${chips('kaynak',AT_KAYNAK)}
+    <div class="rk-ag-b">2 · Sektör</div>${chips('sektor',sek)}
+    <div class="rk-ag-b">3 · Sonuç</div>${chips('sonuc',AT_SONUC)}
     ${D.sonuc==='olusmadi'?`<div class="rk-ag-b">Neden olmadı?</div>${chips('sebep',AT_SEBEP)}`:''}
-    <div class="rk-ag-b">Kişi (isteğe bağlı)</div>
+    <div class="rk-ag-b">Kişi ve not (isteğe bağlı)</div>
     <div class="at-form-2"><input type="tel" placeholder="Telefon" value="${_esc(D.numara)}" oninput="AT.duzen.numara=this.value"><input type="text" placeholder="Ad" value="${_esc(D.ad)}" oninput="AT.duzen.ad=this.value"></div>
-    <input class="at-form-not" type="text" placeholder="Not" value="${_esc(D.not)}" oninput="AT.duzen.not=this.value">`;
-  document.getElementById('at-m-foot').innerHTML=(D.id?`<button class="btn btn-secondary" onclick="atSil(${D.id})">🗑 Sil</button>`:'')+`<button class="btn btn-primary btn-full" onclick="atKaydet()">Kaydet</button>`;
+    <input class="at-form-not" type="text" placeholder="Not" value="${_esc(D.not)}" oninput="AT.duzen.not=this.value">
+    ${D.id?'':atGunHtml(D.tarih)}`;
+  document.getElementById('at-m-foot').innerHTML=D.id
+    ?`<button class="btn btn-secondary" onclick="atSil(${D.id})">🗑 Sil</button><button class="btn btn-primary btn-full" onclick="atKaydet(false)">Kaydet</button>`
+    :`<button class="btn btn-secondary" onclick="atKaydet(true)">Kaydet + yeni</button><button class="btn btn-primary btn-full" onclick="atKaydet(false)">Kaydet</button>`;
 }
-function atSec(alan,k){const D=AT.duzen;if(!D)return;D[alan]=(alan!=='kanal'&&D[alan]===k)?null:k;if(alan==='sonuc'&&D.sonuc!=='olusmadi')D.sebep=null;atFormCiz();}
-async function atKaydet(){
+// seçili günün kayıtları ve "reklamdan arama gelmedi" düğmesi
+function atGunHtml(g){
+  const L=AT.liste.filter(r=>r.tarih===g);let R={n:0,yok:false,L:[]};try{R=rkGunDurum(g);}catch(e){}
+  let h=`<div class="rk-ag-b">${rkGunAd(g)} · ${L.length} kayıt</div>`;
+  h+=L.length?`<div class="at-liste">${L.map(r=>{const z=r.zaman?new Date(r.zaman):null;const sa=z?String(z.getHours()).padStart(2,'0')+':'+String(z.getMinutes()).padStart(2,'0'):'';
+      return `<div class="at-sat tik" onclick="atEkleAc(${r.id})"><div class="at-sat-m"><b>${sa} · ${r.kanal==='wa'?'💬':'📞'} ${_esc(AT_KAYNAK[r.kaynak]||'Kaynak yok')}</b><small>${_esc(r.sektor||'Sektör yok')} · ${_esc(atAd(r))}</small></div><span class="at-sonuc">${r.sonuc?AT_SONUC[r.sonuc]||r.sonuc:'—'}</span></div>`;}).join('')}</div>`:'<div class="gf-not">Bu güne henüz arama kaydı yok.</div>';
+  const eski=(R.L||[]).filter(r=>!/^Arama takibi #/.test(String(r.aciklama||''))).reduce((s,r)=>s+(parseInt(r.deger)||0),0);
+  if(R.n>0)h+=`<div class="gf-ipucu">Reklam araması: <b>${R.n}</b>${eski?` · ${eski} tanesi eski hızlı girişten (ayrıntısız)`:''}</div>`;
+  else if(R.yok)h+=`<div class="gf-ipucu">📵 Bu gün "reklamdan arama gelmedi" olarak işaretli. <button type="button" class="at-link" onclick="atAramaYok(false)">Geri al</button></div>`;
+  else h+=`<button type="button" class="btn btn-secondary btn-full at-yok" onclick="atAramaYok(true)">📵 ${rkGunAd(g)} reklamdan hiç arama gelmedi</button>`;
+  return h;
+}
+async function atAramaYok(ac){const D=AT.duzen;if(!D)return;RK_AG.tarih=D.tarih;await rkAgYok(ac);atFormCiz();}
+function atSec(alan,k){const D=AT.duzen;if(!D)return;
+  if(alan==='kanal'){D.kanal=k==='wa'?'wa':'tel';try{RK_AG.kanal=D.kanal;localStorage.setItem('rk_ag_kanal',D.kanal);}catch(e){}}
+  else D[alan]=D[alan]===k?null:k;
+  if(alan==='sonuc'&&D.sonuc!=='olusmadi')D.sebep=null;atFormCiz();}
+async function atKaydet(yeni){
   const D=AT.duzen;if(!D)return;
   if(!D.kaynak){showToast('Aramanın nereden geldiğini seç','amber');return;}
-  if(!D.sonuc){showToast('Sonucu seç','amber');return;}
   if(!D.sektor&&D.sonuc!=='yanlis'){showToast('Sektörü seç','amber');return;}
+  if(!D.sonuc){showToast('Sonucu seç','amber');return;}
   const p={kanal:D.kanal,kaynak:D.kaynak,sektor:D.sektor||'',sonuc:D.sonuc,sebep:D.sonuc==='olusmadi'?(D.sebep||''):'',numara:(D.numara||'').trim(),rehber_ad:(D.ad||'').trim(),aciklama:(D.not||'').trim()};
   try{
     if(D.id){await sbFetch('rpc/arama_guncelle',{method:'POST',body:JSON.stringify({p_token:null,p_id:D.id,p:Object.assign({},p)})});}
     else{p.tarih=D.tarih;p.yon='manuel';if(D.tarih!==localToday())p.zaman=D.tarih+'T12:00:00';await sbFetch('rpc/arama_kaydet',{method:'POST',body:JSON.stringify({p_token:null,p})});}
-    closeModal('modal-at');showToast('Kaydedildi','green');await atYukle(true);atSonra({yeni:true});
+    try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+    showToast(D.id?'Güncellendi':'Kaydedildi','green');
+    await Promise.all([atYukle(true),rkManuelYukle()]);
+    if(yeni&&!D.id){Object.assign(D,{kaynak:null,sektor:null,sonuc:null,sebep:null,numara:'',ad:'',not:''});atFormCiz();}
+    else{closeModal('modal-at');AT.duzen=null;}
+    atCiz();try{rkAramaSonrasi();}catch(e){}
   }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
 }
 async function atSil(id){
   if(!confirm('Bu arama kaydı silinsin mi?'))return;
-  try{await sbFetch('rpc/arama_sil',{method:'POST',body:JSON.stringify({p_token:null,p_id:id})});AT.liste=AT.liste.filter(x=>x.id!==id);closeModal('modal-at');showToast('Silindi','green');atSonra({yeni:true});}
+  try{await sbFetch('rpc/arama_sil',{method:'POST',body:JSON.stringify({p_token:null,p_id:id})});AT.liste=AT.liste.filter(x=>x.id!==id);closeModal('modal-at');AT.duzen=null;showToast('Silindi','green');
+    await rkManuelYukle();atCiz();try{rkAramaSonrasi();}catch(e){}}
   catch(e){showToast('Silinemedi','red');}
 }
 
@@ -12324,7 +12362,7 @@ function rkEksikGunler(n){if(!rkManHazir())return [];const b=localToday();const 
 function rkGunAd(g){const b=localToday();return g===b?'Bugün':g===gfGunEkle(b,-1)?'Dün':gfTrTarih(g).slice(0,5);}
 function rkManEkle(r){if(!Array.isArray(RK.manuel))RK.manuel=[];RK.manuel.push(r);try{if(Array.isArray(PS.reklamManuel)&&PS.reklamManuel!==RK.manuel)PS.reklamManuel.push(r);PS.ver=(PS.ver||0)+1;}catch(e){}}
 function rkManCikar(id){const f=x=>x.filter(r=>r.id!==id);let ayni=false;try{ayni=PS.reklamManuel===RK.manuel;}catch(e){}RK.manuel=f(RK.manuel||[]);try{if(Array.isArray(PS.reklamManuel))PS.reklamManuel=ayni?RK.manuel:f(PS.reklamManuel);PS.ver=(PS.ver||0)+1;}catch(e){}}
-function rkAramaGirAc(tarih){
+function rkAramaGirAcEski(tarih){
   if(USER_ROL==='goruntule'){showToast('Görüntüleme yetkisiyle kayıt girilemez','amber');return;}
   let m=document.getElementById('modal-rk-ag');
   if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-rk-ag';m.innerHTML=`<div class="modal rk-ag-modal"><div class="modal-handle"></div><div class="modal-head"><h3>📞 Reklam aramaları</h3><button class="modal-close" onclick="closeModal('modal-rk-ag')">✕</button></div><div class="modal-body" id="rk-ag-body"></div><div class="modal-foot"><button class="btn btn-secondary btn-full" onclick="closeModal('modal-rk-ag')">Tamam</button></div></div>`;document.body.appendChild(m);}

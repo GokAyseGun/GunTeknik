@@ -110,6 +110,19 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - Reklam sayfasında **Arama takibi** kartı (`#at-kart`, `atHtml`): kaynak ve sektöre göre dönüşüm, oluşmama sebepleri, takip listesi, "+ Kayıt" (WhatsApp için).
 - Sıradaki fikirler: arama penceresine "iş alındı" seçilince ERP'de işlem açma; ERP'den widget teması.
 
+## 6c. Tek arama kaydı (1 Kasım 2026)
+- Eski hızlı sayaç ("Arama gir" → yalnızca `reklam_manuel` +1) kaldırıldı.
+- **ERP:** `rkAramaGirAc(tarih)` artık `atEkleAc(null,null,{tarih})` açıyor. Buna reklam sayfası, özet şeridi, bildirimdeki `?arama=` ve kısayol dahil. Eski pencere `rkAramaGirAcEski` adıyla duruyor ama kullanılmıyor.
+- **ERP formu:**
+  - Tarih seçimi (Bugün / Dün / girilmemiş günler) ve kanal
+  - Kaynak, sektör, sonuç (+ sebep), isteğe bağlı kişi ve not
+  - O günün kayıtları
+  - "📵 reklamdan hiç arama gelmedi" (`rkAgYok`)
+  - "Kaydet + yeni" düğmesi
+- **Reklam sayıları:** Hâlâ `reklam_manuel`'den hesaplanıyor; `kaynak=reklam` kayıtları buraya otomatik yazılıyor.
+- **Android widget'ları:** Sektör kutuları bugünkü tüm aramaları gösteriyor (`widget_veri.arama.tum_sektor`). Kutulara, başlığa ya da "+ Arama kaydet"e dokununca `AramaPenceresi` adım adım açılıyor: kaynak → sektör → sonuç (→ sebep), son seçimde otomatik kayıt. Numara ve kişi sorulmuyor.
+- **Görüşme sonrası pencere:** Aynı adım adım akışı kullanıyor, numara görüşmeden otomatik alınıyor.
+
 ## 6a. Google girişi uygulamada (1 Kasım 2026)
 - WebView'da Google'ın açılır pencereli girişi (GIS token client) çalışmıyor: hesap seçilince beyaz sayfada kalıyor.
 - Uygulamada `gtToken` (Takvim) ve `googleTokenAl` (Rehber), `andGoogleToken` → yerel `googleYetki` üzerinden telefonun Google hesabıyla yetki alıyor (play-services-auth, AuthorizationClient).

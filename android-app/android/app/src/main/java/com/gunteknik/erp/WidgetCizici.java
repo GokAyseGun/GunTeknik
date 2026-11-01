@@ -80,9 +80,10 @@ public final class WidgetCizici {
     public static RemoteViews arama(Context c, JSONObject v, Bundle o) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.w_arama);
         JSONObject a = aramaBugun(v);
-        rv.setTextViewText(R.id.w_sayi, String.valueOf(a != null ? a.optInt("reklam") : 0));
-        rv.setOnClickPendingIntent(R.id.w_baslik, Bildirimci.ac(c, "./?arama=bugun", 1001));
+        rv.setTextViewText(R.id.w_sayi, String.valueOf(a != null ? a.optInt("toplam") : 0));
+        rv.setOnClickPendingIntent(R.id.w_baslik, sihirbaz(c, 1001));
         rv.setOnClickPendingIntent(R.id.w_sayi, Bildirimci.ac(c, "./?sayfa=reklam", 1002));
+        rv.setOnClickPendingIntent(R.id.w_yeni, sihirbaz(c, 1006));
         sektorBagla(c, rv, a, 1000);
         kanalBagla(c, rv, 1003);
         rv.setTextViewText(R.id.w_alt, aramaAlt(c, a));
@@ -92,13 +93,14 @@ public final class WidgetCizici {
     }
 
     private static void sektorBagla(Context c, RemoteViews rv, JSONObject a, int taban) {
-        JSONObject sek = a != null ? a.optJSONObject("sektor") : null;
+        // bugünkü tüm aramalar (her kaynak) sektöre göre; dokununca adım adım kayıt penceresi
+        JSONObject sek = a != null ? a.optJSONObject("tum_sektor") : null;
         for (int i = 0; i < SEKTOR_ID.length; i++) {
             int n = sek != null ? sek.optInt(Ayar.SEKTORLER[i], 0) : 0;
             CharSequence t = n > 0 ? renkli(Ayar.SEKTOR_KISA[i] + "  ", METIN, false, 1f).append(renkli(String.valueOf(n), CYAN, true, 1.15f)) : Ayar.SEKTOR_KISA[i];
             rv.setTextViewText(SEKTOR_ID[i], t);
             rv.setInt(SEKTOR_ID[i], "setBackgroundResource", n > 0 ? R.drawable.w_dugme_var : R.drawable.w_dugme);
-            rv.setOnClickPendingIntent(SEKTOR_ID[i], yayin(c, EylemAlici.SEKTOR, taban + 10 + i, "sektor", Ayar.SEKTORLER[i]));
+            rv.setOnClickPendingIntent(SEKTOR_ID[i], sihirbaz(c, taban + 10 + i));
         }
     }
 
@@ -110,8 +112,8 @@ public final class WidgetCizici {
     private static String aramaAlt(Context c, JSONObject a) {
         if (Ayar.cihaz(c) == null) return "Uygulamayı açıp ERP'ye giriş yap";
         if (a == null) return "↻ Yenilemek için dokun";
-        String s = "📞 " + a.optInt("tel") + "  💬 " + a.optInt("wa") + "  ·  Dün " + a.optInt("dun") + "  ·  Ay " + a.optInt("ay");
-        if (a.optInt("reklam") == 0 && a.optBoolean("yok")) s = "Bugün arama yok olarak girildi  ·  Dün " + a.optInt("dun");
+        String s = "Reklam " + a.optInt("reklam") + "  ·  📞 " + a.optInt("tel") + "  💬 " + a.optInt("wa") + "  ·  Dün " + a.optInt("dun");
+        if (a.optInt("reklam") == 0 && a.optBoolean("yok")) s = "Reklamdan arama yok  ·  Dün " + a.optInt("dun");
         return s + "  ·  ↻ " + guncel(c);
     }
 
@@ -277,6 +279,7 @@ public final class WidgetCizici {
         rv.setTextViewText(R.id.w_alt, Ayar.cihaz(c) == null ? "Uygulamayı açıp ERP'ye giriş yap" : "↻ " + guncel(c));
         rv.setOnClickPendingIntent(R.id.w_alt, yayin(c, EylemAlici.YENILE, 6003, null, null));
         rv.setOnClickPendingIntent(R.id.w_geri, yayin(c, EylemAlici.GERI, 6004, null, null));
+        rv.setOnClickPendingIntent(R.id.w_yeni, sihirbaz(c, 6010));
 
         JSONObject a = aramaBugun(v);
         JSONObject snap = snap(v);
@@ -302,7 +305,7 @@ public final class WidgetCizici {
                 if (f <= 7) od.add(x);
             }
         }
-        rv.setTextViewText(R.id.w_st1, kutu(a != null ? String.valueOf(a.optInt("reklam")) : "—", "Reklam araması", CYAN));
+        rv.setTextViewText(R.id.w_st1, kutu(a != null ? String.valueOf(a.optInt("toplam")) : "—", a != null ? "Arama · reklam " + a.optInt("reklam") : "Arama", CYAN));
         rv.setTextViewText(R.id.w_st2, kutu(String.valueOf(ajN), "Bugün ajanda", AMBER));
         rv.setTextViewText(R.id.w_st3, kutu(String.valueOf(odBugun + odGec), odGec > 0 ? odGec + " gecikmiş" : "Ödeme günü", odGec > 0 ? KIRMIZI : MG));
         String kasaT = "—";
@@ -370,6 +373,14 @@ public final class WidgetCizici {
         r.setTextColor(R.id.w_sag, sagRenk);
         r.setViewVisibility(R.id.w_sag, sag == null || sag.isEmpty() ? View.GONE : View.VISIBLE);
         return r;
+    }
+
+    /** Adım adım arama kaydı penceresi (kaynak → sektör → sonuç). */
+    static PendingIntent sihirbaz(Context c, int istek) {
+        Intent i = new Intent(c, AramaPenceresi.class)
+            .setAction("gt.arama." + istek)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        return PendingIntent.getActivity(c, istek, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static PendingIntent yayin(Context c, String eylem, int istek, String k, String deger) {
