@@ -142,6 +142,19 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6j. Widget sadeleşti + Bet oyunu (2 Kasım 2026)
+**Widget'lar** (Android): yalnızca iki widget kaldı.
+- **Pano** (`w_pano.xml`): 📞 Arama ekle (AramaPenceresi, kaynak → sektör → sonuç) · bugünkü arama sayısı (arama_takip, reklam sayfasına gider) · ↶ son kaydı geri al · Ajanda bugün / 7 gün (takvim) · Evrak bugün (+gecikmiş, kırmızı) / 7 gün (evrak) · 💰 Kasa (özet sayfası) + 👁 gizle/göster. Sektör düğmeleri, telefon/WhatsApp düğmesi ve potansiyel satırı kaldırıldı.
+- **Arama ekle** (`w_arama.xml`, 4×1): Arama ekle + sayı + ↶.
+- Ajanda, Bugünün Özeti, Kasa, Evrak widget'ları silindi (sınıflar, info xml, manifest, w_kart/w_buyuk/w_satir).
+
+**Bet** (ERP alt menüde en solda, `#page-bet`, `betCiz`): ERP verisine bahis oyunu; hiçbir ERP kaydını değiştirmez.
+- Tablolar: `bet_oyuncular` (coin), `bet_hareketler` (coin defteri, `anahtar` tekil), `bet_pazarlar` (bahis), `bet_kuponlar`, `bet_secimler` (kişi başı bahis başına bir seçim), `bet_sezonlar` (ay şampiyonu). RLS: erp_uye() okur; yazma yalnızca RPC.
+- Tarayıcıdan çağrılan: `bet_katil()`, `bet_oyna({tutar 1–100, secimler:[{pazar_id, secenek|tahmin}]})` (1–8 seçim, kombine oran çarpılır, en fazla 1000).
+- Sunucu (pg_cron `bet-saatlik` her saat :04 → `bet_saatlik()`): `bet_uret()` (yarın: I1 A1 A4 + ilk iş F1–F4; gelecek hafta pzt–paz: K2 K3 I2 I4 X1 G1 G2 G3 X2 A2 A3 A5 R1 R2 R3 Y1 Y2 Y3 Y4; gelecek ay: K1 K4 I3 G4 = 30 tür), `bet_sonuclandir()`, `bet_donem_isle()` (ay başında şampiyon + herkese 1000; coin'i 0 olana haftada bir 100).
+- Ölçüm tek yerde: `bet_olc(tur, bas, bit)` → hem geçmiş oran hesabı (`_bet_gecmis`, kasa için `_bet_kasa_degisim`) hem sonuç. Oran = 0,92 / olasılık (Laplace düzeltmeli, 1,05–25). I3 Poisson: tam = 0,46/P(k), ±1 = 0,46/P(k±1).
+- Kapanış = dönem başı 00:00; sonuç = dönem sonu + 24 saat (ilk iş türleri: ilk iş gününden 24 saat sonra; 45 gün iş yoksa iade). Kimsenin oynamadığı bahis sonuçlanmaz, silinir. Sonuçlanınca push (`bet:` anahtarı, ./?sayfa=bet).
+
 ## 6i. Yapılan iş sayısı (1 Kasım 2026)
 - Özet → İşletme Özeti'ne "🧰 Yapılan İş" kartı: dönem (global-month) iş adedi, toplam, bu ay, iş başı ortalama, tahsil bekleyen. Tanım (`isListesi`): her İşletme Geliri işlemi bir iş; İptal hariç, Bekliyor dahil; aynı `projeId`'li işlemler tek iş. Karta dokununca aylık dağılım + iş listesi (`showDashDetay('isAdet')`).
 

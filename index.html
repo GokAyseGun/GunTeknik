@@ -1648,6 +1648,98 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 .push-davet small{display:block;font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35;}
 .push-davet-i{font-size:20px;}
 .push-davet-x{border:none;background:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;}
+/* ===== BET ===== */
+.bt-ust{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;background:linear-gradient(135deg,rgba(245,197,66,.10),var(--surface) 55%);border-left:4px solid #F5C542;}
+.bt-ust-sol{display:flex;flex-direction:column;gap:2px;min-width:140px;}
+.bt-ust-sol small{font-size:11px;color:var(--text3);}
+.bt-ust-sol b{font-size:28px;color:#F5C542;line-height:1.1;}
+.bt-ust-sol span{font-size:11.5px;color:var(--text2);}
+.bt-ust-sag{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px;position:relative;}
+.bt-ust-sag>small{font-size:11px;color:var(--text3);}
+.bt-mini-sira{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--text2);padding-right:70px;}
+.bt-mini-sira .ben{color:var(--text);font-weight:700;}
+.bt-kural{position:absolute;top:0;right:0;padding:5px 10px;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:11.5px;font-family:inherit;cursor:pointer;}
+.bt-sekme{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0;}
+.bt-sekme button{padding:9px 4px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-sekme button.on{border-color:#F5C542;color:#F5C542;background:rgba(245,197,66,.10);}
+.bt-sekme small{display:inline-block;min-width:16px;padding:0 5px;border-radius:999px;background:#F5C542;color:#111;font-size:10px;font-weight:800;}
+.bt-grup{margin-bottom:6px;}
+.bt-bolum{margin:16px 2px 8px;font-size:14px;}
+.bt-bolum small{color:var(--text3);font-size:11.5px;margin-left:4px;}
+.bt-izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;}
+@media(max-width:520px){.bt-izgara{grid-template-columns:1fr;}}
+.bt-pazar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 13px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.bt-izgara .bt-pazar{margin-bottom:0;}
+.bt-pazar.oynandi{border-color:rgba(245,197,66,.45);}
+.bt-pazar-b{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:700;font-size:13.5px;}
+.bt-pazar-b small{font-weight:500;color:var(--text3);font-size:11px;white-space:nowrap;}
+.bt-rozet{color:#F5C542!important;}
+.bt-pazar-a{font-size:11.5px;color:var(--text3);line-height:1.4;}
+.bt-secenek{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;}
+.bt-sec{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:9px 10px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-family:inherit;font-size:12.5px;cursor:pointer;text-align:left;min-width:0;}
+.bt-sec span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.bt-sec b{color:#F5C542;flex-shrink:0;}
+.bt-sec.on{border-color:#F5C542;background:rgba(245,197,66,.16);}
+.bt-sec.benim{border-color:var(--green);background:var(--green-lt);}
+.bt-sec:disabled{cursor:default;opacity:.55;}
+.bt-sec.benim:disabled{opacity:1;}
+.bt-benim{font-size:12px;color:var(--text2);}
+.bt-benim b{color:#F5C542;}
+.bt-sayi{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bt-sayi>button:not(.bt-sec){width:38px;height:38px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer;font-family:inherit;}
+.bt-sayi>b{font-size:22px;min-width:34px;text-align:center;}
+.bt-sayi>span{font-size:12px;color:var(--text2);flex:1;min-width:120px;}
+.bt-sayi>span b{color:#F5C542;}
+.bt-sayi .bt-sec{flex-basis:100%;justify-content:center;font-weight:700;}
+.bt-sepet{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 6px);z-index:60;display:flex;justify-content:center;padding:0 10px;pointer-events:none;}
+.bt-sepet-ic{pointer-events:auto;width:100%;max-width:560px;background:var(--surface);border:1px solid #F5C542;border-radius:var(--r-lg);padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;}
+.bt-sepet-ic.kapali{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-size:13px;}
+.bt-sepet-ic.kapali b{color:#F5C542;}
+.bt-sepet-kapat{align-self:center;font-size:11px;color:var(--text3);cursor:pointer;margin:-4px 0 -2px;padding:2px 12px;}
+.bt-sepet-l{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow:auto;}
+.bt-sepet-l>div{display:flex;align-items:center;gap:8px;font-size:12px;}
+.bt-sepet-l>div span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
+.bt-sepet-l>div b.num{color:#F5C542;}
+.bt-sepet-l button{border:none;background:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 4px;}
+.bt-mod{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.bt-mod button,.bt-tutar button{padding:7px 8px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-family:inherit;font-size:12px;cursor:pointer;}
+.bt-mod button.on,.bt-tutar button.on{border-color:#F5C542;color:#F5C542;}
+.bt-tutar{display:flex;gap:6px;align-items:center;}
+.bt-tutar input{width:80px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:15px;font-weight:700;outline:none;}
+.bt-tutar button{flex:1;}
+.bt-sepet-alt{font-size:12px;color:var(--text2);}
+.bt-sepet-btn{display:flex;gap:6px;}
+.bt-kupon{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:5px;}
+.bt-kupon.kazandi{border-left-color:var(--green);}.bt-kupon.kaybetti{border-left-color:var(--red);opacity:.85;}.bt-kupon.iade{border-left-color:var(--text3);}
+.bt-kupon-u{display:flex;justify-content:space-between;font-size:13px;}
+.bt-kupon-s{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text2);}
+.bt-kupon-s span:first-child{min-width:0;}
+.bt-kupon-s span:last-child{text-align:right;flex-shrink:0;max-width:55%;}
+.bt-kupon-s small{color:var(--text3);}
+.bt-kupon-a{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);border-top:1px solid var(--border);padding-top:5px;}
+.bt-sira{display:flex;flex-direction:column;gap:8px;}
+.bt-sira-s{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;}
+.bt-sira-s.ben{border-color:#F5C542;}
+.bt-sira-n{font-size:22px;width:32px;text-align:center;}
+.bt-sira-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.bt-sira-m small{font-size:11px;color:var(--text3);}
+.bt-sira-c{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.bt-sira-c b{font-size:17px;color:#F5C542;}
+.bt-sira-c small{font-size:11px;}
+.bt-sezon{display:flex;flex-direction:column;}
+.bt-sezon>div{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:12.5px;align-items:center;}
+.bt-sezon small{color:var(--text3);}
+.bt-hareket{display:flex;flex-direction:column;}
+.bt-hareket>div{display:flex;justify-content:space-between;gap:8px;padding:7px 2px;border-bottom:1px solid var(--border);font-size:12.5px;}
+.bt-hareket span{display:flex;flex-direction:column;}
+.bt-hareket small{font-size:10.5px;color:var(--text3);}
+.bt-sonuc{font-size:12.5px;font-weight:600;color:var(--green);}
+.bt-sonuc.iptal{color:var(--text3);}
+.bt-kim{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--text2);}
+.bt-kim .kaybetti{opacity:.7;}
+.bt-kim-yok{font-size:11px;color:var(--text3);}
+.bt-kural-m ul{padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text2);}
+.bt-kural-m p{font-size:13px;}
 </style>
 </head>
 <body>
@@ -2043,6 +2135,9 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div id="tavsiye-listesi"></div>
     </div>
 
+    <!-- BET -->
+    <div class="page" id="page-bet"><div id="bet-kok"></div></div>
+
     <!-- REKLAM PERFORMANSI -->
     <div class="page" id="page-reklam">
       <div class="rk-ust">
@@ -2266,6 +2361,10 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 
 
   <nav class="bottom-nav" id="bottom-nav">
+    <div class="nav-item" onclick="goPage('bet',this)">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/></svg></span>
+      <span>Bet</span>
+    </div>
     <a class="nav-item" href="elkitabi/index.html" style="text-decoration:none">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="14" y2="11"/></svg></span>
       <span>El Kitabı</span>
@@ -4080,7 +4179,7 @@ async function sbFetch(path,opts={},_retry=false){
   const res=await fetch(SB_URL+'/rest/v1/'+path,{method:opts.method||'GET',headers:h,...(opts.body?{body:opts.body}:{})});
   if(res.status===401&&!_retry){const ok=await tryRefreshToken();if(ok)return sbFetch(path,opts,true);showAuthScreen();return null;}
   if(!res.ok){const e=await res.text();console.error('sbFetch:',res.status,path,e);throw new Error(e||'HTTP '+res.status);}
-  if((opts.method||'GET')!=='GET'&&!/^rpc\/(widget_|push_|cihaz_)/.test(path)){try{widgetYazGecikmeli();}catch(e){}}
+  if((opts.method||'GET')!=='GET'&&!/^rpc\/(widget_|push_|cihaz_|bet_)/.test(path)){try{widgetYazGecikmeli();}catch(e){}}
   const t=await res.text();return t?JSON.parse(t):null;
 }
 // Supabase tek sorguda en fazla 1000 satır döndürür; bu yardımcı tüm satırları sayfa sayfa çeker
@@ -4801,6 +4900,188 @@ function widgetBaslat(){
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')widgetYaz();});
 }
 
+// ============================================================ BET (oyun)
+// ERP verisine bahis: yalnızca okur, hiçbir ERP kaydını değiştirmez. Oranlar, bahis ve sonuçlar sunucuda (bet_* tabloları).
+var BET={sepetAcik:false,yuklu:false,yuk:null,sekme:'bahis',grup:'',kupFiltre:'ben',sepet:[],tutar:10,tekli:false,sayi:{},
+  oyuncular:[],pazarlar:[],kuponlar:[],secimler:[],sezonlar:[],hareketler:[],zaman:0,saat:null};
+const BET_GRUPLAR=['Kasa','İş','İlk iş','Gelir ve gider','Arama','Reklam','Rehber ve ajanda'];
+const BET_GRUP_IK={'Kasa':'💰','İş':'🧰','İlk iş':'🥇','Gelir ve gider':'📊','Arama':'📞','Reklam':'📢','Rehber ve ajanda':'📅'};
+const BET_DONEM={gun:'Yarın',ilk:'İlk iş',hafta:'Gelecek hafta',ay:'Gelecek ay'};
+function betUid(){return (CURRENT_USER&&CURRENT_USER.id)||'';}
+function betHata(e){const m=String((e&&e.message)||e||'');try{const j=JSON.parse(m);return j.message||m;}catch(_){return m;}}
+function betOran(v){return (Math.round((+v||0)*100)/100).toFixed(2).replace('.',',');}
+function betCoin(v){return Math.round(+v||0).toLocaleString('tr-TR');}
+async function betYukle(zorla){
+  if(BET.yuk)return BET.yuk;if(BET.yuklu&&!zorla&&Date.now()-BET.zaman<60000)return;
+  BET.yuk=(async()=>{
+    try{await sbFetch('rpc/bet_katil',{method:'POST',body:'{}'});}catch(e){console.warn('bet katıl',e);}
+    const once=new Date(Date.now()-75*864e5).toISOString();
+    const [o,p,k,s,z,h]=await Promise.all([
+      sbFetchAll('bet_oyuncular?select=*&order=coin.desc'),
+      sbFetchAll('bet_pazarlar?select=*&or=(durum.eq.acik,sonuclanma.gte.%22'+once+'%22)&order=kapanis.asc,id.asc'),
+      sbFetchAll('bet_kuponlar?select=*&zaman=gte.'+once+'&order=zaman.desc'),
+      sbFetchAll('bet_secimler?select=*&order=id.desc'),
+      sbFetchAll('bet_sezonlar?select=*&order=ay.desc'),
+      sbFetchAll('bet_hareketler?select=*&kullanici=eq.'+betUid()+'&order=zaman.desc&limit=80')]);
+    Object.assign(BET,{oyuncular:o||[],pazarlar:p||[],kuponlar:k||[],secimler:s||[],sezonlar:z||[],hareketler:h||[],yuklu:true,zaman:Date.now()});
+  })().catch(e=>{console.warn('bet yükle',e);BET.hata=betHata(e);BET.yuklu=true;}).finally(()=>{BET.yuk=null;});
+  return BET.yuk;
+}
+function betCiz(){
+  const el=document.getElementById('bet-kok');if(!el)return;
+  if(!BET.yuklu||Date.now()-BET.zaman>120000){if(!BET.yuklu)el.innerHTML='<div class="gf-not">Yükleniyor…</div>';betYukle(true).then(()=>{if(document.querySelector('#page-bet.active'))betCiz();});if(!BET.yuklu)return;}
+  if(BET.hata&&!BET.oyuncular.length){el.innerHTML=`<div class="gf-risk yuksek">Bet verisi okunamadı: ${_esc(BET.hata)}</div>`;return;}
+  try{el.innerHTML=betUstHtml()+betSekmeHtml()+(BET.sekme==='kupon'?betKuponlarHtml():BET.sekme==='sira'?betSiraHtml():BET.sekme==='sonuc'?betSonucHtml():betBahisHtml());}
+  catch(e){console.error(e);el.innerHTML='<div class="gf-not">Bet sayfası çizilemedi: '+_esc(e.message)+'</div>';}
+  betSepetCiz();
+  clearInterval(BET.saat);BET.saat=setInterval(()=>{if(!document.querySelector('#page-bet.active')){clearInterval(BET.saat);return;}document.querySelectorAll('[data-bt-kap]').forEach(x=>{x.textContent=betKalan(x.getAttribute('data-bt-kap'));});},30000);
+}
+function betBen(){return BET.oyuncular.find(o=>o.kullanici===betUid());}
+function betAd(uid){const o=BET.oyuncular.find(x=>x.kullanici===uid);return o?o.ad:'?';}
+function betKalan(t){const ms=new Date(t).getTime()-Date.now();if(ms<=0)return 'kapandı';const dk=Math.floor(ms/60000),sa=Math.floor(dk/60),g=Math.floor(sa/24);
+  return g>=1?g+' gün '+(sa%24)+' sa':sa>=1?sa+' sa '+(dk%60)+' dk':dk+' dk';}
+function betBekleyen(uid){return BET.kuponlar.filter(k=>k.kullanici===uid&&k.durum==='bekliyor').reduce((s,k)=>s+k.tutar,0);}
+function betUstHtml(){
+  const ben=betBen();const sira=BET.oyuncular.slice().sort((a,b)=>b.coin-a.coin);const rk=sira.findIndex(o=>o.kullanici===betUid())+1;
+  const bg=localToday();const [y,m]=bg.split('-').map(Number);const aySon=localDateObjStr(new Date(y,m,0));const kalanG=gfGunFark(bg,aySon);
+  const sz=BET.sezonlar[0];
+  return `<div class="bt-ust card"><div class="bt-ust-sol"><small>Senin coinin</small><b class="num">🪙 ${ben?betCoin(ben.coin):'—'}</b><span>${rk?rk+'. sıra':''}${ben&&betBekleyen(ben.kullanici)?' · '+betCoin(betBekleyen(ben.kullanici))+' coin bahiste':''}</span></div>
+    <div class="bt-ust-sag"><div class="bt-mini-sira">${sira.map((o,i)=>`<span class="${o.kullanici===betUid()?'ben':''}">${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${_esc(o.ad)} <b class="num">${betCoin(o.coin)}</b></span>`).join('')}</div>
+    <small>${GF_AYLAR_UZUN[m-1]} şampiyonu ${kalanG?kalanG+' gün sonra':'bu gece'} belli olur${sz?' · son şampiyon: <b>'+_esc(sz.kazanan_ad)+'</b>':''}</small>
+    <button type="button" class="bt-kural" onclick="betKurallar()">ⓘ Kurallar</button></div></div>`;
+}
+function betSekmeHtml(){
+  const acikN=BET.pazarlar.filter(p=>p.durum==='acik'&&new Date(p.kapanis)>new Date()).length;const bekN=BET.kuponlar.filter(k=>k.kullanici===betUid()&&k.durum==='bekliyor').length;
+  return `<div class="bt-sekme">${[['bahis','🎯 Bahis',acikN],['kupon','🧾 Kupon',bekN],['sira','🏆 Sıra',0],['sonuc','📜 Sonuç',0]].map(([k,a,n])=>`<button type="button" class="${BET.sekme===k?'on':''}" onclick="BET.sekme='${k}';betCiz()">${a}${n?` <small>${n}</small>`:''}</button>`).join('')}</div>`;
+}
+// ---- Bahisler
+function betBenimSecim(pid){return BET.secimler.find(s=>s.pazar_id===pid&&s.kullanici===betUid());}
+function betBahisHtml(){
+  const simdi=new Date();const A=BET.pazarlar.filter(p=>p.durum==='acik'&&new Date(p.kapanis)>simdi&&(!BET.grup||p.grup===BET.grup));
+  let h=`<div class="rk-ag-c bt-grup"><button type="button" class="isf-chip${!BET.grup?' on':''}" onclick="BET.grup='';betCiz()">Tümü</button>${BET_GRUPLAR.map(g=>`<button type="button" class="isf-chip${BET.grup===g?' on':''}" onclick="BET.grup=${_esc(JSON.stringify(g))};betCiz()">${BET_GRUP_IK[g]} ${g}</button>`).join('')}</div>`;
+  if(!A.length)return h+'<div class="gf-not">Şu an açık bahis yok. Yeni bahisler her saat başı kendiliğinden açılır.</div>';
+  ['gun','ilk','hafta','ay'].forEach(d=>{const L=A.filter(p=>p.donem===d);if(!L.length)return;
+    const p0=L[0];const tarih=d==='gun'||d==='ilk'?gfTrTarih(p0.bas).slice(0,5):gfTrTarih(p0.bas).slice(0,5)+' – '+gfTrTarih(p0.bit).slice(0,5);
+    h+=`<div class="bt-bolum"><b>${BET_DONEM[d]}</b> <small>${tarih} · kapanış <span data-bt-kap="${p0.kapanis}">${betKalan(p0.kapanis)}</span></small></div><div class="bt-izgara">${L.map(betPazarHtml).join('')}</div>`;});
+  return h+'<div style="height:90px"></div>';
+}
+function betPazarHtml(p){
+  const ben=betBenimSecim(p.id);const sepette=BET.sepet.find(s=>s.pazar_id===p.id);
+  let govde='';
+  if(p.tip==='sayi'){
+    const lam=+((p.param||{}).lambda)||10;const v=BET.sayi[p.id]!=null?BET.sayi[p.id]:Math.round(lam);const o=betSayiOran(v,lam);
+    govde=ben?`<div class="bt-benim">Tahminin: <b>${ben.tahmin}</b> · tam ${betOran(ben.oran)} · ±1 ${betOran(ben.oran_yakin)}</div>`
+      :`<div class="bt-sayi"><button type="button" onclick="betSayiDegis(${p.id},-1)">−</button><b class="num">${v}</b><button type="button" onclick="betSayiDegis(${p.id},1)">+</button>
+        <span>tam <b class="num">${betOran(o.tam)}</b> · ±1 <b class="num">${betOran(o.yakin)}</b></span>
+        <button type="button" class="bt-sec${sepette?' on':''}" onclick="betSepeteSayi(${p.id})">${sepette?'✓ Kuponda ('+sepette.tahmin+')':'Kupona ekle'}</button></div>`;
+  }else{
+    govde=`<div class="bt-secenek">${(p.secenekler||[]).map(o=>{const on=sepette&&sepette.secenek===o.k,bn=ben&&ben.secenek===o.k;
+      return `<button type="button" class="bt-sec${on?' on':''}${bn?' benim':''}"${ben?' disabled':''} onclick="betSepetTik(${p.id},${_esc(JSON.stringify(o.k))})"><span>${_esc(o.ad)}</span><b class="num">${betOran(o.oran)}</b></button>`;}).join('')}</div>`;
+    if(ben)govde+=`<div class="bt-benim">Bahsin: <b>${_esc(betSecenekAd(p,ben))}</b> · oran ${betOran(ben.oran)}</div>`;
+  }
+  return `<div class="bt-pazar${ben?' oynandi':''}"><div class="bt-pazar-b"><span>${BET_GRUP_IK[p.grup]||'🎲'} ${_esc(p.baslik)}</span>${ben?'<small class="bt-rozet">oynadın</small>':''}</div><div class="bt-pazar-a">${_esc(p.aciklama||'')}</div>${govde}</div>`;
+}
+function betSecenekAd(p,s){if(p.tip==='sayi')return 'Tahmin '+s.tahmin;const o=(p.secenekler||[]).find(x=>x.k===s.secenek);return o?o.ad:s.secenek;}
+function betPoisson(k,l){if(k<0||l<=0)return 0;let lp=-l+k*Math.log(l);for(let i=2;i<=k;i++)lp-=Math.log(i);return Math.exp(lp);}
+function betSayiOran(k,l){const pt=betPoisson(k,l),pb=betPoisson(k-1,l)+betPoisson(k+1,l);
+  return {tam:Math.max(1.05,Math.min(60,Math.round(0.46/Math.max(pt,0.004)*100)/100)),yakin:Math.max(1.05,Math.min(30,Math.round(0.46/Math.max(pb,0.008)*100)/100))};}
+function betSayiDegis(pid,d){const p=BET.pazarlar.find(x=>x.id===pid);const lam=+((p&&p.param||{}).lambda)||10;const v=(BET.sayi[pid]!=null?BET.sayi[pid]:Math.round(lam))+d;BET.sayi[pid]=Math.max(0,Math.min(150,v));
+  const s=BET.sepet.find(x=>x.pazar_id===pid);if(s)s.tahmin=BET.sayi[pid];betCiz();}
+function betSepeteSayi(pid){const p=BET.pazarlar.find(x=>x.id===pid);const lam=+((p&&p.param||{}).lambda)||10;const v=BET.sayi[pid]!=null?BET.sayi[pid]:Math.round(lam);
+  const i=BET.sepet.findIndex(x=>x.pazar_id===pid);if(i>=0&&BET.sepet[i].tahmin===v)BET.sepet.splice(i,1);else if(i>=0)BET.sepet[i].tahmin=v;else BET.sepet.push({pazar_id:pid,tahmin:v});betCiz();}
+function betSepetTik(pid,k){const i=BET.sepet.findIndex(x=>x.pazar_id===pid);
+  if(i>=0&&BET.sepet[i].secenek===k)BET.sepet.splice(i,1);else if(i>=0)BET.sepet[i].secenek=k;else{if(BET.sepet.length>=8){showToast('Kuponda en fazla 8 bahis olur','amber');return;}BET.sepet.push({pazar_id:pid,secenek:k});}
+  try{if(navigator.vibrate)navigator.vibrate(8);}catch(e){}betCiz();}
+function betSepetOran(s){const p=BET.pazarlar.find(x=>x.id===s.pazar_id);if(!p)return 1;if(p.tip==='sayi')return betSayiOran(s.tahmin,+((p.param||{}).lambda)||10).tam;const o=(p.secenekler||[]).find(x=>x.k===s.secenek);return o?+o.oran:1;}
+function betSepetCiz(){
+  let el=document.getElementById('bt-sepet');
+  BET.sepet=BET.sepet.filter(s=>{const p=BET.pazarlar.find(x=>x.id===s.pazar_id);return p&&p.durum==='acik'&&new Date(p.kapanis)>new Date()&&!betBenimSecim(p.id);});
+  if(!BET.sepet.length||!document.querySelector('#page-bet.active')||BET.sekme!=='bahis'){if(el)el.remove();return;}
+  if(!el){el=document.createElement('div');el.id='bt-sepet';el.className='bt-sepet';document.body.appendChild(el);}
+  const ben=betBen();const coin=ben?ben.coin:0;const n=BET.sepet.length;const tekli=BET.tekli&&n>1;
+  const oran=BET.sepet.reduce((s,x)=>s*betSepetOran(x),1);const t=Math.max(1,Math.min(100,parseInt(BET.tutar)||1));
+  const kazanc=tekli?BET.sepet.reduce((s,x)=>s+Math.round(t*betSepetOran(x)),0):Math.round(t*Math.min(oran,1000));const toplamT=tekli?t*n:t;
+  if(!BET.sepetAcik){el.innerHTML=`<div class="bt-sepet-ic kapali" onclick="BET.sepetAcik=true;betSepetCiz()"><span>🎲 Kupon: <b>${n}</b> bahis${n>1?' · kombine oran <b class="num">'+betOran(Math.min(oran,1000))+'</b>':' · oran <b class="num">'+betOran(oran)+'</b>'}</span><button type="button" class="btn btn-primary btn-sm">Kuponu aç ▲</button></div>`;return;}
+  el.innerHTML=`<div class="bt-sepet-ic">
+    <div class="bt-sepet-kapat" onclick="BET.sepetAcik=false;betSepetCiz()">▼ küçült</div>
+    <div class="bt-sepet-l">${BET.sepet.map(s=>{const p=BET.pazarlar.find(x=>x.id===s.pazar_id);return `<div><span>${_esc(p.baslik)} · <b>${_esc(betSecenekAd(p,s))}</b></span><b class="num">${betOran(betSepetOran(s))}</b><button type="button" onclick="BET.sepet=BET.sepet.filter(x=>x.pazar_id!==${s.pazar_id});betCiz()" aria-label="Çıkar">✕</button></div>`;}).join('')}</div>
+    ${n>1?`<div class="bt-mod"><button type="button" class="${!BET.tekli?'on':''}" onclick="BET.tekli=false;betSepetCiz()">Kombine · ${betOran(Math.min(oran,1000))}</button><button type="button" class="${BET.tekli?'on':''}" onclick="BET.tekli=true;betSepetCiz()">Tek tek (${n} kupon)</button></div>`:''}
+    <div class="bt-tutar"><input type="number" min="1" max="100" inputmode="numeric" value="${t}" oninput="BET.tutar=this.value;betSepetOzet()" onchange="BET.tutar=Math.max(1,Math.min(100,parseInt(this.value)||1));betSepetCiz()">
+      ${[10,25,50,100].map(v=>`<button type="button" class="${t===v?'on':''}" onclick="BET.tutar=${v};betSepetCiz()">${v}</button>`).join('')}</div>
+    <div class="bt-sepet-alt" id="bt-sepet-ozet">${betSepetOzetHtml(toplamT,kazanc,coin)}</div>
+    <div class="bt-sepet-btn"><button type="button" class="btn btn-secondary" onclick="BET.sepet=[];betCiz()">Temizle</button><button type="button" class="btn btn-primary btn-full" id="bt-oyna" onclick="betOyna()"${toplamT>coin?' disabled':''}>🎲 ${tekli?n+' kupon oyna':'Oyna'} · ${toplamT} coin</button></div></div>`;
+}
+function betSepetOzetHtml(toplamT,kazanc,coin){return `${toplamT>coin?`<span style="color:var(--red)">Yetersiz coin (${betCoin(coin)})</span>`:`Bahis <b class="num">${toplamT}</b> coin`} · olası kazanç <b class="num" style="color:#F5C542">🪙 ${betCoin(kazanc)}</b>`;}
+function betSepetOzet(){const el=document.getElementById('bt-sepet-ozet');if(!el)return;const ben=betBen();const n=BET.sepet.length;const tekli=BET.tekli&&n>1;const t=Math.max(1,Math.min(100,parseInt(BET.tutar)||1));
+  const oran=BET.sepet.reduce((s,x)=>s*betSepetOran(x),1);const kazanc=tekli?BET.sepet.reduce((s,x)=>s+Math.round(t*betSepetOran(x)),0):Math.round(t*Math.min(oran,1000));el.innerHTML=betSepetOzetHtml(tekli?t*n:t,kazanc,ben?ben.coin:0);}
+async function betOyna(){
+  const t=Math.max(1,Math.min(100,parseInt(BET.tutar)||1));const b=document.getElementById('bt-oyna');if(b){b.disabled=true;b.textContent='Oynanıyor…';}
+  const L=BET.tekli&&BET.sepet.length>1?BET.sepet.map(s=>[s]):[BET.sepet];let ok=0,hata='';
+  for(const grup of L){try{await sbFetch('rpc/bet_oyna',{method:'POST',body:JSON.stringify({p:{tutar:t,secimler:grup.map(s=>s.tahmin!=null?{pazar_id:s.pazar_id,tahmin:s.tahmin}:{pazar_id:s.pazar_id,secenek:s.secenek})}})});ok++;}
+    catch(e){hata=betHata(e);}}
+  if(ok){BET.sepet=[];BET.sepetAcik=false;try{if(navigator.vibrate)navigator.vibrate([10,40,10]);}catch(e){}showToast(ok>1?ok+' kupon oynandı 🎲':'Kupon oynandı 🎲','green');}
+  if(hata)showToast(hata.slice(0,90),'red');
+  await betYukle(true);betCiz();
+}
+// ---- Kuponlar
+function betKuponlarHtml(){
+  const ben=BET.kupFiltre==='ben';const L=BET.kuponlar.filter(k=>!ben||k.kullanici===betUid());
+  let h=`<div class="rk-ag-c bt-grup"><button type="button" class="isf-chip${ben?' on':''}" onclick="BET.kupFiltre='ben';betCiz()">Benim kuponlarım</button><button type="button" class="isf-chip${!ben?' on':''}" onclick="BET.kupFiltre='herkes';betCiz()">Herkes</button></div>`;
+  if(!L.length)return h+'<div class="gf-not">Henüz kupon yok. Bahisler sekmesinden seçimini yapıp kupon oyna.</div>';
+  const simdi=new Date();
+  return h+L.map(k=>{const S=BET.secimler.filter(s=>s.kupon_id===k.id);const benim=k.kullanici===betUid();
+    const D={bekliyor:['⏳','Bekliyor','var(--amber)'],kazandi:['✅','Kazandı','var(--green)'],kaybetti:['❌','Kaybetti','var(--red)'],iade:['↩️','İade','var(--text3)']}[k.durum]||['','',''];
+    return `<div class="bt-kupon ${k.durum}"><div class="bt-kupon-u"><b>${benim?'':_esc(betAd(k.kullanici))+' · '}${S.length>1?'Kombine '+S.length+'\'li':'Tekli'}</b><span style="color:${D[2]}">${D[0]} ${D[1]}</span></div>
+      ${S.map(s=>{const p=BET.pazarlar.find(x=>x.id===s.pazar_id);const gizli=!benim&&p&&new Date(p.kapanis)>simdi;
+        const sd={kazandi:'✅',kaybetti:'❌',iade:'↩️'}[s.durum]||'⏳';
+        return `<div class="bt-kupon-s"><span>${sd} ${p?_esc(p.baslik):'Bahis'}${p?` <small>${BET_DONEM[p.donem]||''} ${gfTrTarih(p.bas).slice(0,5)}</small>`:''}</span><span>${gizli?'🔒 kapanınca görünür':'<b>'+_esc(p?betSecenekAd(p,s):s.secenek)+'</b> · '+betOran(s.uygulanan_oran||s.oran)}</span></div>`;}).join('')}
+      <div class="bt-kupon-a"><span>${new Date(k.zaman).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · 🪙 ${k.tutar} × ${betOran(k.oran)}</span><b class="num" style="color:${D[2]}">${k.durum==='bekliyor'?'olası '+betCoin(k.tutar*k.oran):k.durum==='kaybetti'?'−'+k.tutar:'+'+betCoin(k.kazanc)}</b></div></div>`;}).join('');
+}
+// ---- Sıralama ve istatistik
+function betSiraHtml(){
+  const sira=BET.oyuncular.slice().sort((a,b)=>b.coin-a.coin);
+  const ist=uid=>{const K=BET.kuponlar.filter(k=>k.kullanici===uid);const bitti=K.filter(k=>k.durum==='kazandi'||k.durum==='kaybetti');const kaz=bitti.filter(k=>k.durum==='kazandi');
+    const net=bitti.reduce((s,k)=>s+(k.kazanc||0)-k.tutar,0);const enB=kaz.reduce((m,k)=>Math.max(m,(k.kazanc||0)-k.tutar),0);
+    const S=BET.secimler.filter(s=>s.kullanici===uid&&(s.durum==='kazandi'||s.durum==='kaybetti'));
+    return {n:K.length,bitti:bitti.length,kaz:kaz.length,net,enB,isabet:S.length?S.filter(s=>s.durum==='kazandi').length/S.length:null,bek:betBekleyen(uid)};};
+  let h=`<div class="bt-sira">${sira.map((o,i)=>{const s=ist(o.kullanici);return `<div class="bt-sira-s${o.kullanici===betUid()?' ben':''}"><span class="bt-sira-n">${['🥇','🥈','🥉'][i]||i+1}</span>
+    <div class="bt-sira-m"><b>${_esc(o.ad)}</b><small>${s.n} kupon · ${s.kaz}/${s.bitti} kazandı · isabet ${s.isabet==null?'—':'%'+Math.round(s.isabet*100)}${s.enB?' · en büyük +'+betCoin(s.enB):''}</small></div>
+    <div class="bt-sira-c"><b class="num">🪙 ${betCoin(o.coin)}</b><small class="num" style="color:${s.net>0?'var(--green)':s.net<0?'var(--red)':'var(--text3)'}">${s.net>0?'+':''}${betCoin(s.net)} net${s.bek?' · '+s.bek+' bahiste':''}</small></div></div>`;}).join('')}</div>`;
+  h+=`<div class="at-b">🏆 Ayın şampiyonları</div>`+(BET.sezonlar.length?`<div class="bt-sezon">${BET.sezonlar.map(z=>{const [y,m]=z.ay.split('-').map(Number);return `<div><span>${GF_AYLAR_UZUN[m-1]} ${y}</span><b>👑 ${_esc(z.kazanan_ad||'—')}</b><small class="num">${betCoin(z.coin)} coin</small></div>`;}).join('')}</div>`:`<div class="gf-not">İlk şampiyon bu ayın sonunda belli olacak: ay bittiğinde en çok coini olan kazanır, sonra herkese 1000 coin yüklenir.</div>`);
+  h+=`<div class="at-b">🪙 Coin hareketlerin</div><div class="bt-hareket">${BET.hareketler.map(x=>`<div><span>${_esc(x.aciklama||x.tur)}<small>${new Date(x.zaman).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></span><b class="num" style="color:${x.tutar>0?'var(--green)':'var(--red)'}">${x.tutar>0?'+':''}${betCoin(x.tutar)}</b></div>`).join('')||'<div class="gf-not">Hareket yok.</div>'}</div>`;
+  return h;
+}
+// ---- Sonuçlar: kapanmış (sonuç bekleyen) ve sonuçlanmış bahisler, herkesin seçimi
+function betSonucHtml(){
+  const simdi=new Date();
+  const bek=BET.pazarlar.filter(p=>p.durum==='acik'&&new Date(p.kapanis)<=simdi&&BET.secimler.some(s=>s.pazar_id===p.id));
+  const son=BET.pazarlar.filter(p=>p.durum!=='acik'&&BET.secimler.some(s=>s.pazar_id===p.id)).sort((a,b)=>String(b.sonuclanma).localeCompare(String(a.sonuclanma)));
+  const kim=p=>{const S=BET.secimler.filter(s=>s.pazar_id===p.id);if(!S.length)return '<small class="bt-kim-yok">Kimse oynamadı</small>';
+    return `<div class="bt-kim">${S.map(s=>`<span class="${s.durum}">${{kazandi:'✅',kaybetti:'❌',iade:'↩️'}[s.durum]||'⏳'} ${_esc(betAd(s.kullanici))}: <b>${_esc(betSecenekAd(p,s))}</b></span>`).join('')}</div>`;};
+  let h='';
+  if(bek.length)h+=`<div class="at-b">⏳ Sonuç bekleyenler</div>`+bek.map(p=>`<div class="bt-pazar"><div class="bt-pazar-b"><span>${BET_GRUP_IK[p.grup]||'🎲'} ${_esc(p.baslik)}</span><small>${BET_DONEM[p.donem]} ${gfTrTarih(p.bas).slice(0,5)}${p.donem!=='gun'&&p.donem!=='ilk'?'–'+gfTrTarih(p.bit).slice(0,5):''}</small></div><div class="bt-pazar-a">Sonuç: ${new Date(p.sonuc_zamani).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} sonrası${p.donem==='ilk'?' (ilk iş kaydedildikten 1 gün sonra)':''}</div>${kim(p)}</div>`).join('');
+  h+=`<div class="at-b">📜 Sonuçlananlar <small>son 75 gün</small></div>`;
+  h+=son.length?son.map(p=>`<div class="bt-pazar"><div class="bt-pazar-b"><span>${BET_GRUP_IK[p.grup]||'🎲'} ${_esc(p.baslik)}</span><small>${BET_DONEM[p.donem]} ${gfTrTarih(p.bas).slice(0,5)}${p.donem!=='gun'&&p.donem!=='ilk'?'–'+gfTrTarih(p.bit).slice(0,5):''}</small></div><div class="bt-sonuc${p.durum==='iptal'?' iptal':''}">🏁 ${_esc(p.sonuc_metin||'—')}</div>${kim(p)}</div>`).join(''):'<div class="gf-not">Henüz sonuçlanan bahis yok. İlk sonuçlar yarın gece gelir.</div>';
+  return h;
+}
+function betKurallar(){
+  let m=document.getElementById('modal-bet-kural');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-bet-kural';m.innerHTML=`<div class="modal"><div class="modal-handle"></div><div class="modal-head"><h3>🎲 Bet kuralları</h3><button class="modal-close" onclick="closeModal('modal-bet-kural')">✕</button></div><div class="modal-body bt-kural-m">
+    <p>Bet sayfası sadece oyun: ERP'deki gerçek verilerden <b>okur</b>, hiçbir kaydı değiştirmez.</p>
+    <ul><li>Herkes <b>1000 coin</b> ile başlar. Her bahis <b>1–100 coin</b>.</li>
+    <li>Oranlar ERP'nin geçmiş verisinden hesaplanır (olasılık düştükçe oran yükselir). Oynadığın andaki oran kilitlenir.</li>
+    <li>Bir bahse kişi başı bir kez oynanır. Birden fazla bahsi <b>kombine</b> kupona koyabilirsin: oranlar çarpılır, hepsi tutarsa kazanırsın. İstersen <b>tek tek</b> de oynayabilirsin.</li>
+    <li>Bahisler dönem başlamadan kapanır: "yarın" bahisleri bu gece 23:59'da, haftalıklar pazar 23:59'da, aylıklar ay sonunda.</li>
+    <li>Sonuç dönem bittikten <b>24 saat sonra</b> hesaplanır ki geç girilen kayıtlar da sayılsın. Sonuçlandıktan sonra yapılan düzeltmeler sonucu değiştirmez.</li>
+    <li>"Ayın toplam iş sayısı"nda tam bilene yüksek oran, ±1 yaklaşana düşük oran ödenir.</li>
+    <li>Sonuç çıkmazsa (örneğin hiç iş olmazsa "iş başı ortalama") bahis iade edilir.</li>
+    <li>Coin'i biten oyuncuya haftada bir <b>100 coin</b> yardım gelir.</li>
+    <li>Her ay sonunda en çok coini olan <b>ayın şampiyonu</b> olur; ardından herkese <b>1000 coin</b> yüklenir.</li>
+    <li>Başkalarının seçimleri bahis kapanınca görünür.</li>
+    <li>Yeni bahisler her saat başı kendiliğinden açılır; sonuçlanınca telefona bildirim gelir.</li></ul></div></div>`;document.body.appendChild(m);}
+  openModal('modal-bet-kural');
+}
+
 // ============================================================ ARAMA TAKİBİ
 // Her aramanın kaynağı (reklam/tavsiye/eski müşteri), sektörü ve sonucu. Kaynağı "reklam" olanlar reklam_manuel'e de +1 yazılır.
 // Kayıtlar: Android'de arama bitince açılan pencere, widget'taki sektör düğmeleri ya da buradaki "+ Kayıt".
@@ -5473,7 +5754,7 @@ function observeStagger(){
 }
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',evrak:'📄 Evrak Takibi',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',evrak:'📄 Evrak Takibi',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı',bet:'🎲 Bet'};
 
 let _goPageBusy=false;
 function goPage(id,navEl){
@@ -5710,8 +5991,10 @@ function renderAll(){
     if(pid==='teklifler')renderTeklifler();
     if(pid==='fiyatlar')renderFiyatlar();
     if(pid==='reklam')renderReklam();
+    if(pid==='bet')betCiz();
     if(pid==='sablonlar')renderSablonlar();
     if(pid==='tavsiyeler')renderTavsiyeler();
+    try{if(pid!=='bet')betSepetCiz();}catch(e){}
     // Kredi paneli her zaman güncelle
     if(typeof renderKrediPanel==='function')renderKrediPanel();
     if(pid==='cari'){renderCariKrediler();}
