@@ -195,13 +195,37 @@ public class GTYerelPlugin extends Plugin {
     /** Yeni APK sürümü var mı? (Uygulama zaten günde birkaç kez kendisi bakar.) */
     @PluginMethod
     public void guncellemeDenetle(PluginCall call) {
-        // Kullanıcı istedi: denetle, indir ve ekranda olsa bile hemen kur
-        GuncellemeDenetci.arkaplan(getContext(), true, true);
-        JSObject r = new JSObject();
-        r.put("surumKodu", GuncellemeDenetci.surumKodu(getContext()));
-        r.put("bekleyen", GuncellemeDenetci.bekleyen(getContext()));
-        r.put("kurIzni", GuncellemeDenetci.kurIzniVar(getContext()));
-        call.resolve(r);
+        // Kullanıcı istedi: son sürüme bak; yeniyse indir ve hemen kur
+        final android.content.Context c = getContext();
+        new Thread(() -> {
+            JSObject r = new JSObject();
+            long mevcut = GuncellemeDenetci.surumKodu(c);
+            r.put("surumKodu", mevcut);
+            try {
+                String[] e = GuncellemeDenetci.sonEtiket();
+                if (e == null) { r.put("durum", "hata"); call.resolve(r); return; }
+                int yeni = Integer.parseInt(e[1]);
+                r.put("sonSurum", yeni);
+                if (yeni <= mevcut) { r.put("durum", "guncel"); call.resolve(r); return; }
+                if (!GuncellemeDenetci.kurIzniVar(c)) {
+                    r.put("durum", "izin");
+                    call.resolve(r);
+                    Activity a = getActivity();
+                    if (a != null) a.runOnUiThread(() -> {
+                        try {
+                            a.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName())));
+                        } catch (Exception ignored) {}
+                    });
+                    return;
+                }
+                r.put("durum", "indiriliyor");
+                call.resolve(r);
+                GuncellemeDenetci.simdi(c, true);
+            } catch (Exception ex) {
+                r.put("durum", "hata");
+                call.resolve(r);
+            }
+        }).start();
     }
 
     /** ERP'nin indirdiği dosyaları (Excel, PDF, CSV, yedek…) İndirilenler/GunTeknik'e kaydeder ve açar. */

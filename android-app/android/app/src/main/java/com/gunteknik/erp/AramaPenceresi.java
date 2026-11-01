@@ -44,7 +44,7 @@ public class AramaPenceresi extends AppCompatActivity {
     static final String[] SEBEP = {"fiyat", "uzak", "vazgecti", "baska_usta", "diger"};
     static final String[] SEBEP_AD = {"💸 Fiyat", "📍 Uzak", "↩️ Vazgeçti", "🔧 Başka usta", "❔ Diğer"};
 
-    private String numara, ad, kanal;
+    private String numara, ad, kanal, erpAd;
     private int sure;
     private long zaman;
     private boolean gorusme;          // true: görüşme bitince açıldı
@@ -80,6 +80,7 @@ public class AramaPenceresi extends AppCompatActivity {
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
         adim = 0;
         kaynak = sektor = sonuc = sebep = null;
+        erpAd = null;
         gonderiliyor = false;
         setContentView(arayuz());
         adimCiz();
@@ -100,6 +101,7 @@ public class AramaPenceresi extends AppCompatActivity {
                 final String ky = k.optString("kaynak", "");
                 runOnUiThread(() -> {
                     if (isFinishing() || !no.equals(numara)) return;
+                    if (!isim.isEmpty()) erpAd = isim;
                     if (rehberBilgi != null && !isim.isEmpty()) {
                         rehberBilgi.setText("👤 Rehberde: " + isim + (ky.isEmpty() || "null".equals(ky) ? "" : "  ·  " + ky));
                         rehberBilgi.setVisibility(View.VISIBLE);
@@ -302,7 +304,7 @@ public class AramaPenceresi extends AppCompatActivity {
             if (gorusme) {
                 p.put("yon", "gelen");
                 p.put("numara", numara == null ? "" : numara);
-                p.put("rehber_ad", ad == null ? "" : ad);
+                p.put("rehber_ad", erpAd != null ? erpAd : gtsiz(ad));
                 p.put("sure_sn", String.valueOf(sure));
                 p.put("zaman", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).format(new Date(zaman)));
             } else {
@@ -365,6 +367,16 @@ public class AramaPenceresi extends AppCompatActivity {
 
     private int dp(int v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    /** Telefon rehberindeki "GT Ahmet" → "Ahmet" (ERP'deki adla aynı olsun) */
+    static String gtsiz(String s) {
+        if (s == null) return "";
+        String t = s.trim();
+        if (t.length() > 2 && t.substring(0, 2).equalsIgnoreCase("gt") && !Character.isLetter(t.charAt(2))) {
+            t = t.substring(2).replaceFirst("^[\\s\\-_.:]+", "");
+        }
+        return t;
     }
 
     private static String sureYaz(int sn) {

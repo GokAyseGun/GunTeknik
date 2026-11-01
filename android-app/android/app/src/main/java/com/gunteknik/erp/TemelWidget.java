@@ -21,7 +21,6 @@ public abstract class TemelWidget extends AppWidgetProvider {
                 m.updateAppWidget(id, ciz(c, v, m.getAppWidgetOptions(id)));
             } catch (Exception ignored) {}
         }
-        GuncellemeDenetci.arkaplan(c, false, false);
         if (Ayar.cihaz(c) != null && System.currentTimeMillis() - Ayar.veriZaman(c) > 5 * 60 * 1000L) {
             final PendingResult pr = goAsync();
             final Context a = c.getApplicationContext();

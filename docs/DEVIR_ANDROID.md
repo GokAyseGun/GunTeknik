@@ -130,9 +130,9 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **Kendi kendine güncelleme (`GuncellemeDenetci`):**
   - Son sürümü `github.com/.../releases/latest` yönlendirmesinden okur, APK'yı `filesDir/guncelleme`'ye indirir ve PackageInstaller ile kurar.
   - Android 12+'da `USER_ACTION_NOT_REQUIRED`, 14+'da update ownership kullanılır.
-  - Uygulama ekrandayken (`MainActivity.onde`) kurmaz; `onStop`'ta kurar. "Bilinmeyen uygulamaları yükle" izni yoksa bir kez sorar.
   - Alıcılar: `KurulumAlici` (onay gerekirse ekran ya da bildirim), `GuncellendiAlici` (MY_PACKAGE_REPLACED → temizlik + bildirim).
-- **Sunucu:** `android-surum` cron'u 10 dk'da bir `push-gonder?surum=1` çağırır. Yeni etiket varsa (`push_gizli.android_surum`) FCM `tip=guncelle` gönderir ve telefon hemen indirir.
+- **Güncelleme yalnızca elle (Gökay'ın isteği):** ERP → Ayarlar → Android → ⬆️ Güncelleme (`andGuncelle` → `guncellemeDenetle`). Sürüm güncelse "güncel" der, yeniyse indirip hemen kurar. Kurulum izni yoksa ayar ekranını açar. Açılışta, widget'ta ya da sunucudan otomatik denetim **yok**: `android-surum` cron'u kaldırıldı; `push-gonder?surum=1` kodu duruyor ama çağrılmıyor.
+- **Görüşme sonrası pencere:** Arama kaydına telefon rehberindeki "GT Ahmet" yerine ERP'deki ad yazılır (`erpAd`, yoksa `gtsiz`).
 
 ## 6c. Tek arama kaydı (1 Kasım 2026)
 - Eski hızlı sayaç ("Arama gir" → yalnızca `reklam_manuel` +1) kaldırıldı.

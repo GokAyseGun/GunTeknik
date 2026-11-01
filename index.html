@@ -4634,7 +4634,15 @@ async function andGoogleToken(kapsam){
     if(/googleYetki|not implemented|UNIMPLEMENTED/i.test(m))throw new Error('Uygulamayı güncelle (Ayarlar → Android → ⬆️ Güncelleme) ya da bu işlemi Chrome\'dan yap');
     throw new Error(m||'Google izni alınamadı');}
 }
-async function andGuncelle(){try{const r=await andYerel('guncellemeDenetle');showToast(r&&r.kurIzni===false?'Önce Gün Teknik için "Bilinmeyen uygulamaları yükle" iznini aç':'Denetleniyor; yeni sürüm varsa indirilip kurulacak','blue');}catch(e){showToast('Denetlenemedi','red');}}
+async function andGuncelle(){
+  showToast('Güncelleme denetleniyor…','blue');
+  try{const r=await andYerel('guncellemeDenetle');const d=r&&r.durum;
+    if(d==='guncel')showToast('Uygulama güncel (1.0.'+(r.surumKodu||'')+')','green');
+    else if(d==='indiriliyor')showToast('Sürüm 1.0.'+r.sonSurum+' indiriliyor, birazdan kurulacak','blue');
+    else if(d==='izin')showToast('Açılan ekranda "Bu kaynaktan izin ver"i aç, sonra tekrar ⬆️ Güncelleme\'ye bas','amber');
+    else if(d)showToast('Denetlenemedi, internet bağlantısını kontrol et','red');
+    else showToast('Denetleniyor; yeni sürüm varsa indirilip kurulacak','blue');}
+  catch(e){showToast('Denetlenemedi','red');}}
 function andIzinIste(){andYerel('izinIste').catch(()=>{});setTimeout(()=>{try{pushKartCiz();}catch(e){}},5000);}
 async function andYenidenKaydet(){ANDROID.kayit=null;const ok=await andKaydol();try{await andYerel('widgetYenile');}catch(e){}showToast(ok?'Cihaz kaydedildi, widget\'lar yenileniyor':'Kaydedilemedi',ok?'green':'red');pushKartCiz();}
 async function andKartCiz(el){

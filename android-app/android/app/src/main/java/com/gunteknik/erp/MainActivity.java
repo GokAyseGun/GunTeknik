@@ -75,28 +75,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onResume() {
         super.onResume();
-        GuncellemeDenetci.denetle(this, false);
         Veri.arkaplanda(this);
-        kurulumIzniKontrol();
-    }
-
-    /** İndirilmiş güncelleme var ama "bilinmeyen uygulamaları yükle" izni yoksa bir kez sor. */
-    private void kurulumIzniKontrol() {
-        int n = GuncellemeDenetci.bekleyen(this);
-        if (n <= 0 || GuncellemeDenetci.kurIzniVar(this)) return;
-        String anahtar = "kurIzniSoruldu" + n;
-        if (Ayar.bayrak(this, anahtar)) return;
-        Ayar.bayrak(this, anahtar, true);
-        new AlertDialog.Builder(this)
-            .setTitle("Otomatik güncelleme")
-            .setMessage("Gün Teknik'in yeni sürümleri kendisi kurabilmesi için bir sonraki ekranda \"Bu kaynaktan izin ver\" seçeneğini aç. Bir kez yapman yeterli.")
-            .setPositiveButton("Ayarları aç", (d, w) -> {
-                try {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
-                } catch (Exception ignored) {}
-            })
-            .setNegativeButton("Sonra", null)
-            .show();
     }
 
     @Override

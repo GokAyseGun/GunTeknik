@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * 2) N bu kurulumdan büyükse APK'yı uygulamanın kendi klasörüne indirir.
  * 3) Uygulama ekranda değilse Android'in kurulum sistemiyle (PackageInstaller) kurar.
  *    Android 12+ : uygulama kendini bir kez güncelledikten sonra sonraki güncellemeler genellikle onay istemez.
- * Tetikleyiciler: FCM "guncelle" sinyali (Supabase 10 dk'da bir GitHub'a bakar), uygulama açılışı, widget yenilemesi.
+ * Yalnızca elle tetiklenir: ERP → Ayarlar → Android → ⬆️ Güncelleme (GTYerelPlugin.guncellemeDenetle).
  */
 public final class GuncellemeDenetci {
 
@@ -107,7 +107,8 @@ public final class GuncellemeDenetci {
     }
 
     // ---------------------------------------------------------------- iç işler
-    private static String[] sonEtiket() throws Exception {
+    /** Son sürüm etiketi ve numarası: {"android-v7","7"} ya da null. Ana iş parçacığında çağrılmaz. */
+    public static String[] sonEtiket() throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(SAYFA).openConnection();
         try {
             c.setInstanceFollowRedirects(false);
