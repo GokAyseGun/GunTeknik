@@ -14559,9 +14559,9 @@ function onayHtmlIndir(){
       const isim=document.getElementById('onaylayan-isim').value.trim();
       if(!isim){alert('Lütfen adınızı girin');return;}
       // Supabase'e kaydet
-      const SB_URL='${window.SB_URL||'https://zfflnrerdevnflchscqe.supabase.co'}';
-      const SB_KEY='${window.SB_KEY||''}';
-      fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+token,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({durum:'Onaylandı',onay_tarihi:new Date().toISOString(),onaylayan_isim:isim})})
+      const SB_URL='${SB_URL}';
+      const SB_KEY='${SB_KEY}';
+      fetch(SB_URL+'/rest/v1/rpc/teklif_onayla',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({p_token:token,p_isim:isim})})
         .then(()=>{document.getElementById('basari').style.display='block';document.querySelector('button').style.display='none';document.getElementById('onaylayan-isim').style.display='none';})
         .catch(()=>alert('Hata oluştu, lütfen tekrar deneyin.'));
     }

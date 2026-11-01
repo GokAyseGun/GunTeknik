@@ -110,7 +110,15 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - Reklam sayfasında **Arama takibi** kartı (`#at-kart`, `atHtml`): kaynak ve sektöre göre dönüşüm, oluşmama sebepleri, takip listesi, "+ Kayıt" (WhatsApp için).
 - Sıradaki fikirler: arama penceresine "iş alındı" seçilince ERP'de işlem açma; ERP'den widget teması.
 
+## 6b. Güvenlik (1 Kasım 2026)
+- **Tablolar:** Anonim (anon) erişim kapatıldı. Tablolar yalnızca `erp_uyeler` listesindeki giriş yapmış kullanıcılara açık (`erp_uye()`, politika `erp_uye_hepsi` / `erp_uye_okur`). Listede şu an 3 hesap var (auth.users'tan). **Yeni kullanıcı eklenince `erp_uyeler`'e de eklenmeli.**
+- **Açık bırakılanlar:** `villa_*` tabloları ve `sistem_ayarlar` (villa.html girişsiz kullanıyor) ile `villa-files` deposu.
+- **Teklif onayı:** Müşteri artık `teklif_onay_getir(p_token)` / `teklif_onayla(p_token,p_isim)` RPC'leriyle onaylıyor (onay.html ve ERP'deki eski satır içi sayfa güncellendi).
+- **RPC'ler:** `auth.uid() is null` denetimleri `erp_uye()` oldu. `push_teslim_al`, `push_tetikle` ve `push_sunucu_kontrol` dışarıdan çağrılamaz.
+- **Görünüm:** `google_ads_grup_gunluk` artık `security_invoker`.
+
 ## 7. Bekleyen küçük işler (kullanıcı tarafı)
+- Supabase → Authentication → Sign In / Providers → "Allow new users to sign up" kapatılmalı (yabancı kayıt olsa da erp_uyeler'de olmadığı için veri göremez; yine de kapalı olması iyi).
 - Google Maps anahtarına `https://gokaysegun.github.io/*` yönlendiren kısıtlaması eklenmeli (ERP'deki anahtar, RefererNotAllowedMapError).
 - Depodan eski dosyalar silinebilir: `deprem.html`, `evrak.html`, eski Google Ads workflow'ları.
 - İsteğe bağlı: `google.maps.Marker` → `AdvancedMarkerElement` (Map ID gerekir).

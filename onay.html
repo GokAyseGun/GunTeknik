@@ -56,8 +56,10 @@ async function yukle(){
     return;
   }
   try{
-    const res = await fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+token+'&select=*,kisiler(isim,tel,adres)',{
-      headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}
+    const res = await fetch(SB_URL+'/rest/v1/rpc/teklif_onay_getir',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY},
+      body:JSON.stringify({p_token:token})
     });
     const data = await res.json();
     if(!data||!data.length){
@@ -123,10 +125,10 @@ async function onayla(tok){
   }
   if(btn)btn.disabled=true;
   try{
-    const res = await fetch(SB_URL+'/rest/v1/teklifler?onay_token=eq.'+tok,{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,Prefer:'return=minimal'},
-      body:JSON.stringify({durum:'Onaylandı',onay_tarihi:new Date().toISOString(),onaylayan_isim:isim})
+    const res = await fetch(SB_URL+'/rest/v1/rpc/teklif_onayla',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY},
+      body:JSON.stringify({p_token:tok,p_isim:isim})
     });
     if(res.ok){
       document.querySelector('.teklif-kutu')?.remove();
