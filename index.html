@@ -1533,6 +1533,32 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 .at-form-2 input,.at-form-not{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;outline:none;}
 .at-form-not{margin-top:6px;}
 .at-yok{margin-top:10px;}
+.at-bas-tik{cursor:pointer;}
+.at-ust-d{display:flex;gap:6px;align-items:center;}
+.at-tum-btn{margin-top:10px;}
+.at-liste-modal{max-width:640px;}
+#at-l-sz{flex:0 0 auto;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.at-l-govde{flex:1 1 auto;}
+.at-l-ara{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;outline:none;}
+.at-l-donem{margin-top:8px;}
+.at-l-sec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;}
+@media(min-width:600px){.at-l-sec{grid-template-columns:repeat(4,minmax(0,1fr));}}
+.at-l-sec select{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:12.5px;outline:none;appearance:none;}
+.at-l-ozet{font-size:12px;color:var(--text2);margin-bottom:6px;}
+.at-l-gun{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 4px;}
+.at-l-sat{padding:9px 10px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2);margin-bottom:6px;}
+.at-l-sat.tik{cursor:pointer;}
+.at-l-sat.eksik{border-color:var(--amber);}
+.at-l-ust{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0;}
+.at-l-ust b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.at-l-ust small{color:var(--text3);font-size:11px;white-space:nowrap;}
+.at-l-d{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
+.at-l-d .at-ik{width:30px;height:30px;font-size:13px;}
+.at-l-et{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.at-e{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);}
+.at-e.bos{background:var(--amber-lt);border-color:var(--amber);color:var(--amber);}
+.at-e.soluk{color:var(--text3);}
+.at-l-not{font-size:12px;color:var(--text2);margin-top:6px;}
 .kk-rozet{display:inline-block;margin-top:6px;margin-right:6px;padding:3px 9px;border-radius:999px;background:var(--cy-lt);border:1px solid var(--cy-md);color:var(--cy);font-size:11.5px;font-weight:600;}
 .kk-rozet.uyari{background:var(--amber-lt);border-color:var(--amber);color:var(--amber);cursor:pointer;}
 .kk-rozet.tavsiye{background:var(--green-lt);border-color:var(--green);color:var(--green);}
@@ -4709,7 +4735,7 @@ function atYukle(zorla){
     .catch(e=>{console.warn('arama takip',e);AT.yuklu=true;}).finally(()=>{AT.yuk=null;});
   return AT.yuk;
 }
-function atCiz(){const el=document.getElementById('at-kart');if(!el)return;try{el.innerHTML=atHtml(typeof rkAralik==='function'?rkAralik():null);}catch(e){console.warn('arama takip çiz',e);el.innerHTML='<div class="gf-not">Arama takibi çizilemedi.</div>';}}
+function atCiz(){try{const m=document.getElementById('modal-at-liste');if(m&&m.classList.contains('open'))atListeCiz();}catch(e){}const el=document.getElementById('at-kart');if(!el)return;try{el.innerHTML=atHtml(typeof rkAralik==='function'?rkAralik():null);}catch(e){console.warn('arama takip çiz',e);el.innerHTML='<div class="gf-not">Arama takibi çizilemedi.</div>';}}
 function atAd(r){return r.rehber_ad||r.numara||(r.kanal==='wa'?'WhatsApp kaydı':'Elle kayıt');}
 function atHtml(A){
   if(!AT.yuklu){atYukle().then(atCiz);return '<div class="rk-b">📞 Arama takibi</div><div class="gf-not">Yükleniyor…</div>';}
@@ -4718,7 +4744,7 @@ function atHtml(A){
   const say=f=>L.filter(f).length;
   const n=L.length,pot=say(r=>r.sonuc==='potansiyel'),is=say(r=>r.sonuc==='is_alindi'),yan=say(r=>r.sonuc==='yanlis'),olm=say(r=>r.sonuc==='olusmadi'),bos=say(r=>!r.sonuc);
   const don=x=>{const g=x.filter(r=>r.sonuc&&r.sonuc!=='yanlis').length;const i=x.filter(r=>r.sonuc==='is_alindi').length;return g?Math.round(i/g*100)+'%':'—';};
-  const ust=`<div class="rk-b at-ust"><span>📞 Arama takibi${A?` <small>${_esc(A.ad||'')}</small>`:''}</span>${USER_ROL!=='goruntule'?'<button type="button" class="rk-ag-btn" onclick="atEkleAc()">📞 Arama gir</button>':''}</div>`;
+  const ust=`<div class="rk-b at-ust"><span class="at-bas-tik" onclick="atListeAc()">📞 Arama takibi${A?` <small>${_esc(A.ad||'')}</small>`:''} <small>›</small></span><span class="at-ust-d"><button type="button" class="rk-ikon at-tum" onclick="atListeAc()" title="Tüm kayıtlar">📋</button>${USER_ROL!=='goruntule'?'<button type="button" class="rk-ag-btn" onclick="atEkleAc()">📞 Arama gir</button>':''}</span></div>`;
   if(!n)return ust+`<div class="gf-not">Bu dönemde arama kaydı yok. Android uygulamasında görüşme bitince açılan pencere ya da widget'taki sektör düğmeleri buraya yazar; WhatsApp'tan gelenleri <b>📞 Arama gir</b> ile girebilirsin.</div>`+atTakipHtml();
   const k=(ad,v,renk,alt)=>`<div class="at-k"><b class="num" style="color:${renk}">${v}</b><span>${ad}</span>${alt?`<small>${alt}</small>`:''}</div>`;
   let h=ust+`<div class="at-kpi">${k('Arama',n,'var(--text)',bos?bos+' sonuçsuz':'')}${k('Potansiyel',pot,'var(--amber)','')}${k('İş alındı',is,'var(--green)','')}${k('Yanlış',yan,'var(--text3)','')}${k('Oluşmadı',olm,'var(--red)','')}${k('Dönüşüm',don(L),'var(--cy)','iş / gerçek arama')}</div>`;
@@ -4729,7 +4755,7 @@ function atHtml(A){
   const SB={};L.filter(r=>r.sonuc==='olusmadi').forEach(r=>{const s=r.sebep||'belirtilmedi';SB[s]=(SB[s]||0)+1;});
   if(Object.keys(SB).length)h+=`<div class="at-b">Neden iş olmadı?</div><div class="at-sebep">${Object.entries(SB).sort((a,b)=>b[1]-a[1]).map(([s,v])=>`<span class="isf-chip">${_esc(AT_SEBEP[s]||'Belirtilmedi')} <b class="num">${v}</b></span>`).join('')}</div>`;
   h+=atTakipHtml();
-  h+=`<div class="at-b">Son aramalar</div><div class="at-liste">${L.slice(0,12).map(atSatir).join('')}</div>${L.length>12?`<div class="gf-ipucu">+${L.length-12} kayıt daha bu dönemde</div>`:''}`;
+  h+=`<div class="at-b">Son aramalar</div><div class="at-liste">${L.slice(0,12).map(atSatir).join('')}</div><button type="button" class="btn btn-secondary btn-full at-tum-btn" onclick="atListeAc()">📋 Tüm arama kayıtları${AT.liste.length?' ('+AT.liste.length+')':''}</button>`;
   return h;
 }
 function atTakipHtml(){
@@ -4741,6 +4767,59 @@ function atSatir(r){
   const z=r.zaman?new Date(r.zaman):null;const saat=z?String(z.getHours()).padStart(2,'0')+':'+String(z.getMinutes()).padStart(2,'0'):'';
   const sn=r.sonuc?AT_SONUC[r.sonuc]||r.sonuc:'<span style="color:var(--text3)">Sonuç yok</span>';
   return `<div class="at-sat${USER_ROL!=='goruntule'?' tik':''}"${USER_ROL!=='goruntule'?` onclick="atEkleAc(${r.id})"`:''}><div class="at-sat-m"><b>${_esc(atAd(r))}</b><small>${rkGunAd(r.tarih)} ${saat} · ${r.kanal==='wa'?'💬':'📞'} ${_esc(AT_KAYNAK[r.kaynak]||'Kaynak yok')}${r.sektor?' · '+_esc(r.sektor):''}${r.sure_sn?' · '+Math.round(r.sure_sn/60*10)/10+' dk':''}</small></div><span class="at-sonuc">${sn}</span></div>`;
+}
+
+// ---- Tüm arama kayıtları: süzgeç, ayrıntı, düzenle / sil
+AT.f={ara:'',donem:'tum',kaynak:'',sonuc:'',sektor:'',kanal:'',eksik:false};
+function atListeAc(){
+  let m=document.getElementById('modal-at-liste');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-at-liste';m.innerHTML=`<div class="modal at-liste-modal"><div class="modal-handle"></div><div class="modal-head"><h3>📋 Arama kayıtları</h3><button class="modal-close" onclick="closeModal('modal-at-liste')">✕</button></div><div class="modal-body" id="at-l-sz"></div><div class="modal-body at-l-govde" id="at-l-body"></div><div class="modal-foot" id="at-l-foot"></div></div>`;document.body.appendChild(m);}
+  atListeSuzgec();atListeCiz();openModal('modal-at-liste');
+  if(!AT.yuklu)atYukle().then(atListeCiz);
+}
+function atListeSuzgec(){
+  const el=document.getElementById('at-l-sz');if(!el)return;const F=AT.f;
+  const sec=(alan,bos,S)=>`<select onchange="AT.f.${alan}=this.value;atListeCiz()"><option value="">${bos}</option>${Object.entries(S).map(([k,ad])=>`<option value="${_esc(k)}"${F[alan]===k?' selected':''}>${_esc(ad)}</option>`).join('')}</select>`;
+  const sek={};rkAgSektorler().forEach(x=>sek[x]=x);sek['__yok']='Sektör yok';
+  const son=Object.assign({},AT_SONUC,{__yok:'Sonuç yok'});const kay=Object.assign({},AT_KAYNAK,{__yok:'Kaynak yok'});
+  el.innerHTML=`<input type="search" class="at-l-ara" placeholder="Ad, numara ya da not ara…" value="${_esc(F.ara)}" oninput="AT.f.ara=this.value;atListeCiz()">
+    <div class="rk-ag-c at-l-donem">${[['bugun','Bugün'],['7','7 gün'],['30','30 gün'],['ay','Bu ay'],['90','90 gün'],['tum','Tümü']].map(([k,a])=>`<button type="button" class="isf-chip${F.donem===k?' on':''}" onclick="AT.f.donem='${k}';atListeSuzgec();atListeCiz()">${a}</button>`).join('')}
+      <button type="button" class="isf-chip${F.eksik?' on':''}" onclick="AT.f.eksik=!AT.f.eksik;atListeSuzgec();atListeCiz()">⚠️ Eksik bilgili</button></div>
+    <div class="at-l-sec">${sec('kaynak','Tüm kaynaklar',kay)}${sec('sektor','Tüm sektörler',sek)}${sec('sonuc','Tüm sonuçlar',son)}${sec('kanal','Tüm kanallar',{tel:'📞 Telefon',wa:'💬 WhatsApp'})}</div>`;
+}
+function atListeSuz(){
+  const F=AT.f;const bg=localToday();
+  const bas=F.donem==='bugun'?bg:F.donem==='ay'?bg.slice(0,8)+'01':F.donem==='tum'?'0000':gfGunEkle(bg,-(parseInt(F.donem)||30)+1);
+  const q=_trk(F.ara.trim());const qd=F.ara.replace(/\D/g,'');
+  const esit=(v,f)=>!f||(f==='__yok'?!v:v===f);
+  return AT.liste.filter(r=>{
+    if(r.tarih<bas)return false;
+    if(!esit(r.kaynak,F.kaynak)||!esit(r.sektor,F.sektor)||!esit(r.sonuc,F.sonuc))return false;
+    if(F.kanal&&(r.kanal||'tel')!==F.kanal)return false;
+    if(F.eksik&&r.kaynak&&r.sonuc&&(r.sektor||r.sonuc==='yanlis'))return false;
+    if(q){const m=_trk([r.rehber_ad,r.numara,r.aciklama,r.sektor].filter(Boolean).join(' '));if(!m.includes(q)&&!(qd.length>=3&&String(r.numara||'').replace(/\D/g,'').includes(qd)))return false;}
+    return true;});
+}
+function atListeCiz(){
+  const el=document.getElementById('at-l-body');if(!el)return;
+  if(!AT.yuklu){el.innerHTML='<div class="gf-not">Yükleniyor…</div>';return;}
+  const L=atListeSuz();const yetki=USER_ROL!=='goruntule';
+  const is=L.filter(r=>r.sonuc==='is_alindi').length,ger=L.filter(r=>r.sonuc&&r.sonuc!=='yanlis').length;
+  let h=`<div class="at-l-ozet"><b>${L.length}</b> kayıt${L.length?` · ${is} iş alındı${ger?' · dönüşüm %'+Math.round(is/ger*100):''}`:''}</div>`;
+  if(!L.length)h+='<div class="gf-not">Bu süzgece uyan kayıt yok.</div>';
+  let gun='';
+  L.forEach(r=>{
+    if(r.tarih!==gun){gun=r.tarih;h+=`<div class="at-l-gun">${rkGunAd(r.tarih)}${rkGunAd(r.tarih).length>5?'':' · '+gfTrTarih(r.tarih)}</div>`;}
+    const z=r.zaman?new Date(r.zaman):null;const sa=z?String(z.getHours()).padStart(2,'0')+':'+String(z.getMinutes()).padStart(2,'0'):'';
+    const eksik=!r.kaynak||!r.sonuc||(!r.sektor&&r.sonuc!=='yanlis');
+    const etiket=(v,ad,bos)=>v?`<span class="at-e">${_esc(ad||v)}</span>`:`<span class="at-e bos">${bos}</span>`;
+    h+=`<div class="at-l-sat${yetki?' tik':''}${eksik?' eksik':''}"${yetki?` onclick="atEkleAc(${r.id})"`:''}>
+      <div class="at-l-ust"><b>${sa} · ${r.kanal==='wa'?'💬':'📞'} ${_esc(atAd(r))}</b>${r.numara&&r.rehber_ad?`<small>${_esc(r.numara)}</small>`:''}
+        <span class="at-l-d">${r.numara?`<a class="at-ik" href="tel:${_esc(r.numara)}" onclick="event.stopPropagation()" title="Ara">📞</a>`:''}${yetki?`<button type="button" class="at-ik" onclick="event.stopPropagation();atSil(${r.id})" title="Sil">🗑</button>`:''}</span></div>
+      <div class="at-l-et">${etiket(r.kaynak,AT_KAYNAK[r.kaynak],'Kaynak yok')}${etiket(r.sektor,r.sektor,r.sonuc==='yanlis'?'—':'Sektör yok')}${etiket(r.sonuc,(AT_SONUC[r.sonuc]||r.sonuc)+(r.sonuc==='olusmadi'&&r.sebep?' · '+(AT_SEBEP[r.sebep]||r.sebep):''),'Sonuç yok')}${r.sure_sn?`<span class="at-e soluk">${r.sure_sn<60?r.sure_sn+' sn':Math.floor(r.sure_sn/60)+' dk '+(r.sure_sn%60)+' sn'}</span>`:''}${r.yon==='gelen'?'<span class="at-e soluk">otomatik</span>':''}</div>
+      ${r.aciklama?`<div class="at-l-not">📝 ${_esc(r.aciklama)}</div>`:''}</div>`;});
+  el.innerHTML=h;
+  const f=document.getElementById('at-l-foot');if(f)f.innerHTML=(yetki?`<button class="btn btn-secondary" onclick="atEkleAc()">📞 Arama gir</button>`:'')+`<button class="btn btn-primary btn-full" onclick="closeModal('modal-at-liste')">Kapat</button>`;
 }
 function atOlusmadi(id){atEkleAc(id,'olusmadi');}
 async function atGuncelle(id,p){
