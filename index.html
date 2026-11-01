@@ -4644,6 +4644,13 @@ function andBaslat(){
   const bas=()=>{andKaydol().then(ok=>{if(ok){try{pushPlanla(true);}catch(e){}try{widgetYaz(true);}catch(e){}}});};
   if(andAktif())bas();else window.addEventListener('gt-android-hazir',bas,{once:true});
 }
+// Google Takvim / Rehber yetkisi (uygulama içinde)
+async function andGoogleToken(kapsam){
+  try{const r=await andYerel('googleYetki',{kapsamlar:[kapsam]});if(r&&r.token)return r.token;throw new Error('Google jetonu gelmedi');}
+  catch(e){const m=String((e&&e.message)||e||'');
+    if(/googleYetki|not implemented|UNIMPLEMENTED/i.test(m))throw new Error('Uygulamayı güncelle (Ayarlar → Android → ⬆️ Güncelleme) ya da bu işlemi Chrome\'dan yap');
+    throw new Error(m||'Google izni alınamadı');}
+}
 function andIzinIste(){andYerel('izinIste').catch(()=>{});setTimeout(()=>{try{pushKartCiz();}catch(e){}},5000);}
 async function andYenidenKaydet(){ANDROID.kayit=null;const ok=await andKaydol();try{await andYerel('widgetYenile');}catch(e){}showToast(ok?'Cihaz kaydedildi, widget\'lar yenileniyor':'Kaydedilemedi',ok?'green':'red');pushKartCiz();}
 async function andKartCiz(el){
@@ -10570,6 +10577,7 @@ let _gToken=null,_gTokenExp=0,_googYeniKisiId=null;
 
 function googleTokenAl(cb){
   if(_gToken&&Date.now()<_gTokenExp-60000){cb(_gToken);return;}
+  if(typeof andAktif==='function'&&andAktif()){andGoogleToken('https://www.googleapis.com/auth/contacts').then(t=>{_gToken=t;_gTokenExp=Date.now()+50*60*1000;cb(t);}).catch(e=>showToast(String(e.message||e),'red'));return;}
   const client=google.accounts.oauth2.initTokenClient({
     client_id:GOOGLE_CLIENT_ID,
     scope:'https://www.googleapis.com/auth/contacts',
@@ -17057,6 +17065,8 @@ async function gtAyarYaz(d){const a=Object.assign({},gtAyar(),d);if(PS.ayarVar)a
 function gtTokenGecerli(){return GT.token&&Date.now()<GT.exp-60000;}
 function gtToken(){return new Promise((res,rej)=>{
   if(gtTokenGecerli())return res(GT.token);
+  // Android uygulaması: WebView'da Google açılır penceresi çalışmaz → telefonun Google hesabıyla yerel yetki
+  if(typeof andAktif==='function'&&andAktif()){andGoogleToken('https://www.googleapis.com/auth/calendar.app.created').then(t=>{GT.token=t;GT.exp=Date.now()+50*60*1000;res(t);}).catch(rej);return;}
   if(!(window.google&&google.accounts&&google.accounts.oauth2)){rej(new Error('Google girişi yüklenmedi'));return;}
   const c=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/calendar.app.created',
     callback:r=>{if(r.error){rej(new Error(r.error));return;}GT.token=r.access_token;GT.exp=Date.now()+r.expires_in*1000;res(GT.token);},error_callback:e=>rej(new Error((e&&e.type)==='popup_closed'?'İzin penceresi kapatıldı':'Google izni alınamadı'))});

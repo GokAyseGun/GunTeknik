@@ -21,6 +21,20 @@ import android.content.pm.PackageManager;
 import android.provider.Settings;
 
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.android.gms.auth.api.identity.AuthorizationRequest;
+import com.google.android.gms.auth.api.identity.AuthorizationResult;
+import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.Scope;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.getcapacitor.JSArray;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -104,6 +118,78 @@ public class GTYerelPlugin extends Plugin {
 
     private boolean izin(String p) {
         return ContextCompat.checkSelfPermission(getContext(), p) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Google erişim jetonu (Takvim, Rehber). WebView'da Google'ın açılır pencere girişi çalışmadığı için
+     * telefonun kendi Google hesabıyla yetki alınır. {kapsamlar:[...]} → {token}
+     */
+    @PluginMethod
+    public void googleYetki(PluginCall call) {
+        Activity a = getActivity();
+        if (a == null) { call.reject("Etkinlik yok"); return; }
+        List<Scope> L = new ArrayList<>();
+        try {
+            JSArray k = call.getArray("kapsamlar");
+            for (int i = 0; k != null && i < k.length(); i++) L.add(new Scope(k.getString(i)));
+        } catch (Exception ignored) {}
+        if (L.isEmpty()) { call.reject("Kapsam yok"); return; }
+        AuthorizationRequest istek = AuthorizationRequest.builder().setRequestedScopes(L).build();
+        Identity.getAuthorizationClient(a).authorize(istek)
+            .addOnSuccessListener(r -> {
+                if (r.hasResolution() && r.getPendingIntent() != null) {
+                    googlePencere(call, a, r);
+                } else {
+                    googleDon(call, r);
+                }
+            })
+            .addOnFailureListener(e -> call.reject("Google izni alınamadı: " + googleHata(e)));
+    }
+
+    private void googlePencere(PluginCall call, Activity a, AuthorizationResult r) {
+        if (!(a instanceof androidx.activity.ComponentActivity)) { call.reject("Etkinlik desteklenmiyor"); return; }
+        final ActivityResultLauncher<IntentSenderRequest>[] kayit = new ActivityResultLauncher[1];
+        kayit[0] = ((androidx.activity.ComponentActivity) a).getActivityResultRegistry().register(
+            "gt_google_" + System.currentTimeMillis(),
+            new ActivityResultContracts.StartIntentSenderForResult(),
+            sonuc -> {
+                try {
+                    if (sonuc.getResultCode() != Activity.RESULT_OK || sonuc.getData() == null) {
+                        call.reject("İzin verilmedi");
+                        return;
+                    }
+                    AuthorizationResult ar = Identity.getAuthorizationClient(a).getAuthorizationResultFromIntent(sonuc.getData());
+                    googleDon(call, ar);
+                } catch (Exception e) {
+                    call.reject("Google izni alınamadı: " + googleHata(e));
+                } finally {
+                    if (kayit[0] != null) kayit[0].unregister();
+                }
+            });
+        try {
+            kayit[0].launch(new IntentSenderRequest.Builder(r.getPendingIntent().getIntentSender()).build());
+        } catch (Exception e) {
+            kayit[0].unregister();
+            call.reject("Google izin penceresi açılamadı: " + e.getMessage());
+        }
+    }
+
+    private void googleDon(PluginCall call, AuthorizationResult r) {
+        String t = r.getAccessToken();
+        if (t == null || t.isEmpty()) { call.reject("Google jetonu gelmedi"); return; }
+        JSObject o = new JSObject();
+        o.put("token", t);
+        call.resolve(o);
+    }
+
+    private static String googleHata(Exception e) {
+        if (e instanceof ApiException) {
+            int k = ((ApiException) e).getStatusCode();
+            if (k == 10) return "uygulama Google Cloud'da tanımlı değil (Android OAuth istemcisi gerekli)";
+            if (k == 16 || k == 12501) return "iptal edildi";
+            return "kod " + k;
+        }
+        return e.getMessage() != null ? e.getMessage() : "bilinmeyen hata";
     }
 
     /** Yeni APK sürümü var mı? (Uygulama zaten günde birkaç kez kendisi bakar.) */

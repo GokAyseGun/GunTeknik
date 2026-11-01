@@ -110,6 +110,11 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - Reklam sayfasında **Arama takibi** kartı (`#at-kart`, `atHtml`): kaynak ve sektöre göre dönüşüm, oluşmama sebepleri, takip listesi, "+ Kayıt" (WhatsApp için).
 - Sıradaki fikirler: arama penceresine "iş alındı" seçilince ERP'de işlem açma; ERP'den widget teması.
 
+## 6a. Google girişi uygulamada (1 Kasım 2026)
+- WebView'da Google'ın açılır pencereli girişi (GIS token client) çalışmıyor: hesap seçilince beyaz sayfada kalıyor.
+- Uygulamada `gtToken` (Takvim) ve `googleTokenAl` (Rehber), `andGoogleToken` → yerel `googleYetki` üzerinden telefonun Google hesabıyla yetki alıyor (play-services-auth, AuthorizationClient).
+- Bunun için Google Cloud'da (web istemcisi 341229493021 ile aynı proje) **Android OAuth istemcisi** gerekli: paket `com.gunteknik.erp`, SHA-1 `68:AF:5C:8A:73:79:E5:E9:C5:A0:B5:8B:09:5A:FB:B8:3B:38:D6:EA` (sürüm imza anahtarı).
+
 ## 6b. Güvenlik (1 Kasım 2026)
 - **Tablolar:** Anonim (anon) erişim kapatıldı. Tablolar yalnızca `erp_uyeler` listesindeki giriş yapmış kullanıcılara açık (`erp_uye()`, politika `erp_uye_hepsi` / `erp_uye_okur`). Listede şu an 3 hesap var (auth.users'tan). **Yeni kullanıcı eklenince `erp_uyeler`'e de eklenmeli.**
 - **Açık bırakılanlar:** `villa_*` tabloları ve `sistem_ayarlar` (villa.html girişsiz kullanıyor) ile `villa-files` deposu.
