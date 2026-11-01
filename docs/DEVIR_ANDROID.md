@@ -142,6 +142,15 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6g. Arama takibi kartı + analiz (1 Kasım 2026)
+- Kart reklam sayfasının döneminden bağımsız: kendi dönem seçici (Bu ay / 30 / 90 / Tümü / Reklam dönemi; `AT.donem`, localStorage `at_donem`, varsayılan Tümü). `atYukle` artık tarih sınırı olmadan tüm kayıtları çeker.
+- Analizler: 9 KPI (önceki döneme fark), sonuca göre yığılı trend grafiği (Chart.js, gün/hafta/ay kovası, dönüşüm % çizgisi, Google'ın saydığı reklam araması kesikli çizgi), arama hunisi, kaynak/sektör sonuç çubukları (dokununca liste süzülür), sektör × kaynak matrisi, gün × saat ısı haritası + saat çubukları, neden olmadı, ortalama görüşme süresi, önceki dönemle kıyas tablosu, aylık tablo (Ads arama/iş başı maliyet).
+- Saati bilinmeyen kayıt = elle girilmiş ve tam 12:00:00 (`atSaatYok`) → saat analizine katılmaz, listede "saat yok".
+- "Takipteki potansiyel müşteriler" listesi ve 3 gün sonra soran `takip:` bildirimi kaldırıldı (push_sunucu_kontrol'dan çıkarıldı). Potansiyel sonucu kaydedilmeye devam eder.
+- Son 20 arama (tüm tarihler) + "📋 Tüm liste" düğmesi.
+- Arama gir: tarih + saat (bugün → şu an, geçmiş gün → 12:00), düzenlemede tarih/saat değişebilir (`arama_guncelle` `zaman` alır, gün değişirse reklam eşlemesi yenilenir). "4 · Arama adedi" (1–30): `arama_kaydet` `adet` kadar ayrı kayıt açar, `idler` döner.
+- Eski hata: geçmiş gün kayıtları `T12:00:00` UTC olarak yazılıp 15:00 görünüyordu; düzeltildi ve mevcut 8 kayıt 12:00 TSİ'ye çekildi.
+
 ## 6f. Arama algılama tanısı + Google "bağlanmadı" uyarısı (1 Kasım 2026)
 - **AramaAlici** her adımı `gt_arama` prefs'e yazar (`sonOlay`, `sonSonuc`): "Telefon durumu alındı", "Arama kaydı izni yok", "Cihaz kaydı yok", "Giden arama", "Cevapsız/reddedilen", "0 sn", "Rehberde özel kayıt", "Pencere açıldı", "Üstte gösterme izni yok — bildirim gönderildi"… Arama kaydı geç yazılan telefonlar için 4 deneme (~6.5 sn).
 - `izinDurum` artık `aramaSonZaman`, `aramaSonuc`, `pil` (pil kısıtlamasından muaf mı), `uretici` döndürür; yeni yöntemler `pilIzni` (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) ve `uygulamaAyarlari` (Xiaomi vb. otomatik başlat için).
