@@ -76,6 +76,17 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - Uygulama yeni sürümü kendisi fark edip güncelleme önersin.
   - İmzalama anahtarı GitHub Secrets'ta tutulmalı.
 
+### Durum — Adım 1 tamam (1 Kasım 2026)
+- `android-app/`: Capacitor 8.6 projesi. `appId` = `com.gunteknik.erp`, ad "Gün Teknik". `server.url` = GitHub Pages; çevrimdışıyken `www/hata.html` (15 sn'de bir yeniden dener).
+- Yerel kod Java (`android-app/android/app/src/main/java/com/gunteknik/erp/`):
+  - `MainActivity` — `GTYerelPlugin`'i kaydeder, her sayfa yüklenişinde `assets/gt-kopru.js`'i ekler, açılışta güncelleme denetler.
+  - `GTYerelPlugin` (`Capacitor.nativePromise('GTYerel', …)`): `bilgi`, `guncellemeDenetle`, `dosyaKaydet` (blob/data indirmelerini İndirilenler/GunTeknik'e kaydeder ve açar).
+  - `GuncellemeDenetci` — 6 saatte bir `releases/latest`'e bakar; `android-vN` etiketi > sürüm kodu ise "İndir" önerir.
+- `gt-kopru.js`: `window.GT_ANDROID={surumKodu}`, `<html data-android="1">`, `gt-android-hazir` olayı; `a[download]` blob/data tıklamalarını yerele yönlendirir.
+- İzinler: internet, konum, kamera. İkon/splash ERP logosundan (zemin `#060606`).
+- `.github/workflows/android.yml`: `android-app/**` değişince derler, `GT_KEYSTORE_BASE64`, `GT_KEYSTORE_PASSWORD`, `GT_KEY_ALIAS`, `GT_KEY_PASSWORD` secret'larıyla imzalar, `android-vN` (N = run_number = versionCode) olarak Releases'a koyar. Secret yoksa derlemeyi atlar.
+- Sıradaki: bildirim kararı (FCM / WorkManager), oturum jetonu köprüsü, widget'lar, arama sonrası pencere.
+
 ## 7. Bekleyen küçük işler (kullanıcı tarafı)
 - Google Maps anahtarına `https://gokaysegun.github.io/*` yönlendiren kısıtlaması eklenmeli (ERP'deki anahtar, RefererNotAllowedMapError).
 - Depodan eski dosyalar silinebilir: `deprem.html`, `evrak.html`, eski Google Ads workflow'ları.

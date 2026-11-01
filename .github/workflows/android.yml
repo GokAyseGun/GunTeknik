@@ -1,0 +1,97 @@
+name: Android APK
+
+# android-app/ değişince APK'yı derler, imzalar ve GitHub Releases'a "android-vN" olarak koyar.
+# Telefondaki uygulama yeni sürümü kendisi fark edip indirmeyi önerir.
+# Elle çalıştırmak için: Actions → Android APK → Run workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+    inputs:
+      notlar:
+        description: 'Sürüm notu (isteğe bağlı)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: false
+
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    outputs:
+      anahtar: ${{ steps.k.outputs.anahtar }}
+    steps:
+      - id: k
+        env:
+          KS: ${{ secrets.GT_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "anahtar=var" >> "$GITHUB_OUTPUT"
+          else
+            echo "anahtar=yok" >> "$GITHUB_OUTPUT"
+            echo "::warning::İmza anahtarı (GT_KEYSTORE_BASE64) henüz GitHub Secrets'a eklenmemiş; APK derlenmedi."
+          fi
+
+  derle:
+    needs: kontrol
+    if: needs.kontrol.outputs.anahtar == 'var'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Capacitor bağımlılıkları
+        working-directory: android-app
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: İmza anahtarını çöz
+        env:
+          KS: ${{ secrets.GT_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/gunteknik.jks"
+          echo "GT_KEYSTORE_FILE=$RUNNER_TEMP/gunteknik.jks" >> "$GITHUB_ENV"
+
+      - name: APK derle
+        working-directory: android-app/android
+        env:
+          GT_KEYSTORE_PASSWORD: ${{ secrets.GT_KEYSTORE_PASSWORD }}
+          GT_KEY_ALIAS: ${{ secrets.GT_KEY_ALIAS }}
+          GT_KEY_PASSWORD: ${{ secrets.GT_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -PgtVersionCode=${{ github.run_number }}
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/GunTeknik.apk"
+
+      - name: Releases'a yükle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Gün Teknik Android 1.0.${{ github.run_number }}
+          body: ${{ github.event.inputs.notlar || github.event.head_commit.message || 'Yeni sürüm' }}
+          files: GunTeknik.apk
+          make_latest: true

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bağlantı yok</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #07101f; color: #e6edf7;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .kutu { min-height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 18px; padding: 24px; box-sizing: border-box; text-align: center; }
+  svg { width: 72px; height: 72px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  p { margin: 0; color: #9fb0c8; font-size: 15px; line-height: 1.5; max-width: 320px; }
+  button { margin-top: 8px; background: #00E5FF; color: #07101f; border: 0; border-radius: 12px;
+    padding: 14px 28px; font-size: 16px; font-weight: 700; }
+  button:active { transform: scale(.97); }
+</style>
+</head>
+<body>
+<div class="kutu">
+  <svg viewBox="0 0 1024 1024" aria-hidden="true">
+    <polygon fill="#E91E7E" points="520,176 330,498 450,498 382,862 520,612"/>
+    <polygon fill="#00E5FF" points="538,228 572,498 694,498 642,862 538,618"/>
+  </svg>
+  <h1>İnternet bağlantısı yok</h1>
+  <p>Gün Teknik ERP'ye ulaşılamadı. Bağlantı gelince otomatik yeniden denenecek.</p>
+  <button onclick="dene()">Yeniden dene</button>
+</div>
+<script>
+  var ADRES = 'https://gokaysegun.github.io/GunTeknik/';
+  function dene() { location.href = ADRES; }
+  window.addEventListener('online', dene);
+  setInterval(function () { if (navigator.onLine) dene(); }, 15000);
+</script>
+</body>
+</html>
