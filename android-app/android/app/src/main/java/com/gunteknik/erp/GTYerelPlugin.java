@@ -13,7 +13,14 @@ import android.util.Base64;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.provider.Settings;
+
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -42,6 +49,61 @@ public class GTYerelPlugin extends Plugin {
         r.put("surumKodu", GuncellemeDenetci.surumKodu(getContext()));
         r.put("surumAdi", GuncellemeDenetci.surumAdi(getContext()));
         call.resolve(r);
+    }
+
+    /** FCM anahtarı + kayıtlı cihaz anahtarı (ERP bununla cihaz_kaydet çağırır). */
+    @PluginMethod
+    public void fcmToken(PluginCall call) {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(t -> {
+            if (!t.isSuccessful() || t.getResult() == null) {
+                call.reject("FCM anahtarı alınamadı" + (t.getException() != null ? ": " + t.getException().getMessage() : ""));
+                return;
+            }
+            Ayar.fcm(getContext(), t.getResult());
+            JSObject r = new JSObject();
+            r.put("fcm", t.getResult());
+            r.put("cihaz", Ayar.cihaz(getContext()));
+            call.resolve(r);
+        });
+    }
+
+    /** Sunucunun verdiği cihaz anahtarını sakla; widget'lar ve arama penceresi bununla yazar. */
+    @PluginMethod
+    public void cihazKaydet(PluginCall call) {
+        String t = call.getString("token");
+        if (t == null || t.isEmpty()) { call.reject("Anahtar yok"); return; }
+        Ayar.cihaz(getContext(), t);
+        Veri.arkaplanda(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void widgetYenile(PluginCall call) {
+        Veri.arkaplanda(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void izinDurum(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("telefon", izin(Manifest.permission.READ_PHONE_STATE));
+        r.put("aramaKaydi", izin(Manifest.permission.READ_CALL_LOG));
+        r.put("rehber", izin(Manifest.permission.READ_CONTACTS));
+        r.put("bildirim", Build.VERSION.SDK_INT < 33 || izin(Manifest.permission.POST_NOTIFICATIONS));
+        r.put("ustte", Settings.canDrawOverlays(getContext()));
+        r.put("cihaz", Ayar.cihaz(getContext()) != null);
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void izinIste(PluginCall call) {
+        Activity a = getActivity();
+        if (a instanceof MainActivity) a.runOnUiThread(() -> ((MainActivity) a).izinleriIste(true));
+        call.resolve();
+    }
+
+    private boolean izin(String p) {
+        return ContextCompat.checkSelfPermission(getContext(), p) == PackageManager.PERMISSION_GRANTED;
     }
 
     /** Yeni APK sürümü var mı? (Uygulama zaten günde birkaç kez kendisi bakar.) */

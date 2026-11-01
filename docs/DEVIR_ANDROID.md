@@ -85,7 +85,30 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - `gt-kopru.js`: `window.GT_ANDROID={surumKodu}`, `<html data-android="1">`, `gt-android-hazir` olayı; `a[download]` blob/data tıklamalarını yerele yönlendirir.
 - İzinler: internet, konum, kamera. İkon/splash ERP logosundan (zemin `#060606`).
 - `.github/workflows/android.yml`: `android-app/**` değişince derler, `GT_KEYSTORE_BASE64`, `GT_KEYSTORE_PASSWORD`, `GT_KEY_ALIAS`, `GT_KEY_PASSWORD` secret'larıyla imzalar, `android-vN` (N = run_number = versionCode) olarak Releases'a koyar. Secret yoksa derlemeyi atlar.
-- Sıradaki: bildirim kararı (FCM / WorkManager), oturum jetonu köprüsü, widget'lar, arama sonrası pencere.
+
+### Durum — Adım 2 tamam (1 Kasım 2026): FCM, widget'lar, arama penceresi, Arama Takibi
+- **Karar: FCM.** Firebase projesi `gun-teknik`; `android-app/android/app/google-services.json` depoda. Hizmet hesabı Supabase secret'ı `FCM_SERVICE_ACCOUNT` (JSON).
+- **Supabase:**
+  - `cihazlar(token PK, kullanici, ad, fcm, surum, …)` — RLS açık, politika yok; yalnızca RPC'ler erişir.
+  - RPC'ler: `cihaz_kaydet(p_fcm,p_ad,p_token,p_surum)` (ERP oturumu gerekir, cihaz anahtarı döner), `cihaz_fcm(p_token,p_fcm)`.
+  - `arama_takip(zaman, tarih, numara, rehber_ad, yon, sure_sn, kanal, kaynak, sektor, sonuc, sebep, aciklama, reklam_id, takip_soruldu, …)`. Kaynak: `reklam|tavsiye|eski|bilinmiyor`. Sonuç: `potansiyel|is_alindi|yanlis|olusmadi`. Sebep: `fiyat|uzak|vazgecti|baska_usta|diger`.
+  - RPC'ler `arama_kaydet(p_token,p)`, `arama_guncelle(p_token,p_id,p)`, `arama_sil(p_token,p_id)`: ERP oturumu ya da cihaz anahtarı kabul eder. `kaynak='reklam'` olan kayıt `_arama_reklam_esle` ile `reklam_manuel`'e +1 (`aciklama='Arama takibi #id'`) yazılır, o günün `ads_arama_yok` kaydı ve arama hatırlatması silinir.
+  - `widget_durum(id=1, veri, veri_zaman, son_sinyal)`: ERP `widget_yaz(p)` ile anlık görüntüyü yazar (kasa, ay, aj[], od[]). `widget_veri(p_token)` bunu canlı arama sayılarıyla birlikte döndürür.
+  - `widget_sinyal()`: en fazla 10 sn'de bir `push-gonder?yenile=1` çağırır. `reklam_manuel` ve `arama_takip` tetikleyicileri ile `widget_yaz` kullanır.
+  - Eklemeler: `push_arama_yok` cihaz anahtarını da kabul eder; `push_tetikle` FCM cihazı varsa da çalışır; `push_durum` içinde `android` sayısı var; `push_sunucu_kontrol` potansiyel müşteriyi 3 gün sonra 09–20 arası sorar (`takip:ID`, eylem `{tip:'takip',id}`).
+- **push-gonder** (sürüm 3): Web Push'a ek olarak `fcm.js` ile FCM HTTP v1 data mesajı gönderir (`tip=bildirim|yenile`). Geçersiz FCM anahtarı `cihazlar.fcm=null` yapılır.
+- **Android** (`com.gunteknik.erp`):
+  - `GTMesajServisi`: FCM mesajlarını alır.
+  - `Bildirimci`: kanallar `hatirlatma`, `arama_kaydi`. Arama hatırlatmasında "Sektörle gir" / "Arama gelmedi" düğmeleri, takipte "İş alındı" / "Oluşmadı" düğmeleri var.
+  - `EylemAlici`: bildirim ve widget düğmelerini işler.
+  - `AramaAlici` (PHONE_STATE) + `AramaPenceresi`: gelen ve cevaplanmış aramadan sonra açılır. Numara rehberde yoksa ya da ad "GT" ile başlıyorsa çıkar; diğer rehber kayıtlarında çıkmaz. Üstte gösterme izni yoksa bildirimle açılır.
+  - Widget'lar: `WAramaWidget`, `WOzetWidget`, `WAjandaWidget`, `WEvrakWidget`, `WKasaWidget` (varsayılan gizli, 👁), `WPanoWidget`. Çizimler `WidgetCizici`'de. Veri önbelleği `Ayar.veri`; tazeleme FCM `yenile` sinyaliyle, uygulama açılınca ve 30 dakikada bir.
+  - `GTYerelPlugin` yöntemleri: `fcmToken`, `cihazKaydet`, `widgetYenile`, `izinDurum`, `izinIste`, `bilgi`, `guncellemeDenetle`, `dosyaKaydet`.
+- **ERP (index.html):**
+  - `andAktif` / `andKaydol` / `andKartCiz`: Ayarlar'daki bildirim kartı uygulamada Android kartına dönüşür.
+  - `widgetVeri` / `widgetYaz`: açılışta, her yazma işleminden 5 sn sonra, arka plana alınınca ve 30 dakikada bir çalışır.
+  - Reklam sayfasında **Arama takibi** kartı (`#at-kart`, `atHtml`): kaynak ve sektöre göre dönüşüm, oluşmama sebepleri, takip listesi, "+ Kayıt" (WhatsApp için).
+- Sıradaki fikirler: arama penceresine "iş alındı" seçilince ERP'de işlem açma; ERP'den widget teması.
 
 ## 7. Bekleyen küçük işler (kullanıcı tarafı)
 - Google Maps anahtarına `https://gokaysegun.github.io/*` yönlendiren kısıtlaması eklenmeli (ERP'deki anahtar, RefererNotAllowedMapError).

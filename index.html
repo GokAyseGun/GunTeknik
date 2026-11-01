@@ -1504,6 +1504,34 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 .push-k-d small{display:block;font-weight:400;color:var(--text2);margin-top:4px;line-height:1.4;}
 .push-k-btn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
 .push-k-n{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.45;}
+/* arama takibi */
+.at-ust{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.at-ust small{font-weight:600;color:var(--text3);text-transform:none;letter-spacing:0;}
+.at-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+@media(min-width:700px){.at-kpi{grid-template-columns:repeat(6,minmax(0,1fr));}}
+.at-k{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;display:flex;flex-direction:column;min-width:0;}
+.at-k b{font-size:20px;line-height:1.1;}
+.at-k span{font-size:11px;color:var(--text2);}
+.at-k small{font-size:10px;color:var(--text3);}
+.at-b{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 6px;}
+.at-izgara{margin:0;}
+.at-t{display:flex;flex-direction:column;font-size:12px;}
+.at-tr{display:grid;grid-template-columns:minmax(0,1.7fr) .7fr .6fr .9fr .9fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.at-tr.bas{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;padding-top:0;}
+.at-tr>span{min-width:0;overflow-wrap:anywhere;}
+.at-tr>span:not(:first-child){text-align:right;}
+.at-sebep{display:flex;flex-wrap:wrap;gap:6px;}
+.at-liste{display:flex;flex-direction:column;}
+.at-sat{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.at-sat.tik{cursor:pointer;}
+.at-sat-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.at-sat-m b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.at-sat-m small{color:var(--text3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.at-sonuc{flex-shrink:0;font-size:11.5px;color:var(--text2);}
+.at-ik{flex-shrink:0;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--text);text-decoration:none;font-size:15px;cursor:pointer;}
+.at-form-2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.at-form-2 input,.at-form-not{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;outline:none;}
+.at-form-not{margin-top:6px;}
 .push-davet{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border2);background:linear-gradient(90deg,rgba(91,163,217,.14),rgba(91,163,217,.02));}
 .push-davet>span:nth-child(2){flex:1;min-width:0;font-size:13px;}
 .push-davet small{display:block;font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35;}
@@ -1917,6 +1945,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div class="rk-donem" id="rk-donem"></div>
       <div id="rk-durum"></div>
       <div id="rk-kpi"></div>
+      <section class="card rk-kart" id="at-kart"></section>
       <div class="card rk-kart" id="rk-grafik-kart">
         <div id="rk-grafik-arac"></div>
         <div class="rk-grafik-w"><canvas id="rk-chart" role="img" aria-label="Google Ads performans grafiği"></canvas><div id="rk-grafik-bos" class="rk-bos-ust"></div></div>
@@ -3967,6 +3996,7 @@ async function sbFetch(path,opts={},_retry=false){
   const res=await fetch(SB_URL+'/rest/v1/'+path,{method:opts.method||'GET',headers:h,...(opts.body?{body:opts.body}:{})});
   if(res.status===401&&!_retry){const ok=await tryRefreshToken();if(ok)return sbFetch(path,opts,true);showAuthScreen();return null;}
   if(!res.ok){const e=await res.text();console.error('sbFetch:',res.status,path,e);throw new Error(e||'HTTP '+res.status);}
+  if((opts.method||'GET')!=='GET'&&!/^rpc\/(widget_|push_|cihaz_)/.test(path)){try{widgetYazGecikmeli();}catch(e){}}
   const t=await res.text();return t?JSON.parse(t):null;
 }
 // Supabase tek sorguda en fazla 1000 satır döndürür; bu yardımcı tüm satırları sayfa sayfa çeker
@@ -4492,7 +4522,7 @@ function pushDestek(){return 'serviceWorker' in navigator&&'PushManager' in wind
 function pushB64(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s);const o=new Uint8Array(b.length);for(let i=0;i<b.length;i++)o[i]=b.charCodeAt(i);return o;}
 function pushSw(){return Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(()=>r(new Error('Service worker hazır değil')),4000))]);}
 function pushDurum(yenile){if(!SB_TOKEN)return Promise.resolve(null);if(yenile||!PUSH.durumP)PUSH.durumP=sbFetch('rpc/push_durum',{method:'POST',body:'{}'}).catch(()=>null);return PUSH.durumP;}
-async function pushAktif(){let yerel=false;try{yerel=localStorage.getItem('gt_push')==='1';}catch(e){}if(yerel)return true;const d=await pushDurum();return !!(d&&d.abone>0);}
+async function pushAktif(){if(andAktif())return true;let yerel=false;try{yerel=localStorage.getItem('gt_push')==='1';}catch(e){}if(yerel)return true;const d=await pushDurum();return !!(d&&d.abone>0);}
 function pushCihaz(){const u=navigator.userAgent;const os=/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':'Cihaz';return (((CURRENT_USER&&CURRENT_USER.email)||'')+' · '+os).slice(0,120);}
 async function pushAboneOl(sessiz){
   if(!pushDestek()){if(!sessiz)showToast('Bu tarayıcı bildirim desteklemiyor. Android’de Chrome ile ana ekrana eklenmiş ERP’yi kullan.','amber');return false;}
@@ -4520,7 +4550,8 @@ async function pushKapat(){
 }
 async function pushTest(){try{await sbFetch('rpc/push_test',{method:'POST',body:'{}'});showToast('Deneme bildirimi gönderildi, birkaç saniyede gelir. ERP’yi arka plana alabilirsin.','green');}catch(e){showToast('Gönderilemedi: '+String(e.message||e).slice(0,60),'red');}}
 async function pushKartCiz(){
-  const el=document.getElementById('push-kart');if(!el)return;let durum='',btn='';
+  const el=document.getElementById('push-kart');if(!el)return;
+  if(andAktif()){await andKartCiz(el);return;}let durum='',btn='';
   if(!pushDestek())durum='<span style="color:var(--text3)">Bu tarayıcı desteklemiyor (Android’de Chrome ile ana ekrana eklenmiş ERP gerekli)</span>';
   else if(Notification.permission==='denied')durum='<span style="color:var(--red)">İzin engellenmiş.</span> <small>Chrome → ⋮ → Ayarlar → Site ayarları → Bildirimler → gokaysegun.github.io → İzin ver, sonra buraya dön.</small>';
   else{let sub=null;try{sub=await (await pushSw()).pushManager.getSubscription();}catch(e){}
@@ -4533,7 +4564,7 @@ async function pushKartCiz(){
 }
 function pushDavetCiz(){
   const el=document.getElementById('push-davet');if(!el)return;let gizle=true;
-  try{gizle=!pushDestek()||Notification.permission!=='default'||USER_ROL==='goruntule'||Date.now()-(+localStorage.getItem('gt_push_davet')||0)<7*864e5;}catch(e){}
+  try{gizle=andAktif()||!pushDestek()||Notification.permission!=='default'||USER_ROL==='goruntule'||Date.now()-(+localStorage.getItem('gt_push_davet')||0)<7*864e5;}catch(e){}
   el.innerHTML=gizle?'':`<div class="push-davet"><span class="push-davet-i">🔔</span><span><b>Telefon bildirimlerini aç</b><small>21:00 arama hatırlatması, sabah özeti, ödeme günleri — ERP kapalıyken de gelir.</small></span><button class="btn btn-primary btn-sm" onclick="pushAboneOl()">Aç</button><button class="push-davet-x" onclick="pushDavetKapat()" aria-label="Sonra">✕</button></div>`;
 }
 function pushDavetKapat(){try{localStorage.setItem('gt_push_davet',String(Date.now()));}catch(e){}pushDavetCiz();}
@@ -4580,11 +4611,187 @@ function bildirimUrlIsle(href){
 }
 function pushBaslat(){
   if(PUSH.basladi)return;PUSH.basladi=true;
+  try{andBaslat();}catch(e){console.warn('android',e);}
+  try{widgetBaslat();}catch(e){console.warn('widget',e);}
   setTimeout(()=>{try{bildirimUrlIsle(location.href);}catch(e){}},1200);
   setTimeout(()=>{try{pushDavetCiz();pushAboneOl(true).finally(()=>pushPlanla(true));}catch(e){}},6000);
   setInterval(()=>{try{pushPlanla();}catch(e){}},30*60*1000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{pushPlanla();}catch(e){}}else{try{pushDavetCiz();if(document.getElementById('dash-bakis')&&typeof dashBakisCiz==='function')dashBakisCiz();}catch(e){}}});
   try{if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',ev=>{const d=ev.data||{};if(d.tip==='bildirim-ac'&&d.url)bildirimUrlIsle(d.url);});}catch(e){}
+}
+
+// ============================================================ ANDROID UYGULAMASI
+// Uygulama içinde (Capacitor) çalışırken: cihaz kaydı (FCM), izin durumu, widget'lar.
+// Yerel köprü: Capacitor.nativePromise('GTYerel', yöntem, {...}) — android-app/…/GTYerelPlugin.java
+var ANDROID={kayitli:false,kayit:null};
+function andAktif(){return !!(window.GT_ANDROID&&window.Capacitor&&typeof window.Capacitor.nativePromise==='function');}
+function andYerel(m,o){return window.Capacitor.nativePromise('GTYerel',m,o||{});}
+async function andKaydol(){
+  if(!andAktif()||!SB_TOKEN||USER_ROL==='goruntule')return false;
+  if(ANDROID.kayit)return ANDROID.kayit;
+  ANDROID.kayit=(async()=>{
+    try{
+      const f=await andYerel('fcmToken');
+      const t=await sbFetch('rpc/cihaz_kaydet',{method:'POST',body:JSON.stringify({p_fcm:(f&&f.fcm)||null,p_ad:pushCihaz()+' · uygulama',p_token:(f&&f.cihaz)||null,p_surum:String((window.GT_ANDROID||{}).surumKodu||'')})});
+      if(t){await andYerel('cihazKaydet',{token:String(t)});ANDROID.kayitli=true;}
+      return true;
+    }catch(e){console.warn('android kayıt',e);return false;}
+    finally{setTimeout(()=>{ANDROID.kayit=null;},1000);}
+  })();
+  return ANDROID.kayit;
+}
+function andBaslat(){
+  const bas=()=>{andKaydol().then(ok=>{if(ok){try{pushPlanla(true);}catch(e){}try{widgetYaz(true);}catch(e){}}});};
+  if(andAktif())bas();else window.addEventListener('gt-android-hazir',bas,{once:true});
+}
+function andIzinIste(){andYerel('izinIste').catch(()=>{});setTimeout(()=>{try{pushKartCiz();}catch(e){}},5000);}
+async function andYenidenKaydet(){ANDROID.kayit=null;const ok=await andKaydol();try{await andYerel('widgetYenile');}catch(e){}showToast(ok?'Cihaz kaydedildi, widget\'lar yenileniyor':'Kaydedilemedi',ok?'green':'red');pushKartCiz();}
+async function andKartCiz(el){
+  let iz=null;try{iz=await andYerel('izinDurum');}catch(e){}
+  const d=await pushDurum();
+  const s=(ok,ad)=>`<span style="color:${ok?'var(--green)':'var(--amber)'};white-space:nowrap">${ok?'●':'○'} ${ad}</span>`;
+  const eksik=iz&&!(iz.telefon&&iz.aramaKaydi&&iz.rehber&&iz.bildirim&&iz.ustte);
+  el.innerHTML=`<div class="push-k-b">📲 Android uygulaması</div>
+    <div class="push-k-d" style="display:flex;flex-wrap:wrap;gap:4px 12px">${iz?[s(iz.cihaz,'Cihaz kayıtlı'),s(iz.bildirim,'Bildirim'),s(iz.telefon&&iz.aramaKaydi,'Arama algılama'),s(iz.rehber,'Rehber'),s(iz.ustte,'Arama penceresi')].join(''):'<span style="color:var(--text3)">Durum okunamadı</span>'}</div>
+    <div class="push-k-btn"><button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn ${eksik?'btn-primary':'btn-secondary'} btn-sm" onclick="andIzinIste()">🔐 İzinler</button><button class="btn btn-secondary btn-sm" onclick="andYenidenKaydet()">🔄 Yeniden kaydet</button><button class="btn btn-secondary btn-sm" onclick="andYerel('guncellemeDenetle').catch(()=>{});showToast('Yeni sürüm varsa birazdan sorulacak','blue')">⬆️ Güncelleme</button></div>
+    <div class="push-k-n">Bildirimler, ana ekran widget'ları ve arama sonrası pencere bu telefonda uygulama üzerinden çalışır · sessiz saatler <b>23:00–07:00</b>.${d?`<br>${d.android||0} Android · ${Math.max(0,(d.abone||0)-(d.android||0))} tarayıcı kayıtlı`:''}</div>
+    <div class="push-k-n">Widget eklemek: ana ekranda boş yere uzun bas → <b>Widget'lar</b> → <b>Gün Teknik</b>. Bildirim gecikirse: Ayarlar → Uygulamalar → Gün Teknik → Pil → <b>Kısıtlamasız</b>.</div>`;
+}
+
+// ============================================================ WIDGET VERİSİ
+// ERP'nin hesapladığı anlık görüntü (kasa, ajanda, ödeme günleri) widget_durum'a yazılır; telefon widget'ları buradan okur.
+// Arama sayıları sunucuda canlı hesaplanır. Veri değişince sunucu Android'e "yenile" sinyali yollar.
+var WG={son:null,zaman:null,baslar:false};
+function widgetVeri(){
+  const bg=localToday();const c=calcFinans();
+  const aj=[];
+  try{tkOlaylar(gfGunEkle(bg,-30),gfGunEkle(bg,30)).filter(o=>o.durum==='planlandi'&&o.t.tip!=='Bilgi').forEach(o=>{
+    const k=o.t.kisiId?getKisi(o.t.kisiId):null;
+    aj.push({g:String(o.gun).slice(0,10),s:o.t.saat?String(o.t.saat).slice(0,5):'',b:String(o.t.baslik||o.t.tip||'İş').slice(0,60),k:k?String(k.isim||'').slice(0,40):''});});}catch(e){console.warn('widget ajanda',e);}
+  const od=[];
+  try{(DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e)||0;const ad=(evIk(e)+' '+evAd(e)).trim().slice(0,60);const yon=evGider(e)?-1:1;
+    if(R.gecikmis&&R.gecikmis.length){od.push({tur:'evrak',g:R.gecikmis[0].son,ad,t:Math.round(bt),n:R.gecikmis.length,yon});return;}
+    const p=R.simdiki;if(p&&!R.simdikiOdendi&&p.son>=R.takip&&p.son<=gfGunEkle(bg,30))od.push({tur:'evrak',g:p.son,ad,t:Math.round(bt),yon});});}catch(e){console.warn('widget evrak',e);}
+  try{const n0=new Date();n0.setHours(0,0,0,0);krediUyariListesi(n0,new Date(n0.getTime()+30*864e5)).forEach(x=>{if(x&&x.tarih)od.push({tur:'kredi',g:String(x.tarih).slice(0,10),ad:('🏦 '+(x.baslik||'Kredi')).slice(0,60),t:Math.round(x.tutar||0),yon:-1});});}catch(e){console.warn('widget kredi',e);}
+  try{(DB.islemler||[]).filter(i=>i.statu==='Bekliyor'&&i.tarih).forEach(i=>{const g=localDateStr(i.tarih);if(!g||g>gfGunEkle(bg,30)||g<gfGunEkle(bg,-120))return;const k=getKisi(i.kisiId);const y=kasaYon(i);
+    od.push({tur:'islem',g,ad:((y>0?'💰 ':'💸 ')+((k&&k.isim)||i.kat||i.tip||'İşlem')).slice(0,60),t:Math.round(parseFloat(i.tutar)||0),yon:y||-1});});}catch(e){console.warn('widget işlem',e);}
+  od.sort((a,b)=>a.g.localeCompare(b.g));
+  const ay=bg.slice(0,7);let gelir=0,gider=0;
+  (DB.islemler||[]).forEach(i=>{if(i.statu!=='Tamamlandı'||localDateStr(i.tarih).slice(0,7)!==ay)return;const t=parseFloat(i.tutar)||0;
+    if(i.tip==='Gelir'&&(i.kat==='İşletme Geliri'||i.kat==='Şahsi Gelir'))gelir+=t;else if(i.tip==='Gider'&&(i.kat==='İşletme Gideri'||i.kat==='Şahsi Gider'))gider+=t;});
+  const ayAd=(typeof GF_AYLAR_UZUN!=='undefined'&&GF_AYLAR_UZUN[parseInt(bg.slice(5,7))-1])||'Bu ay';
+  return {v:1,bg,kasa:{top:Math.round(c.kasa||0),nakit:Math.round(c.kasaNakit||0),kart:Math.round(c.kasaKart||0),iban:Math.round(c.kasaIBAN||0),alacak:Math.round(c.alacakTop||0),borc:Math.round(c.borcTop||0)},
+    ay:{ad:ayAd,gelir:Math.round(gelir),gider:Math.round(gider)},aj:aj.slice(0,80),od:od.slice(0,80)};
+}
+async function widgetYaz(zorla){
+  try{if(!SB_TOKEN||USER_ROL==='goruntule'||!DB||!DB.islemler||!DB.islemler.length&&!DB.kisiler.length)return;
+    const v=widgetVeri();const s=JSON.stringify(v);if(!zorla&&s===WG.son)return;
+    await sbFetch('rpc/widget_yaz',{method:'POST',body:JSON.stringify({p:v})});WG.son=s;}
+  catch(e){console.warn('widget yaz',e);}
+}
+function widgetYazGecikmeli(){clearTimeout(WG.zaman);WG.zaman=setTimeout(()=>widgetYaz(),5000);}
+function widgetBaslat(){
+  if(WG.baslar)return;WG.baslar=true;
+  setTimeout(()=>widgetYaz(true),9000);
+  setInterval(()=>widgetYaz(),30*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')widgetYaz();});
+}
+
+// ============================================================ ARAMA TAKİBİ
+// Her aramanın kaynağı (reklam/tavsiye/eski müşteri), sektörü ve sonucu. Kaynağı "reklam" olanlar reklam_manuel'e de +1 yazılır.
+// Kayıtlar: Android'de arama bitince açılan pencere, widget'taki sektör düğmeleri ya da buradaki "+ Kayıt".
+var AT={liste:[],yuklu:false,yuk:null,duzen:null};
+const AT_KAYNAK={reklam:'📢 Reklam',tavsiye:'🤝 Tavsiye',eski:'🔁 Eski müşteri',bilinmiyor:'❔ Bilinmiyor'};
+const AT_SONUC={potansiyel:'🟡 Potansiyel',is_alindi:'✅ İş alındı',yanlis:'📵 Yanlış arama',olusmadi:'⛔ Oluşmadı'};
+const AT_SEBEP={fiyat:'Fiyat',uzak:'Uzak',vazgecti:'Vazgeçti',baska_usta:'Başka usta',diger:'Diğer'};
+function atYukle(zorla){
+  if(AT.yuk)return AT.yuk;if(AT.yuklu&&!zorla)return Promise.resolve();
+  AT.yuk=sbFetchAll('arama_takip?select=*&tarih=gte.'+gfGunEkle(localToday(),-400)+'&order=zaman.desc').then(r=>{AT.liste=Array.isArray(r)?r:[];AT.yuklu=true;})
+    .catch(e=>{console.warn('arama takip',e);AT.yuklu=true;}).finally(()=>{AT.yuk=null;});
+  return AT.yuk;
+}
+function atCiz(){const el=document.getElementById('at-kart');if(!el)return;try{el.innerHTML=atHtml(typeof rkAralik==='function'?rkAralik():null);}catch(e){console.warn('arama takip çiz',e);el.innerHTML='<div class="gf-not">Arama takibi çizilemedi.</div>';}}
+function atAd(r){return r.rehber_ad||r.numara||(r.kanal==='wa'?'WhatsApp kaydı':'Elle kayıt');}
+function atHtml(A){
+  if(!AT.yuklu){atYukle().then(atCiz);return '<div class="rk-b">📞 Arama takibi</div><div class="gf-not">Yükleniyor…</div>';}
+  const bas=A?A.bas:gfGunEkle(localToday(),-30),bit=A?A.bit:localToday();
+  const L=AT.liste.filter(r=>r.tarih>=bas&&r.tarih<=bit);
+  const say=f=>L.filter(f).length;
+  const n=L.length,pot=say(r=>r.sonuc==='potansiyel'),is=say(r=>r.sonuc==='is_alindi'),yan=say(r=>r.sonuc==='yanlis'),olm=say(r=>r.sonuc==='olusmadi'),bos=say(r=>!r.sonuc);
+  const don=x=>{const g=x.filter(r=>r.sonuc&&r.sonuc!=='yanlis').length;const i=x.filter(r=>r.sonuc==='is_alindi').length;return g?Math.round(i/g*100)+'%':'—';};
+  const ust=`<div class="rk-b at-ust"><span>📞 Arama takibi${A?` <small>${_esc(A.ad||'')}</small>`:''}</span>${USER_ROL!=='goruntule'?'<button type="button" class="rk-ag-btn" onclick="atEkleAc()">+ Kayıt</button>':''}</div>`;
+  if(!n)return ust+`<div class="gf-not">Bu dönemde arama kaydı yok. Android uygulamasında görüşme bitince açılan pencere ya da widget'taki sektör düğmeleri buraya yazar; WhatsApp'tan gelenleri <b>+ Kayıt</b> ile girebilirsin.</div>`+atTakipHtml();
+  const k=(ad,v,renk,alt)=>`<div class="at-k"><b class="num" style="color:${renk}">${v}</b><span>${ad}</span>${alt?`<small>${alt}</small>`:''}</div>`;
+  let h=ust+`<div class="at-kpi">${k('Arama',n,'var(--text)',bos?bos+' sonuçsuz':'')}${k('Potansiyel',pot,'var(--amber)','')}${k('İş alındı',is,'var(--green)','')}${k('Yanlış',yan,'var(--text3)','')}${k('Oluşmadı',olm,'var(--red)','')}${k('Dönüşüm',don(L),'var(--cy)','iş / gerçek arama')}</div>`;
+  const tablo=(baslik,anahtar,etiket)=>{const G={};L.forEach(r=>{const a=anahtar(r);(G[a]=G[a]||[]).push(r);});const S=Object.entries(G).sort((a,b)=>b[1].length-a[1].length);
+    return `<div class="at-b">${baslik}</div><div class="at-t"><div class="at-tr bas"><span></span><span>Arama</span><span>İş</span><span>Oluşmadı</span><span>Dönüşüm</span></div>`+
+      S.map(([a,x])=>`<div class="at-tr"><span>${_esc(etiket(a))}</span><span class="num">${x.length}</span><span class="num">${x.filter(r=>r.sonuc==='is_alindi').length}</span><span class="num">${x.filter(r=>r.sonuc==='olusmadi').length}</span><span class="num"><b>${don(x)}</b></span></div>`).join('')+'</div>';};
+  h+=`<div class="rk-izgara at-izgara"><div>${tablo('Kaynağa göre',r=>r.kaynak||'bilinmiyor',a=>AT_KAYNAK[a]||a)}</div><div>${tablo('Sektöre göre',r=>r.sektor||'—',a=>a)}</div></div>`;
+  const SB={};L.filter(r=>r.sonuc==='olusmadi').forEach(r=>{const s=r.sebep||'belirtilmedi';SB[s]=(SB[s]||0)+1;});
+  if(Object.keys(SB).length)h+=`<div class="at-b">Neden iş olmadı?</div><div class="at-sebep">${Object.entries(SB).sort((a,b)=>b[1]-a[1]).map(([s,v])=>`<span class="isf-chip">${_esc(AT_SEBEP[s]||'Belirtilmedi')} <b class="num">${v}</b></span>`).join('')}</div>`;
+  h+=atTakipHtml();
+  h+=`<div class="at-b">Son aramalar</div><div class="at-liste">${L.slice(0,12).map(atSatir).join('')}</div>${L.length>12?`<div class="gf-ipucu">+${L.length-12} kayıt daha bu dönemde</div>`:''}`;
+  return h;
+}
+function atTakipHtml(){
+  const P=AT.liste.filter(r=>r.sonuc==='potansiyel').slice(0,8);if(!P.length)return '';
+  return `<div class="at-b">🎯 Takipteki potansiyel müşteriler</div><div class="at-liste">${P.map(r=>`<div class="at-sat"><div class="at-sat-m"><b>${_esc(atAd(r))}</b><small>${gfTrTarih(r.tarih).slice(0,5)}${r.sektor?' · '+_esc(r.sektor):''}${r.kaynak?' · '+_esc(AT_KAYNAK[r.kaynak]||r.kaynak):''}${r.aciklama?' · '+_esc(r.aciklama):''}</small></div>
+    ${r.numara?`<a class="at-ik" href="tel:${_esc(r.numara)}" title="Ara">📞</a>`:''}${USER_ROL!=='goruntule'?`<button type="button" class="at-ik" onclick="atGuncelle(${r.id},{sonuc:'is_alindi'})" title="İş alındı">✅</button><button type="button" class="at-ik" onclick="atOlusmadi(${r.id})" title="Oluşmadı">⛔</button>`:''}</div>`).join('')}</div>`;
+}
+function atSatir(r){
+  const z=r.zaman?new Date(r.zaman):null;const saat=z?String(z.getHours()).padStart(2,'0')+':'+String(z.getMinutes()).padStart(2,'0'):'';
+  const sn=r.sonuc?AT_SONUC[r.sonuc]||r.sonuc:'<span style="color:var(--text3)">Sonuç yok</span>';
+  return `<div class="at-sat${USER_ROL!=='goruntule'?' tik':''}"${USER_ROL!=='goruntule'?` onclick="atEkleAc(${r.id})"`:''}><div class="at-sat-m"><b>${_esc(atAd(r))}</b><small>${rkGunAd(r.tarih)} ${saat} · ${r.kanal==='wa'?'💬':'📞'} ${_esc(AT_KAYNAK[r.kaynak]||'Kaynak yok')}${r.sektor?' · '+_esc(r.sektor):''}${r.sure_sn?' · '+Math.round(r.sure_sn/60*10)/10+' dk':''}</small></div><span class="at-sonuc">${sn}</span></div>`;
+}
+function atOlusmadi(id){atEkleAc(id,'olusmadi');}
+async function atGuncelle(id,p){
+  try{await sbFetch('rpc/arama_guncelle',{method:'POST',body:JSON.stringify({p_token:null,p_id:id,p})});const r=AT.liste.find(x=>x.id===id);if(r)Object.assign(r,p);
+    showToast('Güncellendi','green');atSonra(p);}catch(e){showToast('Güncellenemedi: '+String(e.message||e).slice(0,60),'red');}
+}
+function atSonra(p){atCiz();if(!p||p.kaynak!==undefined||p.sektor!==undefined||p.kanal!==undefined||p.yeni){try{rkManuelYukle().then(()=>{try{rkAramaSonrasi();}catch(e){}});}catch(e){}}}
+// kayıt / düzenleme penceresi
+function atEkleAc(id,sonucOn){
+  if(USER_ROL==='goruntule'){showToast('Görüntüleme yetkisiyle kayıt girilemez','amber');return;}
+  const r=id?AT.liste.find(x=>x.id===id):null;
+  AT.duzen={id:r?r.id:null,tarih:r?r.tarih:localToday(),kanal:r?r.kanal||'tel':((typeof RK_AG!=='undefined'&&RK_AG.kanal)||'tel'),kaynak:r?r.kaynak:null,sektor:r?r.sektor:null,
+    sonuc:sonucOn||(r?r.sonuc:null),sebep:r?r.sebep:null,numara:r?r.numara||'':'',ad:r?r.rehber_ad||'':'',not:r?r.aciklama||'':''};
+  let m=document.getElementById('modal-at');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-at';m.innerHTML=`<div class="modal rk-ag-modal"><div class="modal-handle"></div><div class="modal-head"><h3 id="at-m-bas">📞 Arama kaydı</h3><button class="modal-close" onclick="closeModal('modal-at')">✕</button></div><div class="modal-body" id="at-m-body"></div><div class="modal-foot" id="at-m-foot"></div></div>`;document.body.appendChild(m);}
+  document.getElementById('at-m-bas').textContent=r?'📞 Aramayı düzenle':'📞 Yeni arama kaydı';
+  atFormCiz();openModal('modal-at');
+}
+function atFormCiz(){
+  const D=AT.duzen;const el=document.getElementById('at-m-body');if(!el||!D)return;const q=x=>_esc(JSON.stringify(x));
+  const chips=(alan,S)=>`<div class="rk-ag-c">${Object.entries(S).map(([k,ad])=>`<button type="button" class="isf-chip${D[alan]===k?' on':''}" onclick="atSec('${alan}',${q(k)})">${_esc(ad)}</button>`).join('')}</div>`;
+  const sek={};rkAgSektorler().forEach(s=>sek[s]=s);
+  el.innerHTML=`<div class="rk-ag-b">Tarih ve kanal</div><div class="rk-ag-t"><input type="date" value="${D.tarih}" max="${localToday()}" onchange="AT.duzen.tarih=this.value||AT.duzen.tarih">
+      <button type="button" class="isf-chip${D.kanal==='tel'?' on':''}" onclick="atSec('kanal','tel')">📞 Telefon</button><button type="button" class="isf-chip${D.kanal==='wa'?' on':''}" onclick="atSec('kanal','wa')">💬 WhatsApp</button></div>
+    <div class="rk-ag-b">Nereden geldi?</div>${chips('kaynak',AT_KAYNAK)}
+    <div class="rk-ag-b">Sektör</div>${chips('sektor',sek)}
+    <div class="rk-ag-b">Sonuç</div>${chips('sonuc',AT_SONUC)}
+    ${D.sonuc==='olusmadi'?`<div class="rk-ag-b">Neden olmadı?</div>${chips('sebep',AT_SEBEP)}`:''}
+    <div class="rk-ag-b">Kişi (isteğe bağlı)</div>
+    <div class="at-form-2"><input type="tel" placeholder="Telefon" value="${_esc(D.numara)}" oninput="AT.duzen.numara=this.value"><input type="text" placeholder="Ad" value="${_esc(D.ad)}" oninput="AT.duzen.ad=this.value"></div>
+    <input class="at-form-not" type="text" placeholder="Not" value="${_esc(D.not)}" oninput="AT.duzen.not=this.value">`;
+  document.getElementById('at-m-foot').innerHTML=(D.id?`<button class="btn btn-secondary" onclick="atSil(${D.id})">🗑 Sil</button>`:'')+`<button class="btn btn-primary btn-full" onclick="atKaydet()">Kaydet</button>`;
+}
+function atSec(alan,k){const D=AT.duzen;if(!D)return;D[alan]=(alan!=='kanal'&&D[alan]===k)?null:k;if(alan==='sonuc'&&D.sonuc!=='olusmadi')D.sebep=null;atFormCiz();}
+async function atKaydet(){
+  const D=AT.duzen;if(!D)return;
+  if(!D.kaynak){showToast('Aramanın nereden geldiğini seç','amber');return;}
+  if(!D.sonuc){showToast('Sonucu seç','amber');return;}
+  if(!D.sektor&&D.sonuc!=='yanlis'){showToast('Sektörü seç','amber');return;}
+  const p={kanal:D.kanal,kaynak:D.kaynak,sektor:D.sektor||'',sonuc:D.sonuc,sebep:D.sonuc==='olusmadi'?(D.sebep||''):'',numara:(D.numara||'').trim(),rehber_ad:(D.ad||'').trim(),aciklama:(D.not||'').trim()};
+  try{
+    if(D.id){await sbFetch('rpc/arama_guncelle',{method:'POST',body:JSON.stringify({p_token:null,p_id:D.id,p:Object.assign({},p)})});}
+    else{p.tarih=D.tarih;p.yon='manuel';if(D.tarih!==localToday())p.zaman=D.tarih+'T12:00:00';await sbFetch('rpc/arama_kaydet',{method:'POST',body:JSON.stringify({p_token:null,p})});}
+    closeModal('modal-at');showToast('Kaydedildi','green');await atYukle(true);atSonra({yeni:true});
+  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
+}
+async function atSil(id){
+  if(!confirm('Bu arama kaydı silinsin mi?'))return;
+  try{await sbFetch('rpc/arama_sil',{method:'POST',body:JSON.stringify({p_token:null,p_id:id})});AT.liste=AT.liste.filter(x=>x.id!==id);closeModal('modal-at');showToast('Silindi','green');atSonra({yeni:true});}
+  catch(e){showToast('Silinemedi','red');}
 }
 
 // ============================================================ VERİTABANI
@@ -11643,6 +11850,7 @@ function rkCiz(){
   bolum('rk-kanal',rkKanalHtml);bolum('rk-butce',rkButceHtml);bolum('rk-sektor',rkSektorHtml);bolum('rk-aylik',()=>rkAylikHtml());bolum('rk-isi',rkIsiHtml);bolum('rk-aramalar',rkAramalarHtml);
   bolum('rk-konum',rkKonumHtml);bolum('rk-terimler',rkTerimlerHtml);bolum('rk-kelimeler',rkKelimelerHtml);bolum('rk-kampanyalar',rkKampanyalarHtml);
   rkGrafikAracCiz();rkGrafikCiz();
+  try{atCiz();}catch(e){console.warn('arama takip',e);}
 }
 function rkKampanyaListeCiz(){
   const s=document.getElementById('rk-kampanya');if(!s)return;const M=new Map();

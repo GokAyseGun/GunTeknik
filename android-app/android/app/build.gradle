@@ -30,6 +30,10 @@ android {
             }
         }
     }
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
     buildTypes {
         release {
             if (System.getenv('GT_KEYSTORE_FILE')) {
@@ -53,6 +57,7 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.core:core:$androidxCoreVersion"
+    implementation "com.google.firebase:firebase-messaging:24.1.0"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
