@@ -1472,6 +1472,43 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 [data-tema="chill"] :is(.bottom-nav)::before{content:'';position:absolute;left:0;right:0;top:-8px;height:10px;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='10'%3E%3Cpath d='M0 7 C40 2 70 2 110 6 S190 9 260 5' fill='none' stroke='%23C8921F' stroke-width='1.4' stroke-linecap='round' opacity='0.45'/%3E%3C/svg%3E");background-repeat:repeat-x;background-size:260px 10px;animation:chillKum 26s linear infinite;}
 @keyframes chillKum{from{background-position:0 0;}to{background-position:-260px 0;}}
 @media (prefers-reduced-motion:reduce){[data-tema="chill"] body::before,[data-tema="chill"] :is(.topbar)::after,[data-tema="chill"] :is(.bottom-nav)::before{animation:none;}}
+
+/* ── Reklam araması girişi (sektör zorunlu) ── */
+.rk-ag-eksik{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;padding:8px 10px;border-radius:var(--r-sm);background:rgba(255,171,0,.08);border:1px solid rgba(255,171,0,.3);font-size:12px;color:var(--amber);}
+.rk-ag-eksik button{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,171,0,.45);background:transparent;color:var(--amber);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+.rk-ag-kanal{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px;padding:4px;border-radius:12px;background:var(--bg2);border:1px solid var(--border);}
+.rk-ag-kanal button{height:38px;border-radius:9px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
+.rk-ag-kanal button.on{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.rk-ag-ipucu{font-size:11.5px;color:var(--text3);margin:12px 0 8px;}
+.rk-ag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.rk-ag-sek{position:relative;}
+.rk-ag-art{width:100%;min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:10px 44px 10px 12px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;text-align:left;cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s;}
+.rk-ag-art:active{transform:scale(.97);}
+.rk-ag-art b{font-size:14px;line-height:1.2;}
+.rk-ag-art small{font-size:10.5px;color:var(--text3);}
+.rk-ag-sek.var .rk-ag-art{border-color:#D9A44188;background:linear-gradient(90deg,rgba(217,164,65,.16),rgba(217,164,65,.03));}
+.rk-ag-n{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:24px;font-weight:800;color:#D9A441;}
+.rk-ag-arti{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--text3);}
+.rk-ag-eksi{position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--red);font-size:15px;line-height:1;cursor:pointer;}
+.rk-ag-ozet{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bg2);font-size:13px;}
+.rk-ag-ozet span{color:var(--text3);font-size:12px;}
+.rk-ag-link{border:none;background:none;color:var(--blue);font-family:inherit;font-size:12px;text-decoration:underline;cursor:pointer;}
+.rk-ag-yok{width:100%;margin-top:8px;padding:11px;border-radius:var(--r-sm);border:1px dashed var(--border2);background:transparent;color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.db-rk-eksik{display:block;width:100%;margin-top:8px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid rgba(255,171,0,.4);background:rgba(255,171,0,.1);color:var(--amber);font-family:inherit;font-size:12px;text-align:left;cursor:pointer;line-height:1.35;}
+.db-rk-eksik b{white-space:nowrap;}
+/* ── Telefon bildirimleri ── */
+.push-kart{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;}
+.push-kart:empty{display:none;}
+.push-k-b{font-size:12px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;}
+.push-k-d{font-size:13px;font-weight:600;}
+.push-k-d small{display:block;font-weight:400;color:var(--text2);margin-top:4px;line-height:1.4;}
+.push-k-btn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.push-k-n{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.45;}
+.push-davet{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border2);background:linear-gradient(90deg,rgba(91,163,217,.14),rgba(91,163,217,.02));}
+.push-davet>span:nth-child(2){flex:1;min-width:0;font-size:13px;}
+.push-davet small{display:block;font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35;}
+.push-davet-i{font-size:20px;}
+.push-davet-x{border:none;background:none;color:var(--text3);font-size:15px;cursor:pointer;padding:4px;}
 </style>
 </head>
 <body>
@@ -1617,6 +1654,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 
       <div class="card gf-panel" id="gf-panel"><div class="gf-tabs" id="gf-tabs"></div><div id="gf-tab-icerik"></div></div>
 
+      <div id="push-davet"></div>
       <div class="dash-bakis" id="dash-bakis"></div>
 
       <div id="vade-banner-wrap"></div>
@@ -2724,6 +2762,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
           <button onclick="temaUygula('chill')" id="tema-btn-chill" class="btn btn-secondary" style="font-size:12px;padding:8px 4px;border-radius:10px;">🏖️ Chill</button>
         </div>
       </div>
+      <div class="push-kart" id="push-kart"></div>
       <button class="btn btn-secondary btn-full" onclick="exportData()">💾 Veriyi Yedekle (JSON)</button>
       <button class="btn btn-secondary btn-full" onclick="openBildirimMerkezi()">🔔 Bildirim Merkezi</button>
       <button class="btn btn-secondary btn-full" id="btn-pwa-install" onclick="installPWA()" style="display:none;">📲 Uygulamayı Yükle</button>
@@ -4441,6 +4480,111 @@ async function startApp(){
   try{psFormBagla();ckBaslat();}catch(e){console.warn('davranış başlat',e);}
   setTimeout(()=>{try{gfRiskBildirimKontrol();}catch(e){console.warn('gf risk',e);}},7000);
   setInterval(bildirimKontrol,15*60*1000);
+  try{pushBaslat();}catch(e){console.warn('push başlat',e);}
+}
+
+
+// ============================================================ TELEFON BİLDİRİMLERİ (Web Push)
+// ERP açıkken ileriye dönük hatırlatmaları push_kuyruk'a planlar; Supabase (pg_cron + push-gonder) ERP kapalıyken de gönderir.
+// Sessiz saatler 23:00–07:00 (sunucu). Aynı anda düşenler tek bildirimde birleşir.
+var PUSH={vapid:null,durumP:null,sonPlan:0,basladi:false};
+function pushDestek(){return 'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;}
+function pushB64(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s);const o=new Uint8Array(b.length);for(let i=0;i<b.length;i++)o[i]=b.charCodeAt(i);return o;}
+function pushSw(){return Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(()=>r(new Error('Service worker hazır değil')),4000))]);}
+function pushDurum(yenile){if(!SB_TOKEN)return Promise.resolve(null);if(yenile||!PUSH.durumP)PUSH.durumP=sbFetch('rpc/push_durum',{method:'POST',body:'{}'}).catch(()=>null);return PUSH.durumP;}
+async function pushAktif(){let yerel=false;try{yerel=localStorage.getItem('gt_push')==='1';}catch(e){}if(yerel)return true;const d=await pushDurum();return !!(d&&d.abone>0);}
+function pushCihaz(){const u=navigator.userAgent;const os=/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':'Cihaz';return (((CURRENT_USER&&CURRENT_USER.email)||'')+' · '+os).slice(0,120);}
+async function pushAboneOl(sessiz){
+  if(!pushDestek()){if(!sessiz)showToast('Bu tarayıcı bildirim desteklemiyor. Android’de Chrome ile ana ekrana eklenmiş ERP’yi kullan.','amber');return false;}
+  try{
+    if(!sessiz&&Notification.permission!=='granted'){const p=await Notification.requestPermission();if(p!=='granted'){showToast('Bildirim izni verilmedi','amber');pushKartCiz();pushDavetCiz();return false;}}
+    if(Notification.permission!=='granted')return false;
+    if(!PUSH.vapid){const v=await sbFetch('rpc/push_vapid',{method:'POST',body:'{}'});if(v)PUSH.vapid=v;}
+    if(!PUSH.vapid){if(!sessiz)showToast('Bildirim anahtarı alınamadı','red');return false;}
+    const reg=await pushSw();let sub=await reg.pushManager.getSubscription();
+    if(sub&&sub.options&&sub.options.applicationServerKey){const a=new Uint8Array(sub.options.applicationServerKey),b=pushB64(PUSH.vapid);if(a.length!==b.length||a.some((x,i)=>x!==b[i])){try{await sub.unsubscribe();}catch(e){}sub=null;}}
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushB64(PUSH.vapid)});
+    const j=sub.toJSON();
+    await sbFetch('rpc/push_abone_ol',{method:'POST',body:JSON.stringify({p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_cihaz:pushCihaz()})});
+    try{localStorage.setItem('gt_push','1');}catch(e){}pushDurum(true);
+    if(!sessiz){showToast('Telefon bildirimleri açıldı','green');pushPlanla(true);}
+    pushKartCiz();pushDavetCiz();return true;
+  }catch(e){console.warn('push abone',e);if(!sessiz)showToast('Bildirim açılamadı: '+String(e.message||e).slice(0,70),'red');return false;}
+}
+async function pushKapat(){
+  try{const reg=await pushSw();const sub=await reg.pushManager.getSubscription();
+    if(sub){try{await sbFetch('rpc/push_abone_sil',{method:'POST',body:JSON.stringify({p_endpoint:sub.endpoint})});}catch(e){}await sub.unsubscribe();}
+    try{localStorage.removeItem('gt_push');}catch(e){}pushDurum(true);showToast('Bu cihazda bildirimler kapatıldı','amber');}
+  catch(e){showToast('Kapatılamadı','red');}
+  pushKartCiz();
+}
+async function pushTest(){try{await sbFetch('rpc/push_test',{method:'POST',body:'{}'});showToast('Deneme bildirimi gönderildi, birkaç saniyede gelir. ERP’yi arka plana alabilirsin.','green');}catch(e){showToast('Gönderilemedi: '+String(e.message||e).slice(0,60),'red');}}
+async function pushKartCiz(){
+  const el=document.getElementById('push-kart');if(!el)return;let durum='',btn='';
+  if(!pushDestek())durum='<span style="color:var(--text3)">Bu tarayıcı desteklemiyor (Android’de Chrome ile ana ekrana eklenmiş ERP gerekli)</span>';
+  else if(Notification.permission==='denied')durum='<span style="color:var(--red)">İzin engellenmiş.</span> <small>Chrome → ⋮ → Ayarlar → Site ayarları → Bildirimler → gokaysegun.github.io → İzin ver, sonra buraya dön.</small>';
+  else{let sub=null;try{sub=await (await pushSw()).pushManager.getSubscription();}catch(e){}
+    if(sub&&Notification.permission==='granted'){durum='<span style="color:var(--green)">● Bu cihazda açık</span>';btn=`<button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn btn-secondary btn-sm" onclick="pushKapat()">Kapat</button>`;}
+    else{durum='<span style="color:var(--text3)">Kapalı</span>';btn=`<button class="btn btn-primary btn-sm" onclick="pushAboneOl()">🔔 Bildirimleri aç</button>`;}}
+  const d=await pushDurum();
+  el.innerHTML=`<div class="push-k-b">📲 Telefon bildirimleri</div><div class="push-k-d">${durum}</div>${btn?`<div class="push-k-btn">${btn}</div>`:''}
+    <div class="push-k-n">ERP kapalıyken de gelir · sessiz saatler <b>23:00–07:00</b> · <b>21:00</b> günün reklam aramaları · <b>08:30</b> sabah özeti (randevular, ödeme/evrak günleri, dünkü reklam) · Google Ads senkronu durursa · bütçe, kasa riski. Aynı anda düşenler tek bildirimde birleşir.${d?`<br>${d.abone} cihaz kayıtlı${d.son?' · son gönderim '+new Date(d.son).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}`:''}</div>
+    <div class="push-k-n">Gecikirse: Android Ayarlar → Uygulamalar → Chrome → Pil → <b>Kısıtlamasız</b>.</div>`;
+}
+function pushDavetCiz(){
+  const el=document.getElementById('push-davet');if(!el)return;let gizle=true;
+  try{gizle=!pushDestek()||Notification.permission!=='default'||USER_ROL==='goruntule'||Date.now()-(+localStorage.getItem('gt_push_davet')||0)<7*864e5;}catch(e){}
+  el.innerHTML=gizle?'':`<div class="push-davet"><span class="push-davet-i">🔔</span><span><b>Telefon bildirimlerini aç</b><small>21:00 arama hatırlatması, sabah özeti, ödeme günleri — ERP kapalıyken de gelir.</small></span><button class="btn btn-primary btn-sm" onclick="pushAboneOl()">Aç</button><button class="push-davet-x" onclick="pushDavetKapat()" aria-label="Sonra">✕</button></div>`;
+}
+function pushDavetKapat(){try{localStorage.setItem('gt_push_davet',String(Date.now()));}catch(e){}pushDavetCiz();}
+// anlık olay (aynı anahtar bir kez gider)
+async function pushEkle(o){try{if(!SB_TOKEN||!(await pushAktif()))return;await sbFetch('rpc/push_ekle',{method:'POST',body:JSON.stringify({p:o})});}catch(e){console.warn('push ekle',e);}}
+// ileriye dönük plan (14 gün): ERP her açıldığında / kapanırken yeniden hesaplanır, çözülenler kuyruktan düşer
+function pushPlanListe(){
+  const L=[];const simdi=Date.now();const bg=localToday();const ufuk=gfGunEkle(bg,14);const SABAH='08:30';
+  const ekle=(anahtar,g,saat,baslik,govde,url,on)=>{if(!g||g>ufuk)return;const [y,m,d]=g.split('-').map(Number);const [h,mi]=saat.split(':').map(Number);const z=new Date(y,m-1,d,h,mi);if(z.getTime()<simdi-60e3)return;
+    L.push({anahtar,zaman:z.toISOString(),baslik:String(baslik).slice(0,120),govde:String(govde||'').slice(0,300),url:url||'./',oncelik:on==null?5:on});};
+  const gecikme=(anahtar,son,baslik,ek,url)=>{for(let n=1;n<=91;n=(n===1?7:n+7)){const g=gfGunEkle(son,n);if(g<bg)continue;if(g>ufuk)break;ekle(anahtar+':g'+n,g,SABAH,baslik,(n===1?'Ödeme günü dün geçti':'Ödeme '+n+' gündür gecikmiş')+ek,url,3);}};
+  // 1) evrak ödemeleri: 3 gün önce, son gün, gecikince ertesi gün ve haftada bir
+  try{(DB.evraklar||[]).filter(evAktif).forEach(e=>{const R=evDurum(e);const bt=evBeklenen(e)||0;const ad='🧾 '+(evIk(e)+' '+evAd(e)).trim();const tut=bt?' · ≈ '+fmt(bt):'';
+    if(R.gecikmis.length){const son=R.gecikmis[0].son;gecikme('evrak:'+e.id+':'+son,son,ad,(R.gecikmis.length>1?' ('+R.gecikmis.length+' dönem)':'')+tut,'./?sayfa=evrak');return;}
+    const p=R.simdiki;if(p&&!R.simdikiOdendi&&p.son>=R.takip){ekle('evrak:'+e.id+':'+p.son+':3',gfGunEkle(p.son,-3),SABAH,ad,'3 gün sonra son ödeme günü ('+gfTrTarih(p.son).slice(0,5)+')'+tut,'./?sayfa=evrak',4);
+      ekle('evrak:'+e.id+':'+p.son+':0',p.son,SABAH,ad,'Bugün son ödeme günü'+tut,'./?sayfa=evrak',2);}});}catch(e){console.warn('push evrak',e);}
+  // 2) kredi / borç taksitleri
+  try{const n0=new Date();n0.setHours(0,0,0,0);krediUyariListesi(n0,new Date(n0.getTime()+7*864e5)).forEach(x=>{const tut=x.tutar?' · '+fmt(x.tutar):'';const ad='🏦 '+x.baslik;
+    if(x.gecmis){gecikme('kredi:'+x.id+':'+x.tarih,x.tarih,ad,tut,'./');return;}
+    ekle('kredi:'+x.id+':'+x.tarih+':3',gfGunEkle(x.tarih,-3),SABAH,ad,'3 gün sonra son ödeme günü'+tut,'./',4);ekle('kredi:'+x.id+':'+x.tarih+':0',x.tarih,SABAH,ad,'Bugün son ödeme günü'+tut,'./',2);});}catch(e){console.warn('push kredi',e);}
+  // 3) vadeli işlemler: vade günü sabah; vadesi geçenler pazartesi toplu
+  try{const gec=[];(DB.islemler||[]).filter(i=>i.statu==='Bekliyor'&&i.tarih).forEach(i=>{const g=localDateStr(i.tarih);if(g<bg){gec.push(i);return;}
+      const k=getKisi(i.kisiId);const gel=kasaYon(i)>0;ekle('islem:'+i.id+':'+g,g,SABAH,(gel?'💰 Tahsilat günü: ':'💸 Ödeme günü: ')+((k&&k.isim)||i.kat||i.tip),fmt(i.tutar)+(i.kat?' · '+i.kat:''),'./?islem='+i.id,3);});
+    if(gec.length){const top=gec.reduce((s,i)=>s+(i.tutar||0),0);for(let n=0;n<=8;n++){const g=gfGunEkle(bg,n);if(new Date(g+'T12:00:00').getDay()===1)ekle('bekleyen:'+g,g,SABAH,'⏳ Vadesi geçmiş bekleyen işlemler',gec.length+' işlem · toplam '+fmt(top),'./?sayfa=islemler',5);}}}catch(e){console.warn('push işlem',e);}
+  // 4) ajanda: o sabah + önceki akşam 21:00 (arama hatırlatmasıyla tek bildirimde birleşir)
+  try{for(let n=0;n<=8;n++){const g=gfGunEkle(bg,n);const O=tkOlaylar(g,g).filter(o=>o.durum==='planlandi');if(!O.length)continue;
+      const sat=O.slice(0,4).map(o=>{const k=o.t.kisiId?getKisi(o.t.kisiId):null;return (o.t.saat?String(o.t.saat).slice(0,5)+' ':'')+(o.t.baslik||(k&&k.isim)||o.t.tip||'');}).join(', ')+(O.length>4?' +'+(O.length-4):'');
+      ekle('ajanda:'+g,g,SABAH,'📅 Bugün '+O.length+' iş/randevu',sat,'./?sayfa=takvim',2);ekle('yarin:'+g,gfGunEkle(g,-1),'21:00','📅 Yarın '+O.length+' iş/randevu',sat,'./?sayfa=takvim',4);}}catch(e){console.warn('push ajanda',e);}
+  return L;
+}
+async function pushPlanla(zorla){
+  try{if(!SB_TOKEN||USER_ROL==='goruntule'||!DB||!DB.islemler)return;if(!zorla&&Date.now()-PUSH.sonPlan<120000)return;if(!(await pushAktif()))return;
+    PUSH.sonPlan=Date.now();await sbFetch('rpc/push_planla',{method:'POST',body:JSON.stringify({p:pushPlanListe()})});}
+  catch(e){console.warn('push plan',e);}
+}
+// bildirime / kısayola dokununca: ?arama=YYYY-MM-DD|bugun · ?sayfa=evrak · ?islem=ID
+function bildirimUrlIsle(href){
+  let u;try{u=new URL(href,location.href);}catch(e){return;}const p=u.searchParams;
+  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem');if(!arama&&!sayfa&&!islem)return;
+  try{if(location.search)history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
+  if(arama){rkAramaGirAc(arama==='bugun'?localToday():arama);return;}
+  if(islem){try{showIslemDetay(Number(islem));}catch(e){}return;}
+  if(sayfa&&document.getElementById('page-'+sayfa)){try{goPage(sayfa);}catch(e){}}
+}
+function pushBaslat(){
+  if(PUSH.basladi)return;PUSH.basladi=true;
+  setTimeout(()=>{try{bildirimUrlIsle(location.href);}catch(e){}},1200);
+  setTimeout(()=>{try{pushDavetCiz();pushAboneOl(true).finally(()=>pushPlanla(true));}catch(e){}},6000);
+  setInterval(()=>{try{pushPlanla();}catch(e){}},30*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{pushPlanla();}catch(e){}}else{try{pushDavetCiz();if(document.getElementById('dash-bakis')&&typeof dashBakisCiz==='function')dashBakisCiz();}catch(e){}}});
+  try{if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',ev=>{const d=ev.data||{};if(d.tip==='bildirim-ac'&&d.url)bildirimUrlIsle(d.url);});}catch(e){}
 }
 
 // ============================================================ VERİTABANI
@@ -4588,6 +4732,7 @@ let zIdx=1000;
 let _touchStartY=0;
 function openModal(id){
   if(id==='modal-bildirimler')setTimeout(bildirimListeGoster,50);
+  if(id==='modal-ayarlar')setTimeout(()=>{try{pushKartCiz();}catch(e){}},30);
   const el=document.getElementById(id);if(!el)return;
   zIdx+=10;el.style.zIndex=zIdx;el.classList.add('open');
   // Overlay tıklamasında kapat — zaten listener yoksa ekle
@@ -7189,6 +7334,7 @@ async function gfRiskBildirimKontrol(){
     if(!isaretle('gf_risk_'+gun+'_'+r.ad))return;
     const ne=r.ad==='Sıfır'?'eksiye düşebilir':'"'+r.ad+'" ('+gfKisa(r.esik)+') seviyesinin altına inebilir';
     aiBildirimGoster('uyari',`🔮 Kasa önümüzdeki 30 gün içinde ${ne}: olasılık %${Math.round(r.olasilik30*100)}${r.ilk20?' · riskin arttığı tarih '+gfTrTarih(r.ilk20):''}. Ayrıntı: Ana sayfa → grafik → Tahmin sekmesi.`,12000);
+    pushEkle({anahtar:'risk:'+gfPeriyotAnahtar(gun,'hafta')+':'+r.ad,baslik:'🔮 Kasa riski',govde:`30 gün içinde kasa ${ne}: olasılık %${Math.round(r.olasilik30*100)}${r.ilk20?' · '+gfTrTarih(r.ilk20)+' civarı':''}`,url:'./',oncelik:3});
   });
   try{const R=gfHedefHesap();
     if(R&&R.kalanGun>0&&R.kalanGun<=20&&R.gerceklesen<R.H.tutar&&R.tah.olasilik<0.3&&isaretle('gf_hedef_'+gun.slice(0,7)+'_'+Math.floor(parseInt(gun.slice(8,10))/7)))
@@ -11397,7 +11543,7 @@ var RK_KAYNAKLAR=['Google Ads','Armut','Dışarıdan','Eski Müşteri'];
 var RK_METRIK={
   harcama:{ad:'Harcama',renk:'#7eb3f0',tl:true},tiklama:{ad:'Tıklama',renk:'#6fcf97'},gosterim:{ad:'Gösterim',renk:'#b39ddb'},
   donusum:{ad:'Dönüşüm',renk:'#7ecec4'},ctr:{ad:'TO (CTR)',renk:'#f0c472',yuzde:true,oran:true},cpc:{ad:'Ort. TBM',renk:'#f08080',tl:true,oran:true},
-  telefon:{ad:'Telefon araması',renk:'#e0a0f0'},adsCiro:{ad:'Ads iş geliri',renk:'#4488ff',tl:true},adsIs:{ad:'Ads iş adedi',renk:'#00e5ff'},armutCiro:{ad:'Armut iş geliri',renk:'#ff9900',tl:true}};
+  telefon:{ad:'Telefon (Google)',renk:'#e0a0f0'},elle:{ad:'Elle arama',renk:'#D9A441'},adsCiro:{ad:'Ads iş geliri',renk:'#4488ff',tl:true},adsIs:{ad:'Ads iş adedi',renk:'#00e5ff'},armutCiro:{ad:'Armut iş geliri',renk:'#ff9900',tl:true}};
 var RK_STRATEJI={TARGET_SPEND:'Tıklamaları artır',MAXIMIZE_CONVERSIONS:'Dönüşümleri artır',MAXIMIZE_CONVERSION_VALUE:'Dönüşüm değerini artır',MANUAL_CPC:'Manuel TBM',ENHANCED_CPC:'Geliştirilmiş TBM',TARGET_CPA:'Hedef EBM',TARGET_ROAS:'Hedef ROAS',TARGET_IMPRESSION_SHARE:'Hedef gösterim payı'};
 var RK_KANAL={SEARCH:'Arama',PERFORMANCE_MAX:'Maks. Performans',DISPLAY:'Görüntülü',SMART:'Akıllı',VIDEO:'Video',LOCAL:'Yerel',LOCAL_SERVICES:'Yerel hizmetler'};
 // bilgi amaçlı / hizmet bölgesi dışı olabilecek arama terimleri (negatif kelime önerisi için)
@@ -11550,7 +11696,8 @@ function rkKpiHtml(A){
     k('Tıklama',rkSayi(T.tiklama),rkFark(T.tiklama,O.tiklama,true),`${rkSayi(T.gosterim)} gösterim`,'#6fcf97')+
     k('Tıklama oranı',rkYuzde(T.ctr/100,2),rkFark(T.ctr,O.ctr,true),'tıklama / gösterim','#f0c472')+
     k('Ort. TBM',fmt(T.cpc),rkFark(T.cpc,O.cpc,false),'tıklama başına maliyet','#f08080')+
-    (()=>{const E=rkElleArama(A),EO=rkElleArama(A,true);return k('Elle girilen arama',rkSayi(E.n),rkFark(E.n,EO.n,true),`Google: ${rkSayi(T.telefon)}${rkAramaVar()&&T.cevapsiz?' · '+T.cevapsiz+' cevapsız':''}${E.n&&T.harcama?' · arama başı '+fmt(T.harcama/E.n):''}`,'#e0a0f0','rkAramaGirAc()');})()+
+    (()=>{const E=rkElleArama(A),EO=rkElleArama(A,true);const GV=rkGunVeri(A.bas,A.bit);let gs=0,es=0,gn=0,tg=0;Object.values(GV).forEach(o=>{tg++;if(o.elleVar){gs+=o.telefon;es+=o.elle;gn++;}});
+      return k('Elle girilen arama',rkSayi(E.n),rkFark(E.n,EO.n,true),`📞 ${E.K.tel} · 💬 ${E.K.wa}${E.n&&T.harcama?' · arama başı '+fmt(T.harcama/E.n):''}<br>${gn?`Girilen ${gn}/${tg} günde: sen ${es} · Google ${gs}`:`Google: ${rkSayi(T.telefon)}`}${rkAramaVar()&&T.cevapsiz?' · '+T.cevapsiz+' cevapsız':''}`,'#D9A441','rkAramaGirAc()');})()+
     k('Dönüşüm',T.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),rkFark(T.donusum,O.donusum,true),T.donusum?`dönüşüm başı ${fmt(T.dm)}`:'Google\'ın saydığı','#7ecec4')+
     k('Ads işleri',`${adsL.length} iş`,rkFark(adsL.length,adsO.length,true),`+${fmt(ciro)} ciro`,'#4488ff')+
     k('Reklam getirisi',T.harcama?getiri.toFixed(1).replace('.',',')+'×':'—',rkFark(getiri,getiriO,true),T.harcama?`1 ₺ reklam → ${fmt(getiri)} ciro`:'harcama yok','#00e676')+
@@ -11577,15 +11724,15 @@ function rkGrafikAracCiz(){
 function rkMetrikTik(k){rkGrafikDegis(()=>{const i=RK.metrikler.indexOf(k);if(i>=0){if(RK.metrikler.length>1)RK.metrikler.splice(i,1);}else RK.metrikler.push(k);});}
 // gün gün ham değerler
 function rkGunVeri(bas,bit){
-  const G={};for(let g=bas;g<=bit;g=gfGunEkle(g,1))G[g]={gosterim:0,tiklama:0,harcama:0,donusum:0,telefon:0,adsCiro:0,adsIs:0,armutCiro:0,elle:0,veri:false};
+  const G={};for(let g=bas;g<=bit;g=gfGunEkle(g,1))G[g]={gosterim:0,tiklama:0,harcama:0,donusum:0,telefon:0,adsCiro:0,adsIs:0,armutCiro:0,elle:0,elleVar:0,veri:false};
   const ar=rkAramaVar();
   RK.m.forEach(r=>{const o=G[r.tarih];if(!o||!rkKf(r))return;o.veri=true;o.gosterim+=+r.gosterim||0;o.tiklama+=+r.tiklama||0;o.harcama+=+r.harcama||0;o.donusum+=+r.donusum||0;if(!ar)o.telefon+=+r.telefon_aramasi||0;});
   if(ar)RK.a.forEach(a=>{if(!rkKf(a))return;const o=G[rkAramaGun(a)];if(o)o.telefon++;});
   (DB.islemler||[]).forEach(i=>{if(i.tip!=='Gelir'||i.statu!=='Tamamlandı'||i.kat==='Şahsi Gelir')return;const o=G[localDateStr(i.tarih)];if(!o)return;if(i.islemKaynagi==='Google Ads'){o.adsCiro+=i.tutar;o.adsIs++;}else if(i.islemKaynagi==='Armut')o.armutCiro+=i.tutar;});
-  (RK.manuel||[]).forEach(r=>{if(r.tip!=='ads_arama')return;const o=G[String(r.tarih).slice(0,10)];if(o)o.elle+=parseInt(r.deger)||0;});
+  (RK.manuel||[]).forEach(r=>{if(r.tip!=='ads_arama'&&r.tip!=='ads_arama_yok')return;const o=G[String(r.tarih).slice(0,10)];if(!o)return;o.elleVar=1;if(r.tip==='ads_arama')o.elle+=parseInt(r.deger)||0;});
   return G;
 }
-var RK_TOPLAM_M=['gosterim','tiklama','harcama','donusum','telefon','adsCiro','adsIs','armutCiro','elle'];
+var RK_TOPLAM_M=['gosterim','tiklama','harcama','donusum','telefon','adsCiro','adsIs','armutCiro','elle','elleVar'];
 function rkSeri(A,opt){
   opt=opt||{};const haftalik=A.gun>92;const ortVar=RK.ort&&!haftalik&&!RK.birikimli;
   const G=rkGunVeri(ortVar?gfGunEkle(A.bas,-6):A.bas,A.bit);
@@ -11594,11 +11741,14 @@ function rkSeri(A,opt){
   if(!opt.kopyaYok&&!haftalik&&!RK.birikimli&&G[bg]&&G[dn]&&A.gun>1){['gosterim','tiklama','harcama','donusum','telefon'].forEach(m=>{G[bg][m]=G[dn][m];});kopyaGun=bg;}
   const anahtar=g=>haftalik?gfPeriyotAnahtar(g,'hafta'):g;
   const K=[],B={},Kgun={};for(let g=A.bas;g<=A.bit;g=gfGunEkle(g,1)){const a=anahtar(g);if(!B[a]){B[a]=Object.fromEntries(RK_TOPLAM_M.map(m=>[m,0]));K.push(a);Kgun[a]=[g,g];}Kgun[a][1]=g;RK_TOPLAM_M.forEach(m=>B[a][m]+=G[g][m]);}
-  const S={},M={};Object.keys(RK_METRIK).concat(['elle']).forEach(m=>{S[m]=[];M[m]=[];});const kum={};
+  const S={},M={};Object.keys(RK_METRIK).concat(['elle','elleVar']).forEach(m=>{S[m]=[];M[m]=[];});const kum={};
   K.forEach(a=>{const o=B[a];RK_TOPLAM_M.forEach(m=>{let v=o[m];if(RK.birikimli){kum[m]=(kum[m]||0)+v;v=kum[m];}S[m].push(Math.round(v*100)/100);});
     const t=RK.birikimli?kum:o;S.ctr.push(t.gosterim?Math.round(t.tiklama/t.gosterim*10000)/100:0);S.cpc.push(t.tiklama?Math.round(t.harcama/t.tiklama*100)/100:0);});
   if(ortVar)K.forEach(g=>{const w={};RK_TOPLAM_M.forEach(m=>w[m]=0);for(let i=0;i<7;i++){const x=G[gfGunEkle(g,-i)];if(x)RK_TOPLAM_M.forEach(m=>w[m]+=x[m]);}
-    RK_TOPLAM_M.forEach(m=>M[m].push(Math.round(w[m]/7*100)/100));M.ctr.push(w.gosterim?Math.round(w.tiklama/w.gosterim*10000)/100:0);M.cpc.push(w.tiklama?Math.round(w.harcama/w.tiklama*100)/100:0);});
+    RK_TOPLAM_M.forEach(m=>M[m].push(Math.round(w[m]/7*100)/100));M.ctr.push(w.gosterim?Math.round(w.tiklama/w.gosterim*10000)/100:0);M.cpc.push(w.tiklama?Math.round(w.harcama/w.tiklama*100)/100:0);
+      M.elle[M.elle.length-1]=w.elleVar?Math.round(w.elle/w.elleVar*100)/100:null;});
+  // elle arama: hiç giriş yapılmamış gün/hafta 0 değil boşluk (unutulan gün ortalamayı bozmasın)
+  if(!RK.birikimli)K.forEach((a,i)=>{if(!B[a].elleVar)S.elle[i]=null;});
   const AY=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
   return {K,Kgun,etiket:K.map(a=>{const [y,m,d]=a.split('-').map(Number);return (haftalik?'≈':'')+d+' '+AY[m-1];}),S,M:ortVar?M:null,haftalik,kopya:kopyaGun?K.indexOf(kopyaGun):-1};
 }
@@ -11617,7 +11767,7 @@ function rkGrafikCiz(){
   const T=rkTopla(A);const L=rkErpIsler(A,null);const ads=L.filter(i=>i.islemKaynagi==='Google Ads');const adsC=ads.reduce((s,i)=>s+i.tutar,0);
   if(oz){if(verim){const E=rkElleArama(A);const TO=rkTopla(A,true);const adsO=rkErpIsler(A,'Google Ads',true).reduce((s,i)=>s+i.tutar,0);const g=T.harcama?adsC/T.harcama:null,go=TO.harcama?adsO/TO.harcama:null;
       oz.innerHTML=`<div class="rk-oz" style="--rk:#00E676"><small>Reklam getirisi</small><b class="num">${g!=null?g.toFixed(1).replace('.',',')+'×':'—'}</b>${go!=null&&g!=null?rkFark(g,go,true):''}</div><div class="rk-oz" style="--rk:#7eb3f0"><small>Harcama</small><b class="num">−${fmt(T.harcama)}</b></div><div class="rk-oz" style="--rk:#4488ff"><small>Ads iş geliri</small><b class="num">+${fmt(adsC)}</b></div><div class="rk-oz" style="--rk:#00e5ff"><small>Ads işi · arama</small><b class="num">${ads.length} iş · ${E.n||T.telefon} arama</b></div>`;}
-    else{const v={harcama:'−'+fmt(T.harcama),tiklama:rkSayi(T.tiklama),gosterim:rkSayi(T.gosterim),donusum:T.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),ctr:rkYuzde(T.ctr/100,2),cpc:fmt(T.cpc),telefon:rkSayi(T.telefon),adsCiro:'+'+fmt(adsC),adsIs:String(ads.length),armutCiro:'+'+fmt(L.filter(i=>i.islemKaynagi==='Armut').reduce((s,i)=>s+i.tutar,0))};
+    else{const v={harcama:'−'+fmt(T.harcama),tiklama:rkSayi(T.tiklama),gosterim:rkSayi(T.gosterim),donusum:T.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),ctr:rkYuzde(T.ctr/100,2),cpc:fmt(T.cpc),telefon:rkSayi(T.telefon),adsCiro:'+'+fmt(adsC),adsIs:String(ads.length),armutCiro:'+'+fmt(L.filter(i=>i.islemKaynagi==='Armut').reduce((s,i)=>s+i.tutar,0)),elle:rkSayi(rkElleArama(A).n)};
       oz.innerHTML=RK.metrikler.map(m=>`<div class="rk-oz" style="--rk:${RK_METRIK[m].renk}"><small>${RK_METRIK[m].ad} ${RK_METRIK[m].oran?'(dönem)':'(toplam)'}</small><b class="num">${v[m]}</b></div>`).join('');}}
   if(not)not.innerHTML=(V.haftalik?'Uzun dönemde grafik haftalık toplanır. ':'')+(!verim&&V.M?'Kalın çizgi 7 günlük ortalama, ince çizgi günlük değer. ':'')+(O?'Kesikli soluk çizgi önceki dönem. ':'')+(V.kopya>=0?'Bugün: dünün kopyası (Google verisi bekleniyor). ':'')+'Bir güne dokun → o günün ayrıntısı.';
   if(!veriVar)return;
@@ -11941,54 +12091,85 @@ function ozBolumReklam(A,kisa){
 }
 
 // ---------- elle arama girişi (tarih · adet · sektör)
-var RK_AG={tarih:'',adet:1,sektor:''};
+var RK_AG={tarih:'',kanal:'tel'};
+try{RK_AG.kanal=localStorage.getItem('rk_ag_kanal')==='wa'?'wa':'tel';}catch(e){}
+var RK_KANAL={tel:'📞 Telefon',wa:'💬 WhatsApp'};
 function rkSektorler(){try{return Object.keys(ISLETME_HİZ||{});}catch(e){return [];}}
 function rkSektor(r){return r.sektor||((String(r.aciklama||'').match(/^Sektör: (.+)$/)||[])[1])||'';}
-function rkAramaGirAc(){
+function rkAgSektorler(){return rkSektorler().concat(['Diğer']);}
+// bir günün arama kayıtları; "ads_arama_yok" = o gün arama gelmedi (gün sayılmış ama 0)
+function rkGunKayit(g){return rkMan().filter(r=>String(r.tarih).slice(0,10)===g&&(r.tip==='ads_arama'||r.tip==='ads_arama_yok'));}
+function rkGunDurum(g){const L=rkGunKayit(g);const a=L.filter(r=>r.tip==='ads_arama');return {n:a.reduce((s,r)=>s+(parseInt(r.deger)||0),0),yok:L.some(r=>r.tip==='ads_arama_yok'),girildi:L.length>0,L:a,Y:L.filter(r=>r.tip==='ads_arama_yok')};}
+function rkManHazir(){return RK.manuelYuklu||(typeof PS!=='undefined'&&Array.isArray(PS.reklamManuel));}
+// son n günden girilmemiş olanlar (bugün 17:00'den sonra sayılır)
+function rkEksikGunler(n){if(!rkManHazir())return [];const b=localToday();const out=[];for(let i=n;i>=1;i--){const g=gfGunEkle(b,-i);if(!rkGunDurum(g).girildi)out.push(g);}if(new Date().getHours()>=17&&!rkGunDurum(b).girildi)out.push(b);return out;}
+function rkGunAd(g){const b=localToday();return g===b?'Bugün':g===gfGunEkle(b,-1)?'Dün':gfTrTarih(g).slice(0,5);}
+function rkManEkle(r){if(!Array.isArray(RK.manuel))RK.manuel=[];RK.manuel.push(r);try{if(Array.isArray(PS.reklamManuel)&&PS.reklamManuel!==RK.manuel)PS.reklamManuel.push(r);PS.ver=(PS.ver||0)+1;}catch(e){}}
+function rkManCikar(id){const f=x=>x.filter(r=>r.id!==id);let ayni=false;try{ayni=PS.reklamManuel===RK.manuel;}catch(e){}RK.manuel=f(RK.manuel||[]);try{if(Array.isArray(PS.reklamManuel))PS.reklamManuel=ayni?RK.manuel:f(PS.reklamManuel);PS.ver=(PS.ver||0)+1;}catch(e){}}
+function rkAramaGirAc(tarih){
   if(USER_ROL==='goruntule'){showToast('Görüntüleme yetkisiyle kayıt girilemez','amber');return;}
   let m=document.getElementById('modal-rk-ag');
-  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-rk-ag';m.innerHTML=`<div class="modal rk-ag-modal"><div class="modal-handle"></div><div class="modal-head"><h3>📞 Arama gir</h3><button class="modal-close" onclick="closeModal('modal-rk-ag')">✕</button></div><div class="modal-body" id="rk-ag-body"></div><div class="modal-foot"><button class="btn btn-primary btn-full" id="rk-ag-kaydet" onclick="rkAramaKaydet()">Kaydet</button></div></div>`;document.body.appendChild(m);}
-  RK_AG.tarih=localToday();RK_AG.adet=1;RK_AG.sektor='';rkAgCiz();openModal('modal-rk-ag');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-rk-ag';m.innerHTML=`<div class="modal rk-ag-modal"><div class="modal-handle"></div><div class="modal-head"><h3>📞 Reklam aramaları</h3><button class="modal-close" onclick="closeModal('modal-rk-ag')">✕</button></div><div class="modal-body" id="rk-ag-body"></div><div class="modal-foot"><button class="btn btn-secondary btn-full" onclick="closeModal('modal-rk-ag')">Tamam</button></div></div>`;document.body.appendChild(m);}
+  const b=localToday();RK_AG.tarih=(typeof tarih==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(tarih)&&tarih<=b)?tarih:b;
+  rkAgCiz();openModal('modal-rk-ag');
   if(!RK.manuelYuklu)rkManuelYukle().then(rkAgCiz);
 }
 function rkAgCiz(){
-  const el=document.getElementById('rk-ag-body');if(!el)return;const b=localToday(),dun=gfGunEkle(b,-1);
-  const S=rkSektorler();
-  const L=(RK.manuel||[]).filter(r=>r.tip==='ads_arama').sort((x,y)=>String(y.tarih).localeCompare(String(x.tarih))||(y.id||0)-(x.id||0)).slice(0,6);
-  el.innerHTML=`<div class="rk-ag-b">Tarih</div>
-    <div class="rk-ag-t"><input type="date" value="${RK_AG.tarih}" max="${b}" onchange="RK_AG.tarih=this.value;rkAgCiz()"><button type="button" class="isf-chip${RK_AG.tarih===b?' on':''}" onclick="RK_AG.tarih='${b}';rkAgCiz()">Bugün</button><button type="button" class="isf-chip${RK_AG.tarih===dun?' on':''}" onclick="RK_AG.tarih='${dun}';rkAgCiz()">Dün</button></div>
-    <div class="rk-ag-b">Arama adedi</div>
-    <div class="rk-ag-s"><button type="button" onclick="rkAgAdet(-1)" aria-label="Azalt">▼</button><input type="number" id="rk-ag-adet" inputmode="numeric" min="1" max="99" value="${RK_AG.adet}" oninput="RK_AG.adet=Math.max(1,Math.min(99,parseInt(this.value)||1))" onkeydown="if(event.key==='Enter')rkAramaKaydet()"><button type="button" onclick="rkAgAdet(1)" aria-label="Artır">▲</button></div>
-    <div class="rk-ag-b">Sektör</div>
-    ${S.length?`<div class="rk-ag-c">${S.map(s=>`<button type="button" class="isf-chip${RK_AG.sektor===s?' on':''}" onclick="RK_AG.sektor=RK_AG.sektor===${_esc(JSON.stringify(s))}?'':${_esc(JSON.stringify(s))};rkAgCiz()">${_esc(s)}</button>`).join('')}</div>`:'<div class="gf-not">Hizmet listesi yüklenemedi.</div>'}
-    ${L.length?`<div class="rk-ag-b" style="margin-top:14px">Son girilenler</div>`+L.map(r=>`<div class="rk-ag-l"><span>${gfTrTarih(String(r.tarih).slice(0,10))} · <b>${parseInt(r.deger)||0} arama</b>${rkSektor(r)?' · '+_esc(rkSektor(r)):''}</span><button type="button" onclick="rkAramaSil(${r.id})" aria-label="Sil">✕</button></div>`).join(''):''}`;
+  const el=document.getElementById('rk-ag-body');if(!el)return;const b=localToday(),dun=gfGunEkle(b,-1),g=RK_AG.tarih;
+  const D=rkGunDurum(g);const S=rkAgSektorler();const say={},kan={},kTop={tel:0,wa:0};
+  D.L.forEach(r=>{const s=rkSektor(r)||'Belirtilmemiş';const v=parseInt(r.deger)||0;const k=r.kanal==='wa'?'wa':'tel';say[s]=(say[s]||0)+v;(kan[s]=kan[s]||{tel:0,wa:0})[k]+=v;kTop[k]+=v;});
+  const eksik=rkEksikGunler(7).filter(x=>x!==g);const ga=rkGunAd(g);const q=x=>_esc(JSON.stringify(x));
+  const Lson=rkMan().filter(r=>r.tip==='ads_arama').slice().sort((x,y)=>String(y.tarih).localeCompare(String(x.tarih))||(+y.id||0)-(+x.id||0)).slice(0,6);
+  el.innerHTML=`<div class="rk-ag-t"><input type="date" value="${g}" max="${b}" onchange="if(this.value){RK_AG.tarih=this.value;rkAgCiz();}"><button type="button" class="isf-chip${g===b?' on':''}" onclick="RK_AG.tarih='${b}';rkAgCiz()">Bugün</button><button type="button" class="isf-chip${g===dun?' on':''}" onclick="RK_AG.tarih='${dun}';rkAgCiz()">Dün</button></div>
+    ${eksik.length?`<div class="rk-ag-eksik"><span>⚠️ Girilmemiş:</span>${eksik.map(x=>`<button type="button" onclick="RK_AG.tarih='${x}';rkAgCiz()">${rkGunAd(x)}</button>`).join('')}</div>`:''}
+    <div class="rk-ag-kanal">${['tel','wa'].map(k=>`<button type="button" class="${RK_AG.kanal===k?'on':''}" onclick="rkAgKanal('${k}')">${RK_KANAL[k]}</button>`).join('')}</div>
+    <div class="rk-ag-ipucu">Reklamdan gelen <b>her arama için</b> sektörüne bir kez dokun</div>
+    <div class="rk-ag-grid">${S.map(s=>{const n=say[s]||0,kk=kan[s];return `<div class="rk-ag-sek${n?' var':''}"><button type="button" class="rk-ag-art" onclick="rkAgEkle(${q(s)})"><b>${_esc(s)}</b>${n?`<span class="rk-ag-n num">${n}</span>`:'<span class="rk-ag-arti">+</span>'}${n&&kk&&kk.wa?`<small>📞${kk.tel} · 💬${kk.wa}</small>`:''}</button>${n?`<button type="button" class="rk-ag-eksi" onclick="rkAgEksi(${q(s)})" aria-label="${_esc(s)} bir azalt">−</button>`:''}</div>`;}).join('')}</div>
+    ${say['Belirtilmemiş']?`<div class="gf-not">Bu günde sektörü girilmemiş ${say['Belirtilmemiş']} eski kayıt var.</div>`:''}
+    <div class="rk-ag-ozet">${D.n?`<b>${ga}: ${D.n} arama</b><span>📞 ${kTop.tel} · 💬 ${kTop.wa}</span>`:D.yok?`<b>✓ ${ga}: arama gelmedi</b><button type="button" class="rk-ag-link" onclick="rkAgYok(false)">geri al</button>`:`<span>${ga} için henüz giriş yok</span>`}</div>
+    ${!D.n&&!D.yok?`<button type="button" class="rk-ag-yok" onclick="rkAgYok(true)">🚫 ${ga} reklamdan arama gelmedi</button>`:''}
+    ${Lson.length?`<div class="rk-ag-b" style="margin-top:14px">Son girilenler</div>`+Lson.map(r=>`<div class="rk-ag-l"><span>${gfTrTarih(String(r.tarih).slice(0,10))} · <b>${parseInt(r.deger)||0} arama</b>${rkSektor(r)?' · '+_esc(rkSektor(r)):''}${r.kanal==='wa'?' · 💬':''}</span>${/^\d+$/.test(String(r.id))?`<button type="button" onclick="rkAramaSil(${r.id})" aria-label="Sil">✕</button>`:''}</div>`).join(''):''}`;
 }
-function rkAgAdet(d){RK_AG.adet=Math.max(1,Math.min(99,(parseInt(document.getElementById('rk-ag-adet')?.value)||RK_AG.adet)+d));const i=document.getElementById('rk-ag-adet');if(i)i.value=RK_AG.adet;}
+function rkAgKanal(k){RK_AG.kanal=k==='wa'?'wa':'tel';try{localStorage.setItem('rk_ag_kanal',RK_AG.kanal);}catch(e){}rkAgCiz();}
+async function rkAgYokTemizle(g){for(const y of rkGunDurum(g).Y){if(!/^\d+$/.test(String(y.id)))continue;try{await sbFetch('reklam_manuel?id=eq.'+y.id,{method:'DELETE'});rkManCikar(y.id);}catch(e){}}}
+async function rkAgEkle(s){
+  const g=RK_AG.tarih;if(!g)return;const govde={tarih:g,tip:'ads_arama',deger:1,aciklama:'',sektor:s,kanal:RK_AG.kanal};
+  const gecici=Object.assign({},govde,{id:'g'+Date.now()+Math.random()});rkManEkle(gecici);rkAgCiz();
+  try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+  try{const r=await sbFetch('reklam_manuel',{method:'POST',prefer:'return=representation',body:JSON.stringify(govde)});
+    rkManCikar(gecici.id);if(Array.isArray(r)&&r[0])rkManEkle(r[0]);await rkAgYokTemizle(g);}
+  catch(e){rkManCikar(gecici.id);showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
+  rkAgCiz();rkAramaSonrasi();
+}
+async function rkAgEksi(s){
+  const g=RK_AG.tarih;const L=rkGunDurum(g).L.filter(r=>(rkSektor(r)||'Belirtilmemiş')===s&&/^\d+$/.test(String(r.id))).sort((a,b)=>b.id-a.id);const r=L[0];if(!r)return;
+  try{const v=parseInt(r.deger)||0;
+    if(v>1){await sbFetch('reklam_manuel?id=eq.'+r.id,{method:'PATCH',body:JSON.stringify({deger:v-1})});r.deger=v-1;try{PS.ver=(PS.ver||0)+1;}catch(e){}}
+    else{await sbFetch('reklam_manuel?id=eq.'+r.id,{method:'DELETE'});rkManCikar(r.id);}}
+  catch(e){showToast('Azaltılamadı','red');}
+  rkAgCiz();rkAramaSonrasi();
+}
+async function rkAgYok(ac){
+  const g=RK_AG.tarih;
+  try{if(ac){const r=await sbFetch('reklam_manuel',{method:'POST',prefer:'return=representation',body:JSON.stringify({tarih:g,tip:'ads_arama_yok',deger:0,aciklama:''})});if(Array.isArray(r)&&r[0])rkManEkle(r[0]);showToast(rkGunAd(g)+': arama gelmedi olarak kaydedildi','green');}
+    else await rkAgYokTemizle(g);}
+  catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
+  rkAgCiz();rkAramaSonrasi();
+}
+function rkAgAdet(){}
 async function rkManuelYukle(){
   if(RK._manYuk)return RK._manYuk;
   RK._manYuk=sbFetchAll('reklam_manuel?select=*&order=tarih.asc,id.asc').then(r=>{RK.manuel=Array.isArray(r)?r:[];RK.manuelYuklu=true;try{PS.reklamManuel=RK.manuel;PS.ver=(PS.ver||0)+1;}catch(e){}}).catch(()=>{RK.manuelYuklu=true;}).finally(()=>{RK._manYuk=null;});
   return RK._manYuk;
 }
-async function rkAramaKaydet(){
-  const i=document.getElementById('rk-ag-adet');if(i)RK_AG.adet=Math.max(1,Math.min(99,parseInt(i.value)||1));
-  if(!RK_AG.tarih){showToast('Tarih seç','red');return;}
-  const btn=document.getElementById('rk-ag-kaydet');if(btn)btn.disabled=true;
-  const govde={tarih:RK_AG.tarih,tip:'ads_arama',deger:RK_AG.adet,aciklama:'',sektor:RK_AG.sektor||null};
-  try{
-    try{await sbFetch('reklam_manuel',{method:'POST',prefer:'return=minimal',body:JSON.stringify(govde)});}
-    catch(e){if(!RK_AG.sektor)throw e;delete govde.sektor;govde.aciklama='Sektör: '+RK_AG.sektor;await sbFetch('reklam_manuel',{method:'POST',prefer:'return=minimal',body:JSON.stringify(govde)});}
-    await rkManuelYukle();
-    showToast(`${RK_AG.adet} arama kaydedildi${RK_AG.sektor?' · '+RK_AG.sektor:''}`,'green');closeModal('modal-rk-ag');rkAramaSonrasi();
-  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
-  finally{if(btn)btn.disabled=false;}
-}
+function rkAramaKaydet(){closeModal('modal-rk-ag');}
 async function rkAramaSil(id){
   if(!confirm('Bu arama kaydı silinsin mi?'))return;
-  try{await sbFetch('reklam_manuel?id=eq.'+id,{method:'DELETE'});RK.manuel=(RK.manuel||[]).filter(r=>r.id!==id);rkAgCiz();rkAramaSonrasi();}catch(e){showToast('Silinemedi','red');}
+  try{await sbFetch('reklam_manuel?id=eq.'+id,{method:'DELETE'});rkManCikar(id);rkAgCiz();rkAramaSonrasi();}catch(e){showToast('Silinemedi','red');}
 }
-function rkAramaSonrasi(){try{if(document.querySelector('#page-reklam.active'))rkCiz();}catch(e){}try{if(typeof dashBakisCiz==='function'&&document.getElementById('dash-bakis'))dashBakisCiz();}catch(e){}}
+function rkAramaSonrasi(){try{if(GF)GF.defter=null;}catch(e){}try{if(document.querySelector('#page-reklam.active'))rkCiz();}catch(e){}try{if(typeof dashBakisCiz==='function'&&document.getElementById('dash-bakis'))dashBakisCiz();}catch(e){}}
 // elle girilen aramalar: dönem toplamı ve sektör dağılımı
-function rkElleArama(A,once){const S={};let n=0;(RK.manuel||[]).forEach(r=>{if(r.tip!=='ads_arama'||!rkIcinde(String(r.tarih).slice(0,10),A,once))return;const v=parseInt(r.deger)||0;n+=v;const s=rkSektor(r)||'Belirtilmemiş';S[s]=(S[s]||0)+v;});return {n,S};}
+function rkElleArama(A,once){const S={},K={tel:0,wa:0};let n=0;(RK.manuel||[]).forEach(r=>{if(r.tip!=='ads_arama'||!rkIcinde(String(r.tarih).slice(0,10),A,once))return;const v=parseInt(r.deger)||0;n+=v;const s=rkSektor(r)||'Belirtilmemiş';S[s]=(S[s]||0)+v;K[r.kanal==='wa'?'wa':'tel']+=v;});return {n,S,K};}
 
 // ---------- Özet sayfası: reklam şeridi
 RK.dash=null;RK._dashYuk=null;
@@ -12008,11 +12189,13 @@ function rkDashHtml(){
   let h=0,t=0,g=0;(D?D.m:[]).forEach(r=>{if(r.tarih<ayBas)return;h+=+r.harcama||0;t+=+r.tiklama||0;g+=+r.telefon_aramasi||0;});
   if(RK.yuklu&&RK.a.length)g=RK.a.filter(a=>rkAramaGun(a)>=ayBas).length;
   const elle=rkMan().filter(r=>r.tip==='ads_arama'&&String(r.tarih).slice(0,7)===ayBas.slice(0,7)).reduce((s,r)=>s+(parseInt(r.deger)||0),0);
+  const bgD=rkGunDurum(localToday());const eks=USER_ROL!=='goruntule'?rkEksikGunler(2):[];
+  const eksH=eks.length?`<button type="button" class="db-rk-eksik" onclick="event.stopPropagation();rkAramaGirAc('${eks[0]}')">📞 ${eks.map(rkGunAd).join(', ')} için reklam araması girilmedi <b>→ sektörle gir</b></button>`:'';
   let uy='';try{const U=rkUyarilar().filter(u=>u.k!=='veri');if(U.length)uy=`<div class="db-rk-uyari">${U[0].m}${U.length>1?` <small>(+${U.length-1})</small>`:''}</div>`;}catch(e){}
   const dun=gfGunEkle(localToday(),-1);const eski=D&&D.son&&D.son<dun;
   return `<div class="db-k db-reklam r-kirmizi" onclick="goPage('reklam')"><div class="db-b">📈 Reklam <small>${ay}${eski?' · <span style="color:var(--red)">veri '+gfTrTarih(D.son)+'\'den beri yok</span>':''}</small></div>
-    <div class="db-rk"><div><small>Harcama</small><b class="num">${D?'−'+fmt(h):'…'}</b></div><div><small>Tıklama</small><b class="num">${D?rkSayi(t):'…'}</b></div><div><small>Arama</small><b class="num">${elle}${D&&g?` <small>· Google ${g}</small>`:''}</b></div>
-    ${USER_ROL!=='goruntule'?`<button type="button" class="db-rk-btn" onclick="event.stopPropagation();rkAramaGirAc()">📞 Arama gir</button>`:''}</div>${uy}</div>`;
+    <div class="db-rk"><div><small>Harcama</small><b class="num">${D?'−'+fmt(h):'…'}</b></div><div><small>Tıklama</small><b class="num">${D?rkSayi(t):'…'}</b></div><div><small>Arama · bugün ${bgD.n}</small><b class="num">${elle}${D&&g?` <small>· Google ${g}</small>`:''}</b></div>
+    ${USER_ROL!=='goruntule'?`<button type="button" class="db-rk-btn" onclick="event.stopPropagation();rkAramaGirAc()">📞 Arama gir</button>`:''}</div>${eksH}${uy}</div>`;
 }
 
 
@@ -12172,7 +12355,8 @@ function rkUyarilar(){
 }
 function rkUyariBildir(){
   try{const b=localToday();rkUyarilar().forEach(u=>{const key='rk_uyari_'+u.k;let son='';try{son=localStorage.getItem(key)||'';}catch(e){}if(son===b)return;try{localStorage.setItem(key,b);}catch(e){}
-    if(typeof aiBildirimGoster==='function')aiBildirimGoster(u.tip,u.m,9000);});}catch(e){console.warn('reklam uyarı',e);}
+    if(typeof aiBildirimGoster==='function')aiBildirimGoster(u.tip,u.m,9000);
+    if(u.k!=='veri')pushEkle({anahtar:'rk:'+u.k+':'+gfPeriyotAnahtar(b,'hafta'),baslik:'📈 Reklam uyarısı',govde:String(u.m).replace(/<[^>]+>/g,''),url:'./?sayfa=reklam',oncelik:5});});}catch(e){console.warn('reklam uyarı',e);}
 }
 
 // ---------- 6) Ana grafik metrikleri: elle arama, Ads iş geliri, 30 günlük reklam getirisi
@@ -13186,19 +13370,7 @@ function desenHaklariGuncelle(){
 
 // ============================================================ YAKLAŞAN ÖDEME UYARISI
 
-async function yaklaşanUyariGoster(){
-  const now=new Date(); now.setHours(0,0,0,0);
-  const bugunStr=localDateObjStr(now);
-  const hafta=new Date(now.getTime()+7*24*60*60*1000);
-
-  // ── 1. Bekliyor statüsündeki işlemler (mevcut) ──
-  const yaklasanIslemler=DB.islemler.filter(i=>{
-    if(i.statu!=='Bekliyor')return false;
-    const t=new Date(i.tarih); t.setHours(0,0,0,0);
-    return t<=hafta;
-  }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
-
-  // ── 2. Finansman ödemeleri (borç + kredi, 1 hafta içi veya geçmiş) ──
+function krediUyariListesi(now,hafta){
   const krediUyarilari=[];
   (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif'&&k.kalanTaksit>0).forEach(k=>{
     const dongu=k.odemeDongusu||'aylik';
@@ -13253,6 +13425,22 @@ async function yaklaşanUyariGoster(){
         tarih:localDateObjStr(son),renk,etiket,gecmis});
     }
   });
+  return krediUyarilari;
+}
+async function yaklaşanUyariGoster(){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const bugunStr=localDateObjStr(now);
+  const hafta=new Date(now.getTime()+7*24*60*60*1000);
+
+  // ── 1. Bekliyor statüsündeki işlemler (mevcut) ──
+  const yaklasanIslemler=DB.islemler.filter(i=>{
+    if(i.statu!=='Bekliyor')return false;
+    const t=new Date(i.tarih); t.setHours(0,0,0,0);
+    return t<=hafta;
+  }).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+
+  // ── 2. Finansman ödemeleri (borç + kredi, 1 hafta içi veya geçmiş) ──
+  const krediUyarilari=krediUyariListesi(now,hafta);
 
   // ── 3. Evrak ödemeleri (evrak sayfasının dönem hesabı) ──
   const evrakUyarilari=[];
@@ -13867,6 +14055,7 @@ function butceAsimiKontrol(){
     if(oran>=90)asimlar.push({kat:b.kategori,oran:Math.round(oran),harcama,limit:b.limitTutar});
   });
   if(asimlar.length){
+    asimlar.forEach(a=>pushEkle({anahtar:'butce:'+a.kat+':'+localToday().slice(0,7)+':'+(a.oran>=100?100:90),baslik:'💰 Bütçe: '+a.kat+' %'+a.oran,govde:fmt(a.harcama)+' harcandı · limit '+fmt(a.limit),url:'./',oncelik:4}));
     const msg=asimlar.map(a=>`${a.kat}: %${a.oran} (${fmt(a.harcama)}/${fmt(a.limit)} ₺)`).join('\n');
     showToast('⚠️ Bütçe uyarısı: '+asimlar[0].kat+' %'+asimlar[0].oran,'amber');
   }
