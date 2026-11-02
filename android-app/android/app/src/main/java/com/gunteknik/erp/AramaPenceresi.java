@@ -50,7 +50,7 @@ public class AramaPenceresi extends AppCompatActivity {
     private int sure;
     private long zaman;
     private boolean gorusme;          // true: görüşme bitince açıldı
-    private boolean geri;             // true: kaçırılan aramaya geri dönüldü
+    private boolean geriDonus;        // true: kaçırılan aramaya geri dönüldü
     private int kalan;                // sırada bekleyen başka arama sayısı
     private boolean bitti;            // bu arama sıradan çıkarıldı
     static volatile boolean acik;     // pencere ekranda mı (AramaTarama ikinci kez açmasın)
@@ -123,7 +123,7 @@ public class AramaPenceresi extends AppCompatActivity {
         sure = i.getIntExtra("sure", 0);
         zaman = i.getLongExtra("zaman", 0);
         gorusme = zaman > 0;
-        geri = i.getBooleanExtra("geri", false);
+        geriDonus = i.getBooleanExtra("geri", false);
         kalan = i.getIntExtra("kalan", 0);
         bitti = false;
         kanal = gorusme ? "tel" : Ayar.kanal(this);
@@ -182,10 +182,10 @@ public class AramaPenceresi extends AppCompatActivity {
         kok.setPadding(dp(18), dp(16), dp(18), dp(14));
         kok.setBackground(yuvarlak(ZEMIN, CIZGI, 22));
 
-        kok.addView(metin(gorusme ? (geri ? "📞 Geri döndüğün arama" : "📞 Az önceki arama") : "📞 Arama kaydet", 18, METIN, true));
+        kok.addView(metin(gorusme ? (geriDonus ? "📞 Geri döndüğün arama" : "📞 Az önceki arama") : "📞 Arama kaydet", 18, METIN, true));
         if (gorusme) {
             String kim = ad != null && !ad.isEmpty() ? ad + (numara != null ? "  ·  " + numara : "") : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-            String ek = (geri ? "Kaçırılan arama " : "") + saatYaz(zaman) + (geri ? "  ·  geri aradın" : "") + (sure > 0 ? "  ·  " + sureYaz(sure) : "")
+            String ek = (geriDonus ? "Kaçırılan arama " : "") + saatYaz(zaman) + (geriDonus ? "  ·  geri aradın" : "") + (sure > 0 ? "  ·  " + sureYaz(sure) : "")
                 + (kalan > 0 ? "\n⏳ Sırada " + kalan + " arama daha" : "");
             TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
             alt.setPadding(0, dp(2), 0, dp(2));
