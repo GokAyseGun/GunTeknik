@@ -142,6 +142,14 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6o. GTCOIN v3: aramalar, yaklaşan ödemeler, limit emir, ₺ (2 Kasım 2026)
+- Grup içi ağırlıklı geometrik ortalama. F: kasa .22, net .20, iş .18, tempo .12, ödeme .12, tahmin .10, alacak .06. T: arama(7g) .30, arama3(3g) .15, dönüşüm .15, tıklama .10, ROAS .10, ajanda .12, teklif .08. Aramalar `arama_takip`, `sonuc <> 'yanlis'`.
+- `odeme`: widget `od` listesindeki giden ödemeler 21 gün içinde ağırlık `1 − gün/21` (gecikmiş 1); gelenler ×0,5 düşer. r = (K − yük + 0,5·gelecek)/K, K = kasa+60000. Ödeme yapılınca kasa düşer, yük kalkar → fiyat sıçramaz. `alacak` artık sadece alacak − borç.
+- Geçmiş yeni modelle yeniden üretildi (k ölçeği ile şimdiki fiyat korundu).
+- Limit emir: `bet_gt_emir` (al: `tutar` ₺ ayrılır; sat: `miktar` GTC + `maliyet` ayrılır). `bet_gt_emir_ver(p_tur,p_limit,p_tutar,p_miktar)`, `bet_gt_emir_iptal(p_id)`, `_gt_emir_isle()` tikte; gerçekleşince sahibine push. En fazla 5 bekleyen. Al/sat iç fonksiyonları `_gt_al_ic`, `_gt_sat_ic`.
+- Para birimi ₺ (alan adları `coin` olarak kaldı). Sunucu metinleri ve eski hareket açıklamaları güncellendi. Fiyat "1 GTC = x ₺".
+- ERP: "Fiyatı ne belirliyor" kaldırıldı; Spot (Piyasa/Limit, kaydırıcı, fiyat etkisi, yeni ort. maliyet) + Kaldıraç paneli ve Cüzdan paneli (bakiye, GTC, ort. maliyet, K/Z, pozisyon, emirler, toplam varlık, bekleyen/geçmiş emirler). Grafikte bekleyen limit emir çizgileri.
+
 ## 6n. Arama penceresi Android 15+ düzeltmesi (2 Kasım 2026)
 - Hedef SDK 36: Android 15+ "üstte gösterme" izni olan uygulamanın arka plandan pencere açabilmesi için o an kendi üst katman penceresi ekranda olmalı; yoksa `startActivity` hata vermeden sessizce engelleniyordu (tanı "Pencere açıldı" yazıyordu ama pencere yoktu).
 - `AramaAlici.ustundenBaslat`: ana iş parçacığında 1 px görünmez `TYPE_APPLICATION_OVERLAY` katman ekler, 300 ms sonra pencereyi açar, katmanı 3 sn sonra kaldırır.
