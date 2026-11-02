@@ -142,6 +142,12 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6n. Arama penceresi Android 15+ düzeltmesi (2 Kasım 2026)
+- Hedef SDK 36: Android 15+ "üstte gösterme" izni olan uygulamanın arka plandan pencere açabilmesi için o an kendi üst katman penceresi ekranda olmalı; yoksa `startActivity` hata vermeden sessizce engelleniyordu (tanı "Pencere açıldı" yazıyordu ama pencere yoktu).
+- `AramaAlici.ustundenBaslat`: ana iş parçacığında 1 px görünmez `TYPE_APPLICATION_OVERLAY` katman ekler, 300 ms sonra pencereyi açar, katmanı 3 sn sonra kaldırır.
+- Doğrulama: `AramaPenceresi` açılınca `gt_arama.pencereAcildi` yazar; alıcı 4,2 sn bekler, açılmadıysa yedek bildirim (4242) gönderir. Pencere açılınca 4242 iptal edilir. Kilit ekranında da görünür (`setShowWhenLocked`).
+- Uzaktan tanı: her `iz()` adımı `cihaz_tani(p_token,p_metin,p_bilgi)` ile `cihazlar.tani`ya da yazılır (son 40; sdk, model, üst katman izni). Sorgu: `select tani from cihazlar`.
+
 ## 6m. GTCOIN v2: 19 ölçülü fiyat, 4 saatlik tik, kaldıraç (2 Kasım 2026)
 - Fiyat modeli `_gt_hesap(gün, widget anlık görüntüsü, taze)`: 4 grup, her grup kendi ölçülerinin geometrik ortalaması; `ham = 100·F^0,45·T^0,25·P^0,15·D^0,15`.
   - F Finans: kasa, 30g net kâr, 30g iş, 7g gelir temposu, alacak−borç−14g ödeme (widget), 30g sonrası kasa tahmini (widget `gt.tahmin30`).

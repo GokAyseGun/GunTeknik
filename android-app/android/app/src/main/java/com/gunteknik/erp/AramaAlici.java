@@ -7,13 +7,25 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 
 import androidx.core.content.ContextCompat;
+
+import org.json.JSONObject;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Telefon görüşmesi bitince (IDLE) arama kaydına bakar.
@@ -54,6 +66,16 @@ public class AramaAlici extends BroadcastReceiver {
     static void iz(Context c, String sonuc) {
         c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE).edit()
             .putLong("sonOlay", System.currentTimeMillis()).putString("sonSonuc", sonuc).apply();
+        // Sunucuya da yaz (cihazlar.tani): telefona bakmadan sorun ayıklanabilsin
+        final String t = Ayar.cihaz(c);
+        if (t == null) return;
+        final boolean ust = Settings.canDrawOverlays(c);
+        new Thread(() -> {
+            try {
+                JSONObject b = new JSONObject().put("sdk", Build.VERSION.SDK_INT).put("model", Build.MANUFACTURER + " " + Build.MODEL).put("ust", ust);
+                Sunucu.rpc("cihaz_tani", new JSONObject().put("p_token", t).put("p_metin", sonuc).put("p_bilgi", b));
+            } catch (Exception ignored) {}
+        }).start();
     }
 
     private static void isle(Context c, long bas) throws InterruptedException {
@@ -100,18 +122,57 @@ public class AramaAlici extends BroadcastReceiver {
             .putExtra("sure", (int) sure)
             .putExtra("zaman", zaman);
         String kim = ad != null ? ad : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-        if (Settings.canDrawOverlays(c)) {
-            try {
-                c.startActivity(pen);
-                iz(c, "Pencere açıldı: " + kim);
-                return;
-            } catch (Exception e) {
-                iz(c, "Pencere açılamadı (" + e.getClass().getSimpleName() + ") — bildirim gönderildi: " + kim);
-            }
-        } else {
-            iz(c, "Üstte gösterme izni yok — bildirim gönderildi: " + kim);
+        final long t0 = System.currentTimeMillis();
+        boolean izin = Settings.canDrawOverlays(c);
+        String hata = null;
+        if (izin) hata = ustundenBaslat(c, pen);
+        // Pencere gerçekten açıldı mı? (Android arka plandan açmayı sessizce engelleyebilir)
+        for (int i = 0; i < 14 && izin; i++) {
+            Thread.sleep(300);
+            if (p.getLong("pencereAcildi", 0) >= t0) { iz(c, "Pencere açıldı: " + kim); return; }
         }
+        iz(c, (!izin ? "Üstte gösterme izni yok" : hata != null ? "Pencere açılamadı (" + hata + ")" : "Pencere Android tarafından engellendi")
+            + " — bildirim gönderildi: " + kim);
         Bildirimci.aramaBekliyor(c, pen, kim);
+    }
+
+    /**
+     * Android 15+ (hedef SDK 35+): "üstte gösterme" izni olan uygulama arka plandan pencere açabilmek için
+     * o an ekranda kendi üst katman penceresine sahip olmalı. 1 piksellik görünmez bir katman ekleyip pencereyi
+     * onunla açıyoruz; katman 3 sn sonra kaldırılır.
+     */
+    private static String ustundenBaslat(Context c, Intent pen) throws InterruptedException {
+        final Handler h = new Handler(Looper.getMainLooper());
+        final CountDownLatch bitti = new CountDownLatch(1);
+        final String[] hata = {null};
+        h.post(() -> {
+            final WindowManager wm = (WindowManager) c.getSystemService(Context.WINDOW_SERVICE);
+            View v = null;
+            try {
+                v = new View(c);
+                @SuppressWarnings("deprecation")
+                int tip = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams(1, 1, tip,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    PixelFormat.TRANSLUCENT);
+                lp.gravity = Gravity.TOP | Gravity.START;
+                wm.addView(v, lp);
+            } catch (Exception e) {
+                v = null;
+            }
+            final View ust = v;
+            h.postDelayed(() -> {
+                try {
+                    c.startActivity(pen);
+                } catch (Exception e) {
+                    hata[0] = e.getClass().getSimpleName();
+                }
+                if (ust != null) h.postDelayed(() -> { try { wm.removeView(ust); } catch (Exception ignored) {} }, 3000);
+                bitti.countDown();
+            }, ust != null ? 300 : 0);
+        });
+        bitti.await(5, TimeUnit.SECONDS);
+        return hata[0];
     }
 
     /**

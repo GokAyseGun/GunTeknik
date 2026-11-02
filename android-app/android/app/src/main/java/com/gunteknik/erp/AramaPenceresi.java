@@ -62,6 +62,7 @@ public class AramaPenceresi extends AppCompatActivity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         setFinishOnTouchOutside(false);
+        if (android.os.Build.VERSION.SDK_INT >= 27) setShowWhenLocked(true);
         hazirla(getIntent());
     }
 
@@ -81,6 +82,11 @@ public class AramaPenceresi extends AppCompatActivity {
         kanal = gorusme ? "tel" : Ayar.kanal(this);
         int bildirim = i.getIntExtra("bildirim", 0);
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
+        if (gorusme) {
+            // AramaAlici pencerenin gerçekten açıldığını buradan anlar; yedek bildirim geldiyse kaldır
+            getSharedPreferences("gt_arama", MODE_PRIVATE).edit().putLong("pencereAcildi", System.currentTimeMillis()).apply();
+            NotificationManagerCompat.from(this).cancel(4242);
+        }
         adim = gorusme ? -1 : 0;
         kaynak = sektor = sonuc = sebep = null;
         erpAd = null;
