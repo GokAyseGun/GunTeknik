@@ -142,6 +142,17 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6k. Spam, bahis düzeni, GTCOIN (2 Kasım 2026)
+- **Arama penceresi** (görüşme sonrası) önce "Bu arama neydi?": 🔒 Özel (hiçbir şey) · 💼 İş (kaynak → sektör → sonuç; rehberde kaynak varsa doğrudan sektöre) · 📛 Spam (`arama_spam` RPC → `reklam_manuel` tip=`spam`, deger 1; yalnızca sayı). Widget'tan açılan elle giriş doğrudan kaynakla başlar.
+- ERP: Arama gir penceresinde "📛 Spam aramaydı" düğmesi (`atSpam`); reklam KPI'larında "Spam arama" kutusu; arama takibi kartında yanlış arama kutusunda spam sayısı.
+- Bet: A6 "Yarın kaç telefon gelir?" (arama_takip, kanal tel, spam hariç) eklendi; A1, A2, A5, R1, R3, Y3 kaldırıldı → 25 tür (günlük I1 A6 A4, ilk iş F1–F4, haftalık 14, aylık 4).
+- **GTCOIN** (Bet sayfasının en üstü): `bet_gt_fiyat` (tikler), `bet_gt_islem`, `bet_gt_durum` (baz/prim/dalga), `bet_oyuncular.gt/gt_maliyet`.
+  - Fiyat = temel × (1 + prim) × (1 + dalga). Temel `_gt_temel(_gt_bilesen(bugün), baz)`: 15.07.2026 = 100; geometrik ağırlık kasa(+60.000 kaydırma) %30, 30 gün net kâr (+baz gelir) %25, 30 gün iş (+2) %25, Google Ads getirisi (+1) %20; her oran 0,2–5 arası.
+  - Prim: alım +coin/40.000, satış −tutar/40.000, tik başına ×0,985 söner. Dalga: ortalamaya dönen küçük rastgele (σ %0,25, ×0,92). pg_cron `gt-tik` 15 dakikada bir `bet_gt_tik()`.
+  - `bet_gt_al(p_coin ≥2)`, `bet_gt_sat(p_miktar)`: %1 komisyon (en az 1 coin), coin defterine `gt_al`/`gt_sat`.
+  - Ay şampiyonu ve sıralama: coin + GTCOIN satış değeri (×0,99). Yardım: coin 0 ve GTCOIN değeri < 10.
+  - ERP: klinecharts mum/çizgi grafik (15 dk / 1 sa / 4 sa / 1 gün), 24s/7g/30g değişim, cüzdan K/Z, al/sat, "fiyatı ne belirliyor", son işlemler.
+
 ## 6j. Widget sadeleşti + Bet oyunu (2 Kasım 2026)
 **Widget'lar** (Android): yalnızca iki widget kaldı.
 - **Pano** (`w_pano.xml`): 📞 Arama ekle (AramaPenceresi, kaynak → sektör → sonuç) · bugünkü arama sayısı (arama_takip, reklam sayfasına gider) · ↶ son kaydı geri al · Ajanda bugün / 7 gün (takvim) · Evrak bugün (+gecikmiş, kırmızı) / 7 gün (evrak) · 💰 Kasa (özet sayfası) + 👁 gizle/göster. Sektör düğmeleri, telefon/WhatsApp düğmesi ve potansiyel satırı kaldırıldı.
