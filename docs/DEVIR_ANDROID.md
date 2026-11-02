@@ -142,6 +142,14 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6r. Geri dönüş araması, anında bildirim, dakikalık pozisyon takibi (2 Kasım 2026)
+- Tanı (cihazlar.tani) gösterdi: "yeni arama" aslında RINGING→IDLE (kaçırılan/reddedilen) ve ardından giden arama (geri dönüş) idi; kural yalnız cevaplanan gelen aramada pencere açıyordu.
+- `AramaAlici`: giden arama süresi > 0 ve aynı numaradan son 24 saatte gelen/kaçırılan/reddedilen arama varsa (`oncekiGelen`, `son10`) pencere "Geri döndüğün arama" olarak açılır; kayıt zamanı müşterinin ilk aradığı an. Aynı numara için 24 saatte bir (`gt_arama.pencere:<son10>`). Rehber/850/444/sabit hat kuralları aynen geçerli.
+- `push-gonder` v6: eylem düğmesi olmayan Android bildirimleri `notification` bloğuyla da gider (kanal hatirlatma) → uygulama kapalı / MIUI uyuttuysa da sistem anında gösterir. Eylemliler yalnız data.
+- `push_kuyruk_hemen` (statement trigger): öncelik ≤ 4 ve zamanı gelmiş kayıt eklenince `push_tetikle()` hemen (pg_net) — 5 dk cron beklenmez. Sessiz saat kuralı (23–07, öncelik 0 hariç) aynen.
+- `gt-dk` cron her dakika `bet_gt_dk_cron()`: açık pozisyon, bekleyen emir ya da izleyen varsa `_gt_dk_isle()`; likidasyon/TP/SL/limit dakikasında çalışır. (Önceki SL, sayfa açılınca dakikalar tamamlanırken tetiklenmişti.)
+- `GTYerel.otomatikBaslat()`: MIUI/Huawei/Oppo/Vivo otomatik başlatma ekranı; ERP Ayarlar → Android'de 🚀 düğmesi.
+
 ## 6q. GTCOIN v5: dakikalık canlı fiyat, ×10 ölçek (2 Kasım 2026)
 - Bütün fiyatlar ×10 (≈970 ₺/GTC): `bet_gt_fiyat`, `bet_gt_durum.k/temel/hedef/endeks`, işlem fiyatı ×10 ve miktar ÷10, `bet_oyuncular.gt` ÷10, pozisyon giriş/tp/sl ×10, emir limiti ×10, çizimler ×10.
 - `_gt_dk_isle()`: 4 saatlik pencerede çapa `capa0 → capa1` (log-doğrusal); endeks = çapa·e^x. x: OU (θ=0,015/dk, yarı ömür ~45 dk), σ=0,18%·e^lv, lv AR(1) (oynaklık kümelenmesi), dakikada %0,6 olasılıkla ±%0,5–1,5 sıçrama, |x| ≤ %8. Prim dakikada 0,8^(1/240) söner. Kayıt `kaynak='dk'`, en fazla 240 dk geriye tamamlar; sonra pozisyon ve limit emir kontrolü. Simülasyon: 4 saatlik salınım medyanı %4,6, p90 %7,2.

@@ -141,6 +141,29 @@ public class GTYerelPlugin extends Plugin {
         call.resolve();
     }
 
+    /** Xiaomi/Redmi/POCO (MIUI/HyperOS): "Otomatik başlatma" izni — yoksa uygulama kapalıyken bildirim ve arama penceresi gecikir. Diğer markalarda uygulama ayarları. */
+    @PluginMethod
+    public void otomatikBaslat(PluginCall call) {
+        String[][] adaylar = {
+            {"com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"},
+            {"com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"},
+            {"com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"},
+            {"com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"},
+            {"com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"}};
+        for (String[] a : adaylar) {
+            try {
+                Intent i = new Intent().setComponent(new android.content.ComponentName(a[0], a[1])).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(i);
+                call.resolve();
+                return;
+            } catch (Exception ignored) {}
+        }
+        try {
+            getContext().startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getContext().getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception ignored) {}
+        call.resolve();
+    }
+
     @PluginMethod
     public void izinIste(PluginCall call) {
         Activity a = getActivity();

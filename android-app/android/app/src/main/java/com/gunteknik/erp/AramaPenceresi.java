@@ -50,6 +50,7 @@ public class AramaPenceresi extends AppCompatActivity {
     private int sure;
     private long zaman;
     private boolean gorusme;          // true: görüşme bitince açıldı
+    private boolean geri;             // true: kaçırılan aramaya geri dönüldü
     private int adim;                 // -1 tür (özel/iş/spam), 0 kaynak, 1 sektör, 2 sonuç, 3 sebep
     private String bulunanKaynak;     // ERP rehberinden gelen kaynak (İş seçilince kullanılır)
     private String kaynak, sektor, sonuc, sebep;
@@ -79,6 +80,7 @@ public class AramaPenceresi extends AppCompatActivity {
         sure = i.getIntExtra("sure", 0);
         zaman = i.getLongExtra("zaman", 0);
         gorusme = zaman > 0;
+        geri = i.getBooleanExtra("geri", false);
         kanal = gorusme ? "tel" : Ayar.kanal(this);
         int bildirim = i.getIntExtra("bildirim", 0);
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
@@ -135,10 +137,10 @@ public class AramaPenceresi extends AppCompatActivity {
         kok.setPadding(dp(18), dp(16), dp(18), dp(14));
         kok.setBackground(yuvarlak(ZEMIN, CIZGI, 22));
 
-        kok.addView(metin(gorusme ? "📞 Az önceki arama" : "📞 Arama kaydet", 18, METIN, true));
+        kok.addView(metin(gorusme ? (geri ? "📞 Geri döndüğün arama" : "📞 Az önceki arama") : "📞 Arama kaydet", 18, METIN, true));
         if (gorusme) {
             String kim = ad != null && !ad.isEmpty() ? ad + (numara != null ? "  ·  " + numara : "") : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-            String ek = new SimpleDateFormat("HH:mm", Locale.US).format(new Date(zaman)) + (sure > 0 ? "  ·  " + sureYaz(sure) : "");
+            String ek = (geri ? "Kaçırılan arama " : "") + new SimpleDateFormat("HH:mm", Locale.US).format(new Date(zaman)) + (geri ? "  ·  geri aradın" : "") + (sure > 0 ? "  ·  " + sureYaz(sure) : "");
             TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
             alt.setPadding(0, dp(2), 0, dp(2));
             kok.addView(alt);

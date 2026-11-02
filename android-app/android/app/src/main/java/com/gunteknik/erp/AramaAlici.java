@@ -103,7 +103,20 @@ public class AramaAlici extends BroadcastReceiver {
             }
         }
         if (!bulundu) { iz(c, "Görüşme arama kaydında bulunamadı"); return; }
-        if (tip != CallLog.Calls.INCOMING_TYPE) { iz(c, (tip == CallLog.Calls.OUTGOING_TYPE ? "Giden arama" : "Cevapsız/reddedilen arama") + " — pencere açılmaz"); return; }
+        // Geri dönüş: kaçırılan/reddedilen yeni numarayı 24 saat içinde geri arayıp konuştuysan pencere açılır (arama, müşterinin ilk aradığı saatle kaydedilir)
+        boolean geri = false;
+        if (tip == CallLog.Calls.OUTGOING_TYPE) {
+            if (sure <= 0) { iz(c, "Giden arama (cevaplanmadı) — pencere açılmaz"); return; }
+            long ilk = oncekiGelen(c, numara, zaman);
+            if (ilk <= 0) { iz(c, "Giden arama — pencere açılmaz"); return; }
+            if (System.currentTimeMillis() - c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE).getLong("pencere:" + son10(numara), 0) < 24 * 3600_000L) {
+                iz(c, "Geri dönüş — bu numara için bugün pencere zaten açıldı"); return;
+            }
+            geri = true;
+            zaman = ilk;
+        } else if (tip != CallLog.Calls.INCOMING_TYPE) {
+            iz(c, "Cevapsız/reddedilen arama — geri ararsan pencere açılır"); return;
+        }
         if (sure <= 0) { iz(c, "Gelen arama 0 sn — pencere açılmaz"); return; }
 
         SharedPreferences p = c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE);
@@ -120,7 +133,9 @@ public class AramaAlici extends BroadcastReceiver {
             .putExtra("numara", numara)
             .putExtra("ad", ad)
             .putExtra("sure", (int) sure)
-            .putExtra("zaman", zaman);
+            .putExtra("zaman", zaman)
+            .putExtra("geri", geri);
+        if (son10(numara) != null) p.edit().putLong("pencere:" + son10(numara), System.currentTimeMillis()).apply();
         String kim = ad != null ? ad : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
         final long t0 = System.currentTimeMillis();
         boolean izin = Settings.canDrawOverlays(c);
@@ -129,9 +144,9 @@ public class AramaAlici extends BroadcastReceiver {
         // Pencere gerçekten açıldı mı? (Android arka plandan açmayı sessizce engelleyebilir)
         for (int i = 0; i < 14 && izin; i++) {
             Thread.sleep(300);
-            if (p.getLong("pencereAcildi", 0) >= t0) { iz(c, "Pencere açıldı: " + kim); return; }
+            if (p.getLong("pencereAcildi", 0) >= t0) { iz(c, (geri ? "Geri dönüş · " : "") + "Pencere açıldı: " + kim); return; }
         }
-        iz(c, (!izin ? "Üstte gösterme izni yok" : hata != null ? "Pencere açılamadı (" + hata + ")" : "Pencere Android tarafından engellendi")
+        iz(c, (geri ? "Geri dönüş · " : "") + (!izin ? "Üstte gösterme izni yok" : hata != null ? "Pencere açılamadı (" + hata + ")" : "Pencere Android tarafından engellendi")
             + " — bildirim gönderildi: " + kim);
         Bildirimci.aramaBekliyor(c, pen, kim);
     }
@@ -173,6 +188,33 @@ public class AramaAlici extends BroadcastReceiver {
         });
         bitti.await(5, TimeUnit.SECONDS);
         return hata[0];
+    }
+
+    /** Bu numaradan, verilen andan önceki 24 saatte gelen / kaçırılan / reddedilen arama varsa o aramanın zamanı; yoksa 0. */
+    static long oncekiGelen(Context c, String numara, long once) {
+        String n = son10(numara);
+        if (n == null) return 0;
+        try (Cursor cur = c.getContentResolver().query(CallLog.Calls.CONTENT_URI,
+                new String[]{CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.DATE},
+                CallLog.Calls.DATE + " > ?", new String[]{String.valueOf(once - 24 * 3600_000L)}, CallLog.Calls.DATE + " DESC")) {
+            if (cur == null) return 0;
+            while (cur.moveToNext()) {
+                long d = cur.getLong(2);
+                if (d >= once) continue;
+                int t = cur.getInt(1);
+                boolean gelen = t == CallLog.Calls.INCOMING_TYPE || t == CallLog.Calls.MISSED_TYPE || t == CallLog.Calls.REJECTED_TYPE;
+                if (gelen && n.equals(son10(cur.getString(0)))) return d;
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    /** Karşılaştırma için numaranın son 10 hanesi */
+    static String son10(String numara) {
+        if (numara == null) return null;
+        String d = numara.replaceAll("[^0-9]", "");
+        if (d.length() < 7) return null;
+        return d.length() > 10 ? d.substring(d.length() - 10) : d;
     }
 
     /**
