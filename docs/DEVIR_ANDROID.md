@@ -142,6 +142,13 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6q. GTCOIN v5: dakikalık canlı fiyat, ×10 ölçek (2 Kasım 2026)
+- Bütün fiyatlar ×10 (≈970 ₺/GTC): `bet_gt_fiyat`, `bet_gt_durum.k/temel/hedef/endeks`, işlem fiyatı ×10 ve miktar ÷10, `bet_oyuncular.gt` ÷10, pozisyon giriş/tp/sl ×10, emir limiti ×10, çizimler ×10.
+- `_gt_dk_isle()`: 4 saatlik pencerede çapa `capa0 → capa1` (log-doğrusal); endeks = çapa·e^x. x: OU (θ=0,015/dk, yarı ömür ~45 dk), σ=0,18%·e^lv, lv AR(1) (oynaklık kümelenmesi), dakikada %0,6 olasılıkla ±%0,5–1,5 sıçrama, |x| ≤ %8. Prim dakikada 0,8^(1/240) söner. Kayıt `kaynak='dk'`, en fazla 240 dk geriye tamamlar; sonra pozisyon ve limit emir kontrolü. Simülasyon: 4 saatlik salınım medyanı %4,6, p90 %7,2.
+- `bet_gt_tik()`: önce dakikaları tamamlar, sonra veriden yeni hedef (`capa1`), `capa0` = o anki çapa, pencere = şimdi..+4 sa; tik kaydı penceredeki en yüksek/düşük ile 4 saatlik mumu kapatır; 14 günden eski dakikalıkları siler.
+- `bet_gt_canli()`: izleyen kaydı (`bet_gt_izleyen`) + eksik dakikalar; ERP Bet sayfası açıkken dakika başı +2,5 sn çağırır, artımlı veri çeker, sadece fiyat/istatistik/cüzdan/pozisyon/akış ve grafiğin son mumlarını günceller (girişler bozulmaz). İşlem fonksiyonları başta `_gt_dk_isle()` çağırır.
+- Grafik: 1 dk (son 24 saat), 4 sa, 1 gün; varsayılan 1 dk.
+
 ## 6p. GTCOIN v4: kayma, karekök etki, piyasa görüşü; gösterge ayarları (2 Kasım 2026)
 - Açık kapandı: alım baskı eklenmeden önceki fiyattan, satış itilmiş fiyattan gerçekleştiği için büyük al-sat döngüsü kâr ediyordu (5.000 ₺ ≈ +510 ₺). Artık işlem itilen yolun ortalamasından (`fiyat` = ortalama) gerçekleşir.
 - `_gt_etki(uid,tutar,yon,prim)`: 0,015·√(tutar/1000)/√(1+7g hacim/20000); kişi başı son 24 saatte net etki (`bet_gt_islem.etki`) ±%5; toplam baskı (prim) ±%5, tikte ×0,8 söner. Test: 1.000 ₺ al-sat −20 ₺, 5.000+2.000 al + hepsini sat −93 ₺.

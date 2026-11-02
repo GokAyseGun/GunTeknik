@@ -1732,6 +1732,13 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 .gos-ic{padding:0 11px 10px;display:flex;flex-direction:column;gap:6px;}
 .gos-s{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;align-items:center;font-size:12px;color:var(--text2);}
 .gos-s input,.gos-s select{width:100%;padding:7px 9px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;}
+.gt-canli{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--green);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw;}
+.gt-canli i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(0,230,118,.6);animation:gtNabiz 1.6s infinite;flex-shrink:0;}
+@keyframes gtNabiz{0%{box-shadow:0 0 0 0 rgba(0,230,118,.55)}70%{box-shadow:0 0 0 7px rgba(0,230,118,0)}100%{box-shadow:0 0 0 0 rgba(0,230,118,0)}}
+.gt-fiyat.yukari>b{animation:gtYukari 1.2s ease-out;}
+.gt-fiyat.asagi>b{animation:gtAsagi 1.2s ease-out;}
+@keyframes gtYukari{0%{color:var(--green);text-shadow:0 0 14px rgba(0,230,118,.7)}100%{color:#F5C542;text-shadow:none}}
+@keyframes gtAsagi{0%{color:var(--red);text-shadow:0 0 14px rgba(255,23,68,.7)}100%{color:#F5C542;text-shadow:none}}
 .gt-pano{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;margin-top:10px;}
 .gt-pano>.gt-kutu{min-width:0;}
 @media(max-width:760px){.gt-pano{grid-template-columns:minmax(0,1fr);}}
@@ -5068,7 +5075,7 @@ function widgetBaslat(){
 
 // ============================================================ BET (oyun)
 // ERP verisine bahis: yalnızca okur, hiçbir ERP kaydını değiştirmez. Oranlar, bahis ve sonuçlar sunucuda (bet_* tabloları).
-var BET={gtCizimler:[],gtCizimDb:{},gtCizim:false,gtMiknatis:false,gtOlusan:[],gtF:[],gtIslem:[],gtDurum:null,gtMod:'al',gtCoin:'',gtMiktar:'',gtAralik:'4s',gtTur:'spot',gtEmir:'piyasa',gtLimit:'',gtEmirler:[],kYon:'long',kKal:3,kTem:'',kTp:'',kSl:'',gtPoz:[],gtTip:'candle_solid',gtChart:null,sepetAcik:false,yuklu:false,yuk:null,sekme:'bahis',grup:'',kupFiltre:'ben',sepet:[],tutar:10,tekli:false,sayi:{},
+var BET={gtCizimler:[],gtCizimDb:{},gtCizim:false,gtMiknatis:false,gtOlusan:[],gtF:[],gtIslem:[],gtDurum:null,gtMod:'al',gtCoin:'',gtMiktar:'',gtAralik:'1dk',gtTur:'spot',gtEmir:'piyasa',gtLimit:'',gtEmirler:[],kYon:'long',kKal:3,kTem:'',kTp:'',kSl:'',gtPoz:[],gtTip:'candle_solid',gtChart:null,sepetAcik:false,yuklu:false,yuk:null,sekme:'bahis',grup:'',kupFiltre:'ben',sepet:[],tutar:10,tekli:false,sayi:{},
   oyuncular:[],pazarlar:[],kuponlar:[],secimler:[],sezonlar:[],hareketler:[],zaman:0,saat:null};
 const BET_GRUPLAR=['Kasa','İş','İlk iş','Gelir ve gider','Arama','Reklam','Rehber ve ajanda'];
 const BET_GRUP_IK={'Kasa':'💰','İş':'🧰','İlk iş':'🥇','Gelir ve gider':'📊','Arama':'📞','Reklam':'📢','Rehber ve ajanda':'📅'};
@@ -5090,7 +5097,8 @@ async function betYukle(zorla){
       sbFetchAll('bet_secimler?select=*&order=id.desc'),
       sbFetchAll('bet_sezonlar?select=*&order=ay.desc'),
       sbFetchAll('bet_hareketler?select=*&kullanici=eq.'+betUid()+'&order=zaman.desc&limit=80'),
-      sbFetchAll('bet_gt_fiyat?select=zaman,fiyat,hacim,kaynak,yuksek,dusuk,endeks&zaman=gte.%22'+gtOnce+'%22&order=zaman.asc,id.asc').catch(()=>[]),
+      Promise.all([sbFetchAll('bet_gt_fiyat?select='+GT_ALAN+'&kaynak=neq.dk&zaman=gte.%22'+gtOnce+'%22&order=zaman.asc,id.asc'),
+        sbFetchAll('bet_gt_fiyat?select='+GT_ALAN+'&kaynak=eq.dk&zaman=gte.%22'+new Date(Date.now()-GT_DK_SAAT*36e5).toISOString()+'%22&order=zaman.asc,id.asc')]).then(([a,b])=>gtSirala(a.concat(b))).catch(()=>[]),
       sbFetch('bet_gt_islem?select=*&zaman=gte.%22'+new Date(Date.now()-7*864e5).toISOString()+'%22&order=zaman.desc&limit=400').catch(()=>[]),
       sbFetch('bet_gt_durum?select=*').catch(()=>[]),
       sbFetch('grafik_cizimler?select=*&metrik=eq.'+encodeURIComponent('gt:'+betUid())+'&order=id.asc').catch(()=>[]),
@@ -5108,6 +5116,7 @@ function betCiz(){
   catch(e){console.error(e);el.innerHTML='<div class="gf-not">Bet sayfası çizilemedi: '+_esc(e.message)+'</div>';}
   betSepetCiz();
   try{gtGrafikCiz();}catch(e){console.warn('gtcoin grafik',e);}
+  try{gtCanliBaslat();}catch(e){}
   clearInterval(BET.saat);BET.saat=setInterval(()=>{if(!document.querySelector('#page-bet.active')){clearInterval(BET.saat);return;}document.querySelectorAll('[data-bt-kap]').forEach(x=>{x.textContent=betKalan(x.getAttribute('data-bt-kap'));});},30000);
 }
 function betBen(){return BET.oyuncular.find(o=>o.kullanici===betUid());}
@@ -5143,30 +5152,79 @@ function gtGTC(v){return gtSayi(v,4)+' GTC';}
 function gtRenk(v){return v>0.5?'var(--green)':v<-0.5?'var(--red)':'var(--text3)';}
 function gtHtml(){
   if(!BET.gtF.length)return '';
-  const p=gtFiyat();
-  const c24=gtYuzde(p,gtOnce(864e5)),c7=gtYuzde(p,gtOnce(7*864e5)),c30=gtYuzde(p,gtOnce(30*864e5));
-  const F24=BET.gtF.filter(r=>Date.now()-new Date(r.zaman).getTime()<=864e5);const yuk=Math.max(p,...F24.map(r=>+(r.yuksek||r.fiyat))),dus=Math.min(p,...F24.map(r=>+(r.dusuk||r.fiyat)));
-  const hacim=F24.reduce((s,r)=>s+(r.hacim||0),0);
   const sahip=BET.oyuncular.filter(o=>+o.gt>0).sort((a,b2)=>b2.gt-a.gt);
   const spot=BET.gtTur!=='kal';const acikN=gtPozlar(betUid(),true).length;
   return `<div class="gt card">
-    <div class="gt-ust"><div class="gt-logo">₲</div><div class="gt-ad"><b>GTCOIN</b><small>Gün Teknik · GTC/TRY</small></div>
-      <div class="gt-fiyat"><small>1 GTC =</small><b class="num">${gtTL(p)}</b><span>${gtYzHtml(c24)} <small>24s</small></span></div></div>
-    <div class="gt-ist"><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span>24s hacim <b class="num">${betTL(hacim)}</b></span>${gtPiyasaHtml()}<span>Sonraki güncelleme <b class="num">${gtSonrakiTik()}</b></span></div>
-    <div class="gt-arac">${[['4s','4 sa'],['1g','1 gün']].map(([k,a])=>`<button type="button" class="${BET.gtAralik===k?'on':''}" onclick="BET.gtAralik='${k}';gtGrafikCiz()">${a}</button>`).join('')}<span class="gt-ara"></span><button type="button" onclick="gtTipDegis()" id="gt-tip">${GT_TIP[BET.gtTip]||'🕯 Mum'}</button><button type="button" class="${gtGos().ana.length+gtGos().alt.length?'on':''}" onclick="gtGostergeAc()">📊 Gösterge</button><button type="button" id="gt-ciz-btn" class="${BET.gtCizim?'on':''}" onclick="BET.gtCizim=!BET.gtCizim;gtCizimBarCiz()">✏️ Çiz</button></div>
+    <div class="gt-ust"><div class="gt-logo">₲</div><div class="gt-ad"><b>GTCOIN</b><small>Gün Teknik · GTC/TRY</small><span class="gt-canli" id="gt-canli">${gtCanliRozet()}</span></div>
+      <div class="gt-fiyat" id="gt-ust-f">${gtUstFiyatHtml()}</div></div>
+    <div class="gt-ist" id="gt-ist">${gtIstHtml()}</div>
+    <div class="gt-arac">${[['1dk','1 dk'],['4s','4 sa'],['1g','1 gün']].map(([k,a])=>`<button type="button" class="${BET.gtAralik===k?'on':''}" onclick="BET.gtAralik='${k}';gtGrafikCiz()">${a}</button>`).join('')}<span class="gt-ara"></span><button type="button" onclick="gtTipDegis()" id="gt-tip">${GT_TIP[BET.gtTip]||'🕯 Mum'}</button><button type="button" class="${gtGos().ana.length+gtGos().alt.length?'on':''}" onclick="gtGostergeAc()">📊 Gösterge</button><button type="button" id="gt-ciz-btn" class="${BET.gtCizim?'on':''}" onclick="BET.gtCizim=!BET.gtCizim;gtCizimBarCiz()">✏️ Çiz</button></div>
     <div class="gt-cizim-bar" id="gt-cizim-bar"></div>
     <div class="gt-grafik" id="gt-grafik"></div>
     <div class="gt-pano">
       <div class="gt-kutu gt-emir-k"><div class="gt-tur"><button type="button" class="${spot?'on':''}" onclick="BET.gtTur='spot';betCiz()">💼 Spot</button><button type="button" class="${!spot?'on':''}" onclick="BET.gtTur='kal';betCiz()">⚡ Kaldıraç${acikN?` <small>${acikN}</small>`:''}</button></div>
         ${spot?gtSpotHtml():gtKalHtml()}</div>
-      <div class="gt-kutu">${gtCuzdanHtml()}</div></div>
-    ${gtPozHtml()}
-    ${gtAkisHtml()}
+      <div class="gt-kutu" id="gt-cuzdan">${gtCuzdanHtml()}</div></div>
+    <div id="gt-poz-alan">${gtPozHtml()}</div>
+    <div id="gt-akis-alan">${gtAkisHtml()}</div>
     ${sahip.length?`<div class="gt-sahip">${sahip.map(o=>`<span>${_esc(o.ad)} <b class="num">${gtGTC(o.gt)}</b></span>`).join('')}</div>`:''}
   </div>`;
 }
 function gtPiyasaHtml(){const d=BET.gtDurum||{};const y=v=>{v=(+v||0)*100;return `<b class="num" style="color:${v>0.05?'var(--green)':v<-0.05?'var(--red)':'var(--text2)'}">${v>=0?'+':'−'}%${gtSayi(Math.abs(v),2)}</b>`;};
   return `<span>Al/sat baskısı ${y(d.prim)}</span><span>Piyasa görüşü ${y(d.gorus)}</span>`;}
+
+// ---- Canlı: sayfa açıkken dakikada bir sunucu eksik dakikaları üretir, sayfa yalnızca değişen yerleri yeniler
+var GT_ALAN='id,zaman,fiyat,hacim,kaynak,yuksek,dusuk,endeks',GT_DK_SAAT=24;
+function gtSirala(L){const g={};const o=[];(L||[]).forEach(r=>{if(r.id!=null){if(g[r.id])return;g[r.id]=1;}o.push(r);});o.sort((a,b)=>String(a.zaman).localeCompare(String(b.zaman))||(a.id||0)-(b.id||0));return o;}
+function gtUstFiyatHtml(){const p=gtFiyat();const c24=gtYuzde(p,gtOnce(864e5));return `<small>1 GTC =</small><b class="num">${gtTL(p)}</b><span>${gtYzHtml(c24)} <small>24s</small></span>`;}
+function gtIstHtml(){const p=gtFiyat();const c7=gtYuzde(p,gtOnce(7*864e5)),c30=gtYuzde(p,gtOnce(30*864e5));const c1=gtYuzde(p,gtOnce(36e5));
+  const F24=BET.gtF.filter(r=>Date.now()-new Date(r.zaman).getTime()<=864e5);const yuk=Math.max(p,...F24.map(r=>+(r.yuksek||r.fiyat))),dus=Math.min(p,...F24.map(r=>+(r.dusuk||r.fiyat)));
+  const hacim=F24.reduce((s,r)=>s+(r.hacim||0),0);
+  return `<span>1s ${gtYzHtml(c1)}</span><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span>24s hacim <b class="num">${betTL(hacim)}</b></span>${gtPiyasaHtml()}<span>Veri güncellemesi <b class="num">${gtSonrakiTik()}</b></span>`;}
+function gtCanliRozet(){const L=BET.gtIzleyen||[];return `<i></i>CANLI${L.length?' · '+L.map(_esc).join(', '):''}`;}
+function gtCanliBaslat(){
+  if(BET.gtCanliT)return;
+  const plan=()=>{const ms=60000-(Date.now()%60000)+2500;BET.gtCanliT=setTimeout(tur,ms);};
+  const tur=async()=>{BET.gtCanliT=null;
+    if(!document.querySelector('#page-bet.active')){return;}
+    if(document.visibilityState==='hidden'){plan();return;}
+    try{await gtCanliYenile();}catch(e){console.warn('gt canlı',e);}plan();};
+  tur();
+  if(!BET._gtGorunur){BET._gtGorunur=true;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&document.querySelector('#page-bet.active')&&!BET.gtCanliT)gtCanliBaslat();});}
+}
+async function gtCanliYenile(){
+  if(BET.gtCanliMesgul)return;BET.gtCanliMesgul=true;
+  try{
+    const r=await sbFetch('rpc/bet_gt_canli',{method:'POST',body:'{}'}).catch(()=>null);if(r&&Array.isArray(r.izleyen))BET.gtIzleyen=r.izleyen;
+    const F=BET.gtF;const son=F.length?F[F.length-1].zaman:new Date(Date.now()-GT_DK_SAAT*36e5).toISOString();
+    const sonI=BET.gtIslem.length?BET.gtIslem[0].zaman:new Date(Date.now()-7*864e5).toISOString();
+    const once=new Date(Date.now()-75*864e5).toISOString();
+    const [yf,gd,o,gi,gp,ge]=await Promise.all([
+      sbFetchAll('bet_gt_fiyat?select='+GT_ALAN+'&zaman=gte.%22'+encodeURIComponent(son)+'%22&order=zaman.asc,id.asc').catch(()=>[]),
+      sbFetch('bet_gt_durum?select=*').catch(()=>null),
+      sbFetchAll('bet_oyuncular?select=*&order=coin.desc').catch(()=>null),
+      sbFetch('bet_gt_islem?select=*&zaman=gt.%22'+encodeURIComponent(sonI)+'%22&order=zaman.desc').catch(()=>[]),
+      sbFetchAll('bet_gt_pozisyon?select=*&or=(durum.eq.acik,kapanis.gte.%22'+once+'%22)&order=id.desc').catch(()=>null),
+      sbFetchAll('bet_gt_emir?select=*&or=(durum.eq.bekliyor,zaman.gte.%22'+once+'%22)&order=id.desc').catch(()=>null)]);
+    const p0=gtFiyat();
+    if(yf&&yf.length){const sinir=Date.now()-GT_DK_SAAT*36e5;BET.gtF=gtSirala(F.concat(yf)).filter(x=>x.kaynak!=='dk'||new Date(x.zaman).getTime()>=sinir);}
+    if(gd&&gd[0])BET.gtDurum=gd[0];if(o)BET.oyuncular=o;if(gi&&gi.length)BET.gtIslem=gi.concat(BET.gtIslem).slice(0,400);if(gp)BET.gtPoz=gp;if(ge)BET.gtEmirler=ge;
+    gtCanliCiz(p0);
+  }finally{BET.gtCanliMesgul=false;}
+}
+function gtCanliCiz(p0){
+  const ic=(id,h)=>{const el=document.getElementById(id);if(el)el.innerHTML=h;};
+  const p=gtFiyat();
+  ic('gt-ust-f',gtUstFiyatHtml());ic('gt-ist',gtIstHtml());ic('gt-canli',gtCanliRozet());ic('gt-cuzdan',gtCuzdanHtml());ic('gt-poz-alan',gtPozHtml());ic('gt-akis-alan',gtAkisHtml());
+  const f=document.getElementById('gt-ust-f');if(f&&p0&&p!==p0){f.classList.remove('yukari','asagi');void f.offsetWidth;f.classList.add(p>p0?'yukari':'asagi');}
+  if(document.getElementById('gt-on'))gtSpotOnizle();if(document.getElementById('gt-kal-on'))gtKalOnizle();
+  const c=BET.gtChart;if(!c||!document.getElementById('gt-grafik'))return;
+  try{const M=gtMumlar();const L=c.getDataList()||[];const sonTs=L.length?L[L.length-1].timestamp:null;
+    const yeni=M.filter(m=>m.timestamp>=sonTs);
+    if(sonTs==null||!M.length||yeni.length>6){c.applyNewData(M);}
+    else{yeni.forEach(m=>c.updateData(m));}
+    gtPozCiz();}catch(e){console.warn('gt grafik canlı',e);}
+}
 // ---- 4 saatlik güncelleme: 00 04 08 12 16 20 (Türkiye saati)
 function gtSonrakiTik(){const off=3*36e5,ms=4*36e5;const t=(Math.floor((Date.now()+off)/ms)+1)*ms-off;return new Date(t).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}
 function gtEndeks(){const F=BET.gtF;for(let i=F.length-1;i>=0;i--){if(F[i].endeks!=null)return +F[i].endeks;}return gtFiyat();}
@@ -5440,9 +5498,9 @@ function gtStil(){
     crosshair:{horizontal:{line:{color:tx3,dashedValue:[3,3]},text:{color:tx,backgroundColor:sf,borderColor:br,size:10}},vertical:{line:{color:tx3,dashedValue:[3,3]},text:{color:tx,backgroundColor:sf,borderColor:br,size:10}}}};
 }
 function gtMumlar(){
-  const ms=BET.gtAralik==='1g'?864e5:144e5;const off=3*36e5; // mumlar Türkiye saatine hizalı; 04:00 güncellemesi 00–04 mumunu kapatır
-  const M=[];let son=null;
-  BET.gtF.forEach(r=>{const t=new Date(r.zaman).getTime();const k=Math.floor((t-1+off)/ms)*ms-off;const f=+r.fiyat;const yk=Math.max(f,+r.yuksek||f),ds=Math.min(f,+r.dusuk||f);
+  const ms={'1dk':6e4,'4s':144e5,'1g':864e5}[BET.gtAralik]||144e5;const off=3*36e5; // mumlar Türkiye saatine hizalı; bir kayıt kendinden önceki mumu kapatır (04:00 güncellemesi 00–04 mumunu)
+  const M=[];let son=null;const dk=BET.gtAralik==='1dk';const sinir=Date.now()-GT_DK_SAAT*36e5;
+  BET.gtF.forEach(r=>{const t=new Date(r.zaman).getTime();if(dk&&t<sinir)return;const k=Math.floor((t-1+off)/ms)*ms-off;const f=+r.fiyat;const yk=Math.max(f,+r.yuksek||f),ds=Math.min(f,+r.dusuk||f);
     if(son&&son.timestamp===k){son.high=Math.max(son.high,yk);son.low=Math.min(son.low,ds);son.close=f;son.volume+=r.hacim||0;}
     else{const o=son?son.close:f;son={timestamp:k,open:o,high:Math.max(o,yk),low:Math.min(o,ds),close:f,volume:r.hacim||0};M.push(son);}});
   return M;
@@ -5458,7 +5516,7 @@ function gtGrafikCiz(){
   if(!BET.gtChart){BET.gtChart=klinecharts.init(el,{locale:'tr-TR',timezone:'Europe/Istanbul',thousandsSeparator:'.'});BET.gtChartEl=el;BET.gtChart.setPriceVolumePrecision(2,0);BET.gtOlusan=[];
     try{BET.gtChart.setMaxOffsetRightDistance(60);}catch(e){}}
   BET.gtChart.setStyles(gtStil());BET.gtChart.applyNewData(gtMumlar());
-  try{BET.gtChart.setBarSpace(BET.gtAralik==='1g'?8:4);}catch(e){}
+  try{BET.gtChart.setBarSpace(BET.gtAralik==='1g'?8:BET.gtAralik==='1dk'?6:4);}catch(e){}
   gtGostergeUygula();if(boyDegisti)try{BET.gtChart.resize();}catch(e){}gtCizimleriYukle();gtPozCiz();
 }
 // ---- Bahisler
@@ -5585,7 +5643,8 @@ function betKurallar(){
     <li>Parası biten oyuncuya haftada bir <b>100 ₺</b> yardım gelir.</li>
     <li>Her ay sonunda toplam varlığı (bakiye + GTCOIN'in satış değeri + açık pozisyonlar + emirlerde ayrılan) en çok olan <b>ayın şampiyonu</b> olur; ardından herkese <b>1000 ₺</b> yüklenir.</li>
     <li><b>₲ GTCOIN (GTC)</b>: Gün Teknik'in kripto parası, ₺ ile alınıp satılır; fiyatı "1 GTC = x ₺" olarak gösterilir. Fiyat ERP'deki 21 ölçüden gelir: <b>Finans %45</b> (kasa, 30 gün net kâr, iş sayısı, gelir temposu, yaklaşan ödemeler, kasa tahmini, alacak-borç), <b>Talep %25</b> (son 7 ve 3 günün iş aramaları, aramadan işe dönüşüm, reklam tıklaması ve getirisi, ajanda, teklifler), <b>Psikoloji %15</b> (Gökay'ın check-in'leri), <b>Dış %15</b> (hava, mevsim). Yaklaşan evrak ve kredi ödemeleri son 21 günde ödeme gününe yaklaştıkça fiyata yavaş yavaş yansır; ödeme yapılınca kasadan düşer, fiyat sıçramaz.</li>
-    <li>Fiyat <b>4 saatte bir</b> (00, 04, 08, 12, 16, 20) veriye göre hedefe %35 yaklaşır; üstüne küçük bir dalga biner, her güncellemede en az %0,15 oynar. Spot alım ve satışta %1 komisyon (en az 1 ₺).</li>
+    <li><b>🟢 Canlı piyasa</b>: Veri hedefi <b>4 saatte bir</b> (00, 04, 08, 12, 16, 20) güncellenir ve fiyat sonraki 4 saat boyunca o hedefe doğru <b>dakika dakika</b> yürür. Yol düz değildir: fiyat dakikalık dalgalanır, sakin ve hareketli dönemler gelir, ara sıra ani sıçramalar olur; sapmalar zamanla hedefe geri çekilir. Bet sayfası açıkken grafik ve rakamlar dakikada bir kendiliğinden yenilenir; kimin izlediği başlıkta görünür. Kaldıraçta likidasyon, kâr al, zarar durdur ve limit emirler de dakikalık fiyatla kontrol edilir.</li>
+    <li>Fiyat <b>4 saatte bir</b> veriye göre hedefe %35 yaklaşır; her güncellemede en az %0,15 oynar. Spot alım ve satışta %1 komisyon (en az 1 ₺).</li>
     <li><b>Hacim ve fiyat</b>: Piyasa alımı fiyatı yukarı, satışı aşağı iter. Etki tutarın kareköküyle büyür (1.000 ₺ ≈ %1,5, 4.000 ₺ ≈ %3); son 7 günde işlem hacmi büyüdükçe piyasa derinleşir ve her işlemin etkisi azalır. İşlem, fiyatın itildiği yolun <b>ortalamasından</b> gerçekleşir (kayma): büyük alım kendi ortalamasını da yükseltir, hemen geri satmak kâr değil komisyon kadar zarar getirir. Bir kişinin 24 saatte fiyatı net itebileceği en fazla %5, toplam al/sat baskısı da en fazla ±%5'tir; baskı her 4 saatte %20 söner.</li>
     <li><b>Piyasa görüşü</b>: Son 7 günün net alım-satım akışı (eskidikçe azalarak) fiyata ikinci, yavaş bir katkı yapar. Bir kişinin akışı en fazla %4 sayılır, toplam ±%10: tek kişinin dev girişi değil, birden çok kişinin süren ilgisi değeri kalıcı taşır. Görüş her 4 saatte hedefine %25 yaklaşır ve endeks fiyatına dahildir.</li>
     <li>Sıralama ve ay şampiyonu hesabında GTC, al/sat baskısı olmayan <b>endeks fiyatından</b> değerlenir; anlık pompa varlığı şişirmez.</li>
