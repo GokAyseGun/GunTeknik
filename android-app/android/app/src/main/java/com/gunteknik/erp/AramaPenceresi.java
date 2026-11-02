@@ -26,7 +26,9 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
- * Arama kaydı — adım adım: 1) Nereden geldi?  2) Sektör  3) Sonuç  (+ neden olmadı).
+ * Arama kaydı — görüşme sonrası önce: Özel / İş / Spam.
+ *   Özel → hiçbir şey yapılmaz · Spam → yalnızca sayı olarak kaydedilir · İş → adım adım:
+ *   1) Nereden geldi?  2) Sektör  3) Sonuç  (+ neden olmadı).
  * İki yerden açılır: görüşme bitince (numara ile) ve widget'tan (numarasız, kanal seçilebilir).
  * Son seçimde kendiliğinden kaydeder.
  */
@@ -48,7 +50,8 @@ public class AramaPenceresi extends AppCompatActivity {
     private int sure;
     private long zaman;
     private boolean gorusme;          // true: görüşme bitince açıldı
-    private int adim;                 // 0 kaynak, 1 sektör, 2 sonuç, 3 sebep
+    private int adim;                 // -1 tür (özel/iş/spam), 0 kaynak, 1 sektör, 2 sonuç, 3 sebep
+    private String bulunanKaynak;     // ERP rehberinden gelen kaynak (İş seçilince kullanılır)
     private String kaynak, sektor, sonuc, sebep;
     private boolean gonderiliyor;
 
@@ -78,9 +81,10 @@ public class AramaPenceresi extends AppCompatActivity {
         kanal = gorusme ? "tel" : Ayar.kanal(this);
         int bildirim = i.getIntExtra("bildirim", 0);
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
-        adim = 0;
+        adim = gorusme ? -1 : 0;
         kaynak = sektor = sonuc = sebep = null;
         erpAd = null;
+        bulunanKaynak = null;
         gonderiliyor = false;
         setContentView(arayuz());
         adimCiz();
@@ -108,6 +112,7 @@ public class AramaPenceresi extends AppCompatActivity {
                     }
                     boolean gecerli = false;
                     for (String x : KAYNAK) if (x.equals(ky)) gecerli = true;
+                    if (gecerli) bulunanKaynak = ky;
                     if (gecerli && adim == 0 && kaynak == null && !gonderiliyor) {
                         kaynak = ky;
                         adim = 1;
@@ -161,8 +166,9 @@ public class AramaPenceresi extends AppCompatActivity {
         ap.topMargin = dp(12);
         geri = dugme("← Geri", KUTU, METIN2);
         geri.setOnClickListener(v -> {
-            if (gonderiliyor || adim == 0) return;
+            if (gonderiliyor || adim <= -1 || (adim == 0 && !gorusme)) return;
             adim = adim == 3 ? 2 : adim - 1;
+            if (adim == -1) kaynak = null;
             if (adim <= 2) sebep = null;
             if (adim <= 1) sonuc = null;
             if (adim == 0) sektor = null;
@@ -209,9 +215,21 @@ public class AramaPenceresi extends AppCompatActivity {
     // ---------------------------------------------------------------- adımlar
     private void adimCiz() {
         govde.removeAllViews();
-        geri.setVisibility(adim > 0 ? View.VISIBLE : View.INVISIBLE);
+        geri.setVisibility(adim > 0 || (adim == 0 && gorusme) ? View.VISIBLE : View.INVISIBLE);
         ozetYaz();
         switch (adim) {
+            case -1:
+                adimBaslik.setText("BU ARAMA NEYDİ?");
+                govde.addView(izgara(new String[]{"🔒 Özel", "💼 İş", "📛 Spam"}, new String[]{"ozel", "is", "spam"}, 3, null, v -> {
+                    if ("ozel".equals(v)) { finish(); return; }
+                    if ("spam".equals(v)) { spamKaydet(); return; }
+                    if (bulunanKaynak != null) { kaynak = bulunanKaynak; adim = 1; } else adim = 0;
+                    adimCiz();
+                }));
+                TextView not = metin("Özel: hiçbir şey kaydedilmez · Spam: yalnızca spam sayısına +1", 11, METIN3, false);
+                not.setPadding(dp(4), dp(8), dp(4), 0);
+                govde.addView(not);
+                break;
             case 0:
                 adimBaslik.setText("1 / 3  ·  NEREDEN GELDİ?");
                 govde.addView(izgara(KAYNAK_AD, KAYNAK, 2, kaynak, v -> { kaynak = v; adim = 1; adimCiz(); }));
@@ -288,6 +306,29 @@ public class AramaPenceresi extends AppCompatActivity {
             satir.addView(bos, lp);
         }
         return kap;
+    }
+
+    // ---------------------------------------------------------------- spam: yalnızca sayı
+    private void spamKaydet() {
+        if (gonderiliyor) return;
+        if (Ayar.cihaz(this) == null) { tost("Önce uygulamayı açıp ERP'ye giriş yap"); return; }
+        gonderiliyor = true;
+        govde.removeAllViews();
+        geri.setVisibility(View.INVISIBLE);
+        adimBaslik.setText("KAYDEDİLİYOR…");
+        final String z = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).format(new Date(zaman > 0 ? zaman : System.currentTimeMillis()));
+        new Thread(() -> {
+            try {
+                Islem.aramaSpam(getApplicationContext(), numara, z);
+                runOnUiThread(() -> { tost("📛 Spam sayıldı"); finish(); });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    gonderiliyor = false;
+                    tost("Kaydedilemedi: " + (e.getMessage() != null ? e.getMessage() : "bağlantı yok"));
+                    adimCiz();
+                });
+            }
+        }).start();
     }
 
     // ---------------------------------------------------------------- kaydet

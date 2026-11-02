@@ -30,6 +30,11 @@ public final class Islem {
         return Sunucu.metin(Sunucu.rpc("arama_sil", new JSONObject().put("p_token", token(c)).put("p_id", id)));
     }
 
+    /** Spam arama: yalnızca sayı olarak kaydedilir (reklam_manuel tip=spam) */
+    public static String aramaSpam(Context c, String numara, String zaman) throws Exception {
+        return Sunucu.metin(Sunucu.rpc("arama_spam", new JSONObject().put("p_token", token(c)).put("p_numara", numara == null ? "" : numara).put("p_zaman", zaman == null ? "" : zaman)));
+    }
+
     /** 21:00 hatırlatmasındaki "Arama gelmedi" */
     public static String aramaYok(Context c, String tarih) throws Exception {
         return Sunucu.metin(Sunucu.rpc("push_arama_yok", new JSONObject().put("p_token", token(c)).put("p_tarih", tarih)));
