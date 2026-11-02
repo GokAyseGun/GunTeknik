@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pano: 4 satır × 3 sütun — arama · ajanda · evrak · kasa -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/w_kok"
     android:layout_width="match_parent"
@@ -37,7 +38,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1.15"
+        android:layout_weight="1"
         android:minHeight="44dp"
         android:orientation="horizontal">
         <TextView
@@ -45,15 +46,15 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
-            android:layout_weight="2"
+            android:layout_weight="1"
             android:background="@drawable/w_ekle"
             android:gravity="center"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="📞  Arama ekle"
+            android:text="📞&#10;Arama ekle"
             android:textColor="#FFF0F0F0"
-            android:textSize="15sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/w_sayi"
@@ -66,8 +67,7 @@
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="—
-Arama · bugün"
+            android:text="—&#10;Arama · bugün"
             android:textColor="#FFF0F0F0"
             android:textSize="12sp" />
         <TextView
@@ -75,15 +75,15 @@ Arama · bugün"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
-            android:layout_weight="0.45"
+            android:layout_weight="1"
             android:background="@drawable/w_dugme"
             android:gravity="center"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="↶"
+            android:text="↶&#10;Geri al"
             android:textColor="#FFF0F0F0"
-            android:textSize="16sp" />
+            android:textSize="13sp" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -91,6 +91,21 @@ Arama · bugün"
         android:layout_weight="1"
         android:minHeight="44dp"
         android:orientation="horizontal">
+        <TextView
+            android:id="@+id/w_randevu"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/w_randevu"
+            android:gravity="center"
+            android:maxLines="2"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="📅&#10;Randevu ekle"
+            android:textColor="#FFF0F0F0"
+            android:textSize="13sp"
+            android:textStyle="bold" />
         <TextView
             android:id="@+id/w_aj1"
             android:layout_width="0dp"
@@ -102,12 +117,11 @@ Arama · bugün"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="—
-Ajanda · bugün"
+            android:text="—&#10;Ajanda · bugün"
             android:textColor="#FFF0F0F0"
             android:textSize="12sp" />
         <TextView
-            android:id="@+id/w_aj7"
+            android:id="@+id/w_aj10"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
@@ -117,8 +131,7 @@ Ajanda · bugün"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="—
-Ajanda · 7 gün"
+            android:text="—&#10;Ajanda · 10 gün"
             android:textColor="#FFF0F0F0"
             android:textSize="12sp" />
     </LinearLayout>
@@ -139,12 +152,11 @@ Ajanda · 7 gün"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="—
-Evrak · bugün"
+            android:text="—&#10;Evrak · bugün"
             android:textColor="#FFF0F0F0"
             android:textSize="12sp" />
         <TextView
-            android:id="@+id/w_ev7"
+            android:id="@+id/w_ev5"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
@@ -154,8 +166,21 @@ Evrak · bugün"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="—
-Evrak · 7 gün"
+            android:text="—&#10;Evrak · 5 gün"
+            android:textColor="#FFF0F0F0"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/w_ev15"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/w_kutu"
+            android:gravity="center"
+            android:maxLines="2"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="—&#10;Evrak · 15 gün"
             android:textColor="#FFF0F0F0"
             android:textSize="12sp" />
     </LinearLayout>
@@ -170,7 +195,7 @@ Evrak · 7 gün"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
-            android:layout_weight="3"
+            android:layout_weight="2"
             android:background="@drawable/w_kutu"
             android:gravity="center"
             android:maxLines="2"
@@ -184,15 +209,15 @@ Evrak · 7 gün"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="3dp"
-            android:layout_weight="0.6"
+            android:layout_weight="1"
             android:background="@drawable/w_dugme"
             android:gravity="center"
             android:maxLines="2"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
-            android:text="👁"
+            android:text="👁&#10;Göster"
             android:textColor="#FFF0F0F0"
-            android:textSize="15sp" />
+            android:textSize="13sp" />
     </LinearLayout>
     <TextView
         android:id="@+id/w_alt"

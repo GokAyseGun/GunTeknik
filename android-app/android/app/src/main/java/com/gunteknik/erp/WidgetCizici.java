@@ -25,7 +25,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * İki widget: Pano (arama ekle, arama sayısı, ajanda bugün / 7 gün, evrak bugün / 7 gün, kasa)
+ * İki widget: Pano (arama ekle · bugün · geri al / randevu ekle · ajanda bugün · 10 gün / evrak bugün · 5 gün · 15 gün / kasa · göster)
  * ve küçük "Arama ekle". Veri: widget_veri() → {bugun, arama{...}, snap{kasa, aj[], od[]}}
  */
 public final class WidgetCizici {
@@ -81,8 +81,8 @@ public final class WidgetCizici {
 
         JSONObject snap = v != null ? v.optJSONObject("snap") : null;
         boolean veri = snap != null;
-        // ajanda: bugün ve bugünden itibaren 7 gün
-        int aj1 = 0, aj7 = 0, ev1 = 0, ev7 = 0, evGec = 0;
+        // ajanda: bugün ve bugünden itibaren 10 gün · evrak/kredi ödemeleri: bugün (+ gecikmişler), 5 gün, 15 gün
+        int aj1 = 0, aj10 = 0, ev1 = 0, ev5 = 0, ev15 = 0, evGec = 0;
         if (veri) {
             JSONArray A = snap.optJSONArray("aj");
             for (int i = 0; A != null && i < A.length(); i++) {
@@ -90,9 +90,8 @@ public final class WidgetCizici {
                 if (x == null) continue;
                 int f = fark(x.optString("g"), bg);
                 if (f == 0) aj1++;
-                if (f >= 0 && f <= 6) aj7++;
+                if (f >= 0 && f <= 9) aj10++;
             }
-            // evrak ve kredi ödemeleri: bugün (+ gecikmişler) ve 7 gün
             JSONArray O = snap.optJSONArray("od");
             for (int i = 0; O != null && i < O.length(); i++) {
                 JSONObject x = O.optJSONObject(i);
@@ -102,19 +101,23 @@ public final class WidgetCizici {
                 int f = fark(x.optString("g"), bg);
                 if (f < 0) evGec++;
                 else if (f == 0) ev1++;
-                if (f >= 0 && f <= 6) ev7++;
+                if (f >= 0 && f <= 4) ev5++;
+                if (f >= 0 && f <= 14) ev15++;
             }
         }
         String yok = "—";
+        rv.setOnClickPendingIntent(R.id.w_randevu, Bildirimci.ac(c, "./?randevu=yeni", 6020));
         rv.setTextViewText(R.id.w_aj1, kutu(veri ? String.valueOf(aj1) : yok, "Ajanda · bugün", AMBER));
-        rv.setTextViewText(R.id.w_aj7, kutu(veri ? String.valueOf(aj7) : yok, "Ajanda · 7 gün", AMBER));
+        rv.setTextViewText(R.id.w_aj10, kutu(veri ? String.valueOf(aj10) : yok, "Ajanda · 10 gün", AMBER));
         rv.setTextViewText(R.id.w_ev1, kutu(veri ? String.valueOf(ev1 + evGec) : yok, evGec > 0 ? "Evrak · " + evGec + " gecikmiş" : "Evrak · bugün", evGec > 0 ? KIRMIZI : MG));
         rv.setInt(R.id.w_ev1, "setBackgroundResource", evGec > 0 ? R.drawable.w_kutu_kirmizi : R.drawable.w_kutu);
-        rv.setTextViewText(R.id.w_ev7, kutu(veri ? String.valueOf(ev7) : yok, "Evrak · 7 gün", MG));
+        rv.setTextViewText(R.id.w_ev5, kutu(veri ? String.valueOf(ev5) : yok, "Evrak · 5 gün", MG));
+        rv.setTextViewText(R.id.w_ev15, kutu(veri ? String.valueOf(ev15) : yok, "Evrak · 15 gün", MG));
         rv.setOnClickPendingIntent(R.id.w_aj1, Bildirimci.ac(c, "./?sayfa=takvim", 6021));
-        rv.setOnClickPendingIntent(R.id.w_aj7, Bildirimci.ac(c, "./?sayfa=takvim", 6022));
+        rv.setOnClickPendingIntent(R.id.w_aj10, Bildirimci.ac(c, "./?sayfa=takvim", 6022));
         rv.setOnClickPendingIntent(R.id.w_ev1, Bildirimci.ac(c, "./?sayfa=evrak", 6023));
-        rv.setOnClickPendingIntent(R.id.w_ev7, Bildirimci.ac(c, "./?sayfa=evrak", 6024));
+        rv.setOnClickPendingIntent(R.id.w_ev5, Bildirimci.ac(c, "./?sayfa=evrak", 6024));
+        rv.setOnClickPendingIntent(R.id.w_ev15, Bildirimci.ac(c, "./?sayfa=evrak", 6025));
 
         // kasa: dokununca özet sayfası, 👁 gizle / göster
         boolean acik = Ayar.kasaAcik(c);
@@ -127,7 +130,7 @@ public final class WidgetCizici {
         }
         rv.setTextViewText(R.id.w_kasa, ks);
         rv.setOnClickPendingIntent(R.id.w_kasa, Bildirimci.ac(c, "./", 6031));
-        rv.setTextViewText(R.id.w_goz, acik ? "🙈" : "👁");
+        rv.setTextViewText(R.id.w_goz, renkli(acik ? "🙈" : "👁", METIN, false, 1.2f).append("\n").append(renkli(acik ? "Gizle" : "Göster", METIN2, false, 0.85f)));
         rv.setOnClickPendingIntent(R.id.w_goz, yayin(c, EylemAlici.KASA_GOZ, 6032));
         return rv;
     }

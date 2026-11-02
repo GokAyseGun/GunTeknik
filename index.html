@@ -1224,7 +1224,9 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .ust-harita-btn:hover{border-color:var(--blue);color:var(--blue);}
 .rh-menu-btn{display:none!important;font-size:20px!important;color:var(--text2);}
 .rh-yildiz{color:var(--amber);font-size:12px;flex-shrink:0;}
-@media(max-width:700px){.rh-btnlar{display:none;}.rh-menu-btn{display:flex!important;}}
+.rh-btnlar{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;}
+/* telefon (tarayıcı ya da uygulama): düğmeler tek ⋯ menüde; bilgisayarda eskisi gibi ayrı */
+@media(max-width:700px),(hover:none) and (pointer:coarse){.rh-btnlar{display:none;}.rh-menu-btn{display:flex!important;}}
 .rh-menu-modal{max-width:380px;}
 .rh-menu-l{display:flex;flex-direction:column;gap:6px;}
 .rh-menu-s{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left;}
@@ -4960,10 +4962,11 @@ async function pushPlanla(zorla){
 // bildirime / kısayola dokununca: ?arama=YYYY-MM-DD|bugun · ?sayfa=evrak · ?islem=ID
 function bildirimUrlIsle(href){
   let u;try{u=new URL(href,location.href);}catch(e){return;}const p=u.searchParams;
-  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin');if(!arama&&!sayfa&&!islem&&!checkin)return;
+  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin'),randevu=p.get('randevu');if(!arama&&!sayfa&&!islem&&!checkin&&!randevu)return;
   try{if(location.search)history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
   if(checkin){(async()=>{try{if(PS.checkinler==null&&!GF.ekZaman)await gfEkYukle(true);}catch(e){}ckModalAc();})();return;}
   if(arama){rkAramaGirAc(arama==='bugun'?localToday():arama);return;}
+  if(randevu){try{goPage('takvim');}catch(e){}setTimeout(()=>{try{ustRandevuEkle();}catch(e){}},350);return;}
   if(islem){try{showIslemDetay(Number(islem));}catch(e){}return;}
   if(sayfa&&document.getElementById('page-'+sayfa)){try{goPage(sayfa);}catch(e){}}
 }
