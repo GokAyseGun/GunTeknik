@@ -1723,6 +1723,15 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 @media(max-width:420px){.gt-akis>div{grid-template-columns:42px minmax(0,1fr) auto auto;}.gt-akis small{display:none;}}
 .gt-sahip{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--text3);margin-top:8px;}
 .gt-sahip b{color:#F5C542;}
+.gos-ayar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-top:6px;}
+.gos-ayar summary{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 11px;cursor:pointer;list-style:none;font-size:12.5px;font-weight:700;}
+.gos-ayar summary::-webkit-details-marker{display:none;}
+.gos-ayar summary span::before{content:'▸ ';color:var(--text3);}
+.gos-ayar[open] summary span::before{content:'▾ ';}
+.gos-ayar summary small{font-weight:500;color:var(--text3);font-size:11px;text-align:right;}
+.gos-ic{padding:0 11px 10px;display:flex;flex-direction:column;gap:6px;}
+.gos-s{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;align-items:center;font-size:12px;color:var(--text2);}
+.gos-s input,.gos-s select{width:100%;padding:7px 9px;border-radius:var(--r-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;}
 .gt-pano{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;margin-top:10px;}
 .gt-pano>.gt-kutu{min-width:0;}
 @media(max-width:760px){.gt-pano{grid-template-columns:minmax(0,1fr);}}
@@ -5082,7 +5091,7 @@ async function betYukle(zorla){
       sbFetchAll('bet_sezonlar?select=*&order=ay.desc'),
       sbFetchAll('bet_hareketler?select=*&kullanici=eq.'+betUid()+'&order=zaman.desc&limit=80'),
       sbFetchAll('bet_gt_fiyat?select=zaman,fiyat,hacim,kaynak,yuksek,dusuk,endeks&zaman=gte.%22'+gtOnce+'%22&order=zaman.asc,id.asc').catch(()=>[]),
-      sbFetch('bet_gt_islem?select=*&order=zaman.desc&limit=30').catch(()=>[]),
+      sbFetch('bet_gt_islem?select=*&zaman=gte.%22'+new Date(Date.now()-7*864e5).toISOString()+'%22&order=zaman.desc&limit=400').catch(()=>[]),
       sbFetch('bet_gt_durum?select=*').catch(()=>[]),
       sbFetch('grafik_cizimler?select=*&metrik=eq.'+encodeURIComponent('gt:'+betUid())+'&order=id.asc').catch(()=>[]),
       sbFetchAll('bet_gt_pozisyon?select=*&or=(durum.eq.acik,kapanis.gte.%22'+once+'%22)&order=id.desc').catch(()=>[]),
@@ -5125,7 +5134,7 @@ function gtOnce(ms){const F=BET.gtF;const t=Date.now()-ms;let x=null;for(const r
 function gtYuzde(a,b){return b?(a/b-1)*100:0;}
 function gtYzHtml(v){const s=(v>=0?'+':'−')+Math.abs(v).toFixed(2).replace('.',',')+'%';return `<b class="num" style="color:${v>0.005?'var(--green)':v<-0.005?'var(--red)':'var(--text3)'}">${v>0.005?'▲':v<-0.005?'▼':'•'} ${s}</b>`;}
 function gtSayi(v,b){return (+v||0).toLocaleString('tr-TR',{minimumFractionDigits:b==null?2:b,maximumFractionDigits:b==null?2:b});}
-function betVarlik(o){const e=gtEndeks(),p=gtFiyat();return (o.coin||0)+Math.floor((+o.gt||0)*p*0.99)+gtPozlar(o.kullanici,true).reduce((t,z)=>t+Math.max(0,gtPozDeger(z,e)),0)
+function betVarlik(o){const e=gtEndeks(),p=e;return (o.coin||0)+Math.floor((+o.gt||0)*p*0.99)+gtPozlar(o.kullanici,true).reduce((t,z)=>t+Math.max(0,gtPozDeger(z,e)),0)
   +(BET.gtEmirler||[]).filter(x=>x.kullanici===o.kullanici&&x.durum==='bekliyor').reduce((t,x)=>t+(x.tur==='al'?(x.tutar||0):Math.floor((+x.miktar||0)*p*0.99)),0);}
 function betTL(v){return Math.round(+v||0).toLocaleString('tr-TR')+' ₺';}
 function betTLi(v){const n=Math.round(+v||0);return (n>0?'+':n<0?'−':'±')+Math.abs(n).toLocaleString('tr-TR')+' ₺';}
@@ -5143,7 +5152,7 @@ function gtHtml(){
   return `<div class="gt card">
     <div class="gt-ust"><div class="gt-logo">₲</div><div class="gt-ad"><b>GTCOIN</b><small>Gün Teknik · GTC/TRY</small></div>
       <div class="gt-fiyat"><small>1 GTC =</small><b class="num">${gtTL(p)}</b><span>${gtYzHtml(c24)} <small>24s</small></span></div></div>
-    <div class="gt-ist"><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span>24s hacim <b class="num">${betTL(hacim)}</b></span><span>Sonraki güncelleme <b class="num">${gtSonrakiTik()}</b></span></div>
+    <div class="gt-ist"><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span>24s hacim <b class="num">${betTL(hacim)}</b></span>${gtPiyasaHtml()}<span>Sonraki güncelleme <b class="num">${gtSonrakiTik()}</b></span></div>
     <div class="gt-arac">${[['4s','4 sa'],['1g','1 gün']].map(([k,a])=>`<button type="button" class="${BET.gtAralik===k?'on':''}" onclick="BET.gtAralik='${k}';gtGrafikCiz()">${a}</button>`).join('')}<span class="gt-ara"></span><button type="button" onclick="gtTipDegis()" id="gt-tip">${GT_TIP[BET.gtTip]||'🕯 Mum'}</button><button type="button" class="${gtGos().ana.length+gtGos().alt.length?'on':''}" onclick="gtGostergeAc()">📊 Gösterge</button><button type="button" id="gt-ciz-btn" class="${BET.gtCizim?'on':''}" onclick="BET.gtCizim=!BET.gtCizim;gtCizimBarCiz()">✏️ Çiz</button></div>
     <div class="gt-cizim-bar" id="gt-cizim-bar"></div>
     <div class="gt-grafik" id="gt-grafik"></div>
@@ -5156,6 +5165,8 @@ function gtHtml(){
     ${sahip.length?`<div class="gt-sahip">${sahip.map(o=>`<span>${_esc(o.ad)} <b class="num">${gtGTC(o.gt)}</b></span>`).join('')}</div>`:''}
   </div>`;
 }
+function gtPiyasaHtml(){const d=BET.gtDurum||{};const y=v=>{v=(+v||0)*100;return `<b class="num" style="color:${v>0.05?'var(--green)':v<-0.05?'var(--red)':'var(--text2)'}">${v>=0?'+':'−'}%${gtSayi(Math.abs(v),2)}</b>`;};
+  return `<span>Al/sat baskısı ${y(d.prim)}</span><span>Piyasa görüşü ${y(d.gorus)}</span>`;}
 // ---- 4 saatlik güncelleme: 00 04 08 12 16 20 (Türkiye saati)
 function gtSonrakiTik(){const off=3*36e5,ms=4*36e5;const t=(Math.floor((Date.now()+off)/ms)+1)*ms-off;return new Date(t).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}
 function gtEndeks(){const F=BET.gtF;for(let i=F.length-1;i>=0;i--){if(F[i].endeks!=null)return +F[i].endeks;}return gtFiyat();}
@@ -5177,25 +5188,33 @@ function gtSpotHtml(){
     <div class="gt-on gt-kal-on" id="gt-on">${gtSpotOnizleHtml()}</div>
     <button type="button" class="btn btn-full gt-btn ${al?'al':'sat'}" onclick="gtIslem()">${lim?(al?'⏳ Limit alım emri ver':'⏳ Limit satış emri ver'):(al?'GTCOIN al':'GTCOIN sat')}</button>`;
 }
+// Bir işlemin fiyata etkisi (sunucu _gt_etki ile aynı): karekök kuralı, 7 günlük hacim derinleştirir, kişi başı 24 saatte net ±%5, toplam baskı ±%5
+function gtEtkiHesap(t,yon){const pr=+((BET.gtDurum||{}).prim)||0;const now=Date.now();const I=BET.gtIslem||[];
+  const h7=I.filter(x=>now-new Date(x.zaman).getTime()<7*864e5).reduce((s,x)=>s+(+x.coin||0),0);
+  const net=I.filter(x=>x.kullanici===betUid()&&now-new Date(x.zaman).getTime()<864e5).reduce((s,x)=>s+(+x.etki||0),0);
+  const d=0.015*Math.sqrt(Math.max(0,t)/1000)/Math.sqrt(1+h7/20000);const lim=yon>0?Math.min(0.05-net,0.05-pr):Math.min(0.05+net,pr+0.05);
+  return {d:Math.max(0,Math.min(d,lim)),tavan:d>lim+1e-6,pr,net};}
 function gtSpotOnizleHtml(){
-  const ben=betBen()||{coin:0,gt:0,gt_maliyet:0};const al=BET.gtMod!=='sat';const lim=BET.gtEmir==='limit';const p=gtFiyat();const pr=+((BET.gtDurum||{}).prim)||0;
+  const ben=betBen()||{coin:0,gt:0,gt_maliyet:0};const al=BET.gtMod!=='sat';const lim=BET.gtEmir==='limit';const p=gtFiyat();
   const L=lim?gtNumN(BET.gtLimit):null;const g=(a,b,c)=>`<span>${a} <b class="num"${c?` style="color:${c}"`:''}>${b}</b></span>`;
+  const tavanNot=E=>E.tavan?`<small style="color:var(--amber)">24 saatlik fiyat etkisi sınırına yaklaştın: bu işlem fiyatı en fazla %${gtSayi(E.d*100,2)} iter.</small>`:'';
   if(al){const c=Math.floor(gtNumN(BET.gtCoin)||0);
     if(lim&&L&&L>=p)return `<span style="color:var(--red)">Limit alım fiyatı şimdiki fiyatın (${gtTL(p)}) altında olmalı</span>`;
-    if(c<2)return lim?`Fiyat seçtiğin seviyeye inerse ${gtSonrakiTik()} ya da sonraki 4 saatlik güncellemede alınır.`:`Bakiye ${betTL(ben.coin)} · komisyon %1`;
+    if(c<2)return lim?`Fiyat seçtiğin seviyeye inerse ${gtSonrakiTik()} ya da sonraki 4 saatlik güncellemede alınır.`:`Bakiye ${betTL(ben.coin)} · komisyon %1 · büyük alım fiyatı iterken kendi ortalaman da yükselir`;
     if(c>ben.coin)return `<span style="color:var(--red)">Yetersiz bakiye (${betTL(ben.coin)})</span>`;
-    const kom=Math.max(1,Math.ceil(c*0.01));const f=lim?(L||p):p;const m=(c-kom)/f;
-    if(lim)return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC(m))}${g('Fiyat',L?gtTL(L)+' ve altı':'—')}${g('Komisyon',betTL(kom))}${g('Ayrılacak',betTL(c))}</div><small>Tutar şimdiden ayrılır; emir gerçekleşmezse iptal edip geri alırsın.</small>`;
-    const p2=p*(1+pr+c/40000)/(1+pr);const ort=((+ben.gt_maliyet||0)+c)/((+ben.gt||0)+m);
-    return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC(m))}${g('1 GTC',gtTL(p))}${g('Komisyon',betTL(kom))}${g('Fiyat etkisi',gtTL(p2)+' (+%'+gtSayi((p2/p-1)*100,2)+')','var(--green)')}${g('Yeni ort. maliyet',gtTL(ort))}</div>`;}
+    const kom=Math.max(1,Math.ceil(c*0.01));const E=gtEtkiHesap(c,1);
+    if(lim){const f=(L||p)*(1+E.d/2);return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC((c-kom)/f))}${g('Fiyat',L?gtTL(L)+' ve altı':'—')}${g('Komisyon',betTL(kom))}${g('Ayrılacak',betTL(c))}</div><small>Tutar şimdiden ayrılır; emir gerçekleşmezse iptal edip geri alırsın.</small>`;}
+    const b=p/(1+E.pr),pavg=b*(1+E.pr+E.d/2),p2=b*(1+E.pr+E.d),m=(c-kom)/pavg;const ort=((+ben.gt_maliyet||0)+c)/((+ben.gt||0)+m);
+    return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC(m))}${g('Ort. işlem fiyatı',gtTL(pavg))}${g('Komisyon',betTL(kom))}${g('Fiyatı iter',gtTL(p2)+' (+%'+gtSayi((p2/p-1)*100,2)+')','var(--green)')}${g('Yeni ort. maliyet',gtTL(ort))}</div>${tavanNot(E)}`;}
   const m=gtNumN(BET.gtMiktar)||0;
   if(lim&&L&&L<=p)return `<span style="color:var(--red)">Limit satış fiyatı şimdiki fiyatın (${gtTL(p)}) üstünde olmalı</span>`;
   if(m<=0)return lim?`Fiyat seçtiğin seviyeye çıkarsa 4 saatlik güncellemede satılır.`:`Elinde ${gtGTC(ben.gt)} · komisyon %1`;
   if(m>+ben.gt+1e-6)return `<span style="color:var(--red)">Elinde ${gtGTC(ben.gt)} var</span>`;
-  const f=lim?(L||p):p;const br=m*f,kom=Math.max(1,Math.ceil(br*0.01)),cik=Math.floor(br-kom);const mal=+ben.gt>0?(+ben.gt_maliyet||0)*m/ben.gt:0;const kz=cik-mal;
-  if(lim)return `<div class="gt-on-g">${g('Alacağın ≈',betTL(cik))}${g('Fiyat',L?gtTL(L)+' ve üstü':'—')}${g('Komisyon',betTL(kom))}${g('Kâr / zarar',betTLi(kz),gtRenk(kz))}</div><small>GTC şimdiden ayrılır; emir gerçekleşmezse iptal edip geri alırsın.</small>`;
-  const p2=p*(1+pr-br/40000)/(1+pr);
-  return `<div class="gt-on-g">${g('Alacağın ≈',betTL(cik))}${g('1 GTC',gtTL(p))}${g('Komisyon',betTL(kom))}${g('Kâr / zarar',betTLi(kz),gtRenk(kz))}${g('Fiyat etkisi',gtTL(p2)+' (−%'+gtSayi((1-p2/p)*100,2)+')','var(--red)')}</div>`;
+  const mal=+ben.gt>0?(+ben.gt_maliyet||0)*m/ben.gt:0;const E=gtEtkiHesap(m*(L||p),-1);
+  if(lim){const br=m*L*(1-E.d/2),kom=Math.max(1,Math.ceil(br*0.01)),cik=Math.floor(br-kom),kz=cik-mal;
+    return `<div class="gt-on-g">${g('Alacağın ≈',betTL(cik))}${g('Fiyat',L?gtTL(L)+' ve üstü':'—')}${g('Komisyon',betTL(kom))}${g('Kâr / zarar',betTLi(kz),gtRenk(kz))}</div><small>GTC şimdiden ayrılır; emir gerçekleşmezse iptal edip geri alırsın.</small>`;}
+  const b=p/(1+E.pr),pavg=b*(1+E.pr-E.d/2),p2=b*(1+E.pr-E.d);const br=m*pavg,kom=Math.max(1,Math.ceil(br*0.01)),cik=Math.floor(br-kom),kz=cik-mal;
+  return `<div class="gt-on-g">${g('Alacağın ≈',betTL(cik))}${g('Ort. işlem fiyatı',gtTL(pavg))}${g('Komisyon',betTL(kom))}${g('Kâr / zarar',betTLi(kz),gtRenk(kz))}${g('Fiyatı çeker',gtTL(p2)+' (−%'+gtSayi((1-p2/p)*100,2)+')','var(--red)')}</div>${tavanNot(E)}`;
 }
 function gtSpotOnizle(girdi){const el=document.getElementById('gt-on');if(el)el.innerHTML=gtSpotOnizleHtml();
   if(girdi){const s=document.getElementById('gt-kaydir');const ben=betBen()||{coin:0,gt:0};const al=BET.gtMod!=='sat';const ust=al?ben.coin:+ben.gt;if(s)s.value=ust>0?Math.min(100,Math.round((gtNumN(al?BET.gtCoin:BET.gtMiktar)||0)/ust*100)):0;}}
@@ -5213,8 +5232,8 @@ async function gtIslem(){
       else{const m=gtNumN(BET.gtMiktar);if(!m){showToast('Miktar gir','amber');return;}
         await sbFetch('rpc/bet_gt_emir_ver',{method:'POST',body:JSON.stringify({p_tur:'sat',p_limit:L,p_tutar:null,p_miktar:m})});showToast(`⏳ Limit satış emri: ${gtGTC(m)} · 1 GTC ${gtTL(L)} ve üstüne çıkarsa`,'green');BET.gtMiktar='';}
       BET.gtLimit='';}
-    else if(al){const c=Math.floor(gtNumN(BET.gtCoin)||0);if(c<2){showToast('En az 2 ₺','amber');return;}r=await sbFetch('rpc/bet_gt_al',{method:'POST',body:JSON.stringify({p_coin:c})});BET.gtCoin='';showToast(`${gtGTC(r.miktar)} alındı · 1 GTC = ${gtTL(r.fiyat)}`,'green');}
-    else{const m=gtNumN(BET.gtMiktar);if(!m){showToast('Miktar gir','amber');return;}r=await sbFetch('rpc/bet_gt_sat',{method:'POST',body:JSON.stringify({p_miktar:m})});BET.gtMiktar='';showToast(`${gtGTC(r.miktar)} satıldı · ${betTL(r.coin)}`,'green');}
+    else if(al){const c=Math.floor(gtNumN(BET.gtCoin)||0);if(c<2){showToast('En az 2 ₺','amber');return;}r=await sbFetch('rpc/bet_gt_al',{method:'POST',body:JSON.stringify({p_coin:c})});BET.gtCoin='';showToast(`${gtGTC(r.miktar)} alındı · ortalama ${gtTL(r.fiyat)}`,'green');}
+    else{const m=gtNumN(BET.gtMiktar);if(!m){showToast('Miktar gir','amber');return;}r=await sbFetch('rpc/bet_gt_sat',{method:'POST',body:JSON.stringify({p_miktar:m})});BET.gtMiktar='';showToast(`${gtGTC(r.miktar)} satıldı · ${betTL(r.coin)} · ortalama ${gtTL(r.fiyat)}`,'green');}
     try{if(navigator.vibrate)navigator.vibrate([10,30,10]);}catch(e){}
   }catch(e){showToast(betHata(e).slice(0,110),'red');}
   await betYukle(true);betCiz();
@@ -5229,20 +5248,20 @@ function gtCuzdanHtml(){
   const ben=betBen()||{coin:0,gt:0,gt_maliyet:0};const p=gtFiyat(),e=gtEndeks();
   const gt=+ben.gt||0,deger=gt*p,mal=+ben.gt_maliyet||0,kz=deger-mal;
   const A=gtPozlar(betUid(),true);const pozD=A.reduce((t,z)=>t+Math.max(0,gtPozDeger(z,e)),0);const pozK=A.reduce((t,z)=>t+gtPozOdeme(z,e)-z.teminat-z.acilis_ucret,0);
-  const E=gtEmirlerim(true);const emD=E.reduce((t,x)=>t+(x.tur==='al'?(x.tutar||0):(+x.miktar||0)*p*0.99),0);
+  const E=gtEmirlerim(true);const emD=E.reduce((t,x)=>t+(x.tur==='al'?(x.tutar||0):(+x.miktar||0)*e*0.99),0);
   const sat=(a,b,c,d)=>`<div class="gt-cs"><span>${a}</span><b class="num"${c?` style="color:${c}"`:''}>${b}</b>${d?`<small>${d}</small>`:''}</div>`;
   let h=`<div class="gt-kb">💼 Cüzdanın</div><div class="gt-cz2">
     ${sat('Nakit bakiye',betTL(ben.coin))}
-    ${sat('GTCOIN',gtGTC(gt),null,gt?'≈ '+betTL(deger):'')}
+    ${sat('GTCOIN',gtGTC(gt),null,gt?'piyasa ≈ '+betTL(deger)+' · endeks ≈ '+betTL(gt*e*0.99):'')}
     ${gt?sat('Ortalama maliyet',gtTL(mal/gt),null,'1 GTC için'):''}
     ${gt?sat('Spot kâr / zarar',betTLi(kz),gtRenk(kz),mal?(kz>=0?'+':'−')+'%'+gtSayi(Math.abs(kz/mal*100),1):''):''}
     ${A.length?sat('Kaldıraç ('+A.length+' açık)',betTL(pozD),null,'kâr/zarar '+betTLi(pozK)):''}
     ${E.length?sat('Emirlerde ayrılan',betTL(emD),null,E.length+' bekleyen emir'):''}
-    <div class="gt-cs top"><span>Toplam varlık</span><b class="num">${betTL(betVarlik(ben))}</b></div></div>`;
+    <div class="gt-cs top"><span>Toplam varlık</span><b class="num">${betTL(betVarlik(ben))}</b><small>GTC endeks fiyatından · sıralama ve ay şampiyonu bununla</small></div></div>`;
   if(E.length)h+=`<div class="gt-kb" style="margin-top:4px">⏳ Bekleyen emirler</div><div class="gt-emirler">${E.map(x=>`<div><span class="gt-yon ${x.tur==='al'?'long':'short'}">${x.tur==='al'?'AL':'SAT'}</span><span class="num">${x.tur==='al'?betTL(x.tutar):gtGTC(x.miktar)}</span><span class="num">${x.tur==='al'?'≤':'≥'} ${gtTL(x.limit_fiyat)}</span><button type="button" onclick="gtEmirIptal(${x.id})">İptal</button></div>`).join('')}</div>`;
   const K=gtEmirlerim(false).slice(0,5);
   if(K.length)h+=`<details class="gt-gecmis"><summary>Geçmiş emirler (${K.length})</summary><div class="gt-emirler">${K.map(x=>`<div><span class="gt-yon ${x.tur==='al'?'long':'short'}">${x.tur==='al'?'AL':'SAT'}</span><span class="num">${x.durum==='gerceklesti'?(x.tur==='al'?gtGTC(x.sonuc_miktar):betTL(x.sonuc_tutar)):(x.tur==='al'?betTL(x.tutar):gtGTC(x.miktar))}</span><span class="num">${x.durum==='gerceklesti'?'@ '+gtTL(x.sonuc_fiyat):'iptal'}</span><small>${gtTarihKisa(x.sonuc_zaman||x.zaman)}</small></div>`).join('')}</div></details>`;
-  h+=`<div class="gt-not">Endeks ${gtTL(e)} (kaldıraç bunu kullanır) · spot komisyon %1 · limit emirler ve kaldıraç kontrolleri 4 saatlik güncellemede çalışır.</div>`;
+  h+=`<div class="gt-not">Endeks ${gtTL(e)}: al/sat baskısı hariç fiyat; kaldıraç ve varlık bunu kullanır · spot komisyon %1 · limit emirler ve kaldıraç kontrolleri 4 saatlik güncellemede çalışır.</div>`;
   return h;
 }
 // ---- Kaldıraç (long/short): teminat × kaldıraç = pozisyon büyüklüğü. Endeks fiyatı (al/sat primi hariç) kullanılır.
@@ -5347,16 +5366,19 @@ function gtGostergeAc(){
 function gtGostergeCiz(){const el=document.getElementById('gt-gos-body');if(!el)return;const G=gtGos();const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
   el.innerHTML=`<div class="isf-grup-b">Ana grafik üzerinde</div><div class="isf-chips">${GF_ANA_GOSTERGE.map(([k,l])=>chip(G.ana.includes(k),l,`gtGosTik('ana','${k}')`)).join('')}</div>
     <div class="isf-grup-b">Alt paneller</div><div class="isf-chips">${GT_ALT_GOSTERGE.map(([k,l])=>chip(G.alt.includes(k),l,`gtGosTik('alt','${k}')`)).join('')}</div>
+    ${gosAyarHtml(G.ana.concat(G.alt),G.par||{},'gtGosPar',BET.gtAralik==='1g'?'gün':'4 saatlik mum')}
     <div class="isf-grup-b">Değer ekseni</div><div class="isf-chips">${[['normal','Normal'],['percentage','Yüzde'],['log','Logaritmik']].map(([k,l])=>chip((G.eksen||'normal')===k,l,`gtGos().eksen='${k}';gtGosKaydet();gtGostergeCiz();gtGrafikCiz()`)).join('')}</div>
     <div class="isf-grup-b">Grafik türü</div><div class="isf-chips">${Object.entries(GT_TIP).map(([k,l])=>chip(BET.gtTip===k,l,`BET.gtTip='${k}';gtGostergeCiz();gtGrafikCiz()`)).join('')}</div>
     <div class="isf-ipucu">Gösterge değerleri mum başlığının altında görünür. Alt panellerin yüksekliğini aradaki çizgiyi sürükleyerek değiştirebilirsin. Seçimlerin bu cihazda hatırlanır.</div>
-    <button class="btn btn-secondary btn-full" style="margin-top:12px" onclick="BET._gos={ana:['MA'],alt:['VOL'],eksen:'normal'};gtGosKaydet();gtGostergeCiz();gtGrafikCiz()">↺ Varsayılana dön</button>`;}
+    <button class="btn btn-secondary btn-full" style="margin-top:12px" onclick="BET._gos={ana:['MA'],alt:['VOL'],eksen:'normal',par:{}};gtGosKaydet();gtGostergeCiz();gtGrafikCiz()">↺ Varsayılana dön</button>`;}
+function gtGosPar(ad,i,v){const G=gtGos();G.par=G.par||{};if(gosDegistir(G.par,ad,i,v)){GOS_ACIK[ad]=true;gtGosKaydet();gtGostergeCiz();gtGrafikCiz();}}
 function gtGosTik(t,k){const G=gtGos();const L=G[t];const i=L.indexOf(k);if(i>=0)L.splice(i,1);else{if(t==='alt'&&L.length>=4){showToast('En fazla 4 alt panel','amber');return;}L.push(k);}gtGosKaydet();gtGostergeCiz();gtGrafikCiz();}
 function gtGostergeUygula(){
   const c=BET.gtChart;if(!c)return;const G=gtGos();
   (BET.gtOlusan||[]).forEach(x=>{try{c.removeIndicator(x.pane,x.ad);}catch(e){}});BET.gtOlusan=[];
-  G.ana.forEach(ad=>{try{c.createIndicator(ad,true,{id:'candle_pane'});BET.gtOlusan.push({pane:'candle_pane',ad});}catch(e){console.warn(ad,e);}});
-  G.alt.forEach(ad=>{try{const pid=c.createIndicator(ad,false,{id:'gt_'+ad,height:62,minHeight:36,dragEnabled:true});BET.gtOlusan.push({pane:pid||('gt_'+ad),ad});}catch(e){console.warn(ad,e);}});
+  const o=ad=>{const x=gosOpt(G.par,ad);return x?Object.assign({name:ad},x):ad;};
+  G.ana.forEach(ad=>{try{c.createIndicator(o(ad),true,{id:'candle_pane'});BET.gtOlusan.push({pane:'candle_pane',ad});}catch(e){console.warn(ad,e);}});
+  G.alt.forEach(ad=>{try{const pid=c.createIndicator(o(ad),false,{id:'gt_'+ad,height:62,minHeight:36,dragEnabled:true});BET.gtOlusan.push({pane:pid||('gt_'+ad),ad});}catch(e){console.warn(ad,e);}});
 }
 function gtYukseklik(el){const h=(window.innerWidth>=1100?300:240)+gtGos().alt.length*70;if(el.style.height!==h+'px'){el.style.height=h+'px';return true;}return false;}
 // ---- çizimler: kişiye özel (grafik_cizimler, metrik = gt:<kullanıcı>)
@@ -5430,6 +5452,7 @@ function gtGrafikCiz(){
   document.querySelectorAll('.gt-arac button').forEach(b=>{const k=(b.getAttribute('onclick')||'').match(/gtAralik='(\w+)'/);if(k)b.classList.toggle('on',k[1]===BET.gtAralik);});
   gtCizimBarCiz();
   if(typeof klinecharts==='undefined'){perfScriptYukle('https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js').then(gtGrafikCiz).catch(()=>{el.innerHTML='<div class="gf-not">Grafik yüklenemedi.</div>';});return;}
+  gosKaydet();
   if(BET.gtChart&&BET.gtChartEl!==el){try{klinecharts.dispose(BET.gtChartEl);}catch(e){}BET.gtChart=null;BET.gtOlusan=[];}
   const boyDegisti=gtYukseklik(el);
   if(!BET.gtChart){BET.gtChart=klinecharts.init(el,{locale:'tr-TR',timezone:'Europe/Istanbul',thousandsSeparator:'.'});BET.gtChartEl=el;BET.gtChart.setPriceVolumePrecision(2,0);BET.gtOlusan=[];
@@ -5562,7 +5585,10 @@ function betKurallar(){
     <li>Parası biten oyuncuya haftada bir <b>100 ₺</b> yardım gelir.</li>
     <li>Her ay sonunda toplam varlığı (bakiye + GTCOIN'in satış değeri + açık pozisyonlar + emirlerde ayrılan) en çok olan <b>ayın şampiyonu</b> olur; ardından herkese <b>1000 ₺</b> yüklenir.</li>
     <li><b>₲ GTCOIN (GTC)</b>: Gün Teknik'in kripto parası, ₺ ile alınıp satılır; fiyatı "1 GTC = x ₺" olarak gösterilir. Fiyat ERP'deki 21 ölçüden gelir: <b>Finans %45</b> (kasa, 30 gün net kâr, iş sayısı, gelir temposu, yaklaşan ödemeler, kasa tahmini, alacak-borç), <b>Talep %25</b> (son 7 ve 3 günün iş aramaları, aramadan işe dönüşüm, reklam tıklaması ve getirisi, ajanda, teklifler), <b>Psikoloji %15</b> (Gökay'ın check-in'leri), <b>Dış %15</b> (hava, mevsim). Yaklaşan evrak ve kredi ödemeleri son 21 günde ödeme gününe yaklaştıkça fiyata yavaş yavaş yansır; ödeme yapılınca kasadan düşer, fiyat sıçramaz.</li>
-    <li>Fiyat <b>4 saatte bir</b> (00, 04, 08, 12, 16, 20) veriye göre hedefe %35 yaklaşır; üstüne küçük bir dalga biner, her güncellemede en az %0,15 oynar. Piyasa alımı fiyatı biraz yukarı, satışı aşağı iter. Spot alım ve satışta %1 komisyon (en az 1 ₺).</li>
+    <li>Fiyat <b>4 saatte bir</b> (00, 04, 08, 12, 16, 20) veriye göre hedefe %35 yaklaşır; üstüne küçük bir dalga biner, her güncellemede en az %0,15 oynar. Spot alım ve satışta %1 komisyon (en az 1 ₺).</li>
+    <li><b>Hacim ve fiyat</b>: Piyasa alımı fiyatı yukarı, satışı aşağı iter. Etki tutarın kareköküyle büyür (1.000 ₺ ≈ %1,5, 4.000 ₺ ≈ %3); son 7 günde işlem hacmi büyüdükçe piyasa derinleşir ve her işlemin etkisi azalır. İşlem, fiyatın itildiği yolun <b>ortalamasından</b> gerçekleşir (kayma): büyük alım kendi ortalamasını da yükseltir, hemen geri satmak kâr değil komisyon kadar zarar getirir. Bir kişinin 24 saatte fiyatı net itebileceği en fazla %5, toplam al/sat baskısı da en fazla ±%5'tir; baskı her 4 saatte %20 söner.</li>
+    <li><b>Piyasa görüşü</b>: Son 7 günün net alım-satım akışı (eskidikçe azalarak) fiyata ikinci, yavaş bir katkı yapar. Bir kişinin akışı en fazla %4 sayılır, toplam ±%10: tek kişinin dev girişi değil, birden çok kişinin süren ilgisi değeri kalıcı taşır. Görüş her 4 saatte hedefine %25 yaklaşır ve endeks fiyatına dahildir.</li>
+    <li>Sıralama ve ay şampiyonu hesabında GTC, al/sat baskısı olmayan <b>endeks fiyatından</b> değerlenir; anlık pompa varlığı şişirmez.</li>
     <li><b>⏳ Limit emir</b>: "Fiyat şu seviyeye inerse al" ya da "şu seviyeye çıkarsa sat". Tutar (ya da GTC) emir verilince ayrılır, 4 saatlik güncellemede fiyat limite ulaştıysa o anki fiyattan gerçekleşir ve bildirim gelir. En fazla 5 bekleyen emir; istediğin an iptal edip geri alırsın.</li>
     <li><b>⚡ Kaldıraç</b>: Long (yükselir) ya da Short (düşer) açarsın. Teminat 10–500 ₺, kaldıraç 1–10x, aynı anda en fazla 3 açık pozisyon. Büyüklük = teminat × kaldıraç; fiyat %1 lehine giderse büyüklüğün %1'i kadar kazanırsın, aleyhine giderse kaybedersin. Pozisyonlar al/sat primi olmayan <b>endeks fiyatını</b> kullanır, yani alım-satımla kendi pozisyonunu şişiremezsin.</li>
     <li>Kaldıraçta açılış ve kapanışta büyüklüğün ‰1'i ücret, ayrıca her gün <b>teminatın %1'i</b> günlük ücret düşer. Zarar teminatı bitirirse pozisyon <b>likide</b> olur ve teminat gider. Kâr al ve zarar durdur fiyatı koyabilirsin; 4 saatlik güncellemede kontrol edilir ve tetiklenince bildirim gelir.</li>
@@ -7674,7 +7700,7 @@ async function islemTamamlaPatch(id){
 // ============================================================ GELİŞMİŞ FİNANS GRAFİĞİ — ARAYÜZ (KLineChart)
 var GF={chart:null,defter:null,barlar:[],tahmin:null,tahminAnahtar:'',geriTest:null,geriTestAnahtar:'',ek:{versiyon:0},ekZaman:0,ekYukleniyor:false,
   olusanGostergeler:[],cizimDb:{},toplucaSil:false,seciliCizim:null,cizimModu:false,hedefler:[],gorunur:null,kayitUyari:false,ay:null};
-var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,sifir:true,yEksen:'normal',
+var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],par:{},karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,sifir:true,yEksen:'normal',
   tahminAcik:true,tahminUfuk:90,gelirPct:0,giderPct:0,tahsilatPct:85,eskiTahmin:false,sekme:'ozet',isiMetrik:'isNet',miknatis:false,
   maP:[{n:5,on:true},{n:10,on:true},{n:30,on:true},{n:60,on:true}],emaP:[{n:6,on:true},{n:12,on:true},{n:20,on:true}],
   donemTip:'ay',donemMod:'liste',donemBekleyen:false,donemKat:'',donemEsit:true};
@@ -7688,6 +7714,71 @@ gfAyarYukle();
 
 var GF_ANA_GOSTERGE=[['MA','Hareketli Ortalama (MA)'],['EMA','Üstel Ortalama (EMA)'],['SMA','Düzgün Ortalama (SMA)'],['BOLL','Bollinger Bantları'],['SAR','Parabolik SAR'],['BBI','Boğa-Ayı Endeksi (BBI)'],['AVP','Ortalama Fiyat (AVP)']];
 var GF_ALT_GOSTERGE=[['GF_AKIS','Giriş / Çıkış / Net akış'],['GF_CHECKIN','🧠 Check-in puanları'],['VOL','Hacim (kasa giriş+çıkış)'],['MACD','MACD (momentum)'],['RSI','RSI (aşırı alım/satım)'],['KDJ','KDJ (stokastik)'],['OBV','OBV (hacim dengesi)'],['ROC','ROC (değişim hızı)'],['TRIX','TRIX'],['CCI','CCI'],['WR','Williams %R'],['BIAS','BIAS (sapma)'],['DMI','DMI (yön)'],['MTM','Momentum'],['EMV','EMV'],['PSY','PSY (psikolojik)'],['VR','VR (hacim oranı)'],['AO','Awesome Osilatör'],['BRAR','BRAR'],['CR','CR'],['DMA','DMA'],['PVT','PVT']];
+// ---------- Gösterge ayarları (ana grafik ve GTCOIN grafiğinde ortak): her göstergenin kendine özgü periyot / ortalama ayarı
+// p: [etiket, varsayılan, en az, en çok, adım, seçenekler?]
+var GOS_PAR={
+  MA:{ad:'Hareketli Ortalama (MA)',p:[['1. çizgi',5],['2. çizgi',10],['3. çizgi',30],['4. çizgi',60]],not:'Her çizgi son kaç mumun ortalaması.'},
+  EMA:{ad:'Üstel Ortalama (EMA)',p:[['1. çizgi',6],['2. çizgi',12],['3. çizgi',20]],not:'Yeni mumlara daha çok ağırlık verir.'},
+  SMA:{ad:'Düzgün Ortalama (SMA)',p:[['Periyot',12],['Ağırlık',2,1,50]]},
+  BOLL:{ad:'Bollinger Bantları',p:[['Periyot',20,2],['Bant genişliği (std. sapma ×)',2,0.5,5,0.1]],not:'Bant genişliği büyüdükçe bantlar fiyattan uzaklaşır.'},
+  SAR:{ad:'Parabolik SAR',p:[['Başlangıç ivmesi (×0,01)',2,1,20],['İvme artışı (×0,01)',2,1,20],['En yüksek ivme (×0,01)',20,5,50]],not:'İvme küçüldükçe SAR daha geç döner, daha az yanılır.'},
+  BBI:{ad:'Boğa-Ayı Endeksi (BBI)',p:[['1. ortalama',3],['2. ortalama',6],['3. ortalama',12],['4. ortalama',24]]},
+  VOL:{ad:'Hacim',p:[['1. hacim ortalaması',5],['2. hacim ortalaması',10],['3. hacim ortalaması',20]]},
+  MACD:{ad:'MACD',p:[['Hızlı EMA',12],['Yavaş EMA',26],['Sinyal ortalaması',9]]},
+  RSI:{ad:'RSI',p:[['Periyot',14,2,100],['Yumuşatma (1 = yok)',3,1,30],['Sinyal ortalaması (0 = yok)',9,0,60],['Ortalama türü',1,0,1,1,['Basit (SMA)','Üstel (EMA)']],['Aşırı alım seviyesi',70,50,95],['Aşırı satım seviyesi',30,5,50]],
+    not:'Periyot büyüdükçe RSI sakinleşir. Yumuşatma RSI çizgisinin kendisini ortalar, keskin sıçramaları törpüler. Sinyal ortalaması ikinci bir çizgidir: RSI onu yukarı keserse güçlenme, aşağı keserse zayıflama.'},
+  KDJ:{ad:'KDJ (stokastik)',p:[['Periyot',9],['K yumuşatma',3,1,30],['D yumuşatma',3,1,30]],not:'Yumuşatmaları büyütmek çizgileri sakinleştirir.'},
+  OBV:{ad:'OBV',p:[['OBV ortalaması',30]]},
+  ROC:{ad:'ROC (değişim hızı)',p:[['Periyot',12],['Ortalama',6]]},
+  TRIX:{ad:'TRIX',p:[['Periyot',12],['Sinyal ortalaması',9]]},
+  CCI:{ad:'CCI',p:[['Periyot',20]],not:'Periyot büyüdükçe daha az keskin.'},
+  WR:{ad:'Williams %R',p:[['1. periyot',6],['2. periyot',10],['3. periyot',14]]},
+  BIAS:{ad:'BIAS (sapma)',p:[['1. periyot',6],['2. periyot',12],['3. periyot',24]]},
+  DMI:{ad:'DMI (yön)',p:[['Periyot',14],['ADX yumuşatma',6,1,60]]},
+  MTM:{ad:'Momentum',p:[['Periyot',12],['Ortalama',6]]},
+  PSY:{ad:'PSY (psikolojik)',p:[['Periyot',12],['Ortalama',6]]},
+  AO:{ad:'Awesome Osilatör',p:[['Kısa ortalama',5],['Uzun ortalama',34]]},
+  DMA:{ad:'DMA',p:[['Kısa ortalama',10],['Uzun ortalama',50],['Sinyal ortalaması',10]]},
+  BRAR:{ad:'BRAR',p:[['Periyot',26]]},
+  CR:{ad:'CR',p:[['Periyot',26],['1. ortalama',10],['2. ortalama',20],['3. ortalama',40],['4. ortalama',60]]},
+  VR:{ad:'VR (hacim oranı)',p:[['Periyot',26],['Ortalama',6]]},
+  EMV:{ad:'EMV',p:[['Periyot',14],['Ortalama',9]]}};
+var GOS_ACIK={};
+function gosVars(ad){return GOS_PAR[ad]?GOS_PAR[ad].p.map(x=>x[1]):null;}
+function gosDeger(par,ad){const v=gosVars(ad);if(!v)return null;const s=par&&par[ad];if(!Array.isArray(s)||s.length!==v.length)return v.slice();return s.map((x,i)=>isFinite(+x)?+x:v[i]);}
+function gosOpt(par,ad){if(!GOS_PAR[ad]||!par||!Array.isArray(par[ad]))return null;return {calcParams:gosDeger(par,ad)};}
+function gosSinirla(ad,i,v){const t=GOS_PAR[ad].p[i];const mn=t[2]!=null?t[2]:1,mx=t[3]!=null?t[3]:500,ad2=t[4]||1;let x=parseFloat(String(v).replace(',','.'));if(!isFinite(x))x=t[1];x=Math.round(x/ad2)*ad2;return Math.max(mn,Math.min(mx,+x.toFixed(4)));}
+// par nesnesine yazar; değişti mi döner. i<0 → varsayılana dön
+function gosDegistir(par,ad,i,v){if(!GOS_PAR[ad])return false;if(i<0){delete par[ad];return true;}const a=gosDeger(par,ad);a[i]=gosSinirla(ad,i,v);
+  if(ad==='RSI'&&a[5]>=a[4])a[5]=Math.max(5,a[4]-10);par[ad]=a;return true;}
+function gosAyarHtml(liste,par,fn,birim){
+  const L=liste.filter(ad=>GOS_PAR[ad]);if(!L.length)return '';
+  return `<div class="isf-grup-b">⚙️ Gösterge ayarları <small style="font-weight:500;color:var(--text3)">(periyotlar ${birim||'mum'} sayısı)</small></div>`+L.map(ad=>{const T=GOS_PAR[ad];const D=gosDeger(par,ad);const ozel=par&&Array.isArray(par[ad]);
+    return `<details class="gos-ayar"${GOS_ACIK[ad]?' open':''} ontoggle="GOS_ACIK['${ad}']=this.open"><summary><span>${T.ad}</span><small>${D.map((x,i)=>T.p[i][5]?T.p[i][5][x].split(' ')[0]:String(x).replace('.',',')).join(' · ')}${ozel?' · özel':''}</small></summary>
+      <div class="gos-ic">${T.p.map((t,i)=>`<label class="gos-s"><span>${t[0]}</span>${t[5]?`<select onchange="${fn}('${ad}',${i},this.value)">${t[5].map((o,j)=>`<option value="${j}"${D[i]===j?' selected':''}>${o}</option>`).join('')}</select>`
+        :`<input type="number" inputmode="decimal" min="${t[2]!=null?t[2]:1}" max="${t[3]!=null?t[3]:500}" step="${t[4]||1}" value="${D[i]}" onchange="${fn}('${ad}',${i},this.value)">`}</label>`).join('')}
+      ${T.not?`<div class="isf-ipucu">${T.not}</div>`:''}${ozel?`<button type="button" class="btn btn-secondary btn-sm" onclick="${fn}('${ad}',-1)">↺ Varsayılan</button>`:''}</div></details>`;}).join('');
+}
+// RSI: Wilder RSI + isteğe bağlı yumuşatma + sinyal ortalaması + seviye çizgileri (yerleşik RSI'nın yerine geçer)
+function gosOrt(a,n,tur){if(!(n>1))return a.slice();const o=new Array(a.length).fill(null);
+  if(tur===1){let e=null;const k=2/(n+1);for(let i=0;i<a.length;i++){const v=a[i];if(v==null)continue;e=e==null?v:e+k*(v-e);o[i]=e;}return o;}
+  const w=[];let t=0;for(let i=0;i<a.length;i++){const v=a[i];if(v==null)continue;w.push(v);t+=v;if(w.length>n)t-=w.shift();if(w.length===n)o[i]=t/n;}return o;}
+function gosKaydet(){
+  if(window._gosKayitli||typeof klinecharts==='undefined')return;window._gosKayitli=true;
+  try{klinecharts.registerIndicator({name:'RSI',shortName:'RSI',precision:2,minValue:0,maxValue:100,calcParams:gosVars('RSI'),
+    figures:[{key:'rsi',title:'RSI: ',type:'line'},{key:'sin',title:'Sinyal: ',type:'line'}],
+    regenerateFigures:p=>{const f=[{key:'rsi',title:'RSI'+p[0]+(p[1]>1?'·'+p[1]:'')+': ',type:'line'}];if(p[2]>0)f.push({key:'sin',title:'Sinyal'+p[2]+': ',type:'line'});return f;},
+    styles:{lines:[{color:'#F5C542',size:1.5,style:'solid',smooth:false,dashedValue:[2,2]},{color:'#00E5FF',size:1,style:'dashed',smooth:false,dashedValue:[4,3]}]},
+    calc:(list,ind)=>{const p=ind.calcParams;const n=Math.max(2,+p[0]||14),s=+p[1]||1,g=+p[2]||0,tur=+p[3]===1?1:0;let ag=0,al=0;const ham=new Array(list.length).fill(null);
+      for(let i=1;i<list.length;i++){const ch=list[i].close-list[i-1].close;const up=Math.max(ch,0),dn=Math.max(-ch,0);
+        if(i<=n){ag+=up/n;al+=dn/n;if(i<n)continue;}else{ag=(ag*(n-1)+up)/n;al=(al*(n-1)+dn)/n;}
+        ham[i]=ag+al===0?50:100*ag/(ag+al);}
+      const r=gosOrt(ham,s,tur);const sg=g>0?gosOrt(r,g,tur):null;
+      return list.map((_,i)=>{const o={};if(r[i]!=null)o.rsi=r[i];if(sg&&sg[i]!=null)o.sin=sg[i];return o;});},
+    draw:({ctx,bounding,yAxis,indicator})=>{try{const p=indicator.calcParams;ctx.save();ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      [[+p[4]||70,'rgba(255,23,68,.45)'],[50,'rgba(150,150,150,.25)'],[+p[5]||30,'rgba(0,230,118,.45)']].forEach(([v,c])=>{const y=Math.round(yAxis.convertToPixel(v))+0.5;ctx.strokeStyle=c;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(bounding.width,y);ctx.stroke();});
+      ctx.restore();}catch(e){}return false;}});}catch(e){console.warn('RSI kaydı',e);}
+}
 var GF_CIZIM_ARAC=[['segment','📐 Trend'],['rayLine','➚ Işın'],['straightLine','↔ Sonsuz çizgi'],['horizontalStraightLine','― Yatay'],['horizontalRayLine','→ Yatay ışın'],['verticalStraightLine','| Dikey'],['parallelStraightLine','⫽ Paralel'],['priceChannelLine','▱ Kanal'],['fibonacciLine','🌀 Fibonacci'],['priceLine','🏷 Değer çizgisi'],['simpleAnnotation','💬 Not'],['simpleTag','🔖 Etiket']];
 var GF_AYLAR=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
 var GF_AYLAR_UZUN=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
@@ -7746,6 +7837,7 @@ function gfTooltip(data){
 
 // ---------- Özel göstergeler
 function gfGostergeKaydet(){
+  gosKaydet();
   if(GF.kayitli||typeof klinecharts==='undefined')return;GF.kayitli=true;
   // yüzde modu: eksen etiketlerine % ekle (değerler zaten bugüne göre % olarak dönüştürülüyor)
   try{klinecharts.registerYAxis({name:'gf_yuzde',createTicks:({defaultTicks})=>defaultTicks.map(t=>Object.assign({},t,{text:(Number(t.value)>0?'+':'')+String(t.text).replace(/^\+/,'')+'%'}))});}catch(e){}
@@ -8039,14 +8131,14 @@ function gfGostergeleriKur(kars,tahmin,eski){
     // MA / EMA: kullanıcının seçtiği periyotlar, her çizgi sabit renkli
     if(g==='MA'||g==='EMA'){const P=ay[g==='MA'?'maP':'emaP'];const acik=P.map((p,i)=>({n:p.n,on:p.on,i})).filter(p=>p.on&&p.n>0);if(!acik.length)return;
       const ofs=g==='EMA'?3:0;ana(g,{calcParams:acik.map(p=>p.n),precision:0,styles:{lines:acik.map(p=>({color:GF_CIZGI_RENK[(p.i+ofs)%GF_CIZGI_RENK.length],size:g==='MA'?1.2:1.4,style:g==='MA'?'solid':'dashed',smooth:false,dashedValue:[4,2]}))}});return;}
-    ana(g);});
+    ana(g,gosOpt(ay.par,g));});
   if(ay.gecenYil)ana('GF_GECENYIL');
   if(eski)ana('GF_ESKI');
   const kucuk=typeof gfKucukMu==='function'&&gfKucukMu(); // masaüstü küçük hâl: alt paneller gizli
   if(kars.length){const opt={calcParams:kars,styles:{lines:kars.map(k=>({color:GF_METRIK[k].renk,size:1.4,style:'solid',smooth:false,dashedValue:[2,2]}))}};if(ay.karsAyri&&!kucuk)alt('GF_KARSI',opt,90);else ana('GF_KARSI',opt);}
   if(tahmin)ana('GF_TAHMIN');
   if(ay.olaylar)ana('GF_OLAY');
-  if(!kucuk)ay.altGosterge.forEach(g=>alt(g));
+  if(!kucuk)ay.altGosterge.forEach(g=>alt(g,gosOpt(ay.par,g)));
 }
 
 // ---------- Araç çubuğu
@@ -8317,6 +8409,7 @@ function gfGostergeModalCiz(){
   el.innerHTML=`<div class="isf-grup-b">Ana grafik üzerinde</div><div class="isf-chips">${GF_ANA_GOSTERGE.map(([k,l])=>chip(ay.anaGosterge.includes(k),l,`gfGostergeTik('anaGosterge','${k}')`)).join('')}</div>
   ${ay.anaGosterge.includes('MA')?gfParamHtml('MA'):''}${ay.anaGosterge.includes('EMA')?gfParamHtml('EMA'):''}
   <div class="isf-grup-b">Alt paneller</div><div class="isf-chips">${GF_ALT_GOSTERGE.map(([k,l])=>chip(ay.altGosterge.includes(k),l,`gfGostergeTik('altGosterge','${k}')`)).join('')}</div>
+  ${gosAyarHtml(ay.anaGosterge.filter(g=>g!=='MA'&&g!=='EMA').concat(ay.altGosterge),ay.par||{},'gfGosPar',{gun:'gün',hafta:'hafta',ay:'ay',ceyrek:'çeyrek',yil:'yıl'}[ay.periyot]||'mum')}
   <div class="isf-grup-b">Karşılaştır (en fazla 4 metrik)</div><div class="isf-chips">${Object.keys(GF_METRIK).filter(k=>k!==ay.metrik&&!GF_METRIK[k].gizli).map(k=>chip(ay.karsilastir.includes(k),GF_METRIK[k].ad,`gfGostergeTik('karsilastir','${k}')`)).join('')}</div>
   <div class="isf-chips" style="margin-top:6px;">${chip(ay.karsAyri,'Karşılaştırmayı ayrı panelde göster',"GF.ay.karsAyri=!GF.ay.karsAyri;gfGostergeUygula()")}</div>
   <div class="isf-grup-b">Görünüm</div><div class="isf-chips">${chip(ay.gecenYil,'📅 Geçen yılın aynı dönemi',"GF.ay.gecenYil=!GF.ay.gecenYil;gfGostergeUygula()")}${chip(ay.sifir!==false,'0️⃣ Sıfır çizgisi (eksen sıfırı da gösterir)',"GF.ay.sifir=GF.ay.sifir===false;gfGostergeUygula()")}${chip(ay.olaylar,'⭐ Olay işaretleri',"GF.ay.olaylar=!GF.ay.olaylar;gfGostergeUygula()")}${chip(ay.eskiTahmin,'🕘 Kayıtlı eski tahminler',"GF.ay.eskiTahmin=!GF.ay.eskiTahmin;gfGostergeUygula()")}${chip(ay.reel,'💱 Reel (enflasyondan arındırılmış, bugünün TL\'si)',"GF.ay.reel=!GF.ay.reel;gfGostergeUygula()")}</div>
@@ -8341,6 +8434,7 @@ function gfParamEkle(alan){const P=GF.ay[alan];const son=P[P.length-1];P.push({n
 function gfParamSil(alan,i){GF.ay[alan].splice(i,1);gfGostergeUygula();}
 function gfGostergeTik(alan,k){const a=GF.ay[alan];const i=a.indexOf(k);if(i>=0)a.splice(i,1);else{if(alan==='karsilastir'&&a.length>=4){showToast('En fazla 4 metrik','amber');return;}a.push(k);}gfGostergeUygula();}
 function gfGostergeUygula(){gfAyarKaydet();gfGostergeModalCiz();gfAracCiz();gfCiz();}
+function gfGosPar(ad,i,v){GF.ay.par=GF.ay.par||{};if(gosDegistir(GF.ay.par,ad,i,v)){GOS_ACIK[ad]=true;gfGostergeUygula();}}
 function gfGorunumSifirla(){const m=GF.ay.metrik;GF.ay=Object.assign(JSON.parse(JSON.stringify(GF_AYAR_VARSAYILAN)),{metrik:m,sekme:GF.ay.sekme});gfAyarKaydet();gfGostergeModalCiz();gfAracCiz();GF._sonGorunum='';gfCiz();}
 
 // ---------- Tahmin ayarları modalı

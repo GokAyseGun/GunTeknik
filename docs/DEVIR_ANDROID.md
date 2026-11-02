@@ -142,6 +142,13 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6p. GTCOIN v4: kayma, karekök etki, piyasa görüşü; gösterge ayarları (2 Kasım 2026)
+- Açık kapandı: alım baskı eklenmeden önceki fiyattan, satış itilmiş fiyattan gerçekleştiği için büyük al-sat döngüsü kâr ediyordu (5.000 ₺ ≈ +510 ₺). Artık işlem itilen yolun ortalamasından (`fiyat` = ortalama) gerçekleşir.
+- `_gt_etki(uid,tutar,yon,prim)`: 0,015·√(tutar/1000)/√(1+7g hacim/20000); kişi başı son 24 saatte net etki (`bet_gt_islem.etki`) ±%5; toplam baskı (prim) ±%5, tikte ×0,8 söner. Test: 1.000 ₺ al-sat −20 ₺, 5.000+2.000 al + hepsini sat −93 ₺.
+- Piyasa görüşü `bet_gt_durum.gorus`: `_gt_gorus_hedef()` = 7 günlük kişi başı net akış (yaşla doğrusal azalır), kişi başı ±%4, toplam ±%10; tikte hedefe %25 yaklaşır. Fiyat = temel·(1+prim)·(1+görüş)·(1+dalga); endeks = temel·(1+görüş)·(1+dalga). `_gt_adim` 6 parametreli.
+- `_bet_varlik` ve ERP `betVarlik`: GTC ve satış emirleri endeks fiyatından.
+- Gösterge ayarları (`GOS_PAR`, `gosAyarHtml`, `gosDegistir`, `gosOpt`): her göstergenin kendi periyot/ortalama alanları; GTCOIN'de `gt_gosterge.par`, ana grafikte `GF.ay.par`. Yerleşik RSI yerine `gosKaydet()` ile kayıtlı RSI: Wilder periyot, yumuşatma, sinyal ortalaması (SMA/EMA), aşırı alım/satım seviye çizgileri; varsayılan 14 · 3 · 9 · EMA · 70 · 30.
+
 ## 6o. GTCOIN v3: aramalar, yaklaşan ödemeler, limit emir, ₺ (2 Kasım 2026)
 - Grup içi ağırlıklı geometrik ortalama. F: kasa .22, net .20, iş .18, tempo .12, ödeme .12, tahmin .10, alacak .06. T: arama(7g) .30, arama3(3g) .15, dönüşüm .15, tıklama .10, ROAS .10, ajanda .12, teklif .08. Aramalar `arama_takip`, `sonuc <> 'yanlis'`.
 - `odeme`: widget `od` listesindeki giden ödemeler 21 gün içinde ağırlık `1 − gün/21` (gecikmiş 1); gelenler ×0,5 düşer. r = (K − yük + 0,5·gelecek)/K, K = kasa+60000. Ödeme yapılınca kasa düşer, yük kalkar → fiyat sıçramaz. `alacak` artık sadece alacak − borç.
