@@ -28,10 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Telefon görüşmesi bitince (IDLE) arama kaydına bakar.
- * Gelen ve cevaplanmış arama + yeni numara ise arama penceresini açar.
- * Yeni sayılmayanlar: rehberde kayıtlı her numara, 850 / 444 / 800 numaraları ve şehir alan kodlu sabit hatlar.
- * Rehberdeki diğer kişiler (özel kayıtlar) için pencere açılmaz.
+ * Telefon görüşmesi bitince (IDLE) AramaTarama'yı çalıştırır (kural ve sıra orada).
+ * Aynı iş AramaNobetci servisinde de yapılır: telefon bu yayını uygulama kapalıyken kesse bile servis yakalar.
  */
 public class AramaAlici extends BroadcastReceiver {
 
@@ -42,6 +40,7 @@ public class AramaAlici extends BroadcastReceiver {
         final Context c = ctx.getApplicationContext();
         SharedPreferences p = c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE);
         iz(c, "Telefon durumu alındı: " + durum);
+        AramaNobetci.baslat(c);   // servis telefon tarafından durdurulduysa yeniden başlat
 
         if (TelephonyManager.EXTRA_STATE_RINGING.equals(durum) || TelephonyManager.EXTRA_STATE_OFFHOOK.equals(durum)) {
             if (!p.getBoolean("aktif", false)) p.edit().putBoolean("aktif", true).putLong("bas", System.currentTimeMillis()).apply();
@@ -54,7 +53,7 @@ public class AramaAlici extends BroadcastReceiver {
         final PendingResult pr = goAsync();
         new Thread(() -> {
             try {
-                isle(c, bas);
+                AramaTarama.cagriBitti(c, bas);
             } catch (Exception ignored) {
             } finally {
                 pr.finish();
@@ -78,85 +77,12 @@ public class AramaAlici extends BroadcastReceiver {
         }).start();
     }
 
-    private static void isle(Context c, long bas) throws InterruptedException {
-        if (Ayar.cihaz(c) == null) { iz(c, "Cihaz kaydı yok — uygulamada ERP'ye giriş yap"); return; }
-        if (ContextCompat.checkSelfPermission(c, Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) { iz(c, "Arama kaydı izni yok"); return; }
-
-        // Arama kaydı bazı telefonlarda birkaç saniye geç yazılır: 4 kez dene
-        String numara = null; int tip = 0; long sure = 0, zaman = 0;
-        boolean bulundu = false;
-        for (int deneme = 0; deneme < 4 && !bulundu; deneme++) {
-            Thread.sleep(deneme == 0 ? 1500 : 1700);
-            try (Cursor cur = c.getContentResolver().query(CallLog.Calls.CONTENT_URI,
-                    new String[]{CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.DURATION, CallLog.Calls.DATE},
-                    null, null, CallLog.Calls.DATE + " DESC")) {
-                if (cur == null || !cur.moveToFirst()) continue;
-                zaman = cur.getLong(3);
-                if (zaman < bas - 90_000L) continue;                 // henüz bu görüşme yazılmamış
-                numara = cur.getString(0);
-                tip = cur.getInt(1);
-                sure = cur.getLong(2);
-                bulundu = true;
-            } catch (Exception e) {
-                iz(c, "Arama kaydı okunamadı: " + e.getMessage());
-                return;
-            }
-        }
-        if (!bulundu) { iz(c, "Görüşme arama kaydında bulunamadı"); return; }
-        // Geri dönüş: kaçırılan/reddedilen yeni numarayı 24 saat içinde geri arayıp konuştuysan pencere açılır (arama, müşterinin ilk aradığı saatle kaydedilir)
-        boolean geri = false;
-        if (tip == CallLog.Calls.OUTGOING_TYPE) {
-            if (sure <= 0) { iz(c, "Giden arama (cevaplanmadı) — pencere açılmaz"); return; }
-            long ilk = oncekiGelen(c, numara, zaman);
-            if (ilk <= 0) { iz(c, "Giden arama — pencere açılmaz"); return; }
-            if (System.currentTimeMillis() - c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE).getLong("pencere:" + son10(numara), 0) < 24 * 3600_000L) {
-                iz(c, "Geri dönüş — bu numara için bugün pencere zaten açıldı"); return;
-            }
-            geri = true;
-            zaman = ilk;
-        } else if (tip != CallLog.Calls.INCOMING_TYPE) {
-            iz(c, "Cevapsız/reddedilen arama — geri ararsan pencere açılır"); return;
-        }
-        if (sure <= 0) { iz(c, "Gelen arama 0 sn — pencere açılmaz"); return; }
-
-        SharedPreferences p = c.getSharedPreferences("gt_arama", Context.MODE_PRIVATE);
-        if (p.getLong("sonKayit", 0) == zaman) { iz(c, "Aynı görüşme ikinci kez bildirildi"); return; }
-        p.edit().putLong("sonKayit", zaman).apply();
-
-        String kurum = kurumsalNumara(numara);
-        if (kurum != null) { iz(c, kurum + " (" + numara + ") — kaydedilmez"); return; }
-        String ad = rehberAd(c, numara);
-        if (ad != null) { iz(c, "Rehberde kayıtlı (" + ad + ") — yeni numara değil, kaydedilmez"); return; }
-
-        Intent pen = new Intent(c, AramaPenceresi.class)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            .putExtra("numara", numara)
-            .putExtra("ad", ad)
-            .putExtra("sure", (int) sure)
-            .putExtra("zaman", zaman)
-            .putExtra("geri", geri);
-        if (son10(numara) != null) p.edit().putLong("pencere:" + son10(numara), System.currentTimeMillis()).apply();
-        String kim = ad != null ? ad : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-        final long t0 = System.currentTimeMillis();
-        boolean izin = Settings.canDrawOverlays(c);
-        String hata = null;
-        if (izin) hata = ustundenBaslat(c, pen);
-        // Pencere gerçekten açıldı mı? (Android arka plandan açmayı sessizce engelleyebilir)
-        for (int i = 0; i < 14 && izin; i++) {
-            Thread.sleep(300);
-            if (p.getLong("pencereAcildi", 0) >= t0) { iz(c, (geri ? "Geri dönüş · " : "") + "Pencere açıldı: " + kim); return; }
-        }
-        iz(c, (geri ? "Geri dönüş · " : "") + (!izin ? "Üstte gösterme izni yok" : hata != null ? "Pencere açılamadı (" + hata + ")" : "Pencere Android tarafından engellendi")
-            + " — bildirim gönderildi: " + kim);
-        Bildirimci.aramaBekliyor(c, pen, kim);
-    }
-
     /**
      * Android 15+ (hedef SDK 35+): "üstte gösterme" izni olan uygulama arka plandan pencere açabilmek için
      * o an ekranda kendi üst katman penceresine sahip olmalı. 1 piksellik görünmez bir katman ekleyip pencereyi
      * onunla açıyoruz; katman 3 sn sonra kaldırılır.
      */
-    private static String ustundenBaslat(Context c, Intent pen) throws InterruptedException {
+    static String ustundenBaslat(Context c, Intent pen) throws InterruptedException {
         final Handler h = new Handler(Looper.getMainLooper());
         final CountDownLatch bitti = new CountDownLatch(1);
         final String[] hata = {null};

@@ -28,5 +28,9 @@ public class GTMesajServisi extends FirebaseMessagingService {
         String tip = d.get("tip");
         if ("bildirim".equals(tip)) Bildirimci.goster(this, d);
         Veri.yenile(this);
+        // telefon uygulamayı uyuttuysa: nöbetçiyi canlandır, kaçan aramaları sor
+        AramaNobetci.baslat(this);
+        final android.content.Context c = getApplicationContext();
+        new Thread(() -> { try { AramaTarama.tara(c, true, false); } catch (Exception ignored) {} }).start();
     }
 }

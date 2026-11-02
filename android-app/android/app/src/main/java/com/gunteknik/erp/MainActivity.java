@@ -76,6 +76,9 @@ public class MainActivity extends BridgeActivity {
     public void onResume() {
         super.onResume();
         Veri.arkaplanda(this);
+        AramaNobetci.baslat(this);
+        final android.content.Context c = getApplicationContext();
+        new Thread(() -> { try { AramaTarama.tara(c, true, false); } catch (Exception ignored) {} }).start();
     }
 
     @Override

@@ -28,5 +28,6 @@ public class GuncellendiAlici extends BroadcastReceiver {
             NotificationManagerCompat.from(c).notify(7702, b.build());
         } catch (SecurityException ignored) {}
         Veri.arkaplanda(c);
+        AramaNobetci.baslat(c);
     }
 }

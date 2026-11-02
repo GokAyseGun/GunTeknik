@@ -142,6 +142,12 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6s. Arama sırası (tarama) + arama nöbetçisi servisi (2 Kasım 2026)
+- Tanı: 14:02'deki cevaplanmış gelen aramada telefondan hiç PHONE_STATE yayını gelmedi (cihazlar.tani boş) → MIUI uygulama kapalıyken yayını kesiyor.
+- `AramaTarama`: arama kaydını `tarandi` zamanından (ilk sefer son 24 saat) itibaren tarar; kurala uyanları (cevaplanmış gelen · kaçırılan/reddedilene 24 saatte geri dönüş; rehber/850/444/8xx-9xx/sabit hat hariç) `gt_arama.kuyruk`a ekler; sıradakini açar (üst katman hilesi + doğrulama + yedek bildirim). Çalıştığı yerler: görüşme bitişi (AramaAlici yayını ve AramaNobetci), MainActivity.onResume, her FCM mesajı. Kaçan arama, uygulama ilk uyandığında sorulur.
+- `AramaPenceresi`: `kapat()` aramayı sıradan çıkarır ve aynı pencerede sıradakine geçer; "⏳ Sırada N arama daha"; geri tuşu = atla, kalan varsa bildirim. `acik` bayrağı ikinci pencereyi engeller.
+- `AramaNobetci`: ön plan servisi (specialUse), TelephonyCallback/PhoneStateListener ile görüşme bitişi; sessiz "Aramalar izleniyor" bildirimi (kanal arama_nobetci, MIN). Başlatma: uygulama açılışı, BOOT_COMPLETED (`AcilisAlici`), güncelleme sonrası, her PHONE_STATE yayını, FCM. Aynı görüşme iki yerden gelirse `sonBitis` 8 sn kilidi.
+
 ## 6r. Geri dönüş araması, anında bildirim, dakikalık pozisyon takibi (2 Kasım 2026)
 - Tanı (cihazlar.tani) gösterdi: "yeni arama" aslında RINGING→IDLE (kaçırılan/reddedilen) ve ardından giden arama (geri dönüş) idi; kural yalnız cevaplanan gelen aramada pencere açıyordu.
 - `AramaAlici`: giden arama süresi > 0 ve aynı numaradan son 24 saatte gelen/kaçırılan/reddedilen arama varsa (`oncekiGelen`, `son10`) pencere "Geri döndüğün arama" olarak açılır; kayıt zamanı müşterinin ilk aradığı an. Aynı numara için 24 saatte bir (`gt_arama.pencere:<son10>`). Rehber/850/444/sabit hat kuralları aynen geçerli.

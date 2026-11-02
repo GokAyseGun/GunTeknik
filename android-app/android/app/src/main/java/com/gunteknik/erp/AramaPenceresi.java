@@ -51,6 +51,9 @@ public class AramaPenceresi extends AppCompatActivity {
     private long zaman;
     private boolean gorusme;          // true: görüşme bitince açıldı
     private boolean geri;             // true: kaçırılan aramaya geri dönüldü
+    private int kalan;                // sırada bekleyen başka arama sayısı
+    private boolean bitti;            // bu arama sıradan çıkarıldı
+    static volatile boolean acik;     // pencere ekranda mı (AramaTarama ikinci kez açmasın)
     private int adim;                 // -1 tür (özel/iş/spam), 0 kaynak, 1 sektör, 2 sonuç, 3 sebep
     private String bulunanKaynak;     // ERP rehberinden gelen kaynak (İş seçilince kullanılır)
     private String kaynak, sektor, sonuc, sebep;
@@ -68,6 +71,46 @@ public class AramaPenceresi extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        acik = true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        acik = false;
+        // geri tuşuyla kapandıysa bu aramayı atlanmış say; sırada kalan varsa bildirimle hatırlat
+        if (isFinishing() && gorusme && !bitti) {
+            bitti = true;
+            final android.content.Context c = getApplicationContext();
+            final long z = zaman;
+            new Thread(() -> {
+                Intent n = AramaTarama.cikar(c, z);
+                if (n != null) Bildirimci.aramaBekliyor(c, n, AramaTarama.bekleyen(c) + " arama kaydedilmedi");
+            }).start();
+        }
+        super.onDestroy();
+    }
+
+    /** Bu arama bitti (kaydedildi, spam, özel ya da atlandı): sırada başka arama varsa aynı pencerede ona geç. */
+    private void kapat() {
+        if (!gorusme) { finish(); return; }
+        bitti = true;
+        Intent n = AramaTarama.cikar(this, zaman);
+        if (n != null) {
+            setIntent(n);
+            hazirla(n);
+        } else {
+            finish();
+        }
+    }
+
+    private static String saatYaz(long z) {
+        boolean bugun = android.text.format.DateUtils.isToday(z);
+        return new SimpleDateFormat(bugun ? "HH:mm" : "dd.MM HH:mm", Locale.US).format(new Date(z));
+    }
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
@@ -81,6 +124,8 @@ public class AramaPenceresi extends AppCompatActivity {
         zaman = i.getLongExtra("zaman", 0);
         gorusme = zaman > 0;
         geri = i.getBooleanExtra("geri", false);
+        kalan = i.getIntExtra("kalan", 0);
+        bitti = false;
         kanal = gorusme ? "tel" : Ayar.kanal(this);
         int bildirim = i.getIntExtra("bildirim", 0);
         if (bildirim != 0) NotificationManagerCompat.from(this).cancel(bildirim);
@@ -140,7 +185,8 @@ public class AramaPenceresi extends AppCompatActivity {
         kok.addView(metin(gorusme ? (geri ? "📞 Geri döndüğün arama" : "📞 Az önceki arama") : "📞 Arama kaydet", 18, METIN, true));
         if (gorusme) {
             String kim = ad != null && !ad.isEmpty() ? ad + (numara != null ? "  ·  " + numara : "") : (numara == null || numara.isEmpty() ? "Gizli numara" : numara);
-            String ek = (geri ? "Kaçırılan arama " : "") + new SimpleDateFormat("HH:mm", Locale.US).format(new Date(zaman)) + (geri ? "  ·  geri aradın" : "") + (sure > 0 ? "  ·  " + sureYaz(sure) : "");
+            String ek = (geri ? "Kaçırılan arama " : "") + saatYaz(zaman) + (geri ? "  ·  geri aradın" : "") + (sure > 0 ? "  ·  " + sureYaz(sure) : "")
+                + (kalan > 0 ? "\n⏳ Sırada " + kalan + " arama daha" : "");
             TextView alt = metin(kim + "\n" + ek, 13, METIN2, false);
             alt.setPadding(0, dp(2), 0, dp(2));
             kok.addView(alt);
@@ -183,7 +229,7 @@ public class AramaPenceresi extends AppCompatActivity {
             adimCiz();
         });
         TextView iptal = dugme(gorusme ? "Atla" : "İptal", KUTU, METIN2);
-        iptal.setOnClickListener(v -> finish());
+        iptal.setOnClickListener(v -> kapat());
         LinearLayout.LayoutParams g1 = new LinearLayout.LayoutParams(0, dp(46), 1f);
         g1.rightMargin = dp(6);
         LinearLayout.LayoutParams g2 = new LinearLayout.LayoutParams(0, dp(46), 1f);
@@ -229,7 +275,7 @@ public class AramaPenceresi extends AppCompatActivity {
             case -1:
                 adimBaslik.setText("BU ARAMA NEYDİ?");
                 govde.addView(izgara(new String[]{"🔒 Özel", "💼 İş", "📛 Spam"}, new String[]{"ozel", "is", "spam"}, 3, null, v -> {
-                    if ("ozel".equals(v)) { finish(); return; }
+                    if ("ozel".equals(v)) { kapat(); return; }
                     if ("spam".equals(v)) { spamKaydet(); return; }
                     if (bulunanKaynak != null) { kaynak = bulunanKaynak; adim = 1; } else adim = 0;
                     adimCiz();
@@ -328,7 +374,7 @@ public class AramaPenceresi extends AppCompatActivity {
         new Thread(() -> {
             try {
                 Islem.aramaSpam(getApplicationContext(), numara, z);
-                runOnUiThread(() -> { tost("📛 Spam sayıldı"); finish(); });
+                runOnUiThread(() -> { tost("📛 Spam sayıldı"); kapat(); });
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     gonderiliyor = false;
@@ -371,7 +417,7 @@ public class AramaPenceresi extends AppCompatActivity {
                 Veri.yenile(getApplicationContext());
                 runOnUiThread(() -> {
                     tost("✓ Kaydedildi");
-                    finish();
+                    kapat();
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
