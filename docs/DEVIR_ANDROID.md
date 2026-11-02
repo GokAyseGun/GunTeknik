@@ -142,6 +142,16 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6l. Check-in yeniden kuruldu + GTCOIN analiz araçları (2 Kasım 2026)
+- **Günlük check-in** (her gün 20:00–24:00, yalnız sahibi = erp_ayarlar.checkin.sahip): ruh, stres, kaygı, keyif (`eglence` sütunu), enerji, uyku (dün gece), yarına umut + "ruh halini en çok ne etkiledi" (`etkenler` text[]) + not. Aynı `checkinler` tablosu; yeni sütunlar ruh/enerji/uyku/umut/etkenler/kacirildi. 02.11 öncesi sabah formatındaki kayıtlar arşiv (ckRuh eski ortalamayı kullanır).
+- **Haftalık check-in** (pazar 20:00–24:00, günlükle tek form): `checkin_haftalik` (is_memnun, is_zorluk, gelir_memnun, gider_baski, bekleyen_tutar, bek_is, bek_gelir, bek_gider, en_iyi, en_kotu). "Değdi mi?" harcama soruları buraya taşındı. Formda bu haftanın gerçekleşeni ve geçen pazarki beklenti gösterilir.
+- Kayıt: upsert (`on_conflict=kullanici_id,tarih`); form açıldığı günün tarihine yazar, gece 00:15'ten sonra kaydetmez.
+- Sunucu (`push_sunucu_kontrol`): 20:00–23:59 her saat başı `ck:<tarih>:<saat>` bildirimi, öncelik 0 (sessiz saatten muaf), `hedef = sahip`. 00:20'den sonra doldurulmayan gün → `kacirildi=true` (günlük ve pazar ise haftalık).
+- **Hedefli bildirim**: `push_kuyruk.hedef` (uuid). Edge function `push-gonder` v5: her abonelik/cihaz için yalnız hedefsiz + kendisine hedeflenenleri birleştirip gönderir (cihazlar.kullanici, push_abonelik.kullanici).
+- ERP: `ckModalAc` (yalnız pencere açıkken), `./?checkin=1` bildirimi formu açar, açık sayfada 5 dakikada bir kontrol; "Sonra" ~1 saat susturur.
+- Analiz (`ckOzetHtml`): son 21 gün şeridi (kaçırılanlar kırmızı), haftanın günlerine göre ruh hali, etkenlere göre ruh hali, günlük ilişkiler (`ckGunlukIliskiler`, ≥14 gün: uyku↔ruh/stres, iş↔enerji/stres/ruh, stres/ruh↔ertesi gün şahsi harcama, umut↔ertesi gün iş/ruh), haftalık tablo, beklenti↔gerçek (`ckBeklentiler`, `ckSapma`), haftalık ilişkiler (`ckIliskiler`, ≥6 hafta). Grafik göstergesi GF_CHECKIN: ruh, stres, kaygı, yarına umut. Yapay zekâ özeti (`ozBolumCheckin`) günlük + haftalık + beklenti–gerçek.
+- **GTCOIN grafiği**: 📊 Gösterge (ana: MA/EMA/SMA/BOLL/SAR/BBI/AVP; alt: VOL, MACD, RSI, KDJ, OBV, ROC, TRIX, CCI, WR, BIAS, DMI, MTM, PSY, AO, DMA, BRAR, CR, VR, PVT, EMV — en fazla 4; eksen normal/yüzde/log; tür mum/boş mum/çubuk/alan; localStorage `gt_gosterge`). ✏️ Çiz: ana grafikteki tüm çizim araçları; kişiye özel kayıt `grafik_cizimler.metrik = 'gt:<kullanıcı>'`.
+
 ## 6k. Spam, bahis düzeni, GTCOIN (2 Kasım 2026)
 - **Arama penceresi** (görüşme sonrası) önce "Bu arama neydi?": 🔒 Özel (hiçbir şey) · 💼 İş (kaynak → sektör → sonuç; rehberde kaynak varsa doğrudan sektöre) · 📛 Spam (`arama_spam` RPC → `reklam_manuel` tip=`spam`, deger 1; yalnızca sayı). Widget'tan açılan elle giriş doğrudan kaynakla başlar.
 - ERP: Arama gir penceresinde "📛 Spam aramaydı" düğmesi (`atSpam`); reklam KPI'larında "Spam arama" kutusu; arama takibi kartında yanlış arama kutusunda spam sayısı.
