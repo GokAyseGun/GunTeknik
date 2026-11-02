@@ -142,6 +142,19 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6m. GTCOIN v2: 19 ölçülü fiyat, 4 saatlik tik, kaldıraç (2 Kasım 2026)
+- Fiyat modeli `_gt_hesap(gün, widget anlık görüntüsü, taze)`: 4 grup, her grup kendi ölçülerinin geometrik ortalaması; `ham = 100·F^0,45·T^0,25·P^0,15·D^0,15`.
+  - F Finans: kasa, 30g net kâr, 30g iş, 7g gelir temposu, alacak−borç−14g ödeme (widget), 30g sonrası kasa tahmini (widget `gt.tahmin30`).
+  - T Talep: 7g arama / önceki ort., aramadan işe dönüşüm, 7g reklam tıklaması, ROAS, 7g ajanda, açık teklifler.
+  - P Psikoloji: sahibin 7g check-in ruh/stres/umut ortalaması, haftalık iş memnuniyeti, haftalık gelir beklentisi.
+  - D Dış: hava (widget `gt.hava` = takvimdeki Open-Meteo günlük en yüksek sıcaklık; 7 günde ≥33° ya da ≤10° gün başına +%3), mevsim katsayısı.
+- `bet_gt_tik()` cron `gt-tik` = `0 1,5,9,13,17,21 * * *` (TSİ 00/04/08/12/16/20). `_gt_adim`: temel hedefe %35 yaklaşır, dalga = 0,85·dalga + 0,0045·N (±%6 sınır), prim ×0,8 söner, en az %0,15 hareket; yüksek/düşük fitil. `bet_gt_durum.k` ölçek katsayısı (geçmiş yeniden üretilirken fiyat sürekliliği için).
+- Geçmiş 15.07'den itibaren 4 saatlik olarak yeniden üretildi (kaynak `gecmis`); grafikte yalnız 4 sa ve 1 gün var; 04:00 tiki 00–04 mumunu kapatır.
+- `endeks` = prim hariç fiyat. Kaldıraç `bet_gt_pozisyon`: long/short, 1–10x, teminat 10–500, en fazla 3 açık. Açılış/kapanış ücreti büyüklüğün ‰1'i, günlük ücret teminatın %1'i (`_gt_poz_kontrol`, tikte). Likidasyon değer ≤ 0; TP/SL tikte kontrol, tetiklenince sadece sahibine push (`hedef`).
+- RPC: `bet_gt_poz_ac(p_yon,p_kaldirac,p_teminat,p_tp,p_sl)`, `bet_gt_poz_kapat(p_id)`, `bet_gt_poz_tpsl(p_id,p_tp,p_sl)`. Varlık/şampiyon: `_bet_varlik` = coin + GTCOIN ×0,99 + açık pozisyon değeri.
+- ERP: Spot/Kaldıraç sekmesi, "Fiyatı ne belirliyor" 4 grup açılır listesi (`bet_gt_durum.bilesen` {ham, grup, r, deger}), açık pozisyonlar + kapananlar, grafikte giriş/likidasyon/TP/SL çizgileri. `widgetVeri().gt` yeni.
+- Özet sayfası gider tahmini kutusu: eksi işareti yok, tutar `#7FB8DC`.
+
 ## 6l. Check-in yeniden kuruldu + GTCOIN analiz araçları (2 Kasım 2026)
 - **Günlük check-in** (her gün 20:00–24:00, yalnız sahibi = erp_ayarlar.checkin.sahip): ruh, stres, kaygı, keyif (`eglence` sütunu), enerji, uyku (dün gece), yarına umut + "ruh halini en çok ne etkiledi" (`etkenler` text[]) + not. Aynı `checkinler` tablosu; yeni sütunlar ruh/enerji/uyku/umut/etkenler/kacirildi. 02.11 öncesi sabah formatındaki kayıtlar arşiv (ckRuh eski ortalamayı kullanır).
 - **Haftalık check-in** (pazar 20:00–24:00, günlükle tek form): `checkin_haftalik` (is_memnun, is_zorluk, gelir_memnun, gider_baski, bekleyen_tutar, bek_is, bek_gelir, bek_gider, en_iyi, en_kotu). "Değdi mi?" harcama soruları buraya taşındı. Formda bu haftanın gerçekleşeni ve geçen pazarki beklenti gösterilir.
