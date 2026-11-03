@@ -5517,7 +5517,8 @@ function gtStil(){
 function gtMumlar(){
   const ms={'1dk':6e4,'4s':144e5,'1g':864e5}[BET.gtAralik]||144e5;const off=3*36e5; // mumlar Türkiye saatine hizalı; bir kayıt kendinden önceki mumu kapatır (04:00 güncellemesi 00–04 mumunu)
   const M=[];let son=null;const dk=BET.gtAralik==='1dk';const sinir=Date.now()-GT_DK_SAAT*36e5;
-  BET.gtF.forEach(r=>{const t=new Date(r.zaman).getTime();if(dk&&t<sinir)return;const k=Math.floor((t-1+off)/ms)*ms-off;const f=+r.fiyat;const yk=Math.max(f,+r.yuksek||f),ds=Math.min(f,+r.dusuk||f);
+  BET.gtF.forEach(r=>{const t=new Date(r.zaman).getTime();if(dk&&t<sinir)return;const k=Math.floor((t-1+off)/ms)*ms-off;const f=+r.fiyat;const pencere=dk&&r.kaynak==='tik'; // 4 saatlik kayıt penceresinin en yüksek/düşüğünü taşır: dakikalık mumda fitil yapmasın
+    const yk=pencere?f:Math.max(f,+r.yuksek||f),ds=pencere?f:Math.min(f,+r.dusuk||f);
     if(son&&son.timestamp===k){son.high=Math.max(son.high,yk);son.low=Math.min(son.low,ds);son.close=f;son.volume+=r.hacim||0;}
     else{const o=son?son.close:f;son={timestamp:k,open:o,high:Math.max(o,yk),low:Math.min(o,ds),close:f,volume:r.hacim||0};M.push(son);}});
   return M;

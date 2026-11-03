@@ -142,6 +142,11 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6t. GTCOIN iğneleri kaldırıldı (3 Kasım 2026)
+- 1 dk grafikteki ince uzun mumlar iki kaynaktan: (1) `tik` kaydı 4 saatlik pencerenin en yüksek/düşüğünü taşıyor, dakikalık mumda fitil oluyordu → ERP `gtMumlar` 1 dk'da tik kaydının yüksek/düşüğünü yok sayar; (2) `_gt_dk_isle` sıçramaları (dakikada %0,6 olasılıkla ±%0,5–1,5) + yüksek oynaklık dönemi.
+- `_gt_dk_isle`: sıçrama kaldırıldı, dakikalık değişim en fazla ±%0,5, oynaklık kümelenmesi lv ∈ [−0,8; 0,8], fitil en fazla %0,3. Simülasyon: 4 saatlik salınım medyanı %3,75, p90 %5,2.
+- Son 3 günün tek dakikalık iğneleri komşularının ortalamasına çekildi, fitiller kırpıldı, tik kayıtlarının pencere yüksek/düşüğü yeniden hesaplandı.
+
 ## 6s. Arama sırası (tarama) + arama nöbetçisi servisi (2 Kasım 2026)
 - Tanı: 14:02'deki cevaplanmış gelen aramada telefondan hiç PHONE_STATE yayını gelmedi (cihazlar.tani boş) → MIUI uygulama kapalıyken yayını kesiyor.
 - `AramaTarama`: arama kaydını `tarandi` zamanından (ilk sefer son 24 saat) itibaren tarar; kurala uyanları (cevaplanmış gelen · kaçırılan/reddedilene 24 saatte geri dönüş; rehber/850/444/8xx-9xx/sabit hat hariç) `gt_arama.kuyruk`a ekler; sıradakini açar (üst katman hilesi + doğrulama + yedek bildirim). Çalıştığı yerler: görüşme bitişi (AramaAlici yayını ve AramaNobetci), MainActivity.onResume, her FCM mesajı. Kaçan arama, uygulama ilk uyandığında sorulur.
