@@ -103,8 +103,9 @@ fn betik_calistir(yeni: &Path, hedef: &Path) -> Result<(), String> {
     let betik = std::env::temp_dir().join("gunteknik-guncelle.sh");
     let h = hedef.to_string_lossy();
     let y = yeni.to_string_lossy();
+    let g = yeni.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let icerik = format!(
-        "#!/bin/sh\nsleep 1.5\nrm -rf \"{h}.eski\"\nmv \"{h}\" \"{h}.eski\" && mv \"{y}\" \"{h}\" && rm -rf \"{h}.eski\"\nxattr -cr \"{h}\" 2>/dev/null\nopen \"{h}\"\n"
+        "#!/bin/sh\nLS=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister\nsleep 1.5\nrm -rf \"{h}.eski\"\nmv \"{h}\" \"{h}.eski\" && mv \"{y}\" \"{h}\" && rm -rf \"{h}.eski\"\n$LS -u \"{y}\" 2>/dev/null\nrm -rf \"{g}\"\nxattr -cr \"{h}\" 2>/dev/null\n$LS -f -R -trusted \"{h}\"\nopen \"{h}\"\n"
     );
     std::fs::write(&betik, icerik).map_err(|e| e.to_string())?;
     std::process::Command::new("/bin/sh")

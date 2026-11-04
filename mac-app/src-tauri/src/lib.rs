@@ -314,13 +314,32 @@ fn baglanti_ac(app: &AppHandle, u: &tauri::Url) {
     }
 }
 
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn kabuk(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
 /// Uygulama paketindeki aracı macOS'a tanıt (ilk açılışta ve güncellemeden sonra)
 fn widget_tanit() {
     #[cfg(target_os = "macos")]
     if let Some(c) = std::env::current_exe().ok().and_then(|e| e.parent()?.parent().map(|p| p.to_path_buf())) {
         let ap = c.join("PlugIns/GunTeknikWidget.appex");
-        if ap.exists() {
-            let _ = std::process::Command::new("/usr/bin/pluginkit").arg("-a").arg(&ap).spawn();
+        if let (true, Some(app_yolu)) = (ap.exists(), c.parent()) {
+            // güncelleme .app'i yerine koyunca LaunchServices yeni paketi görmeyebiliyor ("not found in LS database"):
+            // paketi yeniden kaydet, eski (geçici klasördeki) kayıtları sil, aracı etkinleştir
+            let betik = format!(
+                r#"LS=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+A={a}
+/usr/bin/pluginkit -mAvvv -D -i com.gunteknik.mac.widget 2>/dev/null | sed -n 's/^[[:space:]]*Path = //p' | while IFS= read -r p; do
+  case "$p" in "$A"/*) ;; *) /usr/bin/pluginkit -r "$p" 2>/dev/null; $LS -u "$(dirname "$(dirname "$(dirname "$p")")")" 2>/dev/null;; esac
+done
+$LS -f -R -trusted "$A"
+/usr/bin/pluginkit -a "$A/Contents/PlugIns/GunTeknikWidget.appex"
+/usr/bin/pluginkit -e use -i com.gunteknik.mac.widget
+"#,
+                a = kabuk(&app_yolu.to_string_lossy())
+            );
+            let _ = std::process::Command::new("/bin/sh").arg("-c").arg(betik).spawn();
         }
     }
 }
