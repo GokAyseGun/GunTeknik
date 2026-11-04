@@ -5030,7 +5030,8 @@ async function macKartCiz(el){
     <div class="push-k-d">${tok?'<span style="color:var(--green)">● Cihaz kayıtlı · bildirimler bu Mac\'e gelir</span>':'<span style="color:var(--amber)">○ Cihaz kaydı bekleniyor</span>'}</div>
     <div class="push-k-btn"><button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn btn-secondary btn-sm" onclick="MAC.kayit=null;macKaydol().then(ok=>{showToast(ok?'Cihaz kaydedildi':'Kaydedilemedi',ok?'green':'red');pushKartCiz();})">🔄 Yeniden kaydet</button><button class="btn btn-secondary btn-sm" onclick="macGuncelle()">⬆️ Güncelleme</button></div>
     <div class="push-k-n">Bildirimler Android ve tarayıcıya gidenlerin aynısı, 20 sn içinde Mac bildirimi olarak gelir · sessiz saatler <b>23:00–07:00</b>.${d?`<br>${d.android||0} Android · ${d.mac||0} Mac kayıtlı.`:''}</div>
-    <div class="push-k-n">Menü çubuğundaki simge: sol tık <b>pano</b> (arama · ajanda · evrak · kasa · GTCOIN), sağ tık menü. Kısayollar: <b>⌥⌘A</b> arama ekle · <b>⌥⌘R</b> randevu ekle · <b>⌥⌘G</b> pano. Pencereyi kapatınca uygulama menü çubuğunda çalışmaya devam eder; tamamen kapatmak için <b>⌘Q</b>.</div>`;
+    <div class="push-k-n">Menü çubuğundaki simge: sol tık <b>pano</b> (arama · ajanda · evrak · kasa · GTCOIN), sağ tık menü. Kısayollar: <b>⌥⌘A</b> arama ekle · <b>⌥⌘R</b> randevu ekle · <b>⌥⌘G</b> pano. Pencereyi kapatınca uygulama menü çubuğunda çalışmaya devam eder; tamamen kapatmak için <b>⌘Q</b>.</div>
+    <div class="push-k-n">🧩 <b>Masaüstü araçları:</b> masaüstüne sağ tıkla → <b>Araçları Düzenle</b> → listede <b>Gün Teknik</b> (küçük · orta · büyük · çok büyük) ve <b>GTCOIN</b>. Dokununca ERP ilgili sayfada açılır; Geri al ve Kasa göster aracın içinde çalışır. Listede görünmezse uygulamayı bir kez kapatıp (⌘Q) yeniden aç.</div>`;
 }
 function andBaslat(){
   const bas=()=>{andKaydol().then(ok=>{if(ok){try{pushPlanla(true);}catch(e){}try{widgetYaz(true);}catch(e){}}});};

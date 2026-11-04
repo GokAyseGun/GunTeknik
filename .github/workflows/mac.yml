@@ -2,6 +2,7 @@ name: Mac uygulaması
 
 # mac-app/ değişince Mac uygulamasını (Apple Silicon + Intel, tek paket) derler ve
 # GitHub Releases'a "mac-vN" olarak koyar: GunTeknik-Mac.dmg (kurulum) + GunTeknik-Mac.app.tar.gz (kendi kendine güncelleme).
+# Masaüstü araçları (mac-app/widget, WidgetKit) xcodegen + xcodebuild ile derlenir, .app/Contents/PlugIns içine konur.
 # "latest" işaretlenmez; Android uygulamasının güncelleme denetimi (releases/latest) etkilenmez.
 # Elle çalıştırmak için: Actions → Mac uygulaması → Run workflow.
 
@@ -57,18 +58,45 @@ jobs:
           node -e "const f='tauri.conf.json';const j=require('./'+f);j.version='1.0.${{ github.run_number }}';require('fs').writeFileSync(f,JSON.stringify(j,null,2));"
           sed -i '' -E 's/^version = "1\.0\.0"/version = "1.0.${{ github.run_number }}"/' Cargo.toml
 
+      - name: Masaüstü araçlarını derle (WidgetKit)
+        working-directory: mac-app/widget
+        run: |
+          brew install xcodegen >/dev/null 2>&1 || brew install xcodegen
+          sed -i '' -E 's/MARKETING_VERSION: "1\.0\.0"/MARKETING_VERSION: "1.0.${{ github.run_number }}"/; s/CURRENT_PROJECT_VERSION: "1"/CURRENT_PROJECT_VERSION: "${{ github.run_number }}"/' project.yml
+          xcodegen generate --spec project.yml
+          xcodebuild build -project GunTeknikWidget.xcodeproj -target GunTeknikWidget -configuration Release \
+            SYMROOT="$PWD/build" ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO > xb.log 2>&1 \
+            || { grep -E "error:" xb.log | head -60; tail -40 xb.log; exit 1; }
+          grep -E "warning:" xb.log | grep -v "xcodebuild" | head -30 || true
+          tail -5 xb.log
+          ls -la build/Release/GunTeknikWidget.appex/Contents/MacOS
+          lipo -info build/Release/GunTeknikWidget.appex/Contents/MacOS/GunTeknikWidget
+
       - name: Derle
         working-directory: mac-app
         run: npx tauri build --target universal-apple-darwin
+
+      - name: Araçları pakete koy ve imzala
+        run: |
+          APP="$(ls -d mac-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app | head -1)"
+          mkdir -p "$APP/Contents/PlugIns"
+          rm -rf "$APP/Contents/PlugIns/GunTeknikWidget.appex"
+          cp -R mac-app/widget/build/Release/GunTeknikWidget.appex "$APP/Contents/PlugIns/"
+          codesign --force --sign - --options runtime --entitlements mac-app/widget/GunTeknikWidget.entitlements "$APP/Contents/PlugIns/GunTeknikWidget.appex"
+          codesign --force --sign - --preserve-metadata=identifier,entitlements,flags "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -d --entitlements - "$APP/Contents/PlugIns/GunTeknikWidget.appex"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$APP/Contents/Info.plist"
 
       - name: Paketle
         run: |
           B="mac-app/src-tauri/target/universal-apple-darwin/release/bundle"
           ls -R "$B" | head -40
           APP="$(ls -d "$B"/macos/*.app | head -1)"
-          DMG="$(ls "$B"/dmg/*.dmg | head -1)"
           tar -czf GunTeknik-Mac.app.tar.gz -C "$(dirname "$APP")" "$(basename "$APP")"
-          cp "$DMG" GunTeknik-Mac.dmg
+          mkdir -p dmg && cp -R "$APP" dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "Gün Teknik" -srcfolder dmg -ov -format UDZO GunTeknik-Mac.dmg
           ls -la GunTeknik-Mac.*
 
       - name: Releases'a yükle

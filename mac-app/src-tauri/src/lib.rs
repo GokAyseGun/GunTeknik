@@ -4,6 +4,7 @@
 //! · Bildirimler: sunucunun gönderdiği bütün bildirimler (Android/tarayıcıya gidenlerin aynısı) 20 sn'de bir çekilir, Mac bildirimi olarak gösterilir
 //! · Kısayollar: ⌥⌘A arama ekle · ⌥⌘R randevu ekle · ⌥⌘G pano
 //! · Kendi kendine güncelleme (GitHub "mac-vN" sürümleri), Mac açılınca başlama
+//! · Masaüstü araçları (WidgetKit, mac-app/widget): uygulama widget.json yazar, araçlar onu okur; dokununca gunteknik://ac?yol=… ile buraya döner
 mod guncelle;
 mod sunucu;
 
@@ -39,6 +40,7 @@ struct Durum {
     veri: Mutex<Value>,
     bekleyen: Mutex<Option<(String, Instant)>>,
     guncelleme: Mutex<Option<guncelle::Surum>>,
+    widget_imza: Mutex<Option<String>>,
 }
 
 // ---------------------------------------------------------------- ayar dosyası
@@ -241,6 +243,7 @@ async fn veri_tazele(app: &AppHandle) {
         Ok(v) => {
             let (arama, ev) = sayilar(&v);
             *app.state::<Durum>().veri.lock().unwrap() = v.clone();
+            widget_yaz(app, &t, &v);
             if let Some(tr) = app.tray_by_id("ana") {
                 let _ = tr.set_title(Some(if arama > 0 { format!("{arama}") } else { String::new() }));
                 let _ = tr.set_tooltip(Some(format!("Gün Teknik · bugün {arama} arama{}", if ev > 0 { format!(" · {ev} evrak") } else { String::new() })));
@@ -255,6 +258,69 @@ async fn veri_tazele(app: &AppHandle) {
         }
         Err(e) => {
             let _ = app.emit_to("pano", "veri-hata", e);
+        }
+    }
+}
+
+// ---------------------------------------------------------------- masaüstü araçları (WidgetKit)
+#[cfg(target_os = "macos")]
+extern "C" {
+    fn gt_widget_yenile();
+}
+
+fn widget_yenile() {
+    #[cfg(target_os = "macos")]
+    unsafe {
+        gt_widget_yenile()
+    }
+}
+
+/// Araçların okuduğu dosya: ~/Library/Application Support/com.gunteknik.mac/widget.json
+/// (araç korumalı alanda çalışır; bu klasörü okuma izni kendi yetkilerinde tanımlı)
+fn widget_yaz(app: &AppHandle, t: &str, v: &Value) {
+    let Ok(d) = app.path().app_config_dir() else { return };
+    let _ = std::fs::create_dir_all(&d);
+    let p = d.join("widget.json");
+    let gecici = d.join("widget.json.tmp");
+    let govde = json!({ "token": t, "veri": v }).to_string();
+    if std::fs::write(&gecici, govde).is_err() || std::fs::rename(&gecici, &p).is_err() {
+        return;
+    }
+    // yalnız arama / evrak / ajanda / kasa değişince araçlara haber ver (macOS yenileme hakkını idareli kullan)
+    let imza = json!([v.get("bugun"), v.get("arama"), v.get("snap_zaman")]).to_string();
+    let d = app.state::<Durum>();
+    let mut s = d.widget_imza.lock().unwrap();
+    if s.as_deref() != Some(imza.as_str()) {
+        *s = Some(imza);
+        widget_yenile();
+    }
+}
+
+/// gunteknik://ac?yol=./?arama=bugun · gunteknik://pano
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn baglanti_ac(app: &AppHandle, u: &tauri::Url) {
+    if u.scheme() != "gunteknik" {
+        return;
+    }
+    match u.host_str().unwrap_or("ac") {
+        "pano" => pano_degistir(app),
+        _ => {
+            if let Some(w) = app.get_webview_window("pano") {
+                let _ = w.hide();
+            }
+            let yol = u.query_pairs().find(|(k, _)| k == "yol").map(|(_, v)| v.to_string());
+            erp_ac(app, yol.filter(|y| y.starts_with("./")));
+        }
+    }
+}
+
+/// Uygulama paketindeki aracı macOS'a tanıt (ilk açılışta ve güncellemeden sonra)
+fn widget_tanit() {
+    #[cfg(target_os = "macos")]
+    if let Some(c) = std::env::current_exe().ok().and_then(|e| e.parent()?.parent().map(|p| p.to_path_buf())) {
+        let ap = c.join("PlugIns/GunTeknikWidget.appex");
+        if ap.exists() {
+            let _ = std::process::Command::new("/usr/bin/pluginkit").arg("-a").arg(&ap).spawn();
         }
     }
 }
@@ -574,6 +640,8 @@ pub fn run() {
 
             pano(&h);
             erp_ac(&h, None);
+            widget_tanit();
+            widget_yenile();
 
             // döngüler: bildirim 20 sn, pano verisi 3 dk, güncelleme 6 saat
             let a = h.clone();
@@ -604,10 +672,17 @@ pub fn run() {
         .expect("Gün Teknik başlatılamadı");
 
     app.run(|_app, _e| {
-        // Dock simgesine tıklanınca ERP penceresi
         #[cfg(target_os = "macos")]
-        if let tauri::RunEvent::Reopen { .. } = _e {
-            erp_ac(_app, None);
+        match _e {
+            // Dock simgesine tıklanınca ERP penceresi
+            tauri::RunEvent::Reopen { .. } => erp_ac(_app, None),
+            // masaüstü aracına dokunuldu (gunteknik://…)
+            tauri::RunEvent::Opened { urls } => {
+                for u in &urls {
+                    baglanti_ac(_app, u);
+                }
+            }
+            _ => {}
         }
     });
 }
