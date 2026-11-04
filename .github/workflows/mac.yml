@@ -61,6 +61,10 @@ jobs:
       - name: Masaüstü araçlarını derle (WidgetKit)
         working-directory: mac-app/widget
         run: |
+          # xcodegen yeni (Xcode 16) proje biçimi üretiyor; en yeni Xcode 16'yı seç
+          XC="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+          xcodebuild -version
           brew install xcodegen >/dev/null 2>&1 || brew install xcodegen
           sed -i '' -E 's/MARKETING_VERSION: "1\.0\.0"/MARKETING_VERSION: "1.0.${{ github.run_number }}"/; s/CURRENT_PROJECT_VERSION: "1"/CURRENT_PROJECT_VERSION: "${{ github.run_number }}"/' project.yml
           xcodegen generate --spec project.yml
