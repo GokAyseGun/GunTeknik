@@ -79,11 +79,13 @@ jobs:
 
       - name: Derle
         working-directory: mac-app
-        run: npx tauri build --target universal-apple-darwin
+        run: |
+          rm -rf src-tauri/target/universal-apple-darwin/release/bundle
+          npx tauri build --target universal-apple-darwin
 
       - name: Araçları pakete koy ve imzala
         run: |
-          APP="$(ls -d mac-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app | head -1)"
+          APP="mac-app/src-tauri/target/universal-apple-darwin/release/bundle/macos/GunTeknik.app"
           mkdir -p "$APP/Contents/PlugIns"
           rm -rf "$APP/Contents/PlugIns/GunTeknikWidget.appex"
           cp -R mac-app/widget/build/Release/GunTeknikWidget.appex "$APP/Contents/PlugIns/"
@@ -97,7 +99,7 @@ jobs:
         run: |
           B="mac-app/src-tauri/target/universal-apple-darwin/release/bundle"
           ls -R "$B" | head -40
-          APP="$(ls -d "$B"/macos/*.app | head -1)"
+          APP="$B/macos/GunTeknik.app"
           tar -czf GunTeknik-Mac.app.tar.gz -C "$(dirname "$APP")" "$(basename "$APP")"
           mkdir -p dmg && cp -R "$APP" dmg/ && ln -s /Applications dmg/Applications
           hdiutil create -volname "Gün Teknik" -srcfolder dmg -ov -format UDZO GunTeknik-Mac.dmg
