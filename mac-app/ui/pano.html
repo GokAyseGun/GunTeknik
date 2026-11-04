@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Gün Teknik</title>
+<style>
+  :root{--zemin:#141414;--kutu:#1c1c1c;--cizgi:#2e2e2e;--metin:#f0f0f0;--metin2:#b0b0b0;--metin3:#808080;
+    --hardal:#D9A441;--yesil:#00E676;--kirmizi:#FF5252;--amber:#FFAB00;--mg:#E8197A;--cyan:#00E5FF;--altin:#F5C542;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;}
+  html,body{background:transparent;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;color:var(--metin);overflow:hidden;}
+  .kok{margin:6px;background:var(--zemin);border:1px solid var(--cizgi);border-radius:16px;padding:11px;box-shadow:0 10px 30px rgba(0,0,0,.5);height:calc(100vh - 12px);display:flex;flex-direction:column;gap:6px;}
+  .ust{display:flex;align-items:baseline;gap:8px;padding:0 3px 2px;}
+  .ust b{font-size:14px;cursor:pointer;}
+  .ust span{margin-left:auto;font-size:11px;color:var(--metin3);}
+  .izgara{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;flex:1;}
+  .k{background:var(--kutu);border:1px solid var(--cizgi);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+     text-align:center;cursor:pointer;padding:6px 4px;min-height:58px;transition:transform .12s,border-color .12s;}
+  .k:hover{border-color:#4a4a4a;}
+  .k:active{transform:scale(.96);}
+  .k b{font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .k small{font-size:10.5px;color:var(--metin2);margin-top:3px;}
+  .k.d{font-size:13px;font-weight:700;}
+  .k.d i{font-style:normal;font-size:18px;line-height:1.2;}
+  .k.arama{background:rgba(217,164,65,.14);border-color:var(--hardal);color:var(--metin);}
+  .k.randevu{background:rgba(0,230,118,.12);border-color:var(--yesil);}
+  .k.gec{border-color:var(--kirmizi);background:rgba(255,82,82,.10);}
+  .k.genis{grid-column:span 2;flex-direction:row;gap:10px;}
+  .k.genis b{font-size:19px;}
+  .k.uyar{border-color:var(--kirmizi);}
+  .gt{display:flex;align-items:center;gap:8px;background:var(--kutu);border:1px solid var(--cizgi);border-radius:12px;padding:7px 11px;font-size:12px;cursor:pointer;}
+  .gt .lg{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#F5C542,#C8901A);color:#111;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .gt b{color:var(--altin);font-variant-numeric:tabular-nums;}
+  .gt span:last-child{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;}
+  .alt{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--metin3);padding:0 3px;}
+  .alt a{color:var(--metin2);cursor:pointer;text-decoration:none;}
+  .alt a:hover{color:var(--metin);}
+  .alt .bos{flex:1;}
+  .giris{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;color:var(--metin2);font-size:13px;padding:20px;}
+  .giris button{background:var(--mg);border:none;color:#fff;font-weight:700;padding:10px 18px;border-radius:10px;font-size:13px;cursor:pointer;}
+  .tost{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2a2a2a;border:1px solid #444;color:#fff;font-size:12px;padding:7px 12px;border-radius:9px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;}
+  .tost.on{opacity:1;}
+</style>
+</head>
+<body>
+<div class="kok" id="kok"><div class="giris">Yükleniyor…</div></div>
+<div class="tost" id="tost"></div>
+<script>
+const T = window.__TAURI__;
+const cagir = (k, a) => T.core.invoke(k, a || {});
+let D = { veri: null, giris: false, kasa_acik: false }, geriOnay = 0;
+
+const tl = v => Math.round(Math.abs(+v || 0)).toLocaleString('tr-TR') + ' ₺';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function gunNo(g) { const [y, m, d] = String(g).slice(0, 10).split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; }
+function fark(g, bg) { if (!g || String(g).length < 10) return 999; return gunNo(g) - gunNo(bg); }
+function tost(m) { const t = document.getElementById('tost'); t.textContent = m; t.classList.add('on'); clearTimeout(t._z); t._z = setTimeout(() => t.classList.remove('on'), 2200); }
+function ac(url) { cagir('ac', { url }); }
+
+function ciz() {
+  const kok = document.getElementById('kok');
+  if (!D.giris) {
+    kok.innerHTML = `<div class="giris">Pano için Gün Teknik'i açıp ERP'ye giriş yap.<button onclick="ac(null)">Gün Teknik'i aç</button></div>`;
+    return;
+  }
+  const v = D.veri || {};
+  const bg = v.bugun || new Date().toISOString().slice(0, 10);
+  const snap = v.snap || null;
+  const a = v.bugun ? (v.arama || {}) : null;
+  let aj1 = 0, aj10 = 0, ev1 = 0, ev5 = 0, ev15 = 0, gec = 0;
+  if (snap) {
+    (snap.aj || []).forEach(x => { const f = fark(x.g, bg); if (f === 0) aj1++; if (f >= 0 && f <= 9) aj10++; });
+    (snap.od || []).forEach(x => {
+      if (x.tur !== 'evrak' && x.tur !== 'kredi') return;
+      const f = fark(x.g, bg);
+      if (f < 0) gec++; else if (f === 0) ev1++;
+      if (f >= 0 && f <= 4) ev5++;
+      if (f >= 0 && f <= 14) ev15++;
+    });
+  }
+  const yok = '—', n = x => snap ? x : yok;
+  const kasa = snap && snap.kasa ? +snap.kasa.top : null;
+  const son = a && a.son && a.son[0];
+  const gt = v.gt || {};
+  const gF = +gt.fiyat || 0, gO = +gt.once || 0, gY = gO ? (gF / gO - 1) * 100 : 0;
+  const tarih = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+  kok.innerHTML = `
+    <div class="ust"><b onclick="ac(null)">⚡ Gün Teknik</b><span>${tarih}</span></div>
+    <div class="izgara">
+      <div class="k d arama" onclick="ac('./?arama=bugun')" title="⌥⌘A"><i>📞</i>Arama ekle</div>
+      <div class="k" onclick="ac('./?sayfa=reklam')"><b style="color:var(--cyan)">${a ? (a.toplam || 0) : yok}</b><small>Arama · bugün</small></div>
+      <div class="k d${geriOnay ? ' uyar' : ''}" onclick="geriAl()" title="${son ? esc(son.ad) : ''}"><i>↶</i>${geriOnay ? 'Emin misin?' : 'Geri al'}</div>
+      <div class="k d randevu" onclick="ac('./?randevu=yeni')" title="⌥⌘R"><i>📅</i>Randevu ekle</div>
+      <div class="k" onclick="ac('./?sayfa=takvim')"><b style="color:var(--amber)">${n(aj1)}</b><small>Ajanda · bugün</small></div>
+      <div class="k" onclick="ac('./?sayfa=takvim')"><b style="color:var(--amber)">${n(aj10)}</b><small>Ajanda · 10 gün</small></div>
+      <div class="k${gec ? ' gec' : ''}" onclick="ac('./?sayfa=evrak')"><b style="color:${gec ? 'var(--kirmizi)' : 'var(--mg)'}">${n(ev1 + gec)}</b><small>${gec ? 'Evrak · ' + gec + ' gecikmiş' : 'Evrak · bugün'}</small></div>
+      <div class="k" onclick="ac('./?sayfa=evrak')"><b style="color:var(--mg)">${n(ev5)}</b><small>Evrak · 5 gün</small></div>
+      <div class="k" onclick="ac('./?sayfa=evrak')"><b style="color:var(--mg)">${n(ev15)}</b><small>Evrak · 15 gün</small></div>
+      <div class="k genis" onclick="ac('./')"><small style="margin:0">💰 Kasa</small><b style="color:${kasa == null ? 'var(--metin3)' : (D.kasa_acik && kasa < 0) ? 'var(--kirmizi)' : 'var(--yesil)'}">${kasa == null ? yok : D.kasa_acik ? (kasa < 0 ? '−' : '') + tl(kasa) : '••••• ₺'}</b></div>
+      <div class="k d" onclick="kasaGoz()"><i>${D.kasa_acik ? '🙈' : '👁'}</i>${D.kasa_acik ? 'Gizle' : 'Göster'}</div>
+    </div>
+    ${gF ? `<div class="gt" onclick="ac('./?sayfa=bet')"><span class="lg">₲</span><span>1 GTC = <b>${gF.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺</b></span><span style="color:${gY >= 0 ? 'var(--yesil)' : 'var(--kirmizi)'}">${gY >= 0 ? '▲ +' : '▼ −'}%${Math.abs(gY).toFixed(2).replace('.', ',')} <small style="color:var(--metin3);font-weight:400">24s</small></span></div>` : ''}
+    <div class="alt"><a onclick="yenile()">↻ ${v.zaman ? new Date(v.zaman).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '—'}</a><span class="bos"></span><a onclick="ac(null)">Gün Teknik'i aç ›</a></div>`;
+}
+
+async function yukle(yenile) {
+  try { D = await cagir('pano_veri', { yenile: !!yenile }); } catch (e) { tost('Okunamadı: ' + e); }
+  ciz();
+}
+async function yenile() { await yukle(true); tost('Yenilendi'); }
+async function kasaGoz() { D.kasa_acik = await cagir('kasa_degistir'); ciz(); }
+async function geriAl() {
+  const a = D.veri && D.veri.arama, son = a && a.son && a.son[0];
+  if (!son) { tost('Geri alınacak kayıt yok'); return; }
+  if (!geriOnay) { geriOnay = Date.now(); ciz(); tost('Son kayıt: ' + son.ad + ' — silmek için tekrar bas'); setTimeout(() => { geriOnay = 0; ciz(); }, 4000); return; }
+  geriOnay = 0;
+  try { const r = await cagir('geri_al', { id: son.id }); tost(r === 'tamam' ? '↶ Son kayıt geri alındı' : 'Geri alınamadı: ' + r); } catch (e) { tost('Geri alınamadı: ' + e); }
+  await yukle(false);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cagir('pano_gizle'); });
+T.event.listen('veri', ev => { D.veri = ev.payload; D.giris = true; ciz(); });
+T.event.listen('pano-acildi', () => yukle(false));
+yukle(false);
+</script>
+</body>
+</html>

@@ -4881,9 +4881,10 @@ function pushDestek(){return 'serviceWorker' in navigator&&'PushManager' in wind
 function pushB64(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s);const o=new Uint8Array(b.length);for(let i=0;i<b.length;i++)o[i]=b.charCodeAt(i);return o;}
 function pushSw(){return Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(()=>r(new Error('Service worker hazır değil')),4000))]);}
 function pushDurum(yenile){if(!SB_TOKEN)return Promise.resolve(null);if(yenile||!PUSH.durumP)PUSH.durumP=sbFetch('rpc/push_durum',{method:'POST',body:'{}'}).catch(()=>null);return PUSH.durumP;}
-async function pushAktif(){if(andAktif())return true;let yerel=false;try{yerel=localStorage.getItem('gt_push')==='1';}catch(e){}if(yerel)return true;const d=await pushDurum();return !!(d&&d.abone>0);}
+async function pushAktif(){if(andAktif()||macAktif())return true;let yerel=false;try{yerel=localStorage.getItem('gt_push')==='1';}catch(e){}if(yerel)return true;const d=await pushDurum();return !!(d&&d.abone>0);}
 function pushCihaz(){const u=navigator.userAgent;const os=/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':'Cihaz';return (((CURRENT_USER&&CURRENT_USER.email)||'')+' · '+os).slice(0,120);}
 async function pushAboneOl(sessiz){
+  if(macAktif())return false; // Mac uygulaması bildirimleri kendisi çeker
   if(!pushDestek()){if(!sessiz)showToast('Bu tarayıcı bildirim desteklemiyor. Android’de Chrome ile ana ekrana eklenmiş ERP’yi kullan.','amber');return false;}
   try{
     if(!sessiz&&Notification.permission!=='granted'){const p=await Notification.requestPermission();if(p!=='granted'){showToast('Bildirim izni verilmedi','amber');pushKartCiz();pushDavetCiz();return false;}}
@@ -4910,7 +4911,7 @@ async function pushKapat(){
 async function pushTest(){try{await sbFetch('rpc/push_test',{method:'POST',body:'{}'});showToast('Deneme bildirimi gönderildi, birkaç saniyede gelir. ERP’yi arka plana alabilirsin.','green');}catch(e){showToast('Gönderilemedi: '+String(e.message||e).slice(0,60),'red');}}
 async function pushKartCiz(){
   const el=document.getElementById('push-kart');if(!el)return;
-  if(andAktif()){await andKartCiz(el);return;}let durum='',btn='';
+  if(andAktif()){await andKartCiz(el);return;}if(macAktif()){await macKartCiz(el);return;}let durum='',btn='';
   if(!pushDestek())durum='<span style="color:var(--text3)">Bu tarayıcı desteklemiyor (Android’de Chrome ile ana ekrana eklenmiş ERP gerekli)</span>';
   else if(Notification.permission==='denied')durum='<span style="color:var(--red)">İzin engellenmiş.</span> <small>Chrome → ⋮ → Ayarlar → Site ayarları → Bildirimler → gokaysegun.github.io → İzin ver, sonra buraya dön.</small>';
   else{let sub=null;try{sub=await (await pushSw()).pushManager.getSubscription();}catch(e){}
@@ -4923,7 +4924,7 @@ async function pushKartCiz(){
 }
 function pushDavetCiz(){
   const el=document.getElementById('push-davet');if(!el)return;let gizle=true;
-  try{gizle=andAktif()||!pushDestek()||Notification.permission!=='default'||USER_ROL==='goruntule'||Date.now()-(+localStorage.getItem('gt_push_davet')||0)<7*864e5;}catch(e){}
+  try{gizle=andAktif()||macAktif()||!pushDestek()||Notification.permission!=='default'||USER_ROL==='goruntule'||Date.now()-(+localStorage.getItem('gt_push_davet')||0)<7*864e5;}catch(e){}
   el.innerHTML=gizle?'':`<div class="push-davet"><span class="push-davet-i">🔔</span><span><b>Telefon bildirimlerini aç</b><small>21:00 arama hatırlatması, sabah özeti, ödeme günleri — ERP kapalıyken de gelir.</small></span><button class="btn btn-primary btn-sm" onclick="pushAboneOl()">Aç</button><button class="push-davet-x" onclick="pushDavetKapat()" aria-label="Sonra">✕</button></div>`;
 }
 function pushDavetKapat(){try{localStorage.setItem('gt_push_davet',String(Date.now()));}catch(e){}pushDavetCiz();}
@@ -4973,6 +4974,7 @@ function bildirimUrlIsle(href){
 function pushBaslat(){
   if(PUSH.basladi)return;PUSH.basladi=true;
   try{andBaslat();}catch(e){console.warn('android',e);}
+  try{macBaslat();}catch(e){console.warn('mac',e);}
   try{widgetBaslat();}catch(e){console.warn('widget',e);}
   setTimeout(()=>{try{bildirimUrlIsle(location.href);}catch(e){}},1200);
   setTimeout(()=>{try{pushDavetCiz();pushAboneOl(true).finally(()=>pushPlanla(true));}catch(e){}},6000);
@@ -5000,6 +5002,35 @@ async function andKaydol(){
     finally{setTimeout(()=>{ANDROID.kayit=null;},1000);}
   })();
   return ANDROID.kayit;
+}
+// ---- Mac uygulaması (Tauri): cihaz kaydı, bildirimler ve menü çubuğu panosu uygulamanın kendisinde
+var MAC={kayit:null};
+function macAktif(){return !!(window.GT_MAC&&window.__TAURI_INTERNALS__);}
+function macCagir(k,a){return window.__TAURI_INTERNALS__.invoke(k,a||{});}
+async function macKaydol(){
+  if(!macAktif()||!SB_TOKEN||USER_ROL==='goruntule')return false;
+  if(MAC.kayit)return MAC.kayit;
+  MAC.kayit=(async()=>{try{const eski=await macCagir('cihaz_al').catch(()=>null);
+      const t=await sbFetch('rpc/cihaz_kaydet',{method:'POST',body:JSON.stringify({p_fcm:null,p_ad:pushCihaz()+' · Mac uygulaması',p_token:eski||null,p_surum:String(window.GT_MAC.surum||'')})});
+      if(t)await macCagir('cihaz_ayarla',{token:String(t)});return true;}
+    catch(e){console.warn('mac kayıt',e);return false;}finally{setTimeout(()=>{MAC.kayit=null;},1000);}})();
+  return MAC.kayit;
+}
+function macBaslat(){if(!macAktif())return;macKaydol().then(ok=>{if(ok){try{pushPlanla(true);}catch(e){}try{widgetYaz(true);}catch(e){}}});}
+async function macGuncelle(){
+  try{const s=await macCagir('guncelle_denetle');
+    if(!s||!s.var){showToast('Mac uygulaması güncel (sürüm '+_esc(window.GT_MAC.surum)+')','green');return;}
+    if(!confirm('Yeni sürüm 1.0.'+s.no+' hazır. Şimdi kurulsun mu? Uygulama kapanıp yeniden açılacak.'))return;
+    showToast('İndiriliyor… uygulama birazdan yeniden açılacak','blue');await macCagir('guncelle_kur');}
+  catch(e){showToast('Güncellenemedi: '+String(e&&e.message||e).slice(0,80),'red');}
+}
+async function macKartCiz(el){
+  const d=await pushDurum();let tok=null;try{tok=await macCagir('cihaz_al');}catch(e){}
+  el.innerHTML=`<div class="push-k-b">💻 Mac uygulaması <small style="font-weight:500;color:var(--text3)">sürüm ${_esc(window.GT_MAC.surum||'')}</small></div>
+    <div class="push-k-d">${tok?'<span style="color:var(--green)">● Cihaz kayıtlı · bildirimler bu Mac\'e gelir</span>':'<span style="color:var(--amber)">○ Cihaz kaydı bekleniyor</span>'}</div>
+    <div class="push-k-btn"><button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn btn-secondary btn-sm" onclick="MAC.kayit=null;macKaydol().then(ok=>{showToast(ok?'Cihaz kaydedildi':'Kaydedilemedi',ok?'green':'red');pushKartCiz();})">🔄 Yeniden kaydet</button><button class="btn btn-secondary btn-sm" onclick="macGuncelle()">⬆️ Güncelleme</button></div>
+    <div class="push-k-n">Bildirimler Android ve tarayıcıya gidenlerin aynısı, 20 sn içinde Mac bildirimi olarak gelir · sessiz saatler <b>23:00–07:00</b>.${d?`<br>${d.android||0} Android · ${d.mac||0} Mac kayıtlı.`:''}</div>
+    <div class="push-k-n">Menü çubuğundaki simge: sol tık <b>pano</b> (arama · ajanda · evrak · kasa · GTCOIN), sağ tık menü. Kısayollar: <b>⌥⌘A</b> arama ekle · <b>⌥⌘R</b> randevu ekle · <b>⌥⌘G</b> pano. Pencereyi kapatınca uygulama menü çubuğunda çalışmaya devam eder; tamamen kapatmak için <b>⌘Q</b>.</div>`;
 }
 function andBaslat(){
   const bas=()=>{andKaydol().then(ok=>{if(ok){try{pushPlanla(true);}catch(e){}try{widgetYaz(true);}catch(e){}}});};

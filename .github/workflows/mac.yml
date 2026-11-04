@@ -1,0 +1,84 @@
+name: Mac uygulaması
+
+# mac-app/ değişince Mac uygulamasını (Apple Silicon + Intel, tek paket) derler ve
+# GitHub Releases'a "mac-vN" olarak koyar: GunTeknik-Mac.dmg (kurulum) + GunTeknik-Mac.app.tar.gz (kendi kendine güncelleme).
+# "latest" işaretlenmez; Android uygulamasının güncelleme denetimi (releases/latest) etkilenmez.
+# Elle çalıştırmak için: Actions → Mac uygulaması → Run workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mac-app/**'
+      - '.github/workflows/mac.yml'
+  workflow_dispatch:
+    inputs:
+      notlar:
+        description: 'Sürüm notu (isteğe bağlı)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mac-app
+  cancel-in-progress: false
+
+jobs:
+  derle:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Rust (Apple Silicon + Intel)
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mac-app/src-tauri
+
+      - name: Bağımlılıklar ve simgeler
+        working-directory: mac-app
+        run: |
+          npm install --no-audit --no-fund
+          npx tauri icon ../icon-1024.png -o src-tauri/icons
+
+      - name: Sürüm numarası
+        working-directory: mac-app/src-tauri
+        run: |
+          node -e "const f='tauri.conf.json';const j=require('./'+f);j.version='1.0.${{ github.run_number }}';require('fs').writeFileSync(f,JSON.stringify(j,null,2));"
+          sed -i '' -E 's/^version = "1\.0\.0"/version = "1.0.${{ github.run_number }}"/' Cargo.toml
+
+      - name: Derle
+        working-directory: mac-app
+        run: npx tauri build --target universal-apple-darwin
+
+      - name: Paketle
+        run: |
+          B="mac-app/src-tauri/target/universal-apple-darwin/release/bundle"
+          ls -R "$B" | head -40
+          APP="$(ls -d "$B"/macos/*.app | head -1)"
+          DMG="$(ls "$B"/dmg/*.dmg | head -1)"
+          tar -czf GunTeknik-Mac.app.tar.gz -C "$(dirname "$APP")" "$(basename "$APP")"
+          cp "$DMG" GunTeknik-Mac.dmg
+          ls -la GunTeknik-Mac.*
+
+      - name: Releases'a yükle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-v${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Gün Teknik Mac 1.0.${{ github.run_number }}
+          body: ${{ github.event.inputs.notlar || github.event.head_commit.message || 'Yeni sürüm' }}
+          files: |
+            GunTeknik-Mac.dmg
+            GunTeknik-Mac.app.tar.gz
+          make_latest: false

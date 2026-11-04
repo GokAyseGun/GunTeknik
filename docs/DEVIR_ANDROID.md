@@ -142,6 +142,14 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
   - `rkAramaGrupla`: 2 dk içindeki art arda denemeler tek arama sayılır (31.10'daki 9 kayıt = 2 arama). `rkTopla.arama` / `cevapsiz` gruplanmış sayıyı kullanır.
 - **KPI:** "Kaydedilen reklam araması" (eski adı "Elle girilen arama") dokununca Google Ads süzgeçli kayıt listesini açar.
 
+## 6u. Mac uygulaması (4 Kasım 2026)
+- `mac-app/` Tauri 2 (Rust). Derleme: `.github/workflows/mac.yml` (macos-14, universal), sürüm `mac-vN` (make_latest: false → Android'in releases/latest denetimi bozulmaz); varlıklar `GunTeknik-Mac.dmg`, `GunTeknik-Mac.app.tar.gz`.
+- Ana pencere ERP'yi (gokaysegun.github.io/GunTeknik) açar; `init_betik`: `window.GT_MAC`, dış bağlantılar/`window.open` varsayılan tarayıcıda, blob belgeler geçici HTML dosyası olarak tarayıcıda (yazdırma orada), `window.print` → webview.print. Kapat = gizle, ⌘Q çıkış; Dock tıklaması pencereyi açar.
+- ERP: `macAktif/macKaydol/macBaslat/macKartCiz/macGuncelle`; `cihaz_kaydet` ile cihaz anahtarı alınır, `cihaz_ayarla` komutuyla uygulamaya verilir (ayar.json). Web Push Mac'te kapalı.
+- Bildirimler: `mac_bildirim_al(p_token,p_son)` 20 sn'de bir; `push_kuyruk.gonderildi > p_son` ve hedef null ya da cihazın kullanıcısı. Cihaz `platform='mac'` olur; `push_tetikle` ve `push_durum` Mac cihazlarını da sayar. Bildirime tıklanıp uygulamaya gelinirse son bildirimin adresine gider (10 dk).
+- Menü çubuğu: sol tık `ui/pano.html` (widget'ın aynısı + GTCOIN; `widget_veri` artık `gt{fiyat,once}` da döndürür), sağ tık menü (aç, pano, arama/randevu ekle, güncelleme, Mac açılınca başlat, çıkış). Menü çubuğu yazısı = bugünkü arama sayısı, Dock rozeti = bugün/gecikmiş evrak.
+- Kısayollar ⌥⌘A / ⌥⌘R / ⌥⌘G. Güncelleme: `guncelle.rs` GitHub API'den en yüksek `mac-vN`, sha256 (asset digest) doğrulama, .app değişimi betikle + yeniden açılış. İmza: ad-hoc (`signingIdentity "-"`), Apple geliştirici hesabı yok.
+
 ## 6t. GTCOIN iğneleri kaldırıldı (3 Kasım 2026)
 - 1 dk grafikteki ince uzun mumlar iki kaynaktan: (1) `tik` kaydı 4 saatlik pencerenin en yüksek/düşüğünü taşıyor, dakikalık mumda fitil oluyordu → ERP `gtMumlar` 1 dk'da tik kaydının yüksek/düşüğünü yok sayar; (2) `_gt_dk_isle` sıçramaları (dakikada %0,6 olasılıkla ±%0,5–1,5) + yüksek oynaklık dönemi.
 - `_gt_dk_isle`: sıçrama kaldırıldı, dakikalık değişim en fazla ±%0,5, oynaklık kümelenmesi lv ∈ [−0,8; 0,8], fitil en fazla %0,3. Simülasyon: 4 saatlik salınım medyanı %3,75, p90 %5,2.
