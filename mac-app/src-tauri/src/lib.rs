@@ -21,6 +21,9 @@ use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_positioner::{Position, WindowExt};
 
 const ERP: &str = "https://gokaysegun.github.io/GunTeknik/";
+/// Google, uygulama içi tarayıcılarda girişi engelleyebiliyor; Safari kimliğiyle açılır.
+const SAFARI_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
+static PENCERE_NO: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 struct Ayar {
@@ -82,6 +85,8 @@ fn init_betik(app: &AppHandle) -> String {
   window.open=function(u,n,f){{
     try{{
       if(u&&/^blob:/i.test(u)){{fetch(u).then(function(r){{return r.text();}}).then(function(t){{inv('belge_ac',{{html:t}});}});return null;}}
+      // Google girişi (Takvim / Rehber eşitleme): uygulama içinde küçük pencerede açılır, sonuç ERP'ye döner
+      if(u&&/^https:\/\/accounts\.google\.com\//i.test(new URL(u,location.href).href))return _o.apply(window,arguments);
       if(u&&!/^about:/i.test(u)){{inv('dis_ac',{{url:new URL(u,location.href).href}});return null;}}
     }}catch(e){{}}
     return _o.apply(window,arguments);
@@ -120,7 +125,29 @@ fn erp_ac(app: &AppHandle, yol: Option<String>) {
         .title("Gün Teknik")
         .inner_size(1320.0, 860.0)
         .min_inner_size(820.0, 560.0)
+        .user_agent(SAFARI_UA)
         .initialization_script(&init_betik(app))
+        .on_new_window({
+            let app = app.clone();
+            move |url, ozellik| {
+                // yalnız Google giriş penceresi uygulama içinde açılır (window.opener bağlantısıyla, izin sonucu ERP'ye geri döner)
+                if url.host_str() != Some("accounts.google.com") {
+                    let _ = app.opener().open_url(url.to_string(), None::<&str>);
+                    return tauri::webview::NewWindowResponse::Deny;
+                }
+                let n = PENCERE_NO.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                let w = WebviewWindowBuilder::new(&app, format!("google-{n}"), WebviewUrl::External("about:blank".parse().unwrap()))
+                    .window_features(ozellik)
+                    .title("Google ile giriş")
+                    .inner_size(520.0, 680.0)
+                    .user_agent(SAFARI_UA)
+                    .build();
+                match w {
+                    Ok(window) => tauri::webview::NewWindowResponse::Create { window },
+                    Err(_) => tauri::webview::NewWindowResponse::Deny,
+                }
+            }
+        })
         .build();
     if let Ok(w) = w {
         let _ = w.set_focus();
