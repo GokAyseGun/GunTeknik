@@ -62,16 +62,20 @@ pub async fn denetle(simdiki: &str) -> Result<Surum, String> {
     Ok(en.unwrap_or_default())
 }
 
-/// Çalışan uygulamanın .app klasörü (…/Gün Teknik.app)
+/// Çalışan uygulamanın .app klasörü (…/GunTeknik.app ya da eski adıyla …/Gün Teknik.app)
 fn paket_yolu() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     let p = exe.parent()?.parent()?.parent()?.to_path_buf(); // MacOS → Contents → X.app
     if p.extension().map(|e| e == "app").unwrap_or(false) { Some(p) } else { None }
 }
 
+/// Yeni sürüm hep "GunTeknik.app" adıyla aynı klasöre kurulur ("ü"lü adda masaüstü araçları çalışmıyor)
+const PAKET_ADI: &str = "GunTeknik.app";
+
 /// İndir, doğrula, aç; yeni .app'i eskisinin yerine koyup yeniden başlatacak betiği çalıştır.
 pub async fn kur(s: &Surum) -> Result<(), String> {
-    let hedef = paket_yolu().ok_or("Uygulama bir .app paketinden çalışmıyor")?;
+    let eski = paket_yolu().ok_or("Uygulama bir .app paketinden çalışmıyor")?;
+    let hedef = eski.parent().map(|p| p.join(PAKET_ADI)).unwrap_or_else(|| eski.clone());
     let gecici = std::env::temp_dir().join(format!("gunteknik-guncelle-{}", s.no));
     let _ = std::fs::remove_dir_all(&gecici);
     std::fs::create_dir_all(&gecici).map_err(|e| e.to_string())?;
@@ -96,16 +100,17 @@ pub async fn kur(s: &Surum) -> Result<(), String> {
         .filter_map(|e| e.ok().map(|e| e.path()))
         .find(|p| p.extension().map(|x| x == "app").unwrap_or(false))
         .ok_or("Paket içinde .app bulunamadı")?;
-    betik_calistir(&yeni, &hedef)
+    betik_calistir(&yeni, &eski, &hedef)
 }
 
-fn betik_calistir(yeni: &Path, hedef: &Path) -> Result<(), String> {
+fn betik_calistir(yeni: &Path, eski: &Path, hedef: &Path) -> Result<(), String> {
     let betik = std::env::temp_dir().join("gunteknik-guncelle.sh");
+    let e = eski.to_string_lossy();
     let h = hedef.to_string_lossy();
     let y = yeni.to_string_lossy();
     let g = yeni.parent().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let icerik = format!(
-        "#!/bin/sh\nLS=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister\nsleep 1.5\nrm -rf \"{h}.eski\"\nmv \"{h}\" \"{h}.eski\" && mv \"{y}\" \"{h}\" && rm -rf \"{h}.eski\"\n$LS -u \"{y}\" 2>/dev/null\nrm -rf \"{g}\"\nxattr -cr \"{h}\" 2>/dev/null\n$LS -f -R -trusted \"{h}\"\nopen \"{h}\"\n"
+        "#!/bin/sh\nLS=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister\nsleep 1.5\nrm -rf \"{h}.eski\"\nmv \"{e}\" \"{h}.eski\" && mv \"{y}\" \"{h}\" && rm -rf \"{h}.eski\" && $LS -u \"{e}\" 2>/dev/null\n$LS -u \"{y}\" 2>/dev/null\nrm -rf \"{g}\"\nxattr -cr \"{h}\" 2>/dev/null\n$LS -f -R -trusted \"{h}\"\nopen \"{h}\"\n"
     );
     std::fs::write(&betik, icerik).map_err(|e| e.to_string())?;
     std::process::Command::new("/bin/sh")

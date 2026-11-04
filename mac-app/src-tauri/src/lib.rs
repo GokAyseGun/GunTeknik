@@ -15,6 +15,7 @@ use std::time::{Duration, Instant};
 use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
+#[allow(unused_imports)]
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use tauri_plugin_notification::NotificationExt;
@@ -598,7 +599,12 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| erp_ac(app, None)))
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
+        .plugin({
+            let b = tauri_plugin_autostart::Builder::new().app_name("Gün Teknik");
+            #[cfg(target_os = "macos")]
+            let b = b.macos_launcher(MacosLauncher::LaunchAgent);
+            b.build()
+        })
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(
@@ -633,6 +639,10 @@ pub fn run() {
                 let _ = h.autolaunch().enable();
                 app.state::<Durum>().ayar.lock().unwrap().kurulum_tamam = true;
                 ayar_yaz(&h);
+            } else if h.autolaunch().is_enabled().unwrap_or(false) {
+                // uygulamanın yeri / adı değiştiyse (GunTeknik.app) Mac açılış kaydını yeni yola göre yenile
+                let _ = h.autolaunch().disable();
+                let _ = h.autolaunch().enable();
             }
 
             // menü çubuğu simgesi: sol tık pano, sağ tık menü
