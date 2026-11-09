@@ -18719,7 +18719,9 @@ function gtEtkinlik(t){
   else{e.start={date:t.tarih};e.end={date:gfGunEkle(t.tarih,1)};}
   if(t.tekrar){e.recurrence=['RRULE:FREQ='+{haftalik:'WEEKLY',aylik:'MONTHLY',yillik:'YEARLY'}[t.tekrar]+(t.tekrarBitis?';UNTIL='+t.tekrarBitis.replace(/-/g,'')+'T235959Z':'')];
     const ist=Object.keys(t.tekrarDurum||{}).filter(g=>['iptal','ertelendi'].includes(t.tekrarDurum[g]));if(ist.length)e.recurrence.push('EXDATE'+(t.saat?';TZID=Europe/Istanbul:'+ist.map(g=>tkIcsZaman(g,t.saat)).join(','):';VALUE=DATE:'+ist.map(g=>g.replace(/-/g,'')).join(',')));}
-  e.reminders=t.hatirlat!=null?{useDefault:false,overrides:[{method:'popup',minutes:Number(t.hatirlat)}]}:{useDefault:false,overrides:[]};
+  // hatırlatma: seçilen süre kadar önce + saatli randevularda randevu anında (0 dk)
+  const hm=[...new Set([t.hatirlat!=null?Number(t.hatirlat):null,t.saat?0:null].filter(x=>x!=null&&!isNaN(x)))];
+  e.reminders={useDefault:false,overrides:hm.map(m=>({method:'popup',minutes:m}))};
   return e;
 }
 function gtHashlar(){try{return JSON.parse(localStorage.getItem('gt_hash_v1')||'{}');}catch(e){return {};}}
