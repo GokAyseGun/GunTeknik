@@ -294,6 +294,19 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **RPC'ler:** `auth.uid() is null` denetimleri `erp_uye()` oldu. `push_teslim_al`, `push_tetikle` ve `push_sunucu_kontrol` dışarıdan çağrılamaz.
 - **Görünüm:** `google_ads_grup_gunluk` artık `security_invoker`.
 
+## 6v. Randevu alarmları (9 Kasım 2026)
+- ERP `widgetAlarmlar()` → widget anlık görüntüsüne `al[]` (14 gün, planlanmış tüm randevular): `{i:"id|gün|tur", z(ms), tur: once|an|gun, h(dk), b, k, tel, ad, yol, g, s, d}`.
+  Saatli: hatırlatma kadar önce (`once`) + randevu anında (`an`); saatsiz: 09:00 (`gun`) + hatırlatma kadar önce.
+- Google Takvim'e de iki "popup" hatırlatma gider (önce + 0 dk). Google API'de alarm türü yok.
+- Android: `Veri.yenile` → `Alarmci.esitle` (setAlarmClock; kaldırılan randevunun alarmı iptal) · `AlarmAlici` → `AlarmCalar` (ön plan servisi, USAGE_ALARM sesi + titreşim, 3 dk sonra susar → "kaçırılan alarm") · `AlarmEkrani` (kilit ekranında tam ekran: Kapat / 5 dk ertele / Ara / Yol tarifi / Ajanda).
+  Açılışta ve güncellemede `Alarmci.yeniden`. İzinler: USE_EXACT_ALARM, USE_FULL_SCREEN_INTENT. ERP ayar kartında "⏰ Alarm dene" / "⏰ Alarm ayarı".
+- Mac: `alarm_bak` 15 sn'de bir aynı listeye bakar → sesli bildirim (Glass) + Dock simgesi zıplar.
+
+## 6u. Mac masaüstü araçları (4 Kasım 2026)
+- `mac-app/widget` (WidgetKit, Swift) CI'da xcodegen + xcodebuild (Xcode 16) ile derlenir, `GunTeknik.app/Contents/PlugIns` içine konup ad-hoc imzalanır.
+- Paket adı ASCII olmalı (`GunTeknik.app`): "ü"lü klasör adında macOS aracı bulamıyordu ("not found in LS database"). Görünen ad Info.plist'te "Gün Teknik".
+- Uygulama widget.json'u `~/Library/Application Support/com.gunteknik.mac/` altına yazar; araç sandbox istisnasıyla okur, eskiyse kendisi de tazeler.
+
 ## 7. Bekleyen küçük işler (kullanıcı tarafı)
 - Supabase → Authentication → Sign In / Providers → "Allow new users to sign up" kapatılmalı (yabancı kayıt olsa da erp_uyeler'de olmadığı için veri göremez; yine de kapalı olması iyi).
 - Google Maps anahtarına `https://gokaysegun.github.io/*` yönlendiren kısıtlaması eklenmeli (ERP'deki anahtar, RefererNotAllowedMapError).

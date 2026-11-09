@@ -18,6 +18,7 @@ public final class Veri {
             if (r == null || r.trim().isEmpty() || r.trim().equals("null")) return false;
             Ayar.veri(a, r);
             WidgetCizici.hepsi(a);
+            Alarmci.esitle(a, r);
             return true;
         } catch (Exception e) {
             return false;

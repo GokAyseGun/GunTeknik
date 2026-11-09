@@ -112,7 +112,51 @@ public class GTYerelPlugin extends Plugin {
         android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(android.content.Context.POWER_SERVICE);
         r.put("pil", pm != null && pm.isIgnoringBatteryOptimizations(getContext().getPackageName()));
         r.put("uretici", Build.MANUFACTURER);
+        // randevu alarmları
+        android.app.AlarmManager am = (android.app.AlarmManager) getContext().getSystemService(android.content.Context.ALARM_SERVICE);
+        boolean tamZaman = Build.VERSION.SDK_INT < 31 || (am != null && am.canScheduleExactAlarms());
+        android.app.NotificationManager nm = (android.app.NotificationManager) getContext().getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+        boolean tamEkran = Build.VERSION.SDK_INT < 34 || (nm != null && nm.canUseFullScreenIntent());
+        r.put("alarm", tamZaman && tamEkran);
+        r.put("alarmTamZaman", tamZaman);
+        r.put("alarmTamEkran", tamEkran);
+        try {
+            org.json.JSONObject o = Alarmci.ozet(getContext());
+            r.put("alarmSayi", o.optInt("sayi", 0));
+            if (o.has("ilkZ")) { r.put("alarmIlkZ", o.optLong("ilkZ")); r.put("alarmIlkB", o.optString("ilkB")); r.put("alarmIlkTur", o.optString("ilkTur")); }
+        } catch (Exception ignored) {}
         call.resolve(r);
+    }
+
+    /** Randevu alarmı izinleri: tam zamanlı alarm (Android 12+) ve kilit ekranında tam ekran (Android 14+). */
+    @PluginMethod
+    public void alarmIzni(PluginCall call) {
+        android.content.Context c = getContext();
+        try {
+            android.app.AlarmManager am = (android.app.AlarmManager) c.getSystemService(android.content.Context.ALARM_SERVICE);
+            android.app.NotificationManager nm = (android.app.NotificationManager) c.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+            if (Build.VERSION.SDK_INT >= 31 && am != null && !am.canScheduleExactAlarms()) {
+                c.startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } else if (Build.VERSION.SDK_INT >= 34 && nm != null && !nm.canUseFullScreenIntent()) {
+                c.startActivity(new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } else if (Build.VERSION.SDK_INT >= 26) {
+                c.startActivity(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, c.getPackageName())
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, AlarmCalar.KANAL)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+        } catch (Exception e) {
+            try { c.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception ignored) {}
+        }
+        call.resolve();
+    }
+
+    /** 10 saniye sonra deneme alarmı. */
+    @PluginMethod
+    public void alarmDene(PluginCall call) {
+        AlarmCalar.kanallar(getContext());
+        Alarmci.dene(getContext());
+        call.resolve();
     }
 
     /** Pil kısıtlamasından muaf tutma (arama algılama ve bildirimler arka planda kesilmesin). */

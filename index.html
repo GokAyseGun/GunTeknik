@@ -5053,6 +5053,7 @@ async function andGuncelle(){
     else if(d)showToast('Denetlenemedi, internet bağlantısını kontrol et','red');
     else showToast('Denetleniyor; yeni sürüm varsa indirilip kurulacak','blue');}
   catch(e){showToast('Denetlenemedi','red');}}
+async function andAlarmDene(){try{await andYerel('alarmDene');showToast('⏰ 10 saniye sonra deneme alarmı çalacak','green');}catch(e){showToast('Bu sürümde yok: önce ⬆️ Güncelleme','amber');}}
 function andIzinIste(){andYerel('izinIste').catch(()=>{});setTimeout(()=>{try{pushKartCiz();}catch(e){}},5000);}
 async function andYenidenKaydet(){ANDROID.kayit=null;const ok=await andKaydol();try{await andYerel('widgetYenile');}catch(e){}showToast(ok?'Cihaz kaydedildi, widget\'lar yenileniyor':'Kaydedilemedi',ok?'green':'red');pushKartCiz();}
 async function andKartCiz(el){
@@ -5064,8 +5065,9 @@ async function andKartCiz(el){
   const sonAStr=sonA?sonA.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
   const yeniSurum=iz&&('aramaSonuc' in iz);
   el.innerHTML=`<div class="push-k-b">📲 Android uygulaması</div>
-    <div class="push-k-d" style="display:flex;flex-wrap:wrap;gap:4px 12px">${iz?[s(iz.cihaz,'Cihaz kayıtlı'),s(iz.bildirim,'Bildirim'),s(iz.telefon&&iz.aramaKaydi,'Arama algılama'),s(iz.rehber,'Rehber'),s(iz.ustte,'Arama penceresi'),...('pil' in iz?[s(iz.pil,'Pil kısıtlaması yok')]:[])].join(''):'<span style="color:var(--text3)">Durum okunamadı</span>'}</div>
-    <div class="push-k-btn"><button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn ${eksik?'btn-primary':'btn-secondary'} btn-sm" onclick="andIzinIste()">🔐 İzinler</button><button class="btn btn-secondary btn-sm" onclick="andYenidenKaydet()">🔄 Yeniden kaydet</button><button class="btn btn-secondary btn-sm" onclick="andGuncelle()">⬆️ Güncelleme</button>${iz&&'pil' in iz?`<button class="btn ${iz.pil?'btn-secondary':'btn-primary'} btn-sm" onclick="andYerel('pilIzni').catch(()=>{})">🔋 Pil izni</button><button class="btn btn-secondary btn-sm" onclick="andYerel('uygulamaAyarlari').catch(()=>{})">⚙️ Uygulama ayarları</button><button class="btn btn-secondary btn-sm" onclick="andYerel('otomatikBaslat').catch(()=>showToast('Bu sürümde yok: önce ⬆️ Güncelleme','amber'))">🚀 Otomatik başlatma</button>`:''}</div>
+    <div class="push-k-d" style="display:flex;flex-wrap:wrap;gap:4px 12px">${iz?[s(iz.cihaz,'Cihaz kayıtlı'),s(iz.bildirim,'Bildirim'),s(iz.telefon&&iz.aramaKaydi,'Arama algılama'),s(iz.rehber,'Rehber'),s(iz.ustte,'Arama penceresi'),...('pil' in iz?[s(iz.pil,'Pil kısıtlaması yok')]:[]),...('alarm' in iz?[s(iz.alarm,'Randevu alarmı')]:[])].join(''):'<span style="color:var(--text3)">Durum okunamadı</span>'}</div>
+    <div class="push-k-btn"><button class="btn btn-secondary btn-sm" onclick="pushTest()">📨 Deneme gönder</button><button class="btn ${eksik?'btn-primary':'btn-secondary'} btn-sm" onclick="andIzinIste()">🔐 İzinler</button><button class="btn btn-secondary btn-sm" onclick="andYenidenKaydet()">🔄 Yeniden kaydet</button><button class="btn btn-secondary btn-sm" onclick="andGuncelle()">⬆️ Güncelleme</button>${iz&&'pil' in iz?`<button class="btn ${iz.pil?'btn-secondary':'btn-primary'} btn-sm" onclick="andYerel('pilIzni').catch(()=>{})">🔋 Pil izni</button><button class="btn btn-secondary btn-sm" onclick="andYerel('uygulamaAyarlari').catch(()=>{})">⚙️ Uygulama ayarları</button><button class="btn btn-secondary btn-sm" onclick="andYerel('otomatikBaslat').catch(()=>showToast('Bu sürümde yok: önce ⬆️ Güncelleme','amber'))">🚀 Otomatik başlatma</button>`:''}<button class="btn btn-secondary btn-sm" onclick="andAlarmDene()">⏰ Alarm dene</button>${iz&&'alarm' in iz?`<button class="btn ${iz.alarm?'btn-secondary':'btn-primary'} btn-sm" onclick="andYerel('alarmIzni').catch(()=>{});setTimeout(()=>{try{pushKartCiz();}catch(e){}},6000)">⏰ Alarm ayarı</button>`:''}</div>
+    ${iz&&'alarm' in iz?`<div class="push-k-n">⏰ <b>Randevu alarmları:</b> ${iz.alarmSayi?`${iz.alarmSayi} alarm kurulu (14 gün) · ilki ${new Date(iz.alarmIlkZ).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} — ${_esc(iz.alarmIlkB||'')}`:'Önümüzdeki 14 günde alarm yok.'} Her randevu seçilen hatırlatma kadar önce ve randevu saatinde alarm gibi çalar (saatsiz randevular 09:00'da).${iz.alarm?'':' <b style="color:var(--amber)">İzin eksik: ⏰ Alarm ayarı</b>.'}</div>`:''}
     ${iz?`<div class="push-k-n">📞 <b>Son arama algılama:</b> ${yeniSurum?(sonA?`${sonAStr} — ${_esc(iz.aramaSonuc||'')}`:'Uygulama henüz hiç arama algılamadı.'):'Bu bilgi için uygulamayı güncelle (⬆️).'}${yeniSurum&&!sonA?' Telefon izni açıkken bu satır boş kalıyorsa telefon uygulamayı arka planda durduruyor: <b>🔋 Pil izni</b> ver, <b>⚙️ Uygulama ayarları</b>nda "Otomatik başlat / Arka planda çalış" iznini aç.':''}</div>`:''}
     <div class="push-k-n">Bildirimler, ana ekran widget'ları ve arama sonrası pencere bu telefonda uygulama üzerinden çalışır · sessiz saatler <b>23:00–07:00</b>.${d?`<br>${d.android||0} Android · ${Math.max(0,(d.abone||0)-(d.android||0))} tarayıcı kayıtlı`:''}</div>
     <div class="push-k-n">Widget eklemek: ana ekranda boş yere uzun bas → <b>Widget'lar</b> → <b>Gün Teknik</b>. Bildirim gecikirse: Ayarlar → Uygulamalar → Gün Teknik → Pil → <b>Kısıtlamasız</b>.</div>`;
@@ -5093,8 +5095,26 @@ function widgetVeri(){
   (DB.islemler||[]).forEach(i=>{if(i.statu!=='Tamamlandı'||localDateStr(i.tarih).slice(0,7)!==ay)return;const t=parseFloat(i.tutar)||0;
     if(i.tip==='Gelir'&&(i.kat==='İşletme Geliri'||i.kat==='Şahsi Gelir'))gelir+=t;else if(i.tip==='Gider'&&(i.kat==='İşletme Gideri'||i.kat==='Şahsi Gider'))gider+=t;});
   const ayAd=(typeof GF_AYLAR_UZUN!=='undefined'&&GF_AYLAR_UZUN[parseInt(bg.slice(5,7))-1])||'Bu ay';
-  return {v:1,bg,kasa:{top:Math.round(c.kasa||0),nakit:Math.round(c.kasaNakit||0),kart:Math.round(c.kasaKart||0),iban:Math.round(c.kasaIBAN||0),alacak:Math.round(c.alacakTop||0),borc:Math.round(c.borcTop||0)},
+  return {v:1,bg,al:widgetAlarmlar(),kasa:{top:Math.round(c.kasa||0),nakit:Math.round(c.kasaNakit||0),kart:Math.round(c.kasaKart||0),iban:Math.round(c.kasaIBAN||0),alacak:Math.round(c.alacakTop||0),borc:Math.round(c.borcTop||0)},
     ay:{ad:ayAd,gelir:Math.round(gelir),gider:Math.round(gider)},aj:aj.slice(0,80),od:od.slice(0,80),gt:widgetGtVeri()};
+}
+// Randevu alarmları (telefon uygulaması gerçek alarm kurar, Mac sesli bildirim verir): önümüzdeki 14 gün, planlanmış tüm randevular.
+// Saatli: seçilen hatırlatma kadar önce + randevu anında · saatsiz (gün boyu): o gün 09:00'da (+ hatırlatma kadar önce)
+function widgetAlarmlar(){
+  const L=[];const simdi=Date.now();const bg=localToday();
+  try{tkOlaylar(bg,gfGunEkle(bg,14)).filter(o=>o.durum==='planlandi').forEach(o=>{
+    const t=o.t,g=String(o.gun).slice(0,10),s=t.saat?String(t.saat).slice(0,5):'';
+    const bas=new Date(g+'T'+(s||'09:00')+':00+03:00').getTime();if(!isFinite(bas))return;
+    const k=t.kisiId?getKisi(t.kisiId):null;let adr='',yol='';
+    try{const a=k?tkAdres(t,k):null;adr=a?hrAdresSatir(a,{}):((k&&k.adres)||'');yol=k?hrYolUrl(a,k.adres):'';}catch(e){}
+    const T=TK_TIP[t.tip]||TK_TIP.Bilgi;
+    const ort={b:(T.ik+' '+(t.baslik||t.tip||'Randevu')).slice(0,80),k:k?String(k.isim||'').slice(0,50):'',tel:k&&k.tel?String(k.tel).slice(0,20):'',
+      ad:String(adr||'').slice(0,120),yol:String(yol||'').slice(0,300),g,s,d:String(t.detay||'').slice(0,160)};
+    const h=t.hatirlat!=null&&!isNaN(Number(t.hatirlat))?Number(t.hatirlat):0;
+    const ekle=(tur,z)=>{if(z<simdi-5*60000)return;L.push(Object.assign({i:t.id+'|'+g+'|'+tur,z,tur,h},ort));};
+    ekle(s?'an':'gun',bas);
+    if(h>0)ekle('once',bas-h*60000);});}catch(e){console.warn('widget alarm',e);}
+  return L.sort((a,b)=>a.z-b.z).slice(0,150);
 }
 // GTCOIN fiyatı için: 30 gün sonrası kasa tahmini (günde bir hesaplanır) ve takvimdeki hava verisi (günlük en yüksek sıcaklık)
 function widgetGtVeri(){

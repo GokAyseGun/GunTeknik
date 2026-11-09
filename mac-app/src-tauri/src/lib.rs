@@ -33,6 +33,9 @@ struct Ayar {
     son_bildirim: Option<String>,
     kasa_acik: bool,
     kurulum_tamam: bool,
+    /// en son çalınan randevu alarmının zamanı (ms) — aynı alarm iki kez çalmasın
+    #[serde(default)]
+    son_alarm: i64,
 }
 
 #[derive(Default)]
@@ -387,6 +390,82 @@ async fn bildirim_turu(app: &AppHandle) {
     ayar_yaz(app);
 }
 
+// ---------------------------------------------------------------- randevu alarmları
+/// ERP'nin widget görüntüsündeki snap.al listesi (telefonda gerçek alarm kurulan liste): vakti gelen her biri için
+/// sesli bildirim + Dock simgesi zıplar. Saatli randevu: hatırlatma kadar önce + randevu anında.
+fn alarm_bak(app: &AppHandle) {
+    let simdi = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    let al = {
+        let d = app.state::<Durum>();
+        let v = d.veri.lock().unwrap();
+        v.get("snap").and_then(|s| s.get("al")).and_then(|a| a.as_array()).cloned().unwrap_or_default()
+    };
+    let son = app.state::<Durum>().ayar.lock().unwrap().son_alarm;
+    let alt_sinir = son.max(simdi - 10 * 60_000);
+    let mut caldi = son;
+    let mut liste: Vec<&Value> = al
+        .iter()
+        .filter(|x| {
+            let z = x.get("z").and_then(|z| z.as_i64()).unwrap_or(0);
+            z > alt_sinir && z <= simdi
+        })
+        .collect();
+    liste.sort_by_key(|x| x.get("z").and_then(|z| z.as_i64()).unwrap_or(0));
+    for x in liste {
+        let s = |k: &str| x.get(k).and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let z = x.get("z").and_then(|z| z.as_i64()).unwrap_or(0);
+        let h = x.get("h").and_then(|h| h.as_i64()).unwrap_or(0);
+        let ust = match s("tur").as_str() {
+            "once" => format!("⏰ {} sonra", sure_yaz(h)),
+            "gun" => "📅 Bugün".to_string(),
+            _ => "🔔 Randevu saati".to_string(),
+        };
+        let mut govde = Vec::new();
+        if !s("s").is_empty() {
+            govde.push(format!("🕐 {}", s("s")));
+        }
+        if !s("k").is_empty() {
+            govde.push(format!("👤 {}{}", s("k"), if s("tel").is_empty() { String::new() } else { format!(" · {}", s("tel")) }));
+        }
+        if !s("ad").is_empty() {
+            govde.push(format!("📍 {}", s("ad")));
+        }
+        let _ = app
+            .notification()
+            .builder()
+            .title(format!("{ust} · {}", s("b")))
+            .body(govde.join("  "))
+            .sound("Glass")
+            .show();
+        caldi = caldi.max(z);
+    }
+    if caldi > son {
+        app.state::<Durum>().ayar.lock().unwrap().son_alarm = caldi;
+        ayar_yaz(app);
+        if let Some(w) = app.get_webview_window("main") {
+            let _ = w.request_user_attention(Some(tauri::UserAttentionType::Critical));
+        }
+        *app.state::<Durum>().bekleyen.lock().unwrap() = Some(("./?sayfa=takvim".into(), Instant::now()));
+    }
+}
+
+fn sure_yaz(dk: i64) -> String {
+    if dk <= 0 {
+        "şimdi".into()
+    } else if dk % 1440 == 0 {
+        format!("{} gün", dk / 1440)
+    } else if dk >= 60 && dk % 60 == 0 {
+        format!("{} saat", dk / 60)
+    } else if dk > 60 {
+        format!("{} sa {} dk", dk / 60, dk % 60)
+    } else {
+        format!("{dk} dk")
+    }
+}
+
 // ---------------------------------------------------------------- güncelleme
 async fn guncelleme_bak(app: &AppHandle, sessiz: bool) -> Result<guncelle::Surum, String> {
     let s = guncelle::denetle(&surum_metni(app)).await?;
@@ -672,12 +751,20 @@ pub fn run() {
             widget_tanit();
             widget_yenile();
 
-            // döngüler: bildirim 20 sn, pano verisi 3 dk, güncelleme 6 saat
+            // döngüler: bildirim 20 sn, randevu alarmı 15 sn, pano verisi 3 dk, güncelleme 6 saat
             let a = h.clone();
             tauri::async_runtime::spawn(async move {
                 loop {
                     bildirim_turu(&a).await;
                     tokio::time::sleep(Duration::from_secs(20)).await;
+                }
+            });
+            let a = h.clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(25)).await;
+                loop {
+                    alarm_bak(&a);
+                    tokio::time::sleep(Duration::from_secs(15)).await;
                 }
             });
             let a = h.clone();
