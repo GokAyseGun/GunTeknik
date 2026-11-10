@@ -2225,10 +2225,16 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
     <div class="page" id="page-cari">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;">
         <select id="f-cari-tip" onchange="renderCari()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;appearance:none;font-family:inherit;">
-          <option value="Tümü">Tüm Açık Hesaplar</option><option value="Alacak">Bize Borçlular</option><option value="Borc">Biz Borçluyuz</option>
+          <option value="Tümü">Tüm Açık Hesaplar</option><option value="Alacak">Bize Borçlular</option><option value="Borc">Biz Borçluyuz</option><option value="Gecikmis">Vadesi geçmiş</option>
         </select>
+        <div style="display:flex;gap:8px;">
+          <select id="f-cari-sira" onchange="renderCari()" style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;">
+            <option value="tutar">Sırala: tutar</option><option value="eski">Sırala: en eski borç</option><option value="isim">Sırala: isim</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="cariTopluHatirlat()" style="flex-shrink:0;">💬 Toplu hatırlat</button>
+        </div>
         <input type="text" id="f-cari-ara" placeholder="Kişi veya cari no ara..." oninput="renderCari()" style="padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;">
       </div>
+      <div id="cari-ozet"></div>
       <div id="cari-tahsil-asistan"></div>
             <div class="stagger-wrap" id="list-cari" style="overflow-y:auto;margin-bottom:8px;"></div>
       <div id="list-cari-kredi" style="overflow-y:auto;"></div>
@@ -2259,6 +2265,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <div style="display:flex;gap:8px;">
           <button class="btn btn-secondary btn-sm" onclick="stokKarRaporuGoster()" style="background:rgba(46,160,67,0.12);color:var(--green);border-color:rgba(46,160,67,0.3);">📊 Kar Raporu</button>
           <button class="btn btn-secondary btn-sm" onclick="openBarkodKamera('stok-ara-barkod')" title="Barkodla ara">📷 Tara</button>
+          <button class="btn btn-secondary btn-sm" onclick="stokHareketleriGoster()" title="Giriş / çıkış geçmişi">🔁 Hareketler</button>
           <button class="btn btn-secondary btn-sm" onclick="openStokEnflasyonModal()" style="background:rgba(16,185,129,0.15);color:#10b981;border-color:rgba(16,185,129,0.3);">📈 Enflasyon</button>
           <button class="btn btn-primary btn-sm" onclick="openStokModal()">+ Ekle</button>
         </div>
@@ -2268,6 +2275,8 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <option value="">Tüm Kategoriler</option>
         <option value="Elektrik">Elektrik</option>
         <option value="Klima">Klima</option>
+        <option value="TV, Uydu, Çanak">TV, Uydu, Çanak</option>
+        <option value="İnternet">İnternet</option>
         <option value="Sıhhi Tesisat">Sıhhi Tesisat</option>
         <option value="Metal">Metal</option>
         <option value="Ahşap">Ahşap</option>
@@ -2276,6 +2285,8 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <option value="Sarf Malzemeleri">Sarf Malzemeleri</option>
         <option value="Diğer">Diğer</option>
       </select>
+      <input type="text" id="stok-ara" placeholder="Malzeme, marka ya da model ara…" oninput="renderStok()" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;margin:8px 0;box-sizing:border-box;">
+      <div id="stok-ozet"></div>
       <div id="stok-kritik-wrap"></div>
       <div style="display:flex;flex-direction:column;gap:6px;" id="list-stok"></div>
     </div>
@@ -2535,6 +2546,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div class="sec-title mt0" style="margin:0">💰 Fiyat Listesi</div>
         <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="fiyatAraclar()" title="Toplu zam, bölge katsayısı, müşteriye liste">⚙️</button>
           <button class="btn btn-secondary btn-sm" onclick="openEnflasyonModal()" style="background:rgba(126,179,240,0.15);color:var(--blue);border-color:rgba(126,179,240,0.3);">📈 Enflasyon</button>
           <button class="btn btn-primary btn-sm" onclick="openFiyatModal()">+ Fiyat Ekle</button>
         </div>
@@ -2543,10 +2555,13 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <button class="btn btn-secondary btn-sm fiyat-kat-btn active" onclick="fiyatKatFiltre('',this)">Tümü</button>
         <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Elektrik',this)">⚡ Elektrik</button>
         <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Klima',this)">❄️ Klima</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('TV, Uydu, Çanak',this)">📡 TV / Uydu</button>
+        <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('İnternet',this)">🌐 İnternet</button>
         <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Sıhhi Tesisat',this)">🔧 Tesisat</button>
         <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Metal',this)">🔩 Metal</button>
         <button class="btn btn-secondary btn-sm fiyat-kat-btn" onclick="fiyatKatFiltre('Ahşap',this)">🪵 Ahşap</button>
       </div>
+      <input type="text" id="fiyat-ara" placeholder="İş ara (ör. gaz dolumu, priz)…" oninput="renderFiyatlar()" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;margin-bottom:10px;box-sizing:border-box;">
       <div id="list-fiyatlar" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
@@ -3831,6 +3846,8 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <select id="stok-kat" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
           <option value="Elektrik">Elektrik</option>
           <option value="Klima">Klima</option>
+          <option value="TV, Uydu, Çanak">TV, Uydu, Çanak</option>
+          <option value="İnternet">İnternet</option>
           <option value="Sıhhi Tesisat">Sıhhi Tesisat</option>
           <option value="Metal">Metal</option>
           <option value="Ahşap">Ahşap</option>
@@ -6407,7 +6424,7 @@ async function loadDB(o){
       durum:t.durum||(String(t.tarih||'').slice(0,10)<localToday()?'yapildi':'planlandi'),bitisSaat:t.bitis_saat?String(t.bitis_saat).slice(0,5):'',personelIds:Array.isArray(t.personel_ids)?t.personel_ids:[],tutar:t.tutar!=null?parseFloat(t.tutar):null,
       tekrar:t.tekrar||'',tekrarBitis:t.tekrar_bitis||'',tekrarDurum:(t.tekrar_durum&&typeof t.tekrar_durum==='object')?t.tekrar_durum:{},hatirlat:t.hatirlat!=null?t.hatirlat:null,
       googleEventId:t.google_event_id||null,googleHash:t.google_hash||null,islemId:t.islem_id||null,adresId:t.adres_id||null}));
-    DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
+    DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:(s.marka&&s.marka!=='Genel Markalar')?s.marka:'',model:(s.model&&s.model!=='-----')?s.model:'',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
       alisFiyat:parseFloat(s.alis_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,baslik:s.baslik||s.isim||'',tip:s.tip||'Gider',hesap:s.hesap||'İşletme',kategori:s.kategori||s.kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',periyot:s.periyot||'Aylık',baslangic:s.baslangic||null,bitis:s.bitis||null,aktif:s.aktif!==false,sonIslemTarihi:s.son_islem_tarihi||null,aciklama:s.aciklama||s.not||''}));
@@ -12658,60 +12675,100 @@ function showKisiDetay(id){
 
 
 // ============================================================ CARİ
+// Açık hesap bakiyesi her zaman tüm zamanlardan hesaplanır (ay seçimi bakiyeyi bozmaz)
+function cariYaslandir(kisiId,yon){
+  // yon>0: alacak (Gelir/Tahsil Edilecek), yon<0: borç — en eski bekleyen kalemin vadesi
+  const bg=localToday();
+  const L=DB.islemler.filter(i=>String(i.kisiId)===String(kisiId)&&i.statu==='Bekliyor'&&i.tip!=='Kasa Hareketi'&&((yon>0)===(i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak')));
+  if(!L.length)return null;
+  L.sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  const ilk=localDateStr(L[0].tarih);const gun=Math.round((new Date(bg)-new Date(ilk))/864e5);
+  const yaklasan=L.map(i=>localDateStr(i.tarih)).filter(g=>g>=bg).sort()[0]||null;
+  return {ilk,gun,yaklasan,adet:L.length};
+}
 function renderCari(c){
   if(!c)c=calcFinans();
   const fTip=document.getElementById('f-cari-tip')?.value||'Tümü';
-  const fAra=(document.getElementById('f-cari-ara')?.value||'').toLowerCase();
+  const fAra=(document.getElementById('f-cari-ara')?.value||'').toLocaleLowerCase('tr');
+  const sira=document.getElementById('f-cari-sira')?.value||'tutar';
   const list=document.getElementById('list-cari');if(!list)return;
-  const fDate=getMonth(); // Seçili ay filtresi
-
-  // Tarih filtreli cari hesaplama
-  const cariMap={};
-  DB.kisiler.filter(k=>k.tip!=='Banka').forEach(k=>cariMap[k.id]={id:k.id,ad:k.isim,tip:k.tip,bakiye:0});
-  DB.islemler.forEach(i=>{
-    if(!i.kisiId||!cariMap[i.kisiId])return;
-    if(i.tip==='Kasa Hareketi')return;
-    // Tarih filtresi uygula
-    if(fDate&&!(i.tarih||'').startsWith(fDate))return;
-    const t=parseFloat(i.tutar)||0;
-    const isP=i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak';
-    const s=isP?1:-1;
-    cariMap[i.kisiId].bakiye+=(t*s);
-    if(i.statu==='Tamamlandı')cariMap[i.kisiId].bakiye-=(t*s);
+  const kisiMap=new Map(DB.kisiler.map(k=>[String(k.id),k]));
+  const tum=Object.values(c.cD||{}).filter(x=>{const k=kisiMap.get(String(x.id));return k&&k.tip!=='Banka'&&Math.abs(x.bakiyeAll)>=0.01;})
+    .map(x=>{const k=kisiMap.get(String(x.id));return {id:x.id,ad:x.ad,tip:x.tip,tel:k&&k.tel,bakiye:x.bakiyeAll,yas:cariYaslandir(x.id,x.bakiyeAll>0?1:-1)};});
+  // özet + yaşlandırma
+  const al=tum.filter(x=>x.bakiye>0),br=tum.filter(x=>x.bakiye<0);
+  const alTop=al.reduce((a,x)=>a+x.bakiye,0),brTop=br.reduce((a,x)=>a-x.bakiye,0);
+  const kova=[0,0,0,0];al.forEach(x=>{const g=x.yas?x.yas.gun:0;kova[g<=0?0:g<=30?1:g<=60?2:3]+=x.bakiye;});
+  const oz=document.getElementById('cari-ozet');
+  if(oz){const kart=(e,d,r,alt)=>`<div class="card" style="padding:10px 12px;"><div class="lbl">${e}</div><div class="val num" style="font-size:17px;color:${r};">${d}</div>${alt?`<div style="font-size:10px;color:var(--text3);">${alt}</div>`:''}</div>`;
+    const kb=(e,v,r)=>`<div style="flex:1;min-width:0;text-align:center;padding:6px 4px;background:var(--bg2);border-radius:var(--r-sm);"><div style="font-size:10px;color:var(--text3);">${e}</div><div class="num" style="font-size:12px;font-weight:700;color:${r};">${fmt(v)}</div></div>`;
+    oz.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px;">
+      ${kart('🟢 Bize borçlu',fmt(alTop),'var(--green)',al.length+' kişi')}${kart('🔴 Biz borçluyuz',fmt(brTop),'var(--red)',br.length+' kişi')}${kart('⚖️ Net',(alTop-brTop<0?'− ':'')+fmt(alTop-brTop),alTop>=brTop?'var(--green)':'var(--red)')}</div>
+      ${alTop?`<div style="font-size:10px;color:var(--text3);margin:2px 0 4px;">Alacak yaşlandırma (en eski vadeye göre)</div><div style="display:flex;gap:6px;margin-bottom:10px;">${kb('Vadesi gelmedi',kova[0],'var(--text2)')}${kb('0–30 gün',kova[1],'var(--green)')}${kb('30–60 gün',kova[2],'var(--amber)')}${kb('60+ gün',kova[3],'var(--red)')}</div>`:''}
+      ${getMonth()?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">ℹ️ Bakiyeler seçili aydan bağımsız, tüm kayıtlardan hesaplanır.</div>`:''}`;}
+  let items=tum.filter(x=>{
+    const m=fTip==='Tümü'?true:fTip==='Alacak'?x.bakiye>0:fTip==='Borc'?x.bakiye<0:(x.yas&&x.yas.gun>0);
+    return m&&(x.ad||'').toLocaleLowerCase('tr').includes(fAra);
   });
-  DB.odemeler.forEach(o=>{
-    if(!cariMap[o.kisiId])return;
-    if(fDate&&!(o.tarih||'').startsWith(fDate))return;
-    const t=parseFloat(o.tutar)||0;
-    const s=o.islemTipi==='Tahsilat'?-1:1;
-    cariMap[o.kisiId].bakiye+=(t*s);
-  });
-
-  const items=Object.values(cariMap).filter(x=>{
-    if(Math.abs(x.bakiye)<0.01)return false;
-    const m=fTip==='Tümü'?true:(fTip==='Alacak'?x.bakiye>0:x.bakiye<0);
-    return m&&(x.ad||'').toLowerCase().includes(fAra);
-  });
-
+  if(sira==='eski')items.sort((a,b)=>((b.yas?b.yas.gun:-1e9)-(a.yas?a.yas.gun:-1e9)));
+  else if(sira==='isim')items.sort((a,b)=>(a.ad||'').localeCompare(b.ad||'','tr'));
+  else items.sort((a,b)=>Math.abs(b.bakiye)-Math.abs(a.bakiye));
   if(!items.length){
-    list.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><div class="empty-title">Açık hesap yok</div><div class="empty-sub">'+(fDate?'Bu dönemde açık hesap bulunamadı':'Tüm hesaplar kapalı')+'</div></div>';
-    return;
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><div class="empty-title">Açık hesap yok</div><div class="empty-sub">'+(fAra?'Aramayla eşleşen yok':'Tüm hesaplar kapalı')+'</div></div>';
+    renderCariKrediler();return;
   }
   list.innerHTML=items.map((x,i)=>{
-    const renk=x.bakiye>0?'var(--green)':'var(--red)';
+    const renk=x.bakiye>0?'var(--green)':'var(--red)';const y=x.yas;
+    const yasR=!y?'':y.gun>60?'var(--red)':y.gun>30?'var(--amber)':y.gun>0?'var(--text2)':'var(--text3)';
+    const yasM=!y?'':y.gun>0?`⏰ ${y.gun} gündür bekliyor`:(y.yaklasan?`📅 vade ${dtS(y.yaklasan)}`:'');
     return `<div class="stagger-item" style="animation-delay:${i*0.05}s" onclick="showKisiDetay(${x.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.ad||'—'} <span class="id-badge">${fmtKId(x.id)}</span></div></div>
-        <div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation()">
-          <div style="font-weight:700;font-size:17px;color:${renk};" class="num">${fmt(Math.abs(x.bakiye))}</div>
+        <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(x.ad||'—')} <span class="id-badge">${fmtKId(x.id)}</span></div>
+          <div style="font-size:11px;color:${yasR};">${x.bakiye>0?'Bize borçlu':'Biz borçluyuz'}${yasM?' · '+yasM:''}</div></div>
+        <div style="display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">
+          <div style="font-weight:700;font-size:16px;color:${renk};margin-right:4px;" class="num">${fmt(Math.abs(x.bakiye))}</div>
+          ${x.bakiye>0&&x.tel?`<button class="icon-btn" title="WhatsApp hatırlat" onclick="whatsappHatirlatici(${x.id})" style="width:30px;height:30px;font-size:14px;">💬</button>`:''}
+          <button class="icon-btn" title="Hesap ekstresi" onclick="kisiEkstre(${x.id})" style="width:30px;height:30px;font-size:14px;">📄</button>
         </div>
       </div>
     </div>`;
   }).join('');
-
   // Banka kredileri alt paneli
   renderCariKrediler();
   setStagger(list.querySelectorAll('.stagger-item'));observeStagger();
+}
+function cariTopluHatirlat(){
+  const c=calcFinans();
+  const L=Object.values(c.cD||{}).filter(x=>x.bakiyeAll>0.01).map(x=>({x,k:getKisi(x.id),y:cariYaslandir(x.id,1)})).filter(o=>o.k&&o.k.tip!=='Banka').sort((a,b)=>b.x.bakiyeAll-a.x.bakiyeAll);
+  if(!L.length){showToast('Açık alacak yok','green');return;}
+  showInfoModal('💬 Toplu hatırlatma',`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Her satır WhatsApp'ta hazır mesajla açılır. Gönderilenler işaretlenir.</div>`+
+    L.map(o=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:5px;">
+      <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(o.k.isim)}</div><div style="font-size:11px;color:${o.y&&o.y.gun>30?'var(--red)':'var(--text3)'};">${fmt(o.x.bakiyeAll)}${o.y&&o.y.gun>0?' · '+o.y.gun+' gün':''}</div></div>
+      ${o.k.tel?`<button class="btn btn-secondary btn-sm" onclick="whatsappHatirlatici(${o.k.id});this.textContent='✓ Gönderildi';this.style.color='var(--green)'">💬 Gönder</button>`:'<span style="font-size:11px;color:var(--text3);">tel yok</span>'}</div>`).join('')+
+    `<button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="whatsappBorcListesi()">📋 Listeyi panoya kopyala</button>`);
+}
+// Kişi hesap ekstresi (yazdır / PDF)
+function kisiEkstre(kisiId){
+  const k=getKisi(kisiId);if(!k)return;const F=firmaBilgi();
+  const S=[];
+  DB.islemler.filter(i=>String(i.kisiId)===String(kisiId)&&i.tip!=='Kasa Hareketi').forEach(i=>{
+    const art=i.tip==='Gelir'||i.tip==='Tahsil Edilecek Alacak';const t=i.tutar||0;
+    S.push({g:localDateStr(i.tarih),a:(i.kat||i.tip)+(i.altKat?' / '+i.altKat:'')+(i.not?' — '+i.not:''),b:art?t:0,c:art?0:t,d:i.statu});
+    if(i.statu==='Tamamlandı')S.push({g:localDateStr(i.tarih),a:(art?'Tahsilat':'Ödeme')+' ('+(i.odemeYontemi||'')+')',b:art?0:t,c:art?t:0,d:''});
+  });
+  DB.odemeler.filter(o=>String(o.kisiId)===String(kisiId)).forEach(o=>{const th=o.islemTipi==='Tahsilat';S.push({g:localDateStr(o.tarih),a:(th?'Tahsilat':'Ödeme')+' ('+(o.odemeYontemi||'')+')'+(o.not?' — '+o.not:''),b:th?0:o.tutar,c:th?o.tutar:0,d:''});});
+  S.sort((a,b)=>a.g<b.g?-1:a.g>b.g?1:0);
+  let bak=0;const satir=S.map(s=>{bak+=s.b-s.c;return `<tr><td>${dtS(s.g)}</td><td>${_esc(s.a)}${s.d==='Bekliyor'?' <i style="color:#b45309">(vadeli)</i>':''}</td><td class="r">${s.b?fmt(s.b):''}</td><td class="r">${s.c?fmt(s.c):''}</td><td class="r b">${bak<0?'− ':''}${fmt(bak)}</td></tr>`;}).join('');
+  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hesap ekstresi — ${_esc(k.isim)}</title>
+  <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;margin:0;padding:24px;}h1{font-size:20px;margin:0;}.a{color:#64748b;font-size:12px;}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;}th{background:#f1f5f9;text-align:left;padding:7px 8px;font-size:11px;}td{padding:6px 8px;border-bottom:1px solid #eef2f6;}.r{text-align:right;}.b{font-weight:700;}.t{margin-top:14px;padding:12px;background:#eff6ff;border-radius:8px;font-size:14px;}.bar{position:sticky;top:0;background:#fff;padding:8px 0;text-align:right;}@media print{.bar{display:none}}</style></head><body>
+  <div class="bar"><button onclick="window.print()" style="padding:8px 16px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:600;">🖨️ Yazdır / PDF</button></div>
+  <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><h1>${_esc(F.unvan)}</h1><div class="a">${[F.adres,F.tel,F.eposta].filter(Boolean).map(_esc).join(' · ')}</div></div>
+  <div style="text-align:right;"><div style="font-weight:700;">HESAP EKSTRESİ</div><div class="a">${new Date().toLocaleDateString('tr-TR')}</div></div></div>
+  <div style="margin-top:14px;font-size:14px;"><b>${_esc(k.firmaUnvan||k.isim)}</b>${k.tel?' · '+_esc(k.tel):''}${k.vergiNo?' · VKN '+_esc(k.vergiNo):''}</div>
+  <table><thead><tr><th>Tarih</th><th>Açıklama</th><th class="r">Borç</th><th class="r">Alacak</th><th class="r">Bakiye</th></tr></thead><tbody>${satir||'<tr><td colspan="5">Kayıt yok</td></tr>'}</tbody></table>
+  <div class="t">Güncel bakiye: <b>${fmt(Math.abs(bak))}</b> ${bak>0?'(tarafınızın borcu)':bak<0?'(tarafımızın borcu)':'(hesap kapalı)'}</div>
+  ${F.iban&&bak>0?`<div class="a" style="margin-top:10px;">Ödeme: ${_esc(F.banka||'')} IBAN <b>${_esc(F.iban)}</b> · ${_esc(F.unvan)}</div>`:''}</body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 // ============================================================ FİNANSMAN DÜZENLE / SİL
@@ -13017,6 +13074,8 @@ function openStokModal(id){
       document.getElementById('stok-kat').value=s.kategori||'Elektrik';
       document.getElementById('stok-marka').value=s.marka||'';
       document.getElementById('stok-model').value=s.model||'';
+      // eski kayıtlarda kategori listede yoksa ekle
+      const ks=document.getElementById('stok-kat');if(ks&&s.kategori&&![...ks.options].some(o=>o.value===s.kategori)){const o=document.createElement('option');o.value=o.textContent=s.kategori;ks.appendChild(o);}
       document.getElementById('stok-birim').value=s.birim||'Adet';
       document.getElementById('stok-miktar').value=s.miktar||0;
       document.getElementById('stok-kritik').value=s.kritikSeviye||5;
@@ -13042,15 +13101,16 @@ async function saveStok(btn){
     if(!ad){showToast('Malzeme adı gerekli','red');return;}
     const barkod=document.getElementById('stok-barkod').value.trim()||null;
     const yeniFiyat=parseTutar(document.getElementById('stok-fiyat').value);
-    let eskiFiyat=0;
-    if(id){const esS=DB.stok.find(x=>x.id===parseInt(id));if(esS)eskiFiyat=esS.birimFiyat||0;}
+    const miktar=parseTutar(document.getElementById('stok-miktar').value)||0;
+    let eski=null;
+    if(id)eski=DB.stok.find(x=>x.id===parseInt(id))||null;
     const payload={
       ad,
-      kategori:document.getElementById('stok-kat').value||'Genel',
-      marka:document.getElementById('stok-marka').value.trim()||'Genel Markalar',
-      model:document.getElementById('stok-model').value.trim()||'-----',
+      kategori:document.getElementById('stok-kat').value||'Diğer',
+      marka:document.getElementById('stok-marka').value.trim()||null,
+      model:document.getElementById('stok-model').value.trim()||null,
       birim:document.getElementById('stok-birim').value||'Adet',
-      miktar:parseTutar(document.getElementById('stok-miktar').value),
+      miktar,
       kritik_seviye:parseFloat(document.getElementById('stok-kritik').value)||5,
       birim_fiyat:yeniFiyat,
       alis_fiyat:parseTutar(document.getElementById('stok-alis-fiyat')?.value)||0,
@@ -13061,30 +13121,48 @@ async function saveStok(btn){
     if(id){
       await sbFetch('stok?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
       resultId=parseInt(id);
-      if(eskiFiyat&&yeniFiyat&&eskiFiyat!==yeniFiyat){
-        const deg=((yeniFiyat-eskiFiyat)/eskiFiyat*100);
-        await sbFetch('stok_fiyat_gecmis',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-          stok_id:parseInt(id),kategori:payload.kategori,
-          eski_fiyat:eskiFiyat,yeni_fiyat:yeniFiyat,
-          degisim_yuzdesi:Math.round(deg*100)/100,
-          tarih:new Date().toISOString()
-        })});
-      }
+      // satış fiyatı değiştiyse fiyat geçmişine (enflasyon) tek kayıt
+      if(eski&&eski.birimFiyat&&yeniFiyat&&eski.birimFiyat!==yeniFiyat)await stokFiyatGecmisKaydet(resultId,eski.birimFiyat,yeniFiyat,payload.kategori).catch(()=>{});
+      // miktar elle değiştiyse sayım düzeltmesi hareketi
+      if(eski&&Math.abs((eski.miktar||0)-miktar)>1e-9)await stokHareketYaz(resultId,miktar>(eski.miktar||0)?'Giriş':'Çıkış',Math.abs(miktar-(eski.miktar||0)),'Elle düzeltme');
     }else{
       const r=await sbFetch('stok',{method:'POST',prefer:'return=representation',body:JSON.stringify(payload)});
       resultId=r&&r[0]?r[0].id:null;
+      if(resultId&&miktar>0)await stokHareketYaz(resultId,'Giriş',miktar,'İlk kayıt');
     }
     await loadDB();
-    // Fiyat değiştiyse stok enflasyon geçmişine kaydet
-    if(id&&eskiFiyat&&yeniFiyat&&eskiFiyat!==yeniFiyat){
-      const stokObj=DB.stok.find(x=>x.id===parseInt(id));
-      if(typeof stokFiyatGecmisKaydet==='function')
-        await stokFiyatGecmisKaydet(parseInt(id),eskiFiyat,yeniFiyat,stokObj?.kategori||'Genel');
-    }
     closeModal('modal-stok');showToast(id?'Güncellendi':'Eklendi','green');
     if(barkod&&resultId){const s=DB.stok.find(x=>x.id===resultId)||{ad,barkod};showBarkodEtiket(s);}
-  }catch(e){showToast('Hata!','red');}
+  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,90),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
+}
+async function stokHareketYaz(stokId,tip,miktar,not,islemId){
+  try{await sbFetch('stok_hareketleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({stok_id:stokId,hareket_tipi:tip,miktar,'not':not||'',islem_id:islemId||null,tarih:new Date().toISOString()})});}
+  catch(e){console.warn('stok hareketi',e);}
+}
+// Hızlı giriş / çıkış
+function stokHareketModal(id){
+  const s=DB.stok.find(x=>x.id===id);if(!s)return;
+  formModal(`📦 ${_esc(s.ad)} — mevcut ${s.miktar} ${_esc(s.birim)}`,[
+    {id:'tip',etiket:'Hareket',tip:'select',deger:'Giriş',secenek:[['Giriş','➕ Giriş (alım / iade)'],['Çıkış','➖ Çıkış (kullanım / satış)']]},
+    {id:'miktar',etiket:'Miktar ('+s.birim+')',tip:'number',deger:''},
+    {id:'not',etiket:'Not',deger:'',placeholder:'Örn: Koçtaş alımı, Ahmet Bey işi'}
+  ],async d=>{
+    const m=parseTutar(d.miktar);if(!(m>0)){showToast('Miktar gir','red');return false;}
+    const yeni=d.tip==='Giriş'?(s.miktar||0)+m:Math.max(0,(s.miktar||0)-m);
+    await sbFetch('stok?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({miktar:yeni})});
+    await stokHareketYaz(id,d.tip,m,d.not);
+    await loadDB();showToast(`${d.tip}: ${m} ${s.birim} · yeni miktar ${yeni}`,'green');
+  });
+}
+function stokHareketleriGoster(stokId){
+  const H=(DB.stokHareketleri||[]).filter(h=>!stokId||h.stokId===stokId).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  const s=stokId?DB.stok.find(x=>x.id===stokId):null;
+  showInfoModal('🔁 Stok hareketleri'+(s?' — '+_esc(s.ad):''),H.length?H.slice(0,200).map(h=>{const st=DB.stok.find(x=>x.id===h.stokId);const giris=h.tip==='Giriş';
+    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:4px;font-size:12px;">
+      <div style="min-width:0;"><div style="font-weight:600;">${_esc(st?st.ad:'(silinmiş malzeme)')}</div><div style="color:var(--text3);font-size:11px;">${dtS(h.tarih)}${h.not?' · '+_esc(h.not):''}${h.islemId?' · işlem '+fmtId(h.islemId):''}</div></div>
+      <div class="num" style="font-weight:700;color:${giris?'var(--green)':'var(--red)'};white-space:nowrap;">${giris?'+':'−'}${h.miktar} ${_esc(st?st.birim:'')}</div></div>`;}).join('')
+    :'<div style="text-align:center;color:var(--text3);padding:16px;">Henüz hareket yok</div>');
 }
 
 async function deleteStok(id,event){
@@ -13099,27 +13177,38 @@ async function deleteStok(id,event){
 function renderStok(){
   const kritikWrap=document.getElementById('stok-kritik-wrap');const list=document.getElementById('list-stok');if(!list)return;
   const fKat=document.getElementById('stok-kat-filtre')?.value||'';
-  const filtreliStok=fKat?DB.stok.filter(s=>s.kategori===fKat):DB.stok;
+  const ara=(document.getElementById('stok-ara')?.value||'').toLocaleLowerCase('tr').trim();
+  let filtreliStok=fKat?DB.stok.filter(s=>s.kategori===fKat):DB.stok;
+  if(ara)filtreliStok=filtreliStok.filter(s=>[s.ad,s.marka,s.model,s.barkod,s.not].join(' ').toLocaleLowerCase('tr').includes(ara));
   const kritikler=filtreliStok.filter(s=>s.miktar<=s.kritikSeviye&&s.miktar>0);const bitti=filtreliStok.filter(s=>s.miktar<=0);
+  const oz=document.getElementById('stok-ozet');
+  if(oz){const alis=DB.stok.reduce((a,s)=>a+(s.miktar>0?s.miktar*(s.alisFiyat||0):0),0),satis=DB.stok.reduce((a,s)=>a+(s.miktar>0?s.miktar*(s.birimFiyat||0):0),0);
+    oz.innerHTML=DB.stok.length?`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;">
+      <div class="card" style="padding:10px 12px;"><div class="lbl">📦 Kalem</div><div class="val num" style="font-size:17px;">${DB.stok.length}</div></div>
+      <div class="card" style="padding:10px 12px;"><div class="lbl">🧾 Alış değeri</div><div class="val num" style="font-size:17px;color:var(--amber);">${fmt(alis)}</div></div>
+      <div class="card" style="padding:10px 12px;"><div class="lbl">🏷️ Satış değeri</div><div class="val num" style="font-size:17px;color:var(--green);">${fmt(satis)}</div></div></div>`:'';}
   if(kritikWrap){
     let w='';
-    if(bitti.length)w+=`<div class="vade-banner" style="background:var(--red-lt);border-color:rgba(232,128,128,0.25);margin-bottom:8px;"><div class="vade-banner-dot" style="background:var(--red);"></div><div><div style="font-weight:600;font-size:12px;color:var(--red);">🚫 ${bitti.length} malzeme tükendi</div><div style="font-size:11px;color:var(--text2);">${bitti.map(s=>s.ad).join(', ')}</div></div></div>`;
-    if(kritikler.length)w+=`<div class="vade-banner" style="background:var(--amber-lt);border-color:rgba(240,196,114,0.25);margin-bottom:8px;"><div class="vade-banner-dot" style="background:var(--amber);animation:none;"></div><div><div style="font-weight:600;font-size:12px;color:var(--amber);">⚠️ ${kritikler.length} malzeme kritik seviyede</div><div style="font-size:11px;color:var(--text2);">${kritikler.map(s=>s.ad).join(', ')}</div></div></div>`;
+    if(bitti.length)w+=`<div class="vade-banner" style="background:var(--red-lt);border-color:rgba(232,128,128,0.25);margin-bottom:8px;"><div class="vade-banner-dot" style="background:var(--red);"></div><div><div style="font-weight:600;font-size:12px;color:var(--red);">🚫 ${bitti.length} malzeme tükendi</div><div style="font-size:11px;color:var(--text2);">${bitti.slice(0,5).map(s=>_esc(s.ad)).join(', ')}</div></div></div>`;
+    if(kritikler.length)w+=`<div class="vade-banner" style="background:var(--amber-lt);border-color:rgba(240,196,114,0.25);margin-bottom:8px;"><div class="vade-banner-dot" style="background:var(--amber);animation:none;"></div><div><div style="font-weight:600;font-size:12px;color:var(--amber);">⚠️ ${kritikler.length} malzeme kritik seviyede</div><div style="font-size:11px;color:var(--text2);">${kritikler.slice(0,5).map(s=>_esc(s.ad)+' ('+s.miktar+')').join(', ')}</div></div></div>`;
     kritikWrap.innerHTML=w;
   }
-  if(!filtreliStok.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">'+(fKat?fKat+' kategorisinde stok yok':'Stok kaydı yok')+'</div></div>';return;}
-  const sorted=[...filtreliStok].sort((a,b)=>(a.ad||'').localeCompare(b.ad||''));
+  if(!filtreliStok.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">'+(ara?'Eşleşen malzeme yok':fKat?fKat+' kategorisinde stok yok':'Stok kaydı yok')+'</div></div>';return;}
+  const sorted=[...filtreliStok].sort((a,b)=>(a.ad||'').localeCompare(b.ad||'','tr'));
   list.innerHTML=sorted.map((s,i)=>{
     const bitti=s.miktar<=0;const kritik=!bitti&&s.miktar<=s.kritikSeviye;
     const rowCls='stok-row'+(bitti?' bitti':kritik?' kritik':'');
     const renk=bitti?'var(--red)':kritik?'var(--amber)':'var(--green)';
+    const alt=[s.kategori,s.marka,s.model].filter(Boolean).map(_esc).join(' · ');
     const barkodBtn=s.barkod?`<button class="icon-btn" onclick="showBarkodEtiket(DB.stok.find(x=>x.id===${s.id}))" style="width:26px;height:26px;font-size:12px;" title="Etiket görüntüle">🏷️</button>`:'';
+    const harBtn=USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="stokHareketModal(${s.id})" style="width:26px;height:26px;font-size:12px;" title="Giriş / çıkış">±</button>`:'';
     const editBtn=USER_ROL!=='goruntule'?`<button class="icon-btn" onclick="openStokModal(${s.id})" style="width:26px;height:26px;font-size:12px;">✏️</button>`:'';
     const delBtn=USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteStok(${s.id},event)" style="width:26px;height:26px;font-size:12px;color:var(--red);">🗑</button>`:'';
-    return `<div class="${rowCls}" style="animation-delay:${i*0.04}s;">
-      <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.ad}${s.barkod?'<span style="font-size:10px;color:var(--text3);margin-left:6px;font-family:monospace;">'+s.barkod.slice(-6)+'</span>':''}</div><div style="font-size:11px;color:var(--text2);">${s.kategori}${s.birimFiyat>0?' · Satış '+fmt(s.birimFiyat)+'/'+s.birim:''}${s.alisFiyat>0?' · Alış '+fmt(s.alisFiyat):''}</div></div>
-      <div style="font-weight:700;font-size:14px;color:${renk};white-space:nowrap;">${s.miktar} <span style="font-size:10px;font-weight:400;color:var(--text3);">${s.birim}</span></div>
-      <div onclick="event.stopPropagation()" style="display:flex;gap:2px;">${barkodBtn}${editBtn}${delBtn}</div>
+    return `<div class="${rowCls}" style="animation-delay:${i*0.04}s;cursor:pointer;" onclick="stokHareketleriGoster(${s.id})">
+      <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(s.ad)}${s.barkod?'<span style="font-size:10px;color:var(--text3);margin-left:6px;font-family:monospace;">'+_esc(s.barkod.slice(-6))+'</span>':''}</div>
+        <div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${alt}${s.birimFiyat?' · '+fmt(s.birimFiyat)+'/'+_esc(s.birim):''}</div></div>
+      <div style="font-weight:700;font-size:14px;color:${renk};white-space:nowrap;">${s.miktar} <span style="font-size:10px;font-weight:400;color:var(--text3);">${_esc(s.birim)}</span></div>
+      <div onclick="event.stopPropagation()" style="display:flex;gap:2px;">${harBtn}${barkodBtn}${editBtn}${delBtn}</div>
     </div>`;
   }).join('');
   observeStagger();
@@ -16287,7 +16376,8 @@ function whatsappHatirlatici(kisiId){
       mesaj+=`\nYaklaşan ödemeler:\n`;
       vadeli.slice(0,3).forEach(i=>{mesaj+=`• ${dtS(i.tarih)}: ${fmt(i.tutar)}\n`;});
     }
-    mesaj+=`\nÖdeme kolaylığı için iletişime geçebilirsiniz.\n\nGün Teknik`;
+    const _F=firmaBilgi();
+    mesaj+=`\nÖdeme kolaylığı için iletişime geçebilirsiniz.${_F.iban?'\n\nIBAN: '+_F.iban+' ('+_F.unvan+')':''}\n\n${_F.unvan}`;
   }else{
     mesaj+=`Bilginize: Hesabınızda ${fmt(Math.abs(bakiye))} borcunuz bulunmaktadır.\n\nGün Teknik`;
   }
@@ -20574,20 +20664,21 @@ const FIYAT_KATEGORILER = {
 
 // Zorluk yüzde aralıkları
 const ZORLUK_ARALIK = {
-  'Kolay':   {min:0,   max:0,   label:'Sabit fiyat (+%0)'},
-  'Orta':    {min:30,  max:50,  label:'+%30 ile +%50 arası'},
-  'Zor':     {min:80,  max:100, label:'+%80 ile +%100 arası'},
-  'Çok Zor': {min:150, max:200, label:'+%150 ile +%200 arası'}
+  'Kolay':   {min:0,  max:0,   label:'Sabit fiyat (+%0)'},
+  'Orta':    {min:10, max:20,  label:'+%10 ile +%20 arası'},
+  'Zor':     {min:30, max:50,  label:'+%30 ile +%50 arası'},
+  'Çok Zor': {min:60, max:100, label:'+%60 ile +%100 arası'}
 };
+function fiyatBolgeKatsayi(){const v=parseFloat(((PS.ayar&&PS.ayar.fiyat)||{}).bolge);return v>0?v:1;}
 
 // AI Fiyat Senaryoları — kategori/dal bazında piyasa ortalamaları (TL, 2024)
-// AI Fiyat Senaryoları — Marmaris/Muğla 2026 piyasa ortalamaları
+// AI Fiyat Senaryoları — Muğla bölgesi 2026 piyasa ortalamaları (Fiyatlar → ⚙️ Bölge katsayısı ile ayarlanır)
 // Kaynak: Armut.com, forelektrik.com, meslekmaas.com — Ocak-Haziran 2026
-// Not: Marmaris tatil bölgesi olup Türkiye ortalamasının ~%25 üzerindedir
+// Not: Değerler Muğla turizm bölgesi ortalaması; Ortaca–Dalyan–Dalaman için katsayıyla düzeltilir
 const AI_FIYAT_SENARYOLAR = {
   // ── ELEKTRİK ──────────────────────────────────────────
   // Günlük yevmiye 2026: 3.000-4.000₺, servis/muayene ücreti: 1.000-1.500₺
-  'Elektrik:Priz / Anahtar Montajı': {base:500,  label:'2026 Marmaris: 400-650₺/adet (servis dahil). Türkiye ort. 300-500₺, bölge farkı +%25'},
+  'Elektrik:Priz / Anahtar Montajı': {base:500,  label:'2026 bölge: 400-650₺/adet (servis dahil). Türkiye ort. 300-500₺, bölge farkı +%25'},
   'Elektrik:Priz / Anahtar Tamiri':  {base:600,  label:'2026: Arıza servis ücreti 1.000-1.500₺ + işçilik. Basit tamir 500-700₺'},
   'Elektrik:Kablo ve Hat Çekme':     {base:55,   perMetre:true, label:'2026: 45-70₺/metre işçilik. Gizli kanalda +%30'},
   'Elektrik:Tavan Led Döşeme':       {base:150,  perUnit:true,  label:'2026: 120-200₺/spot işçilik. Sıva üstü 80₺, gömme 150₺+'},
@@ -20595,7 +20686,7 @@ const AI_FIYAT_SENARYOLAR = {
   'Elektrik:Dekoratif Aydınlatma':   {base:1200, label:'2026: 900-1.500₺ işçilik. Karmaşık sistem 2.000₺+'},
   'Elektrik:Klima Elektrik Bağlantısı':{base:900, label:'2026: 700-1.200₺. Özel hat çekilecekse 1.500₺+'},
   'Elektrik:Tesisat Yenileme':       {base:300,  perM2:true, label:'2026: 250-350₺/m² işçilik (malzeme hariç). 100m² daire ~30.000₺'},
-  'Elektrik:İnternet Arıza':         {base:700,  label:'2026: 600-1.000₺. Servis ücreti Marmaris\'te yüksek'},
+  'Elektrik:İnternet Arıza':         {base:700,  label:'2026: 600-1.000₺. Servis ücreti bölgede yüksek'},
   'Elektrik:İnternet Kablo Çekme':   {base:50,   perMetre:true, label:'2026: 40-65₺/metre. Kanal açma gerekiyorsa +%40'},
   'Elektrik:Sigorta Arızası / Değişimi':{base:800, label:'2026: 700-1.200₺. Pano değişimi 3.000-8.000₺'},
   'Elektrik:Pano Montajı':           {base:5000, label:'2026: 4.000-7.000₺ işçilik. Malzeme ayrıca'},
@@ -20605,7 +20696,7 @@ const AI_FIYAT_SENARYOLAR = {
   'Elektrik:TV Montaj':              {base:700,  label:'2026: 600-900₺. Duvara askı dahil. Kablo gizleme +300₺'},
   // ── KLİMA ─────────────────────────────────────────────
   // Kaynak: Armut klima montaj 2026: 3.500-5.250₺ standart. Marmaris +%25
-  'Klima:Montaj':                    {base:4500, label:'2026 Marmaris: 3.800-5.500₺ standart split (12-18K BTU). Yüksek kat/zor konum +%30'},
+  'Klima:Montaj':                    {base:4500, label:'2026 bölge: 3.800-5.500₺ standart split (12-18K BTU). Yüksek kat/zor konum +%30'},
   'Klima:Gaz Dolumu':                {base:1800, label:'2026: 1.500-2.500₺. R32 gaz + işçilik. Kaçak varsa +500₺'},
   'Klima:İç Ünite Temizliği':        {base:1200, label:'2026: 1.000-1.500₺/kafa. Kimyasal temizlik dahil'},
   'Klima:Dış Ünite Temizliği':       {base:900,  label:'2026: 800-1.200₺. Yüksek erişim gerekiyorsa +%40'},
@@ -20617,17 +20708,17 @@ const AI_FIYAT_SENARYOLAR = {
   'Klima:Tesisat Döşeme':            {base:180,  perMetre:true, label:'2026: 150-220₺/metre bakır boru+işçilik'},
   // ── SIHHI TESİSAT ─────────────────────────────────────
   // Kaynak: erkasutesisatcisi.com, enestesisat.com 2026
-  'Sıhhi Tesisat:Tıkanıklık Açma':   {base:1200, label:'2026 Marmaris: 1.000-1.600₺. Spiral/basınçlı açma. Gece/acil +%50'},
+  'Sıhhi Tesisat:Tıkanıklık Açma':   {base:1200, label:'2026 bölge: 1.000-1.600₺. Spiral/basınçlı açma. Gece/acil +%50'},
   'Sıhhi Tesisat:Su Kaçağı Tespiti': {base:1500, label:'2026: 1.200-2.000₺ tespit işçilik. Tamir yaptırılırsa ±düşülebilir'},
   'Sıhhi Tesisat:Su Kaçağı Tamiratı':{base:2500, label:'2026: 2.000-4.000₺+ işçilik. Kırım-döküm gerektiriyorsa 5.000₺+'},
   'Sıhhi Tesisat:Şofben Montaj':     {base:1500, label:'2026: 1.200-2.000₺ işçilik. Kombi montajı 2.500-4.000₺'},
   'Sıhhi Tesisat:Montaj':            {base:1300, label:'2026: 1.000-1.600₺ standart montaj (musluk, klozet vb.)'},
-  'Sıhhi Tesisat:Tamir':             {base:1100, label:'2026: 900-1.500₺. Servis ücreti Marmaris\'te 800₺+'},
+  'Sıhhi Tesisat:Tamir':             {base:1100, label:'2026: 900-1.500₺. Servis ücreti bölgede 800₺+'},
   'Sıhhi Tesisat:Arıza':             {base:1000, label:'2026: 800-1.400₺. Acil servis +%50 ek'},
   'Sıhhi Tesisat:Döşeme':            {base:130,  perMetre:true, label:'2026: 110-160₺/metre PPR/PE-X boru işçilik (malzeme hariç)'},
   // ── METAL / DEMİR ─────────────────────────────────────
   // Kaynak: Armut 2026 demir kaynak/korkuluk, emirdemirdograma.com
-  'Metal:Kaynak İşçilik':            {base:250,  perSaat:true,  label:'2026 Marmaris: 200-300₺/saat. Günlük yevmiye 3.000-4.000₺'},
+  'Metal:Kaynak İşçilik':            {base:250,  perSaat:true,  label:'2026 bölge: 200-300₺/saat. Günlük yevmiye 3.000-4.000₺'},
   'Metal:Korkuluk':                  {base:900,  perMetre:true, label:'2026: 700-1.200₺/metre (malzeme+işçilik). Ferforje 1.500₺+/m'},
   'Metal:Küpeşte':                   {base:750,  perMetre:true, label:'2026: 600-950₺/metre. Paslanmaz çelik 1.200₺+/m'},
   'Metal:Panel Çit':                 {base:550,  perMetre:true, label:'2026: 450-700₺/metre (malzeme+işçilik+beton)'},
@@ -20639,7 +20730,7 @@ const AI_FIYAT_SENARYOLAR = {
   'Metal:Ferforje':                  {base:1300, perMetre:true, label:'2026: 1.100-1.600₺/metre. El dövmesi özel tasarım 2.000₺+/m'},
   // ── AHŞAP ─────────────────────────────────────────────
   // Kaynak: Armut marangoz/lambri/parke 2026, sistrecilausta.com
-  'Ahşap:İşçilik':                   {base:250,  perSaat:true,  label:'2026 Marmaris marangoz: 200-300₺/saat. Günlük 2.500-3.500₺'},
+  'Ahşap:İşçilik':                   {base:250,  perSaat:true,  label:'2026 bölge marangoz: 200-300₺/saat. Günlük 2.500-3.500₺'},
   'Ahşap:Tamir':                     {base:1200, label:'2026: 900-1.600₺. Kapı/çerçeve tamiri 800-1.200₺'},
   'Ahşap:Lambri':                    {base:280,  perM2:true, label:'2026: 230-350₺/m² sadece işçilik. Malzeme dahil 500-800₺/m²'},
   'Ahşap:Zımpara':                   {base:180,  perM2:true, label:'2026: 150-220₺/m² (zemin zımparası). Parke yüzey 200-280₺/m²'},
@@ -20720,8 +20811,9 @@ function fiyatAiHesapla(){
     else if(senaryo.perMetre || senaryo.perM2 || senaryo.perUnit) base = base; // kullanıcı miktar bilmeli
     const ar = ZORLUK_ARALIK[zorluk] || ZORLUK_ARALIK['Orta'];
     const carpan = 1 + (ar.min+ar.max)/2/100;
-    aiTahmini = Math.round(base * carpan);
-    aciklama = senaryo.label + (zorluk!=='Kolay'?' · Zorluk katsayısı uygulandı':'');
+    const bk=fiyatBolgeKatsayi();
+    aiTahmini = Math.round(base * carpan * bk);
+    aciklama = senaryo.label + (zorluk!=='Kolay'?' · Zorluk katsayısı uygulandı':'') + (bk!==1?' · bölge ×'+bk:'');
   } else if(sabit > 0){
     const ar = ZORLUK_ARALIK[zorluk] || ZORLUK_ARALIK['Orta'];
     const carpan = 1 + (ar.min+ar.max)/2/100;
@@ -20800,17 +20892,63 @@ function fiyatKatFiltre(kat, btn){
   renderFiyatlar();
 }
 
+// Kendi geçmiş işlerinden gerçek fiyat: işlem kategorisi / alt kategori / notunda bu işin adı geçen gelirler
+function fiyatGecmisIsler(f){
+  const anah=[f.dal,f.tarif].filter(Boolean).map(x=>String(x).toLocaleLowerCase('tr').replace(/\(.*?\)/g,'').trim()).filter(x=>x.length>=4);
+  if(!anah.length)return {adet:0};
+  const sinir=gfGunEkle(localToday(),-365);
+  const L=(DB.islemler||[]).filter(i=>i.tip==='Gelir'&&localDateStr(i.tarih)>=sinir&&i.tutar>0).filter(i=>{const m=[i.kat,i.altKat,i.not].join(' ').toLocaleLowerCase('tr');return anah.some(a=>m.includes(a));})
+    .sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+  if(!L.length)return {adet:0};
+  const v=L.map(i=>Math.max(0,i.tutar-(i.malzemeTutar||0))||i.tutar);
+  return {adet:L.length,ort:Math.round(v.reduce((a,x)=>a+x,0)/v.length),son:v[0],min:Math.min(...v),max:Math.max(...v)};
+}
+function fiyatAraclar(){
+  secimModal('⚙️ Fiyat araçları','',[['zam','📈 Toplu zam / indirim (%)'],['bolge','📍 Bölge katsayısı (AI tahmini) — şu an ×'+fiyatBolgeKatsayi()],['liste','📄 Müşteriye fiyat listesi'],['wa','💬 Fiyat listesini WhatsApp metni olarak kopyala']],s=>{
+    const kats=[['','Tümü'],...Object.keys(FIYAT_KATEGORILER).map(k=>[k,k])];
+    if(s==='zam')formModal('📈 Toplu zam / indirim',[{id:'kat',etiket:'Kategori',tip:'select',deger:fiyatAktifKat||'',secenek:kats},{id:'oran',etiket:'Değişim % (indirim için eksi yaz)',tip:'number',deger:'',placeholder:'Örn: 15'}],async d=>{
+      const o=parseFloat(String(d.oran).replace(',','.'));if(!o||Math.abs(o)>300){showToast('Geçerli bir yüzde gir','red');return false;}
+      const L=(DB.fiyatlar||[]).filter(f=>!d.kat||f.kategori===d.kat);if(!L.length){showToast('Fiyat yok','amber');return false;}
+      const k=1+o/100,y=v=>v?Math.round(v*k/10)*10:v;let n=0;
+      for(const f of L){const g={sabit_fiyat:y(f.sabitFiyat),gercek_fiyat_min:y(f.gercekFiyatMin),gercek_fiyat_max:y(f.gercekFiyatMax)};
+        try{await sbFetch('fiyatlar?id=eq.'+f.id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify(g)});await fiyatGecmisKaydet(f.id,parseFloat(f.sabitFiyat)||fiyatTahmini(f),g.sabit_fiyat||y(fiyatTahmini(f)),f.kategori).catch(()=>{});n++;}catch(e){}}
+      await loadFiyatlar();renderFiyatlar();showToast(`${n} fiyat %${o} güncellendi`,'green');});
+    else if(s==='bolge')formModal('📍 Bölge katsayısı',[{id:'bolge',etiket:'AI tahminine uygulanacak çarpan (1 = olduğu gibi, 0.9 = %10 düşük)',tip:'number',deger:fiyatBolgeKatsayi()}],async d=>{
+      const v=parseFloat(String(d.bolge).replace(',','.'));if(!(v>0.3&&v<3)){showToast('0,3 ile 3 arası bir sayı gir','red');return false;}
+      await psAyarKaydet('fiyat',Object.assign({},(PS.ayar&&PS.ayar.fiyat)||{},{bolge:v}));showToast('Bölge katsayısı ×'+v,'green');});
+    else if(s==='liste'||s==='wa')secimModal('📄 Hangi kategori?','',kats.map(k=>[k[0],k[1]]),kat=>fiyatListesiCikar(kat,s==='wa'));
+  });
+}
+function fiyatListesiCikar(kat,metin){
+  const L=(DB.fiyatlar||[]).filter(f=>f.aktif!==false&&(!kat||f.kategori===kat)).sort((a,b)=>(a.kategori+a.tarif).localeCompare(b.kategori+b.tarif,'tr'));
+  if(!L.length){showToast('Bu kategoride fiyat yok','amber');return;}
+  const F=firmaBilgi();const fy=f=>{const a=parseFloat(f.gercekFiyatMin)||0,b=parseFloat(f.gercekFiyatMax)||0,s=parseFloat(f.sabitFiyat)||0;return s?fmt(s):(a&&b?fmt(a)+' – '+fmt(b):(a||b?fmt(a||b):'Sorunuz'));};
+  if(metin){
+    const txt=`${F.unvan} — ${kat||'Hizmet'} fiyat listesi (${new Date().toLocaleDateString('tr-TR')})\n\n`+L.map(f=>`• ${f.tarif}${f.dal&&f.dal!==f.tarif?' ('+f.dal+')':''}: ${fy(f)}`).join('\n')+`\n\nFiyatlar işin durumuna göre değişebilir; kesin fiyat keşif sonrası verilir.${F.tel?'\n☎ '+F.tel:''}`;
+    navigator.clipboard.writeText(txt).then(()=>showToast('Fiyat listesi panoya kopyalandı','green')).catch(()=>showInfoModal('Fiyat listesi','<pre style="white-space:pre-wrap;font-size:12px;">'+_esc(txt)+'</pre>'));return;
+  }
+  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fiyat listesi — ${_esc(F.unvan)}</title>
+  <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;margin:0;padding:28px;}h1{margin:0;font-size:22px;}.a{color:#64748b;font-size:12px;}h2{font-size:14px;margin:22px 0 6px;color:#1d4ed8;}table{width:100%;border-collapse:collapse;font-size:13px;}td{padding:7px 8px;border-bottom:1px solid #eef2f6;}.r{text-align:right;white-space:nowrap;font-weight:600;}.bar{text-align:right;}@media print{.bar{display:none}}</style></head><body>
+  <div class="bar"><button onclick="window.print()" style="padding:8px 16px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:600;">🖨️ Yazdır / PDF</button></div>
+  <h1>${_esc(F.unvan)}</h1><div class="a">${_esc(F.alt)}<br>${[F.adres,F.tel,F.eposta].filter(Boolean).map(_esc).join(' · ')}</div>
+  <div style="margin-top:8px;font-weight:700;">Hizmet fiyat listesi · ${new Date().toLocaleDateString('tr-TR',{month:'long',year:'numeric'})}</div>
+  ${[...new Set(L.map(f=>f.kategori))].map(k=>`<h2>${_esc(k)}</h2><table>${L.filter(f=>f.kategori===k).map(f=>`<tr><td>${_esc(f.tarif)}${f.dal&&f.dal!==f.tarif?' <span class="a">('+_esc(f.dal)+')</span>':''}</td><td class="r">${fy(f)}</td></tr>`).join('')}</table>`).join('')}
+  <div class="a" style="margin-top:20px;">Fiyatlar işin durumuna göre değişebilir; kesin fiyat keşif sonrası verilir.</div></body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 function renderFiyatlar(){
   const el = document.getElementById('list-fiyatlar');if(!el)return;
   let liste = (DB.fiyatlar||[]).filter(f=>f.aktif!==false);
   if(fiyatAktifKat) liste = liste.filter(f=>f.kategori===fiyatAktifKat);
-  liste.sort((a,b)=>a.tarif.localeCompare(b.tarif,'tr'));
+  const _ara=(document.getElementById('fiyat-ara')?.value||'').toLocaleLowerCase('tr').trim();
+  if(_ara) liste = liste.filter(f=>[f.tarif,f.dal,f.kategori,f.notlar].join(' ').toLocaleLowerCase('tr').includes(_ara));
+  liste.sort((a,b)=>(a.tarif||'').localeCompare(b.tarif||'','tr'));
   if(!liste.length){
     el.innerHTML='<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">Fiyat listesi boş</div><div class="empty-sub">Fiyat Ekle ile başlayın</div></div>';
     return;
   }
-  const katRenk={Elektrik:'var(--amber)',Klima:'var(--blue)',  'Sıhhi Tesisat':'var(--teal)',Metal:'#9ca3af',Ahşap:'#a16207'};
-  const katEmoji={Elektrik:'⚡',Klima:'❄️','Sıhhi Tesisat':'🔧',Metal:'🔩',Ahşap:'🪵'};
+  const katRenk={Elektrik:'var(--amber)',Klima:'var(--blue)','TV, Uydu, Çanak':'#a78bfa','İnternet':'#00E5FF','Sıhhi Tesisat':'var(--teal)',Metal:'#9ca3af',Ahşap:'#a16207'};
+  const katEmoji={Elektrik:'⚡',Klima:'❄️','TV, Uydu, Çanak':'📡','İnternet':'🌐','Sıhhi Tesisat':'🔧',Metal:'🔩',Ahşap:'🪵'};
   el.innerHTML = liste.map((f,i)=>{
     const renk = katRenk[f.kategori]||'var(--text2)';
     const emoji = katEmoji[f.kategori]||'';
@@ -20848,6 +20986,7 @@ function renderFiyatlar(){
         </div>
       </div>
       ${f.iscillikSure?`<div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:right;">⏱ Tahmini süre: ${f.iscillikSure} saat</div>`:''}
+      ${(()=>{const g=fiyatGecmisIsler(f);return g.adet?`<div style="font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">📒 Son 12 ayda bu işi <b>${g.adet}</b> kez yaptın · ort. <b>${fmt(g.ort)}</b> · son <b>${fmt(g.son)}</b>${g.min!==g.max?` · ${fmt(g.min)}–${fmt(g.max)}`:''}</div>`:'';})()}
     </div>`;
   }).join('');
 }
@@ -21164,7 +21303,7 @@ function enfasyonAiKatsayisi(kategori){
 // Kaynakçı/Demirci günlük 5.000₺, Turistik bölge +%30
 const AI_FIYAT_SENARYOLAR_YENİ = {
   // ELEKTRİK — saatlik ~650₺ (5000/8saat)
-  'Elektrik:Priz / Anahtar Montajı':    {base:1200, label:'2026 Marmaris: ~1.000-1.400₺/adet. Servis ücreti dahil. 1-2 saat'},
+  'Elektrik:Priz / Anahtar Montajı':    {base:1200, label:'2026 bölge: ~1.000-1.400₺/adet. Servis ücreti dahil. 1-2 saat'},
   'Elektrik:Priz / Anahtar Tamiri':     {base:1000, label:'2026: 800-1.200₺. Basit tamir servis dahil'},
   'Elektrik:Kablo ve Hat Çekme':        {base:80,   perMetre:true, label:'2026: 65-100₺/metre işçilik (gizli kanal +%40)'},
   'Elektrik:Tavan Led Döşeme':          {base:200,  perUnit:true,  label:'2026: 160-260₺/spot. Sıva üstü 160₺, gömme 220₺+'},
@@ -21181,7 +21320,7 @@ const AI_FIYAT_SENARYOLAR_YENİ = {
   'Elektrik:Montaj':                    {base:1300, label:'2026: 1.100-1.600₺ standart montaj işçilik'},
   'Elektrik:TV Montaj':                 {base:1000, label:'2026: 850-1.200₺. Askı+kablo gizleme dahil'},
   // KLİMA — iç/dış temizlik baz 2.000₺
-  'Klima:Montaj':                       {base:5500, label:'2026 Marmaris: 4.500-7.000₺ split (malzeme ayrıca). Yüksek kat +%40'},
+  'Klima:Montaj':                       {base:5500, label:'2026 bölge: 4.500-7.000₺ split (malzeme ayrıca). Yüksek kat +%40'},
   'Klima:Gaz Dolumu':                   {base:2500, label:'2026: 2.000-3.200₺. R32 gaz+işçilik. Kaçak var +800₺'},
   'Klima:İç Ünite Temizliği':           {base:2000, label:'2026 baz fiyat: 1.800-2.300₺/kafa. Kimyasal temizlik dahil'},
   'Klima:Dış Ünite Temizliği':          {base:2000, label:'2026: 1.700-2.400₺. Yüksek erişim +%50'},
@@ -21192,16 +21331,16 @@ const AI_FIYAT_SENARYOLAR_YENİ = {
   'Klima:Yer Değiştirme Sök/Tak':       {base:4500, label:'2026: 3.800-5.500₺. Söküm+nakil+montaj'},
   'Klima:Tesisat Döşeme':               {base:250,  perMetre:true, label:'2026: 200-320₺/metre bakır boru+işçilik'},
   // SIHHI TESİSAT — saatlik ~600₺
-  'Sıhhi Tesisat:Tıkanıklık Açma':      {base:1600, label:'2026 Marmaris: 1.300-2.000₺. Gece/acil +%60'},
+  'Sıhhi Tesisat:Tıkanıklık Açma':      {base:1600, label:'2026 bölge: 1.300-2.000₺. Gece/acil +%60'},
   'Sıhhi Tesisat:Su Kaçağı Tespiti':    {base:2000, label:'2026: 1.600-2.600₺ tespit işçilik. Tamir yaptırılırsa düşer'},
   'Sıhhi Tesisat:Su Kaçağı Tamiratı':   {base:3500, label:'2026: 2.800-5.000₺+ işçilik. Kırım gerekiyorsa 7.000₺+'},
   'Sıhhi Tesisat:Şofben Montaj':        {base:2000, label:'2026: 1.700-2.500₺ işçilik. Kombi montajı 3.500-5.000₺'},
   'Sıhhi Tesisat:Montaj':               {base:1800, label:'2026: 1.500-2.200₺ (musluk/klozet/batarya montajı)'},
-  'Sıhhi Tesisat:Tamir':                {base:1500, label:'2026: 1.200-1.900₺. Servis Marmaris\'te 1.000₺+'},
+  'Sıhhi Tesisat:Tamir':                {base:1500, label:'2026: 1.200-1.900₺. Servis bölgede 1.000₺+'},
   'Sıhhi Tesisat:Arıza':                {base:1400, label:'2026: 1.100-1.800₺. Acil servis +%60'},
   'Sıhhi Tesisat:Döşeme':               {base:180,  perMetre:true, label:'2026: 150-220₺/metre PPR boru işçilik (malzeme hariç)'},
   // METAL — günlük 5.000₺, saatlik ~650₺
-  'Metal:Kaynak İşçilik':               {base:650,  perSaat:true, label:'2026 Marmaris: 600-750₺/saat. Günlük 5.000₺'},
+  'Metal:Kaynak İşçilik':               {base:650,  perSaat:true, label:'2026 bölge: 600-750₺/saat. Günlük 5.000₺'},
   'Metal:Korkuluk':                     {base:1300, perMetre:true, label:'2026: 1.100-1.600₺/metre malzeme+işçilik. Ferforje 2.200₺+/m'},
   'Metal:Küpeşte':                      {base:1100, perMetre:true, label:'2026: 900-1.400₺/metre. Paslanmaz 1.600₺+/m'},
   'Metal:Panel Çit':                    {base:800,  perMetre:true, label:'2026: 650-1.000₺/metre (malzeme+işçilik+beton)'},
@@ -21212,7 +21351,7 @@ const AI_FIYAT_SENARYOLAR_YENİ = {
   'Metal:Garaj Yapımı':                 {base:25000,label:'2026: 20.000-35.000₺ standart. Otomatik kapı +12.000₺'},
   'Metal:Ferforje':                     {base:1900, perMetre:true, label:'2026: 1.600-2.400₺/metre. El dövmesi 3.000₺+/m'},
   // AHŞAP — günlük 3.500-4.000₺, saatlik ~450₺
-  'Ahşap:İşçilik':                      {base:450,  perSaat:true, label:'2026 Marmaris: 400-550₺/saat. Günlük 3.500-4.000₺'},
+  'Ahşap:İşçilik':                      {base:450,  perSaat:true, label:'2026 bölge: 400-550₺/saat. Günlük 3.500-4.000₺'},
   'Ahşap:Tamir':                        {base:1800, label:'2026: 1.500-2.200₺. Kapı/çerçeve tamiri'},
   'Ahşap:Lambri':                       {base:380,  perM2:true, label:'2026: 320-480₺/m² sadece işçilik. Malzeme dahil 700-1.100₺/m²'},
   'Ahşap:Zımpara':                      {base:260,  perM2:true, label:'2026: 220-320₺/m². Parke yüzey zımparası'},
@@ -23321,7 +23460,7 @@ function stokKarRaporuGoster(){
   DB.stok.forEach(s=>{
     if(!s.alisFiyat||!s.birimFiyat||s.alisFiyat===s.birimFiyat)return;
     const karBirim=s.birimFiyat-s.alisFiyat;
-    const kullanim=(DB.stokHareketleri||[]).filter(h=>h.stokId===s.id&&h.tip==='Kullanım');
+    const kullanim=(DB.stokHareketleri||[]).filter(h=>h.stokId===s.id&&(h.tip==='Çıkış'||h.tip==='Kullanım'));
     const toplamMiktar=kullanim.reduce((a,h)=>a+(h.miktar||0),0);
     if(!toplamMiktar)return;
     const kar=karBirim*toplamMiktar;
