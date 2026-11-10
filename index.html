@@ -2504,6 +2504,8 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
           <option value="İptal">İptal</option>
         </select>
       </div>
+      <input type="text" id="proje-ara" placeholder="Proje, müşteri ya da adres ara…" oninput="renderProjeler()" style="width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;margin-bottom:10px;box-sizing:border-box;">
+      <div id="proje-ozet"></div>
       <div id="list-projeler" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
@@ -6411,7 +6413,8 @@ async function loadDB(o){
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,baslik:s.baslik||s.isim||'',tip:s.tip||'Gider',hesap:s.hesap||'İşletme',kategori:s.kategori||s.kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',periyot:s.periyot||'Aylık',baslangic:s.baslangic||null,bitis:s.bitis||null,aktif:s.aktif!==false,sonIslemTarihi:s.son_islem_tarihi||null,aciklama:s.aciklama||s.not||''}));
     DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
     DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||'',maasTutar:parseFloat(p.maas_tutar)||0,maasDongusu:p.maas_dongusu||'Aylık',sgkNo:p.sgk_no||'',iseBaslama:p.ise_baslama||null}));
-    DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',islemKaynagi:kaynakTuret(p.islem_kaynagi||'',p.musteri_id),baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,adres:p.adres||'',zorluk:p.zorluk||'Orta',enIyiFiyat:parseFloat(p.en_iyi_fiyat)||0,teklifFiyat:parseFloat(p.teklif_fiyat)||0,musteriTeklif:parseFloat(p.musteri_teklif)||0,malzemeTahmini:parseFloat(p.malzeme_tahmini)||0,iscilikTahmini:parseFloat(p.iscilik_tahmini)||0,gerceklesenTutar:parseFloat(p.gerceklesen_tutar)||0,malzemeler:p.malzemeler||'',teklifId:p.teklif_id||null,teklifKalemleri:p.teklif_kalemleri||'',teklifAciklama:p.teklif_aciklama||'',createdAt:p.created_at}));
+    DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',islemKaynagi:kaynakTuret(p.islem_kaynagi||'',p.musteri_id),baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,adres:p.adres||'',zorluk:p.zorluk||'Orta',enIyiFiyat:parseFloat(p.en_iyi_fiyat)||0,teklifFiyat:parseFloat(p.teklif_fiyat)||0,musteriTeklif:parseFloat(p.musteri_teklif)||0,malzemeTahmini:parseFloat(p.malzeme_tahmini)||0,iscilikTahmini:parseFloat(p.iscilik_tahmini)||0,gerceklesenTutar:parseFloat(p.gerceklesen_tutar)||0,malzemeler:p.malzemeler||'',teklifId:p.teklif_id||null,teklifKalemleri:p.teklif_kalemleri||'',teklifAciklama:p.teklif_aciklama||'',createdAt:p.created_at,
+      ilerleme:parseInt(p.ilerleme)||0,asamalar:Array.isArray(p.asamalar)?p.asamalar:[]}));
     DB.teklifler=(teklifler||[]).map(t=>{
       let kalemler=t.kalemler||[];
       if(typeof kalemler==='string'){try{kalemler=JSON.parse(kalemler);}catch(e){kalemler=[];}}
@@ -11038,10 +11041,10 @@ async function projejiTamamla(btn){
         await sbFetch('stok?id=eq.'+m.stok_id,{method:'PATCH',body:JSON.stringify({miktar:yeniMiktar})});
         // Stok hareketi
         await sbFetch('stok_hareketleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
-          stok_id:m.stok_id,tarih:tarih+'T12:00:00',
-          tip:'Kullanım',miktar:m.miktar,
-          aciklama:`Proje: ${p.isim}`
-        })}).catch(()=>{});
+          stok_id:m.stok_id,islem_id:result&&result[0]?result[0].id:null,tarih:tarih+'T12:00:00',
+          hareket_tipi:'Çıkış',miktar:m.miktar,
+          'not':`Proje: ${p.isim}`
+        })}).catch(e=>console.warn('stok hareketi',e));
       }
     }
 
@@ -15776,47 +15779,65 @@ function icsEscape(str){
 
 // ============================================================ PROJELER
 
+// Proje rakamları: beklenen ciro (teklif / müşteriye verilen fiyat), tahsil edilen, tahmini gider, kâr
+function projeRakam(p,giderMap){
+  const islemler=DB.islemler.filter(x=>x.projeId===p.id);
+  const tahsil=islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+  const bekleyen=islemler.filter(x=>x.tip==='Gelir'&&x.statu!=='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
+  const beklenen=p.durum==='Tamamlandı'&&p.gerceklesenTutar?p.gerceklesenTutar:(p.musteriTeklif||p.teklifFiyat||0);
+  const ciro=p.durum==='Tamamlandı'?(p.gerceklesenTutar||tahsil):Math.max(beklenen,tahsil+bekleyen);
+  const gider=(giderMap&&giderMap[p.id])||0;
+  return {islemler,tahsil,bekleyen,beklenen,ciro,gider,kar:ciro-gider,tahsilOran:ciro>0?Math.min(100,Math.round(tahsil/ciro*100)):0};
+}
+function projeGecikti(p){return !!p.bitis&&p.durum!=='Tamamlandı'&&p.durum!=='İptal'&&String(p.bitis).slice(0,10)<localToday();}
+function projeIlerleme(p){const a=p.asamalar||[];if(a.length)return Math.round(a.filter(x=>x.ok).length/a.length*100);return p.durum==='Tamamlandı'?100:(p.ilerleme||0);}
 async function renderProjeler(){
   const list=document.getElementById('list-projeler');if(!list)return;
   const filtre=document.getElementById('proje-filtre')?.value||'';
+  const ara=(document.getElementById('proje-ara')?.value||'').toLocaleLowerCase('tr').trim();
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
-  const projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
-  if(!projeler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Proje yok</div><div class="empty-sub">+ Proje butonuna bas</div></div>';return;}
+  let projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
+  if(ara)projeler=projeler.filter(p=>{const k=getKisi(p.musteriId);return [p.isim,p.adres,p.aciklama,k&&k.isim].join(' ').toLocaleLowerCase('tr').includes(ara);});
   // Tüm projelerin tahmini gider toplamlarını tek seferde çek
-  const projeIdler=projeler.map(p=>p.id).join(',');
   let tahminGiderMap={};
   try{
-    const gd=await sbFetch('proje_giderler?proje_id=in.('+projeIdler+')').catch(()=>[]);
-    (gd||[]).forEach(g=>{tahminGiderMap[g.proje_id]=(tahminGiderMap[g.proje_id]||0)+(parseFloat(g.tutar)||0);});
+    const idler=DB.projeler.map(p=>p.id).join(',');
+    if(idler){const gd=await sbFetch('proje_giderler?proje_id=in.('+idler+')').catch(()=>[]);
+      (gd||[]).forEach(g=>{tahminGiderMap[g.proje_id]=(tahminGiderMap[g.proje_id]||0)+(parseFloat(g.tutar)||0);});}
   }catch(e){}
+  const oz=document.getElementById('proje-ozet');
+  if(oz){
+    const aktif=DB.projeler.filter(p=>p.durum==='Devam Ediyor'||p.durum==='Beklemede');
+    const R=aktif.map(p=>projeRakam(p,tahminGiderMap));
+    const gec=DB.projeler.filter(projeGecikti);
+    oz.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;">
+      <div class="card" style="padding:10px 12px;"><div class="lbl">🏗️ Devam eden</div><div class="val num" style="font-size:17px;color:var(--blue);">${aktif.length}</div></div>
+      <div class="card" style="padding:10px 12px;"><div class="lbl">💰 Beklenen ciro</div><div class="val num" style="font-size:17px;color:var(--green);">${fmt(R.reduce((a,r)=>a+r.ciro,0))}</div></div>
+      <div class="card" style="padding:10px 12px;"><div class="lbl">⏳ Tahsil edilecek</div><div class="val num" style="font-size:17px;color:var(--amber);">${fmt(R.reduce((a,r)=>a+Math.max(0,r.ciro-r.tahsil),0))}</div></div></div>
+      ${gec.length?`<div class="vade-banner" style="background:var(--red-lt);border-color:rgba(232,128,128,0.25);margin-bottom:8px;cursor:pointer;" onclick="showProjeDetay(${gec[0].id})"><div class="vade-banner-dot" style="background:var(--red);"></div><div><div style="font-weight:600;font-size:12px;color:var(--red);">⏰ ${gec.length} projenin bitiş tarihi geçti</div><div style="font-size:11px;color:var(--text2);">${gec.slice(0,3).map(p=>_esc(p.isim)+' ('+dtS(p.bitis)+')').join(' · ')}</div></div></div>`:''}`;
+  }
+  if(!projeler.length){list.innerHTML='<div class="empty-state"><div class="empty-title">'+(DB.projeler.length?'Eşleşen proje yok':'Proje yok')+'</div><div class="empty-sub">'+(DB.projeler.length?'':'+ Proje butonuna bas')+'</div></div>';return;}
   list.innerHTML=projeler.map((p,i)=>{
-    const k=getKisi(p.musteriId);
-    const islemler=DB.islemler.filter(x=>x.projeId===p.id);
-    // Tek yönlü akış: proje TAMAMLANDIYSA gerceklesenTutar SABİT kalır, işlemler sayfasındaki
-    // sonraki değişiklikler/silmeler bu rakamı asla etkilemez (arşiv mantığı).
-    // Sadece tamamlanmamış/devam eden projeler için işlemlerden canlı hesap yapılır.
-    const gercekCiro=(p.durum==='Tamamlandı')
-      ? (p.gerceklesenTutar||0)
-      : islemler.filter(x=>x.tip==='Gelir'&&x.statu==='Tamamlandı').reduce((a,x)=>a+x.tutar,0);
-    // Not: Malzeme/İşçilik müşteriden talep edilen tutarın (Ciro) içinde sayılır, ayrıca maliyet değildir.
-    // Sadece Gider (proje_giderler — kendi masrafımız) Ciro'dan düşülerek Kâr hesaplanır.
-    const tamamlandi=p.durum==='Tamamlandı'&&gercekCiro>0;
-    const ciro=tamamlandi?gercekCiro:0;
-    const gider=tahminGiderMap[p.id]||0;
-    const kar=ciro-gider;
-    const renk=durumRenk[p.durum]||'var(--blue)';
-    return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;border-left:3px solid ${renk};" onclick="showProjeDetay(${p.id})">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+    const k=getKisi(p.musteriId);const R=projeRakam(p,tahminGiderMap);
+    const renk=durumRenk[p.durum]||'var(--blue)';const il=projeIlerleme(p);const gec=projeGecikti(p);
+    return `<div class="card" style="animation-delay:${i*0.04}s;cursor:pointer;border-left:3px solid ${gec?'var(--red)':renk};" onclick="showProjeDetay(${p.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.isim}</div>
-          <div style="font-size:11px;color:var(--text2);">${k?k.isim:'Müşteri yok'} · ${islemler.length} işlem</div>
+          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(p.isim)}</div>
+          <div style="font-size:11px;color:var(--text2);">${_esc(k?k.isim:'Müşteri yok')} · ${R.islemler.length} işlem${p.bitis?' · 🏁 '+dtS(p.bitis):''}</div>
         </div>
-        <span style="background:${renk}22;color:${renk};font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;">${p.durum}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+          <span style="background:${renk}22;color:${renk};font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;">${p.durum}</span>
+          ${gec?`<span style="color:var(--red);font-size:10px;font-weight:600;">⏰ Gecikti</span>`:''}
+        </div>
       </div>
-      <div style="display:flex;gap:12px;">
-        <div><div style="font-size:10px;color:var(--text3);">Ciro</div><div style="font-weight:600;font-size:13px;color:var(--green);" class="num">${fmt(ciro)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);">Gider</div><div style="font-weight:600;font-size:13px;color:var(--red);" class="num">${fmt(gider)}</div></div>
-        <div><div style="font-size:10px;color:var(--text3);">Kâr</div><div style="font-weight:600;font-size:13px;color:${kar>=0?'var(--green)':'var(--red)'};" class="num">${kar<0?'- ':''} ${fmt(Math.abs(kar))}</div></div>
+      ${p.durum!=='İptal'?`<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="height:100%;width:${il}%;background:${il>=100?'var(--green)':'var(--blue)'};"></div></div>`:''}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div><div style="font-size:10px;color:var(--text3);">${p.durum==='Tamamlandı'?'Ciro':'Beklenen'}</div><div style="font-weight:600;font-size:13px;color:var(--green);" class="num">${fmt(R.ciro)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);">Tahsil</div><div style="font-weight:600;font-size:13px;color:var(--cyan,#00E5FF);" class="num">${fmt(R.tahsil)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);">Gider</div><div style="font-weight:600;font-size:13px;color:var(--red);" class="num">${fmt(R.gider)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);">Kâr</div><div style="font-weight:600;font-size:13px;color:${R.kar>=0?'var(--green)':'var(--red)'};" class="num">${R.kar<0?'− ':''}${fmt(R.kar)}</div></div>
+        <div style="margin-left:auto;align-self:flex-end;font-size:11px;color:var(--text3);">%${il}</div>
       </div>
     </div>`;
   }).join('');
@@ -15885,9 +15906,11 @@ async function saveProje(btn){
 
 async function deleteProje(id){
   showConfirm('Projeyi Sil','Bu proje silinecek. İşlemler etkilenmez.',async()=>{
-    await eklerTopluSil('proje',id);
-    await sbFetch('projeler?id=eq.'+id,{method:'DELETE'});
-    await loadDB();closeModal('modal-proje-detay');showToast('Proje silindi','amber');
+    try{
+      await eklerTopluSil('proje',id).catch(()=>{});
+      await sbFetch('projeler?id=eq.'+id,{method:'DELETE'});
+      await loadDB();closeModal('modal-proje-detay');showToast('Proje silindi','amber');
+    }catch(e){showToast('Silinemedi: '+String(e.message||e).slice(0,80),'red');}
   },'🗑');
 }
 
@@ -21771,6 +21794,82 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
 
 
 // ── PROJE DETAY (ASYNC - TAM VERSİYON) ─────────────────
+// ── Proje ilerleme / aşamalar ──
+function projeIlerlemeHtml(p){
+  const a=p.asamalar||[];const il=projeIlerleme(p);
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">📈 İlerleme</div>
+      <b style="font-size:15px;color:${il>=100?'var(--green)':'var(--blue)'};">%${il}</b></div>
+    <div style="height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:${il}%;background:${il>=100?'var(--green)':'var(--blue)'};transition:width .3s;"></div></div>
+    ${a.length?a.map((x,i)=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:3px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" ${x.ok?'checked':''} onchange="projeAsamaIsaretle(${p.id},${i},this.checked)" style="width:18px;height:18px;">
+        <span style="flex:1;${x.ok?'text-decoration:line-through;color:var(--text3);':''}">${_esc(x.ad)}</span>
+        ${x.ok&&x.t?`<span style="font-size:10px;color:var(--text3);">${dtS(x.t)}</span>`:''}
+        <button onclick="event.preventDefault();projeAsamaSil(${p.id},${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">✕</button></label>`).join('')
+      :`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-bottom:6px;">Aşama yoksa elle: <input type="range" min="0" max="100" step="5" value="${p.ilerleme||0}" onchange="projeIlerlemeYaz(${p.id},this.value)" style="flex:1;"></div>`}
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <input type="text" id="proje-asama-yeni-${p.id}" placeholder="Aşama ekle (ör. Kablolama)" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:12px;outline:none;" onkeydown="if(event.key==='Enter')projeAsamaEkle(${p.id})">
+      <button class="btn btn-secondary btn-sm" onclick="projeAsamaEkle(${p.id})">+ Ekle</button>
+      ${!a.length?`<button class="btn btn-secondary btn-sm" onclick="projeAsamaHazir(${p.id})" title="Standart aşamalar">⚡ Hazır</button>`:''}
+    </div></div>`;
+}
+async function projeAsamaYaz(id,asamalar){
+  const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+  p.asamalar=asamalar;p.ilerleme=projeIlerleme(p);
+  try{await sbFetch('projeler?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({asamalar,ilerleme:p.ilerleme})});}
+  catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');return;}
+  showProjeDetay(id);renderProjeler();
+}
+function projeAsamaEkle(id){const el=document.getElementById('proje-asama-yeni-'+id);const ad=(el&&el.value||'').trim();if(!ad)return;const p=DB.projeler.find(x=>x.id===id);if(!p)return;projeAsamaYaz(id,[...(p.asamalar||[]),{ad,ok:false}]);}
+function projeAsamaHazir(id){projeAsamaYaz(id,['Keşif / ölçü','Malzeme temini','Montaj / uygulama','Test ve devreye alma','Teslim ve tahsilat'].map(ad=>({ad,ok:false})));}
+function projeAsamaIsaretle(id,i,ok){const p=DB.projeler.find(x=>x.id===id);if(!p)return;const a=(p.asamalar||[]).map((x,j)=>j===i?Object.assign({},x,{ok,t:ok?localToday():null}):x);projeAsamaYaz(id,a);}
+function projeAsamaSil(id,i){const p=DB.projeler.find(x=>x.id===id);if(!p)return;projeAsamaYaz(id,(p.asamalar||[]).filter((_,j)=>j!==i));}
+async function projeIlerlemeYaz(id,v){const p=DB.projeler.find(x=>x.id===id);if(!p)return;p.ilerleme=parseInt(v)||0;try{await sbFetch('projeler?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({ilerleme:p.ilerleme})});}catch(e){}renderProjeler();showProjeDetay(id);}
+// Müşterinin proje dönemindeki randevuları
+function projeRandevuHtml(p){
+  if(!p.musteriId||typeof tkOlaylar!=='function')return '';
+  const bas=p.baslangic||String(p.createdAt||localToday()).slice(0,10);
+  const bit=gfGunEkle(p.bitis&&p.bitis>localToday()?p.bitis:localToday(),60);
+  let L=[];try{L=tkOlaylar(gfGunEkle(bas,-7),bit).filter(o=>o.t.kisiId===p.musteriId);}catch(e){}
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">📅 Randevular (${L.length})</div>
+      <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="closeModal('modal-proje-detay');projeRandevuEkle(${p.id})">+ Randevu</button></div>
+    ${L.length?L.slice(0,8).map(o=>{const T=TK_TIP[o.t.tip]||TK_TIP.Bilgi;const dr={yapildi:'✓',iptal:'✕',ertelendi:'↷'}[o.durum]||'';
+      return `<div style="display:flex;gap:8px;align-items:center;padding:6px 8px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:3px;font-size:12px;cursor:pointer;" onclick="closeModal('modal-proje-detay');tkFormAc(${o.t.id})">
+        <span style="width:74px;color:${o.gun===localToday()?'var(--amber)':'var(--text3)'};">${dtS(o.gun).slice(0,5)}${o.t.saat?' '+o.t.saat:''}</span><span style="flex:1;">${T.ik} ${_esc(o.t.baslik||o.t.tip)}</span><span style="color:var(--text3);">${dr}</span></div>`;}).join('')
+      :'<div style="font-size:12px;color:var(--text3);text-align:center;padding:4px;">Bu müşteri için randevu yok</div>'}</div>`;
+}
+function projeRandevuEkle(id){
+  const p=DB.projeler.find(x=>x.id===id);if(!p)return;
+  goPage('takvim');setTimeout(()=>{try{tkFormAc(null,null,{kisiId:p.musteriId||null,baslik:p.isim,tip:'İş'});}catch(e){tkFormAc();}},300);
+}
+// Zaman çizelgesi: teklif, başlangıç, randevular, işlemler, notlar, aşamalar
+function projeZamanHtml(p,islemler,notlar){
+  const E=[];const ek=(g,ik,m)=>{if(g)E.push({g:String(g).slice(0,10),ik,m});};
+  const tk=p.teklifId&&DB.teklifler.find(x=>x.id===p.teklifId);
+  if(tk){ek(tk.tarih,'📋','Teklif '+teklifNoYaz(tk)+' · '+fmt(tk.toplam));if(tk.onayTarihi)ek(tk.onayTarihi,'✅','Teklif onaylandı');}
+  ek(p.createdAt,'🏗️','Proje açıldı');ek(p.baslangic,'▶️','Başlangıç');
+  (p.asamalar||[]).filter(a=>a.ok&&a.t).forEach(a=>ek(a.t,'☑️',a.ad));
+  (islemler||[]).forEach(i=>ek(localDateStr(i.tarih),i.tip==='Gelir'?'💰':'🧾',(i.kat||i.tip)+' · '+fmt(i.tutar)+(i.statu==='Bekliyor'?' (bekliyor)':'')));
+  (notlar||[]).forEach(n=>ek(n.created_at,'📝',String(n.not_metni||'').slice(0,70)));
+  if(p.musteriId&&typeof tkOlaylar==='function'){try{tkOlaylar(p.baslangic||String(p.createdAt||'').slice(0,10)||localToday(),localToday()).filter(o=>o.t.kisiId===p.musteriId&&o.durum==='yapildi').forEach(o=>ek(o.gun,'📅',o.t.baslik||o.t.tip));}catch(e){}}
+  if(p.bitis)ek(p.bitis,p.durum==='Tamamlandı'?'🏁':'🎯',p.durum==='Tamamlandı'?'Tamamlandı':'Planlanan bitiş');
+  if(!E.length)return '';
+  E.sort((a,b)=>a.g<b.g?-1:a.g>b.g?1:0);
+  return `<details style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+    <summary style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;cursor:pointer;">🕒 Zaman çizelgesi (${E.length})</summary>
+    <div style="margin-top:8px;border-left:2px solid var(--border2);padding-left:10px;">${E.map(e=>`<div style="font-size:12px;margin-bottom:6px;"><span style="color:${e.g>localToday()?'var(--amber)':'var(--text3)'};font-size:11px;">${dtS(e.g)}</span> ${e.ik} ${_esc(e.m)}</div>`).join('')}</div></details>`;
+}
+function projeIlerlemeWhatsapp(id){
+  const p=DB.projeler.find(x=>x.id===id);if(!p)return;const k=getKisi(p.musteriId);
+  if(!k||!k.tel){showToast('Müşterinin telefonu kayıtlı değil','amber');return;}
+  const a=p.asamalar||[];const il=projeIlerleme(p);
+  const satir=a.length?'\n\n'+a.map(x=>(x.ok?'✅ ':'⬜ ')+x.ad).join('\n'):'';
+  const msg=`Merhaba ${k.isim},\n\n"${p.isim}" işinizde son durum: %${il} tamamlandı.${satir}${p.bitis&&p.durum!=='Tamamlandı'?'\n\nPlanlanan bitiş: '+dtS(p.bitis):''}\n\nSorunuz olursa bize yazabilirsiniz.\n${firmaBilgi().unvan}`;
+  window.open('https://wa.me/'+waNumara(k.tel)+'?text='+encodeURIComponent(msg),'_blank');
+}
 async function showProjeDetay(id){
   const p=DB.projeler.find(x=>x.id===id);if(!p)return;
   _projeAktifId=id;
@@ -21821,10 +21920,22 @@ async function showProjeDetay(id){
       ${p.baslangic?`<div style="font-size:11px;color:var(--text3);">📅 <b>${p.baslangic}</b></div>`:''}
       ${p.bitis?`<div style="font-size:11px;color:var(--text3);">🏁 <b>${p.bitis}</b></div>`:''}
       <div style="font-size:11px;color:var(--text3);">⚡ <b>${p.zorluk||'Orta'}</b></div>
-      ${p.teklifId?`<div style="font-size:11px;color:var(--text3);">📋 Teklif #${fmtId(p.teklifId)}</div>`:''}
+      ${p.teklifId?`<div style="font-size:11px;color:var(--text3);cursor:pointer;" onclick="closeModal('modal-proje-detay');showTeklifDetay(${p.teklifId})">📋 Teklif ${_esc(teklifNoYaz(DB.teklifler.find(x=>x.id===p.teklifId)||{id:p.teklifId}))}</div>`:''}
+      ${projeGecikti(p)?`<div style="font-size:11px;color:var(--red);font-weight:600;">⏰ Bitiş tarihi ${Math.floor((Date.now()-new Date(p.bitis))/864e5)} gün geçti</div>`:''}
     </div>
     ${p.aciklama?`<div style="font-size:12px;color:var(--text2);margin-top:8px;padding:8px;background:rgba(0,0,0,0.15);border-radius:var(--r-sm);">${p.aciklama}</div>`:''}
   </div>`;
+  // İLERLEME & AŞAMALAR
+  html+=projeIlerlemeHtml(p);
+  // BÜTÇE KARŞILAŞTIRMA
+  {const R=projeRakam(p,{[p.id]:giderToplam});const mx=Math.max(R.ciro,R.tahsil,giderToplam,p.teklifFiyat||0,1);
+   const bar=(e,v,r)=>`<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px;"><span style="width:70px;color:var(--text3);">${e}</span><div style="flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${Math.round(v/mx*100)}%;background:${r};"></div></div><span class="num" style="width:84px;text-align:right;">${fmt(v)}</span></div>`;
+   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
+     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">📊 Bütçe: teklif ↔ gerçekleşen ↔ gider</div>
+     ${p.teklifFiyat?bar('Teklif',p.teklifFiyat,'var(--blue)'):''}${bar(p.durum==='Tamamlandı'?'Ciro':'Beklenen',R.ciro,'var(--green)')}${bar('Tahsil',R.tahsil,'#00E5FF')}${bar('Gider',giderToplam,'var(--red)')}
+     <div style="font-size:11px;color:var(--text2);margin-top:6px;">Tahsil oranı <b>%${R.tahsilOran}</b>${R.ciro-R.tahsil>0?` · kalan <b>${fmt(R.ciro-R.tahsil)}</b>`:''} · tahmini kâr <b style="color:${R.kar>=0?'var(--green)':'var(--red)'}">${R.kar<0?'− ':''}${fmt(R.kar)}</b>${p.teklifFiyat&&R.ciro?` · teklife göre ${R.ciro>=p.teklifFiyat?'+':'−'}${fmt(R.ciro-p.teklifFiyat)}`:''}</div></div>`;}
+  // RANDEVULAR (müşterinin proje dönemindeki ajandası)
+  html+=projeRandevuHtml(p);
   // FİNANSAL
   const projeAraToplam=malzemeToplam+iscilikToplam;
   // Not: Malzeme/İşçilik müşteriden talep edilen tutarın içinde sayılır (Ciro'nun parçası).
@@ -21939,6 +22050,8 @@ async function showProjeDetay(id){
     });
     html+=`</div>`;
   }
+  // ZAMAN ÇİZELGESİ
+  html+=projeZamanHtml(p,islemler,projeNotlar);
   // NOTLAR
   html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">📝 Notlar</div>
@@ -21959,6 +22072,16 @@ async function showProjeDetay(id){
   html+=`<div style="border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:10px;">
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">📎 Fotoğraf & Çizim/PDF</div>
     <div id="proje-detay-ekler-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-height:0;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed rgba(255,171,0,0.45);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--amber);">
+        📷 İş öncesi
+        <input type="file" accept="image/*" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'proje',_projeAktifId,'oncesi')">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed rgba(0,230,118,0.45);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--green);">
+        📷 İş sonrası
+        <input type="file" accept="image/*" multiple style="display:none;" onchange="eklerDetayDosyaEkle(this,'proje',_projeAktifId,'sonrasi')">
+      </label>
+    </div>
     <div style="display:flex;gap:8px;">
       <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border2);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--blue);">
         📷 Kamera / Galeri
@@ -21982,7 +22105,7 @@ async function showProjeDetay(id){
     </div>
     <div style="display:flex;gap:6px;">
       <button class="btn btn-secondary btn-full" onclick="isRaporuYazdirAc(${id})" style="background:rgba(30,58,138,0.2);color:#60a5fa;border-color:rgba(30,58,138,0.4);">🖨️ İş Raporu Yazdır</button>
-      <button class="btn btn-secondary btn-full" onclick="isRaporuYazdirAc(${id})" style="background:rgba(30,58,138,0.2);color:#60a5fa;border-color:rgba(30,58,138,0.4);">📄 İş Raporu İndir</button>
+      <button class="btn btn-secondary btn-full" onclick="projeIlerlemeWhatsapp(${id})" style="background:rgba(37,211,102,0.12);color:#25D366;border-color:rgba(37,211,102,0.35);">💬 Müşteriye ilerleme</button>
     </div>
     ${USER_ROL==='admin'?`<button class="btn btn-secondary btn-full" style="color:var(--red);border-color:var(--red);" onclick="deleteProje(${id})">🗑 Projeyi Sil</button>`:''}
   </div>`;
@@ -22605,6 +22728,7 @@ function eklerGridGuncelle(tip) {
            </div>`
         : `<img src="${url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="window.open('${url}','_blank')" loading="lazy">`
       }
+      ${ek.etiket?`<span style="position:absolute;left:3px;bottom:3px;background:${ek.etiket==='oncesi'?'rgba(255,171,0,.9)':'rgba(0,200,100,.9)'};color:#111;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">${ek.etiket==='oncesi'?'ÖNCE':'SONRA'}</span>`:''}
       <button onclick="eklerMevcutSil('${ek.id}','${tip}')"
         style="position:absolute;top:3px;right:3px;background:rgba(200,50,50,0.85);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
     </div>`;
@@ -23343,12 +23467,13 @@ async function showTavsiyeDetay(id){
 }
 
 // Detay penceresinde anlık (kaydet adımı olmadan) dosya yükleme - tüm tipler için generic
-async function eklerDetayDosyaEkle(input, tip, kayitId){
+async function eklerDetayDosyaEkle(input, tip, kayitId, etiket){
   const files=Array.from(input.files||[]);
   if(!files.length||!kayitId){input.value='';return;}
   const mevcut=_eklerMevcut[tip]||[];
-  const kalan=6-mevcut.length;
-  if(kalan<=0){showToast('Maksimum 6 dosya yüklenebilir','amber');input.value='';return;}
+  const sinir=tip==='proje'?12:6;
+  const kalan=sinir-mevcut.length;
+  if(kalan<=0){showToast('Maksimum '+sinir+' dosya yüklenebilir','amber');input.value='';return;}
   const eklenecek=files.slice(0,kalan);
   if(files.length>kalan)showToast(`${files.length-kalan} dosya limit aşımı nedeniyle eklenmedi`,'amber');
   input.disabled=true;
@@ -23365,7 +23490,8 @@ async function eklerDetayDosyaEkle(input, tip, kayitId){
         url,
         dosya_adi:file.name,
         dosya_tipi:file.type.includes('pdf')?'pdf':'image',
-        dosya_boyut:file.size
+        dosya_boyut:file.size,
+        ...(etiket?{etiket}:{})
       })});
     }catch(e){
       console.error('eklerDetayDosyaEkle hata:',e);
