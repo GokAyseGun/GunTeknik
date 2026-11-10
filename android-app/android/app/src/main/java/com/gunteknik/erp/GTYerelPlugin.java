@@ -14,6 +14,9 @@ import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.fragment.app.FragmentActivity;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
@@ -401,5 +404,58 @@ public class GTYerelPlugin extends Plugin {
         if (ad.lastIndexOf('.') > 0) return ad;
         String uz = MimeTypeMap.getSingleton().getExtensionFromMimeType(tur);
         return uz != null ? ad + "." + uz : ad;
+    }
+
+    // ---------------------------------------------------------------- parmak izi (30 dk kilidi)
+    private static int parmakYetki() {
+        return Build.VERSION.SDK_INT >= 30
+            ? (BiometricManager.Authenticators.BIOMETRIC_WEAK | BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+            : BiometricManager.Authenticators.BIOMETRIC_WEAK;
+    }
+
+    /** Telefonda parmak izi (ya da yüz / ekran kilidi) tanımlı mı? */
+    @PluginMethod
+    public void parmakDurum(PluginCall call) {
+        JSObject r = new JSObject();
+        int s;
+        try { s = BiometricManager.from(getContext()).canAuthenticate(parmakYetki()); } catch (Exception e) { s = -1; }
+        r.put("var", s == BiometricManager.BIOMETRIC_SUCCESS);
+        r.put("kod", s);
+        call.resolve(r);
+    }
+
+    /** Sistemin parmak izi ekranı; {ok:true} ya da {ok:false, kod, mesaj}. */
+    @PluginMethod
+    public void parmakDogrula(PluginCall call) {
+        final String baslik = call.getString("baslik", "Gün Teknik");
+        final String alt = call.getString("alt", "Devam etmek için parmak izini okut");
+        Activity a = getActivity();
+        if (!(a instanceof FragmentActivity)) {
+            JSObject r = new JSObject(); r.put("ok", false); r.put("mesaj", "etkinlik yok"); call.resolve(r); return;
+        }
+        final FragmentActivity fa = (FragmentActivity) a;
+        fa.runOnUiThread(() -> {
+            try {
+                BiometricPrompt bp = new BiometricPrompt(fa, ContextCompat.getMainExecutor(fa), new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                        JSObject r = new JSObject(); r.put("ok", true); call.resolve(r);
+                    }
+
+                    @Override
+                    public void onAuthenticationError(int kod, CharSequence mesaj) {
+                        JSObject r = new JSObject(); r.put("ok", false); r.put("kod", kod); r.put("mesaj", String.valueOf(mesaj)); call.resolve(r);
+                    }
+                });
+                BiometricPrompt.PromptInfo.Builder b = new BiometricPrompt.PromptInfo.Builder()
+                    .setTitle(baslik)
+                    .setSubtitle(alt)
+                    .setAllowedAuthenticators(parmakYetki());
+                if (Build.VERSION.SDK_INT < 30) b.setNegativeButtonText("Vazgeç");
+                bp.authenticate(b.build());
+            } catch (Exception e) {
+                JSObject r = new JSObject(); r.put("ok", false); r.put("mesaj", String.valueOf(e.getMessage())); call.resolve(r);
+            }
+        });
     }
 }

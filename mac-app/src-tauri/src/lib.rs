@@ -266,6 +266,57 @@ async fn veri_tazele(app: &AppHandle) {
     }
 }
 
+// ---------------------------------------------------------------- Touch ID (ERP 30 dk kilidi)
+#[cfg(target_os = "macos")]
+extern "C" {
+    fn gt_parmak_durum() -> i32;
+    fn gt_parmak_dogrula(
+        neden: *const std::os::raw::c_char,
+        baglam: *mut std::ffi::c_void,
+        geri: extern "C" fn(*mut std::ffi::c_void, i32),
+    );
+}
+
+#[cfg(target_os = "macos")]
+extern "C" fn parmak_geri(baglam: *mut std::ffi::c_void, tamam: i32) {
+    let tx = unsafe { Box::from_raw(baglam as *mut tokio::sync::oneshot::Sender<bool>) };
+    let _ = tx.send(tamam == 1);
+}
+
+/// 2: Touch ID · 1: yalnız parola · 0: yok
+#[tauri::command]
+fn parmak_durum() -> i32 {
+    #[cfg(target_os = "macos")]
+    {
+        unsafe { gt_parmak_durum() }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        0
+    }
+}
+
+#[tauri::command]
+async fn parmak_dogrula(app: AppHandle, neden: Option<String>) -> bool {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_focus();
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
+        let metin = std::ffi::CString::new(neden.unwrap_or_else(|| "Gün Teknik kilidini açmak için".into()))
+            .unwrap_or_else(|_| std::ffi::CString::new("Gün Teknik").unwrap());
+        let baglam = Box::into_raw(Box::new(tx)) as *mut std::ffi::c_void;
+        unsafe { gt_parmak_dogrula(metin.as_ptr(), baglam, parmak_geri) };
+        rx.await.unwrap_or(false)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = neden;
+        false
+    }
+}
+
 // ---------------------------------------------------------------- masaüstü araçları (WidgetKit)
 #[cfg(target_os = "macos")]
 extern "C" {
@@ -706,7 +757,7 @@ pub fn run() {
         .manage(Durum::default())
         .invoke_handler(tauri::generate_handler![
             cihaz_al, cihaz_ayarla, ac, dis_ac, belge_ac, yazdir, pano_gizle, pano_veri, geri_al,
-            kasa_acik, kasa_degistir, surum, guncelle_denetle, guncelle_kur
+            kasa_acik, kasa_degistir, surum, guncelle_denetle, guncelle_kur, parmak_durum, parmak_dogrula
         ])
         .setup(|app| {
             let h = app.handle().clone();

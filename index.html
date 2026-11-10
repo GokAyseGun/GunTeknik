@@ -212,7 +212,12 @@ input.isim-input{text-transform:capitalize;}
 .skel-card{height:64px;border-radius:var(--r-md);margin-bottom:8px;}
 
 /* AUTH */
-#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn 0.6s var(--ease);}
+#acilis-ekrani{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+#acilis-ekrani .ai{width:64px;height:64px;border-radius:18px;background:var(--blue-lt);border:1px solid var(--blue-md);display:flex;align-items:center;justify-content:center;font-size:30px;}
+#acilis-ekrani .ad{font-weight:700;font-size:17px;letter-spacing:.3px;}
+#acilis-ekrani .ac{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--border2);border-top-color:var(--blue);animation:acilisDon .8s linear infinite;}
+@keyframes acilisDon{to{transform:rotate(360deg)}}
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;padding:24px;animation:fadeIn 0.6s var(--ease);}
 .auth-box{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xl);padding:44px 36px;box-shadow:var(--shadow-lg);animation:scaleIn 0.7s var(--ease);}
 .auth-logo{text-align:center;margin-bottom:32px;}
 .auth-logo-icon{width:56px;height:56px;border-radius:var(--r-md);background:var(--blue-lt);border:1px solid var(--blue-md);display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px;}
@@ -1919,6 +1924,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 </style>
 </head>
 <body>
+<div id="acilis-ekrani"><div class="ai">⚡</div><div class="ad">Gün Teknik</div><div class="ac"></div></div>
 <!-- Google Kişiler Onay Modalı -->
 <div class="modal-ov" id="modal-google-onay" style="z-index:99999;">
   <div class="modal" style="max-width:320px;margin:auto;">
@@ -1986,7 +1992,11 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
   <div class="desen-alt">Devam etmek için parmak izinizi kullanın</div>
   <div class="parmak-icon">👆</div>
   <div class="desen-durum" id="parmak-durum" style="min-height:18px;"></div>
-  <button class="btn btn-secondary" onclick="parmakIziVazgec()" style="font-size:12px;padding:8px 16px;margin-top:8px;">Desen ile gir</button>
+  <button class="btn btn-primary" onclick="parmakDene()" style="font-size:14px;padding:11px 22px;margin-top:6px;">👆 Parmak izi ile aç</button>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="btn btn-secondary" id="parmak-desen-btn" onclick="parmakIziVazgec()" style="font-size:12px;padding:8px 14px;">Desen ile gir</button>
+    <button class="btn btn-secondary" onclick="parmakSifreIle()" style="font-size:12px;padding:8px 14px;">Mail / şifre ile gir</button>
+  </div>
 </div>
 
 <!-- GİRİŞ -->
@@ -3192,6 +3202,10 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');openButceModal()">💰 Bütçe Limitleri</button>
       <button class="btn btn-secondary btn-full" onclick="closeModal('modal-ayarlar');hrAyarModalAc()">🗺️ Harita ve Konum (Google Maps)</button>
       <div style="height:1px;background:var(--border);"></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px;">🔗 Google (Takvim + Rehber)</div>
+        <div id="g-baglanti-ayar"><div class="gf-ipucu">Yükleniyor…</div></div>
+      </div>
       <button class="btn btn-secondary btn-full" onclick="window.location.reload()">🔄 Veriyi Yenile</button>
       <div style="height:1px;background:var(--border);"></div>
       <button class="btn btn-secondary btn-full" onclick="ekraniKilitle()" style="background:rgba(139,92,246,0.12);color:#a78bfa;border-color:rgba(139,92,246,0.3);">🔐 Ekranı Kilitle</button>
@@ -4383,10 +4397,90 @@ async function tryRefreshToken(){
       SB_TOKEN=d.access_token;SB_REFRESH_TOKEN=d.refresh_token;
       localStorage.setItem('sb_token',SB_TOKEN);localStorage.setItem('sb_refresh_token',d.refresh_token);
       if(d.user){CURRENT_USER=d.user;localStorage.setItem('sb_user',JSON.stringify(d.user));}
+      try{esJeton();}catch(e){}
       return true;
     }
     return false;
   }catch(e){return false;}
+}
+// ── Cihazlar arası anlık eşitleme ──────────────────────────────────────────
+// Sunucuda her tablo değişince erp_degisim'e tek satır sinyal düşer (kaynak = değiştiren oturum).
+// ERP Supabase Realtime ile dinler; başka cihazdan gelen değişiklikte veriyi sessizce yeniden yükler.
+// Yedek: sayfa görünür olunca / pencere odaklanınca erp_degisim_son() ile kaçan değişiklik kontrolü.
+var ES={ws:null,ref:0,kalp:null,tekrar:null,bekleyen:new Set(),zam:null,son:null,kontrolT:0};
+const ES_KANAL='realtime:erp-degisim';
+const ES_AYRI=new Set(['arama_takip','reklam_manuel','erp_ayarlar']); // loadDB dışında yüklenenler
+function jetonBilgi(){try{return JSON.parse(decodeURIComponent(escape(atob(String(SB_TOKEN||'').split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));}catch(e){return null;}}
+function esOturum(){const p=jetonBilgi();return p&&p.session_id||null;}
+async function jetonTaze(){const p=jetonBilgi();if(p&&p.exp&&p.exp*1000-Date.now()<5*60000){await tryRefreshToken();}}
+function esGonder(topic,event,payload){try{if(ES.ws&&ES.ws.readyState===1)ES.ws.send(JSON.stringify({topic,event,payload,ref:String(++ES.ref),join_ref:topic==='phoenix'?null:'1'}));}catch(e){}}
+function esJeton(){if(SB_TOKEN)esGonder(ES_KANAL,'access_token',{access_token:SB_TOKEN});}
+async function esBaslat(){
+  if(!SB_TOKEN||ES.ws||typeof WebSocket==='undefined')return;
+  try{await jetonTaze();}catch(e){}
+  try{
+    const ws=new WebSocket(SB_URL.replace(/^http/,'ws')+'/realtime/v1/websocket?apikey='+encodeURIComponent(SB_KEY)+'&vsn=1.0.0');
+    ES.ws=ws;
+    ws.onopen=()=>{ES.ref=0;
+      esGonder(ES_KANAL,'phx_join',{config:{broadcast:{self:false,ack:false},presence:{key:''},postgres_changes:[{event:'*',schema:'public',table:'erp_degisim'}],private:false},access_token:SB_TOKEN});
+      clearInterval(ES.kalp);ES.kalp=setInterval(()=>{esGonder('phoenix','heartbeat',{});},25000);
+      esKontrol();};
+    ws.onmessage=m=>{let d;try{d=JSON.parse(m.data);}catch(e){return;}
+      if(d.event==='phx_reply'&&d.ref==='1'){ES.katildi=!!(d.payload&&d.payload.status==='ok');}
+      if(d.event==='postgres_changes'){const r=d.payload&&d.payload.data&&d.payload.data.record;if(r)esSinyal(r.tablo,r.zaman,r.kaynak);}
+      else if((d.event==='phx_reply'||d.event==='system')&&d.payload&&d.payload.status==='error'){console.warn('eşitleme',d.payload);}
+      else if(d.event==='phx_close'||d.event==='phx_error'){try{ws.close();}catch(e){}}};
+    ws.onclose=()=>{if(ES.ws===ws)ES.ws=null;ES.katildi=false;clearInterval(ES.kalp);clearTimeout(ES.tekrar);
+      if(SB_TOKEN)ES.tekrar=setTimeout(esBaslat,document.hidden?60000:4000);};
+    ws.onerror=()=>{try{ws.close();}catch(e){}};
+  }catch(e){console.warn('eşitleme',e);ES.ws=null;}
+}
+function esSinyal(tablo,zaman,kaynak){
+  if(!tablo)return;
+  if(!ES.son)ES.son={};
+  ES.son[tablo]=zaman;
+  if(kaynak&&kaynak===esOturum())return; // bu cihazın kendi kaydı: zaten yüklendi
+  ES.bekleyen.add(tablo);
+  clearTimeout(ES.zam);ES.zam=setTimeout(esUygula,800);
+}
+function esFormAcik(){return !!document.querySelector('[id^="modal-"].open:not(#modal-bildirimler):not(#modal-ayarlar)');}
+async function esUygula(){
+  if(!ES.bekleyen.size)return;
+  if(document.hidden)return; // görünür olunca uygulanır
+  if(esFormAcik()){clearTimeout(ES.zam);ES.zam=setTimeout(esUygula,2500);return;} // açık formu bozma
+  const t=[...ES.bekleyen];ES.bekleyen.clear();
+  const db=t.some(x=>!ES_AYRI.has(x));
+  try{
+    const onceTeklif=new Map((DB.teklifler||[]).map(x=>[x.id,x.durum]));
+    if(db)await loadDB({sessiz:true});
+    if(t.includes('arama_takip')&&typeof atYukle==='function')await atYukle(true);
+    if((t.includes('reklam_manuel')||t.includes('erp_ayarlar'))&&typeof gfEkYukle==='function')await gfEkYukle(true).catch(()=>{});
+    if(!db)renderAll();
+    if(t.includes('teklifler'))teklifOnayKontrol(onceTeklif);
+  }catch(e){console.warn('eşitleme uygula',e);}
+}
+async function esKontrol(ilk){
+  if(!SB_TOKEN)return;
+  if(!ilk&&Date.now()-ES.kontrolT<4000)return;ES.kontrolT=Date.now();
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/rpc/erp_degisim_son',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN,'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok)return;const s=await r.json();if(!s||typeof s!=='object')return;
+    if(!ES.son||ilk){ES.son={};Object.keys(s).forEach(k=>ES.son[k]=s[k].z);return;}
+    const ben=esOturum();let var_=false;
+    Object.keys(s).forEach(k=>{const z=s[k].z;if(ES.son[k]!==z){ES.son[k]=z;if(!(s[k].k&&s[k].k===ben)){ES.bekleyen.add(k);var_=true;}}});
+    if(var_){clearTimeout(ES.zam);ES.zam=setTimeout(esUygula,300);}
+  }catch(e){}
+}
+function esKur(){
+  esKontrol(true);esBaslat();
+  if(ES._kurulu)return;ES._kurulu=true;
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(!ES.ws)esBaslat();esKontrol();if(ES.bekleyen.size)esUygula();}});
+  window.addEventListener('focus',()=>{esKontrol();if(ES.bekleyen.size)esUygula();});
+  window.addEventListener('online',()=>{if(!ES.ws)esBaslat();esKontrol();});
+  // açık kalan ekranlarda jeton süresi dolmasın (1 saat)
+  setInterval(()=>{if(!document.hidden)jetonTaze().catch(()=>{});},4*60000);
+  // anlık bağlantı kurulamadıysa (ağ / sunucu) açık ekranda 30 sn'de bir hafif kontrol
+  setInterval(()=>{if(!document.hidden&&!ES.katildi)esKontrol();},30000);
 }
 async function sbStorage(bucket, file, path){
   const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
@@ -4746,17 +4840,23 @@ async function doLogin(){
     loginAttempts=0;SB_TOKEN=d.access_token;SB_REFRESH_TOKEN=d.refresh_token;CURRENT_USER=d.user;
     localStorage.setItem('sb_token',SB_TOKEN);localStorage.setItem('sb_refresh_token',d.refresh_token||'');localStorage.setItem('sb_user',JSON.stringify(CURRENT_USER));
     await loadUserRol();
-    // Desen varsa doğrulat, yoksa direkt başlat
-    await cihazKilidiKontrol(async()=>{await startApp();});
+    // Mail / şifre ile girildi: ayrıca parmak izi sorma
+    aktiflikYaz();
+    await startApp();
   }catch(e){document.getElementById('err-pass').textContent='Bağlantı hatası';}
   finally{btn.disabled=false;btn.textContent='Giriş Yap';}
 }
-document.addEventListener('keydown',e=>{if(document.getElementById('auth-screen').style.display!=='none'&&e.key==='Enter')doLogin();});
+document.addEventListener('keydown',e=>{if(document.getElementById('auth-screen').style.display==='flex'&&e.key==='Enter')doLogin();});
 
 async function loadUserRol(){
+  const _r=localStorage.getItem('gt_rol');if(_r)USER_ROL=_r;
+  // ağ yavaşsa açılışı bekletme: 4 sn'de cevap yoksa son bilinen rolle devam
+  return Promise.race([_loadUserRol(),new Promise(r=>setTimeout(r,_r?2500:8000))]);
+}
+async function _loadUserRol(){
   try{
     const d=await sbFetch('kullanici_profiller?id=eq.'+CURRENT_USER.id+'&select=*');
-    if(d&&d[0]){USER_ROL=d[0].rol;}
+    if(d&&d[0]){USER_ROL=d[0].rol;try{localStorage.setItem('gt_rol',USER_ROL);}catch(e){}}
     else{await sbFetch('kullanici_profiller',{method:'POST',prefer:'return=minimal',body:JSON.stringify({id:CURRENT_USER.id,isim:CURRENT_USER.email,rol:'admin'})});USER_ROL='admin';}
   }catch(e){USER_ROL='admin';}
 }
@@ -4765,66 +4865,71 @@ async function checkSession(){
   const token=localStorage.getItem('sb_token');
   const user=localStorage.getItem('sb_user');
   SB_REFRESH_TOKEN=localStorage.getItem('sb_refresh_token')||null;
-  // Token veya kullanıcı bilgisi hiç yok — ilk kez giriş
+  // Hiç giriş yapılmamış (ya da çıkış yapılmış) — mail / şifre
   if(!token||!user){showAuthScreen();return;}
   SB_TOKEN=token;
-  CURRENT_USER=JSON.parse(user);
-  try{
-    const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN}});
-    if(!res.ok){
-      // Token expired — refresh dene
-      const ok=await tryRefreshToken();
-      if(!ok){
-        // Refresh da olmadı — desen varsa desen sor, yoksa auth
-        if(desenVarMi()){
-          await cihazKilidiKontrol(async()=>{await startApp();});
-        }else{
-          showAuthScreen();
-        }
-        return;
-      }
-    }
-    await loadUserRol();
-    // Token geçerli — 30 dk içinde aktifse direkt gir, değilse desen/parmak izi sor
-    const _la=parseInt(localStorage.getItem('erp_last_active')||'0');
-    const _gecen=Date.now()-_la;
-    if(_la>0 && _gecen < 30*60*1000){
-      // 30 dakika içinde aktifti — direkt giriş
-      await startApp();
-    } else {
-      await cihazKilidiKontrol(async()=>{await startApp();});
-    }
-  }catch(e){
-    // Ağ hatası — desen varsa offline modda devam et
-    if(CURRENT_USER){
-      USER_ROL='admin';
-      const _la2=parseInt(localStorage.getItem('erp_last_active')||'0');
-      if(_la2>0 && Date.now()-_la2 < 30*60*1000){
-        await startApp();
-      } else {
-        await cihazKilidiKontrol(async()=>{await startApp();});
-      }
-    }else{
-      showAuthScreen();
+  try{CURRENT_USER=JSON.parse(user);}catch(e){showAuthScreen();return;}
+  // Jetonun süresi cihazda bilinir: geçerliyse sunucuya sormadan devam (açılış hızlı, mail ekranı görünmez)
+  const jb=jetonBilgi();
+  let gecerli=!!(jb&&jb.exp&&jb.exp*1000>Date.now()+60000);
+  if(!gecerli){
+    let ok=false;try{ok=await tryRefreshToken();}catch(e){ok=false;}
+    if(!ok){
+      // Ağ yoksa ya da yenileme olmadıysa: oturum bilgisi duruyor → kilitle, sonra yine dene
+      if(navigator.onLine===false||kilitVarMi()){await cihazKilidiKontrol(async()=>{await startApp();});return;}
+      showAuthScreen();return;
     }
   }
+  try{await loadUserRol();}catch(e){USER_ROL=USER_ROL||'admin';}
+  // 30 dk içinde kullanıldıysa direkt gir, değilse parmak izi / desen
+  if(Date.now()-sonAktiflik()<KILIT_SURE)await startApp();
+  else await cihazKilidiKontrol(async()=>{await startApp();});
 }
 
-function showAuthScreen(){document.getElementById('auth-screen').style.display='flex';document.getElementById('app').classList.remove('active');}
+function acilisKapat(){const a=document.getElementById('acilis-ekrani');if(a)a.remove();}
+function showAuthScreen(){acilisKapat();try{parmakEkraniKapat();}catch(e){}document.getElementById('auth-screen').style.display='flex';document.getElementById('app').classList.remove('active');}
+// ── 30 dakika boşluk kilidi ──
+const KILIT_SURE=30*60*1000;
+function sonAktiflik(){return parseInt(localStorage.getItem('erp_last_active')||'0')||0;}
+function aktiflikYaz(){try{localStorage.setItem('erp_last_active',String(Date.now()));}catch(e){}}
+function kilitVarMi(){return yerelParmakAcik()||(parmakIziVarMi()&&parmakIziDesteklenir())||desenVarMi();}
+let _kilitli=false,_aktT=0;
+function uygulamayiGoster(){
+  acilisKapat();_kilitli=false;aktiflikYaz();
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('desen-screen').classList.remove('active');
+  try{parmakEkraniKapat();}catch(e){}
+  document.getElementById('app').classList.add('active');
+}
+function kilitle(){
+  if(_kilitli||!window._appBasladi||!CURRENT_USER||!kilitVarMi())return false;
+  _kilitli=true;
+  cihazKilidiKontrol(()=>{uygulamayiGoster();try{esKontrol();}catch(e){}});
+  return true;
+}
+function kilitKontrol(){if(!_kilitli&&window._appBasladi&&Date.now()-sonAktiflik()>KILIT_SURE)return kilitle();return false;}
+function kilitIzle(){
+  if(window._kilitIzle)return;window._kilitIzle=true;
+  // gerçek kullanım (dokunma / tuş / kaydırma) aktiflik sayılır; 30 dk dokunulmadıysa ilk dokunuş kilidi açar
+  const etkin=e=>{
+    if(_kilitli)return;
+    if(window._appBasladi&&Date.now()-sonAktiflik()>KILIT_SURE&&kilitVarMi()){
+      if(e&&e.cancelable){e.preventDefault();e.stopPropagation();}
+      kilitle();return;
+    }
+    const n=Date.now();if(n-_aktT>20000){_aktT=n;aktiflikYaz();}
+  };
+  ['pointerdown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,etkin,{capture:true,passive:false}));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')kilitKontrol();});
+  window.addEventListener('focus',()=>kilitKontrol());
+  // ekran açık ama kullanılmıyorsa da 30 dk sonra kilitle
+  setInterval(()=>{if(!document.hidden)kilitKontrol();},60000);
+}
 
 async function ekraniKilitle(){
   closeModal('modal-ayarlar');
-  if(desenVarMi()){
-    document.getElementById('app').classList.remove('active');
-    desenMod='giris';desenYanlisSayisi=0;
-    document.getElementById('desen-baslik').textContent='Gün Teknik';
-    document.getElementById('desen-alt').textContent='Devam etmek için deseninizi çizin';
-    document.getElementById('btn-desen-vazgec').style.display='none';
-    desenHaklariGuncelle();
-    desenEkraniAc();
-  }else{
-    showToast('Kilit için önce Ayarlar → Giriş Deseni Belirle','amber');
-  }
+  if(!kilitVarMi()){showToast('Kilit için önce parmak izi ya da giriş deseni belirle','amber');return;}
+  localStorage.setItem('erp_last_active','0');kilitle();
 }
 
 async function doLogout(){
@@ -4837,12 +4942,12 @@ async function doLogout(){
 }
 
 async function startApp(){
-  // Sayfa geçişi için aktif zaman damgası
-  localStorage.setItem('erp_last_active', String(Date.now()));
-  setInterval(()=>localStorage.setItem('erp_last_active', String(Date.now())), 2*60*1000);
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('desen-screen').classList.remove('active');
-  document.getElementById('app').classList.add('active');
+  // Kilit / yeniden giriş sonrası: uygulama zaten çalışıyorsa sadece göster ve veriyi tazele
+  if(window._appBasladi){uygulamayiGoster();try{await loadDB({sessiz:true});esKur();}catch(e){}return;}
+  window._appBasladi=true;
+  uygulamayiGoster();
+  kilitIzle();
+  setTimeout(()=>{try{yerelParmakHazir(true);}catch(e){}},2500);
   // FAB renderAll tarafından yönetiliyor
   document.getElementById('ayar-user-email').textContent=CURRENT_USER?.email||'—';
   document.getElementById('ayar-user-rol').textContent=USER_ROL==='admin'?'Yönetici':USER_ROL==='editor'?'Editör':'Görüntüleyici';
@@ -4860,8 +4965,11 @@ async function startApp(){
   await loadDB();
   // Veri yedek hatırlatıcı
   setTimeout(()=>yedekHatirlatici(),5000);
-  // Teklif gerçek zamanlı takip
+  // Teklif onay takibi + cihazlar arası anlık eşitleme
   teklifPollBaslat();
+  try{esKur();}catch(e){console.warn('eşitleme kur',e);}
+  // Google: bağlıysa bekleyen randevuları sessizce gönder
+  setTimeout(()=>{gDurum().then(b=>{if(b)gtOtoBekleyenler();}).catch(()=>{});},6000);
   // Yaklaşan ödeme + bütçe kontrolü
   setTimeout(()=>{yaklaşanUyariGoster&&yaklaşanUyariGoster().catch(()=>{});butceAsimiKontrol();setTimeout(()=>finansmanBildirimKontrol().catch(()=>{}),500);},1500);
   // Sistem bildirim kontrolü
@@ -6219,8 +6327,9 @@ function rkMusteriHtml(A){
 // ============================================================ VERİTABANI
 let DB={islemler:[],kisiler:[],odemeler:[],yardimciIslemleri:[],takvim:[],stok:[],stokHareketleri:[],sablonlar:[],ekler:[],personeller:[],projeler:[],teklifler:[],butceLimitler:[],bankaKredileri:[],krediOdemeleri:[],tavsiyeler:[]};
 
-async function loadDB(){
-  showLoading(true);
+async function loadDB(o){
+  const _sessiz=!!(o&&o.sessiz);
+  if(!_sessiz)showLoading(true);
   try{
     const [kisiler,islemler,odemeler,yardimci,takvim,stok,stokHar,sablonlar,ekler,personeller,projeler,teklifler,butceLimitler,bankaKredileri,krediOdemeleri,tavsiyeler,kisiAdresRaw,evrakRaw,evrakOdRaw,evrakEkRaw]=await Promise.all([
       sbFetch('kisiler?order=isim.asc&select=*'),
@@ -6282,7 +6391,7 @@ async function loadDB(){
     DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:(/^\d{4}-\d{2}-\d{2}$/.test(String(t.tarih||''))?t.tarih:(t.tarih?localDateStr(t.tarih):'')),tip:t.tip||'Bilgi',baslik:t.baslik||t.not||'',detay:t.detay||t.not||'',saat:t.saat?String(t.saat).slice(0,5):'',kisiId:t.kisi_id||null,
       durum:t.durum||(String(t.tarih||'').slice(0,10)<localToday()?'yapildi':'planlandi'),bitisSaat:t.bitis_saat?String(t.bitis_saat).slice(0,5):'',personelIds:Array.isArray(t.personel_ids)?t.personel_ids:[],tutar:t.tutar!=null?parseFloat(t.tutar):null,
       tekrar:t.tekrar||'',tekrarBitis:t.tekrar_bitis||'',tekrarDurum:(t.tekrar_durum&&typeof t.tekrar_durum==='object')?t.tekrar_durum:{},hatirlat:t.hatirlat!=null?t.hatirlat:null,
-      googleEventId:t.google_event_id||null,islemId:t.islem_id||null,adresId:t.adres_id||null}));
+      googleEventId:t.google_event_id||null,googleHash:t.google_hash||null,islemId:t.islem_id||null,adresId:t.adres_id||null}));
     DB.stok=(stok||[]).map(s=>({id:s.id,ad:s.ad,kategori:s.kategori||'Genel',marka:s.marka||'Genel Markalar',model:s.model||'-----',birim:s.birim||'Adet',miktar:parseFloat(s.miktar)||0,kritikSeviye:parseFloat(s.kritik_seviye)||5,birimFiyat:parseFloat(s.birim_fiyat)||0,
       alisFiyat:parseFloat(s.alis_fiyat)||0,not:s.not||'',barkod:s.barkod||''}));
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
@@ -6306,8 +6415,8 @@ async function loadDB(){
     const s=String(e?.message||'');
     let msg='Veri yükleme hatası: '+s.substring(0,80);
     if(s.includes('JWT')||s.includes('401')){const ok=await tryRefreshToken();if(ok){await loadDB();return;}else{setTimeout(()=>doLogout(),1500);return;}}
-    showToast(msg,'red');
-  }finally{showLoading(false);}
+    if(!_sessiz)showToast(msg,'red');
+  }finally{if(!_sessiz)showLoading(false);}
 }
 
 function showLoading(v){let el=document.getElementById('loading-overlay');if(!el){el=document.createElement('div');el.id='loading-overlay';el.innerHTML='<div class="loader"></div>';document.body.appendChild(el);}el.style.display=v?'flex':'none';}
@@ -6362,7 +6471,7 @@ let zIdx=1000;
 let _touchStartY=0;
 function openModal(id){
   if(id==='modal-bildirimler')setTimeout(bildirimListeGoster,50);
-  if(id==='modal-ayarlar')setTimeout(()=>{try{pushKartCiz();}catch(e){}},30);
+  if(id==='modal-ayarlar')setTimeout(()=>{try{pushKartCiz();}catch(e){}try{gBaglantiKartCiz();gDurum();}catch(e){}},30);
   const el=document.getElementById(id);if(!el)return;
   zIdx+=10;el.style.zIndex=zIdx;el.classList.add('open');
   // Overlay tıklamasında kapat — zaten listener yoksa ekle
@@ -12235,12 +12344,70 @@ async function toggleFavori(id,event){
 }
 
 
+// ════ GOOGLE KALICI İZİN (sunucu) ════
+// gokaysegun@gmail.com bir kez bağlanır; izin anahtarı sunucuda (google-yetki fonksiyonu) saklanır.
+// Takvim ve Rehber jetonu her cihazda buradan gelir → hesap seçtirmez, "güvenli değil" ekranı çıkmaz.
+var GS={tok:null,exp:0,bagli:null,email:null,gizli:null,yokla:null};
+async function gYetki(islem,ek){
+  try{await jetonTaze();}catch(e){}
+  const r=await fetch(SB_URL+'/functions/v1/google-yetki',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_TOKEN,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({islem},ek||{}))});
+  return r.json().catch(()=>({hata:'HTTP '+r.status}));
+}
+async function gSunucuToken(){
+  if(GS.tok&&Date.now()<GS.exp-90000)return GS.tok;
+  let r=null;try{r=await gYetki('token');}catch(e){r={hata:'ag',mesaj:String(e.message||e)};}
+  if(r&&r.access_token){GS.tok=r.access_token;GS.exp=Date.now()+(r.expires_in||3000)*1000;GS.bagli=true;if(r.email)GS.email=r.email;return GS.tok;}
+  if(r&&r.hata==='bagli_degil')GS.bagli=false;
+  const e=new Error(r&&r.hata==='bagli_degil'?'Google hesabı bağlı değil':(r&&(r.mesaj||r.hata))||'Google jetonu alınamadı');
+  e.bagliDegil=!!(r&&(r.hata==='bagli_degil'||r.hata==='gizli_yok'));throw e;
+}
+async function gDurum(){
+  try{const r=await gYetki('durum');if(r&&!r.hata){GS.bagli=!!r.bagli;GS.email=r.email||null;GS.gizli=r.gizli;GS.durumMetin=r.durum||'';}}catch(e){}
+  try{tkAktarCiz();}catch(e){}try{gBaglantiKartCiz();}catch(e){}
+  return GS.bagli;
+}
+async function gBaglan(){
+  if(USER_ROL!=='admin'){showToast('Yalnız yönetici bağlayabilir','amber');return;}
+  showToast('Google izin sayfası açılıyor…','blue');
+  let r=null;try{r=await gYetki('baslat');}catch(e){r={mesaj:String(e.message||e)};}
+  if(!r||!r.url){showToast('Bağlanamadı: '+((r&&(r.mesaj||r.hata))||'?'),'red');return;}
+  if(typeof macAktif==='function'&&macAktif())macCagir('dis_ac',{url:r.url}).catch(()=>window.open(r.url,'_blank'));
+  else window.open(r.url,'_blank');
+  // tarayıcıda izin verilip dönülünce durumu yakala
+  clearInterval(GS.yokla);let n=0;
+  GS.yokla=setInterval(async()=>{n++;if(n>60){clearInterval(GS.yokla);return;}if(document.hidden)return;
+    if(await gDurum()){clearInterval(GS.yokla);GS.tok=null;showToast('✅ Google bağlandı'+(GS.email?': '+GS.email:''),'green');setTimeout(()=>gtOtoBekleyenler(),1500);}},5000);
+}
+function gBaglantiKes(){
+  showConfirm('Google bağlantısını kaldır','Takvim ve Rehber eşitlemesi durur; yeniden bağlayana kadar Google hesap sorar.',async()=>{
+    const r=await gYetki('kes');GS.tok=null;GS.bagli=false;showToast(r&&r.ok?'Google bağlantısı kaldırıldı':'Kaldırılamadı','amber');gDurum();},'🔌');
+}
+function gBaglantiHtml(){
+  const b=GS.bagli;
+  if(b===null)return `<div class="gf-satir"><span>Google hesabı</span><b>…</b></div>`;
+  if(b)return `<div class="gf-satir"><span>Google hesabı</span><b style="color:var(--green)">✅ ${_esc(GS.email||'bağlı')}</b></div>
+    <div class="gf-ipucu">Kalıcı izin sunucuda: hiçbir cihaz hesap seçtirmez, kayıtlar her cihazdan otomatik gider.${USER_ROL==='admin'?` <a href="#" onclick="event.preventDefault();gBaglantiKes()" style="color:var(--text3)">Bağlantıyı kaldır</a>`:''}</div>`;
+  return `<div class="gf-satir"><span>Google hesabı</span><b style="color:var(--amber)">Bağlı değil</b></div>
+    <div class="gf-ipucu">Bir kez bağla: gokaysegun@gmail.com'u seç, "güvenli değil" uyarısında <b>Gelişmiş → Devam et</b>, izinleri onayla. Sonra bir daha sorulmaz.${GS.gizli===false?' <b style="color:var(--red)">Sunucuda Google gizli anahtarı (client secret) henüz tanımlı değil.</b>':''}</div>
+    <button class="btn btn-primary btn-full" style="margin:6px 0 10px;" onclick="gBaglan()">🔗 Google hesabını bağla (bir kez)</button>`;
+}
+function gBaglantiKartCiz(){['g-baglanti-kart','g-baglanti-ayar'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=gBaglantiHtml();});}
+// Açılışta: bağlıysa bekleyen randevuları sessizce Google'a gönder
+async function gtOtoBekleyenler(){
+  const A=gtAyar();if(!A.calendarId||A.otomatik===false)return;
+  if(!gtBekleyenSay())return;
+  try{await gSunucuToken();}catch(e){return;}
+  gtEsitle(true);
+}
+
 // ════ GOOGLE CONTACTS ════
 const GOOGLE_CLIENT_ID='341229493021-mtj2q3qmnt1e74425m7u5eevtbph7ao9.apps.googleusercontent.com';
 let _gToken=null,_gTokenExp=0,_googYeniKisiId=null;
 
 function googleTokenAl(cb){
   if(_gToken&&Date.now()<_gTokenExp-60000){cb(_gToken);return;}
+  // Sunucuda kalıcı Google izni varsa hesap seçtirmeden
+  if(!googleTokenAl._eski){gSunucuToken().then(tk=>{_gToken=tk;_gTokenExp=GS.exp;cb(tk);}).catch(e=>{if(e&&e.bagliDegil){googleTokenAl._eski=true;try{googleTokenAl(cb);}finally{googleTokenAl._eski=false;}}else showToast('Google: '+String(e.message||e).slice(0,90),'red');});return;}
   if(typeof andAktif==='function'&&andAktif()){andGoogleToken('https://www.googleapis.com/auth/contacts').then(t=>{_gToken=t;_gTokenExp=Date.now()+50*60*1000;cb(t);}).catch(e=>showToast(String(e.message||e),'red'));return;}
   const client=google.accounts.oauth2.initTokenClient({
     client_id:GOOGLE_CLIENT_ID,
@@ -14965,6 +15132,7 @@ async function desenKontrol(devamCB){
 }
 
 function desenEkraniAc(){
+  acilisKapat();
   desenTemizle();
   document.getElementById('desen-screen').classList.add('active');
   document.getElementById('auth-screen').style.display='none';
@@ -14988,7 +15156,32 @@ function desenVazgec(){
 // ── PARMAK İZİ / FACE ID (WebAuthn) ──
 let _parmakAbort=null;
 function parmakIziVarMi(){return !!localStorage.getItem(WEBAUTHN_KEY);}
-function parmakIziDesteklenir(){return !!(window.PublicKeyCredential&&navigator.credentials);}
+function parmakIziDesteklenir(){return !yerelParmakOrtam()&&!!(window.PublicKeyCredential&&navigator.credentials);}
+// Yerel parmak izi: Android uygulamasında telefonun parmak izi ekranı, Mac uygulamasında Touch ID.
+// Cihazda tanımlıysa kendiliğinden açıktır; Ayarlar'dan kapatılabilir.
+const YP_KAPALI='gt_parmak_yerel_kapali';
+let _ypDurum=null;
+function yerelParmakOrtam(){return (typeof andAktif==='function'&&andAktif())||(typeof macAktif==='function'&&macAktif());}
+function yerelParmakAcik(){return yerelParmakOrtam()&&localStorage.getItem('gt_parmak_yerel_var')==='1'&&!localStorage.getItem(YP_KAPALI);}
+async function yerelParmakHazir(tazele){
+  if(!yerelParmakOrtam())return false;
+  if(_ypDurum===null||tazele){
+    try{
+      if(andAktif()){const r=await andYerel('parmakDurum');_ypDurum=!!(r&&r.var);}
+      else{const k=await macCagir('parmak_durum');_ypDurum=Number(k)>0;}
+    }catch(e){_ypDurum=false;}
+    try{localStorage.setItem('gt_parmak_yerel_var',_ypDurum?'1':'0');}catch(e){}
+    try{parmakIziBtnGuncelle();}catch(e){}
+  }
+  return _ypDurum&&!localStorage.getItem(YP_KAPALI);
+}
+async function yerelParmakDogrula(){
+  try{
+    if(andAktif()){const r=await andYerel('parmakDogrula',{baslik:'Gün Teknik',alt:'Devam etmek için parmak izini okut'});return !!(r&&r.ok);}
+    if(macAktif())return !!(await macCagir('parmak_dogrula',{neden:'Gün Teknik kilidini açmak için'}));
+  }catch(e){console.warn('parmak izi',e);}
+  return false;
+}
 function _b64uToBuf(b64u){
   const b64=b64u.replace(/-/g,'+').replace(/_/g,'/');
   const pad=b64.length%4?4-(b64.length%4):0;
@@ -14998,7 +15191,14 @@ function _b64uToBuf(b64u){
   return buf;
 }
 async function parmakIziKaydet(){
-  if(!parmakIziDesteklenir()){showToast('Bu cihaz/tarayıcı parmak izi girişini desteklemiyor','red');return;}
+  if(yerelParmakOrtam()){
+    const var_=await yerelParmakHazir(true).catch(()=>false)||localStorage.getItem('gt_parmak_yerel_var')==='1';
+    if(localStorage.getItem('gt_parmak_yerel_var')!=='1'){showToast((andAktif()?'Telefonda':'Mac\'te')+' parmak izi tanımlı değil (sistem ayarlarından ekle) ya da uygulamayı güncelle','red');return;}
+    const ok=await yerelParmakDogrula();
+    if(!ok){showToast('Parmak izi doğrulanamadı','amber');return;}
+    localStorage.removeItem(YP_KAPALI);showToast('👆 Parmak izi girişi açık — 30 dk kullanılmayınca sorulacak','green');parmakIziBtnGuncelle();return;
+  }
+  if(!(window.PublicKeyCredential&&navigator.credentials)){showToast('Bu cihaz/tarayıcı parmak izi girişini desteklemiyor','red');return;}
   try{
     if(window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){
       const av=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -15024,6 +15224,10 @@ async function parmakIziKaydet(){
   parmakIziBtnGuncelle();
 }
 function parmakIziSil(){
+  if(yerelParmakOrtam()){
+    showConfirm('Parmak İzi Girişini Kapat','Bu cihazda 30 dk sonra parmak izi sorulmayacak. Emin misiniz?',()=>{localStorage.setItem(YP_KAPALI,'1');showToast('Parmak izi girişi kapatıldı','amber');parmakIziBtnGuncelle();},'🗑');
+    return;
+  }
   showConfirm('Parmak İzini Kaldır','Bu cihaz için kayıtlı parmak izi / Face ID girişi silinecek. Emin misiniz?',()=>{
     localStorage.removeItem(WEBAUTHN_KEY);
     showToast('Parmak izi kaydı kaldırıldı','amber');
@@ -15034,8 +15238,17 @@ function parmakIziBtnGuncelle(){
   const btn=document.getElementById('btn-parmak-ayar');
   const btnSil=document.getElementById('btn-parmak-sil');
   if(!btn)return;
+  if(yerelParmakOrtam()){
+    const var_=localStorage.getItem('gt_parmak_yerel_var')==='1',acik=var_&&!localStorage.getItem(YP_KAPALI);
+    btn.style.display='flex';
+    btn.textContent=acik?'👆 Parmak izi girişi açık (dene)':var_?'👆 Parmak izi girişini aç':'👆 Parmak izi (cihazda tanımlı değil)';
+    if(btnSil)btnSil.style.display=acik?'flex':'none';
+    if(btnSil)btnSil.textContent='🚫 Parmak izi girişini kapat';
+    return;
+  }
   if(!parmakIziDesteklenir()){btn.style.display='none';if(btnSil)btnSil.style.display='none';return;}
   btn.style.display='flex';
+  if(btnSil)btnSil.textContent='🗑 Parmak İzi Kaydını Kaldır';
   if(parmakIziVarMi()){
     btn.textContent='👆 Parmak İzini Yeniden Kaydet';
     if(btnSil)btnSil.style.display='flex';
@@ -15045,11 +15258,13 @@ function parmakIziBtnGuncelle(){
   }
 }
 function parmakEkraniAc(){
+  acilisKapat();
   document.getElementById('parmak-screen').classList.add('active');
   document.getElementById('desen-screen').classList.remove('active');
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').classList.remove('active');
   const d=document.getElementById('parmak-durum');if(d)d.textContent='';
+  const db=document.getElementById('parmak-desen-btn');if(db)db.style.display=desenVarMi()?'':'none';
 }
 function parmakEkraniKapat(){
   document.getElementById('parmak-screen').classList.remove('active');
@@ -15066,18 +15281,29 @@ async function parmakIziDogrula(){
   }catch(e){return false;}
   finally{_parmakAbort=null;}
 }
+const PK={cb:null,yerel:false,calisiyor:false};
+async function parmakDene(){
+  if(PK.calisiyor)return;PK.calisiyor=true;
+  const d=document.getElementById('parmak-durum');if(d)d.textContent='';
+  let ok=false;
+  try{ok=PK.yerel?await yerelParmakDogrula():await parmakIziDogrula();}finally{PK.calisiyor=false;}
+  if(ok){parmakEkraniKapat();const cb=PK.cb;PK.cb=null;if(cb)cb();return;}
+  if(d)d.textContent='Okunamadı — tekrar dene';
+}
 function parmakIziVazgec(){
   if(_parmakAbort){try{_parmakAbort.abort();}catch(e){}}
+  parmakEkraniKapat();
+  if(desenVarMi())desenKontrol(PK.cb);else showAuthScreen();
 }
-// Oturum/desen kontrolünden önce çalışan cihaz kilidi: önce parmak izi, hata/yoksa desen
+function parmakSifreIle(){if(_parmakAbort){try{_parmakAbort.abort();}catch(e){}}parmakEkraniKapat();showAuthScreen();}
+// Oturum açıkken kilit: önce parmak izi (telefon / Mac / tarayıcı), olmazsa desen
 async function cihazKilidiKontrol(devamCB){
-  desenStartCB=devamCB;
-  if(parmakIziVarMi()&&parmakIziDesteklenir()){
-    parmakEkraniAc();
-    const ok=await parmakIziDogrula();
-    parmakEkraniKapat();
-    if(ok){devamCB();return;}
+  desenStartCB=devamCB;PK.cb=devamCB;
+  let yerel=false;try{yerel=await yerelParmakHazir();}catch(e){}
+  if(yerel||(parmakIziVarMi()&&parmakIziDesteklenir())){
+    PK.yerel=yerel;parmakEkraniAc();parmakDene();return;
   }
+  acilisKapat();
   desenKontrol(devamCB);
 }
 
@@ -18683,8 +18909,10 @@ async function tkIslemBaglandi(islemId){const B=TK.bagla;TK.bagla=null;if(!B||!i
 // ---------- telefon takvimi (.ics) ve Google Takvim
 function tkAktarCiz(){
   const el=document.getElementById('tk-aktar');if(!el)return;const A=(PS.ayar&&PS.ayar.gtakvim)||{};const bekl=gtBekleyenSay();
+  if(GS.bagli===null&&!tkAktarCiz._sor){tkAktarCiz._sor=true;gDurum();}
   el.innerHTML=`<div class="tk-aktar"><div class="tk-aktar-b">📆 Google Takvim eşitleme</div>
-    <div class="gf-ipucu">ERP ajandası Google hesabındaki ayrı bir <b>"Gün Teknik"</b> takvimine aktarılır: saatli, adresli, hatırlatmalı. Telefonun takvim uygulaması kendiliğinden günceller. (İlk seferde Google izin ister.)</div>
+    <div class="gf-ipucu">ERP ajandası Google hesabındaki ayrı bir <b>"Gün Teknik"</b> takvimine aktarılır: saatli, adresli, hatırlatmalı. Telefonun takvim uygulaması kendiliğinden günceller.</div>
+    <div id="g-baglanti-kart">${gBaglantiHtml()}</div>
     <div class="gf-satir"><span>Durum</span><b>${A.calendarId?'Bağlı':'Bağlı değil'}${A.son?' · son eşitleme '+new Date(A.son).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</b></div>
     ${A.calendarId?`<div class="gf-satir"><span>Eşitlenmeyi bekleyen</span><b>${bekl}</b></div>`:''}
     <div class="isf-chips" style="margin:8px 0;"><button class="isf-chip${A.otomatik!==false?' on':''}" onclick="gtOtomatikDegistir()">🔄 Kaydettikçe otomatik eşitle</button></div>
@@ -18717,15 +18945,19 @@ var GT={token:null,exp:0};
 function gtAyar(){return (PS.ayar&&PS.ayar.gtakvim)||{};}
 async function gtAyarYaz(d){const a=Object.assign({},gtAyar(),d);if(PS.ayarVar)await psAyarKaydet('gtakvim',a);else{PS.ayar.gtakvim=a;try{localStorage.setItem('gt_ayar',JSON.stringify(a));}catch(e){}}}
 function gtTokenGecerli(){return GT.token&&Date.now()<GT.exp-60000;}
-function gtToken(){return new Promise((res,rej)=>{
+function gtToken(etkilesimsiz){return new Promise((res,rej)=>{
   if(gtTokenGecerli())return res(GT.token);
+  // 1) sunucudaki kalıcı izin (hesap sormaz)
+  if(!gtToken._eski){gSunucuToken().then(tk=>{GT.token=tk;GT.exp=GS.exp;res(tk);}).catch(e=>{
+    if(e&&e.bagliDegil&&!etkilesimsiz){gtToken._eski=true;gtToken().then(res,rej).finally(()=>{gtToken._eski=false;});}else rej(e);});return;}
+  // 2) eski yol: her seferinde hesap seçtirir
   // Android uygulaması: WebView'da Google açılır penceresi çalışmaz → telefonun Google hesabıyla yerel yetki
   if(typeof andAktif==='function'&&andAktif()){andGoogleToken('https://www.googleapis.com/auth/calendar.app.created').then(t=>{GT.token=t;GT.exp=Date.now()+50*60*1000;res(t);}).catch(rej);return;}
   if(!(window.google&&google.accounts&&google.accounts.oauth2)){rej(new Error('Google girişi yüklenmedi'));return;}
   const c=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/calendar.app.created',
     callback:r=>{if(r.error){rej(new Error(r.error));return;}GT.token=r.access_token;GT.exp=Date.now()+r.expires_in*1000;res(GT.token);},error_callback:e=>rej(new Error((e&&e.type)==='popup_closed'?'İzin penceresi kapatıldı':'Google izni alınamadı'))});
   c.requestAccessToken({prompt:''});});}
-async function gtIstek(yol,yontem,govde){const tk=await gtToken();const r=await fetch('https://www.googleapis.com/calendar/v3/'+yol,{method:yontem||'GET',headers:{'Authorization':'Bearer '+tk,'Content-Type':'application/json'},body:govde?JSON.stringify(govde):undefined});
+async function gtIstek(yol,yontem,govde,etkilesimsiz){const tk=await gtToken(etkilesimsiz);const r=await fetch('https://www.googleapis.com/calendar/v3/'+yol,{method:yontem||'GET',headers:{'Authorization':'Bearer '+tk,'Content-Type':'application/json'},body:govde?JSON.stringify(govde):undefined});
   if(r.status===204)return null;const j=await r.json().catch(()=>null);if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||('HTTP '+r.status));e.status=r.status;throw e;}return j;}
 function gtEtkinlik(t){
   const k=t.kisiId?getKisi(t.kisiId):null;const a=k?tkAdres(t,k):null;const T=TK_TIP[t.tip]||TK_TIP.Bilgi;const dr=t.durum||'planlandi';
@@ -18744,7 +18976,8 @@ function gtEtkinlik(t){
   e.reminders={useDefault:false,overrides:hm.map(m=>({method:'popup',minutes:m}))};
   return e;
 }
-function gtHashlar(){try{return JSON.parse(localStorage.getItem('gt_hash_v1')||'{}');}catch(e){return {};}}
+// eşitleme izi kayıtta (takvim.google_hash): her cihaz aynı bekleyen sayısını görür
+function gtHashlar(){const H={};(DB.takvim||[]).forEach(t=>{if(t.googleHash)H[t.id]=t.googleHash;});return H;}
 function gtHash(t){const s=JSON.stringify([gtEtkinlik(t),t.durum]);let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return String(h);}
 function gtAday(){const bg=localToday();return (DB.takvim||[]).filter(t=>t.tarih>=gfGunEkle(bg,-60)||t.tekrar);}
 function gtBekleyenSay(){if(!gtAyar().calendarId)return 0;const H=gtHashlar();let n=gtAday().filter(t=>H[t.id]!==gtHash(t)&&!(t.durum==='iptal'&&!t.googleEventId)).length;try{n+=JSON.parse(localStorage.getItem('gt_silinecek')||'[]').length;}catch(e){}return n;}
@@ -18756,11 +18989,16 @@ async function gtTakvimHazirla(){
 }
 async function gtTekGonder(cal,t,H){
   const H2=H||gtHashlar();const yol='calendars/'+encodeURIComponent(cal)+'/events';
-  if(t.durum==='iptal'){if(t.googleEventId){try{await gtIstek(yol+'/'+encodeURIComponent(t.googleEventId),'DELETE');}catch(e){if(e.status!==404&&e.status!==410)throw e;}}H2[t.id]=gtHash(t);return;}
-  const ev=gtEtkinlik(t);let r=null;
-  if(t.googleEventId){try{r=await gtIstek(yol+'/'+encodeURIComponent(t.googleEventId),'PUT',ev);}catch(e){if(e.status!==404&&e.status!==410)throw e;}}
-  if(!r){r=await gtIstek(yol,'POST',ev);if(r&&r.id){t.googleEventId=r.id;try{await sbFetch('takvim?id=eq.'+t.id,{method:'PATCH',body:JSON.stringify({google_event_id:r.id})});}catch(e){}}}
-  H2[t.id]=gtHash(t);
+  const h=gtHash(t);
+  if(t.durum==='iptal'){if(t.googleEventId){try{await gtIstek(yol+'/'+encodeURIComponent(t.googleEventId),'DELETE',null,true);}catch(e){if(e.status!==404&&e.status!==410)throw e;}}H2[t.id]=h;await gtIzYaz(t,h,null);return;}
+  const ev=gtEtkinlik(t);let r=null,yeniId=null;
+  if(t.googleEventId){try{r=await gtIstek(yol+'/'+encodeURIComponent(t.googleEventId),'PUT',ev,true);}catch(e){if(e.status!==404&&e.status!==410)throw e;}}
+  if(!r){r=await gtIstek(yol,'POST',ev,true);if(r&&r.id){t.googleEventId=r.id;yeniId=r.id;}}
+  H2[t.id]=h;await gtIzYaz(t,h,yeniId);
+}
+async function gtIzYaz(t,h,yeniId){
+  t.googleHash=h;const g={google_hash:h};if(yeniId)g.google_event_id=yeniId;
+  try{await sbFetch('takvim?id=eq.'+t.id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify(g)});}catch(e){console.warn('google iz',e);}
 }
 async function gtEsitle(sessiz){
   try{if(!sessiz)showToast('Google Takvim\'e bağlanılıyor…','blue');const cal=await gtTakvimHazirla();const H=gtHashlar();let n=0,hata=0;
@@ -18768,16 +19006,19 @@ async function gtEsitle(sessiz){
     for(const eid of sil){try{await gtIstek('calendars/'+encodeURIComponent(cal)+'/events/'+encodeURIComponent(eid),'DELETE');}catch(e){}}
     try{localStorage.setItem('gt_silinecek','[]');}catch(e){}
     for(const t of gtAday()){if(H[t.id]===gtHash(t))continue;if(t.durum==='iptal'&&!t.googleEventId)continue;try{await gtTekGonder(cal,t,H);n++;}catch(e){hata++;console.warn('gtakvim',e);}await new Promise(r=>setTimeout(r,120));}
-    try{localStorage.setItem('gt_hash_v1',JSON.stringify(H));}catch(e){}
     await gtAyarYaz({son:Date.now()});if(!sessiz)showToast(`Google Takvim: ${n} kayıt eşitlendi${hata?', '+hata+' hata':''}`,hata?'amber':'green');tkAktarCiz();
   }catch(e){console.warn('gtakvim',e);if(!sessiz)showToast('Google Takvim: '+String(e.message||e).slice(0,80)+(/disabled|not been used|accessNotConfigured/i.test(String(e.message))?' — Cloud\'da Google Calendar API\'yi etkinleştir':''),'red');}
 }
 async function gtOtoEsitle(id){
-  const A=gtAyar();if(!A.calendarId||A.otomatik===false||!gtTokenGecerli()){setTimeout(tkAktarCiz,50);return;}
-  const t=(DB.takvim||[]).find(x=>x.id===id);if(!t)return;try{const H=gtHashlar();await gtTekGonder(A.calendarId,t,H);localStorage.setItem('gt_hash_v1',JSON.stringify(H));}catch(e){console.warn('gtakvim oto',e);}tkAktarCiz();
+  const A=gtAyar();if(!A.calendarId||A.otomatik===false){setTimeout(tkAktarCiz,50);return;}
+  // hesap sormadan jeton yoksa (sunucu bağlantısı yok ve açık jeton yok) sessizce bekletir
+  try{await gtToken(true);}catch(e){setTimeout(tkAktarCiz,50);return;}
+  const t=(DB.takvim||[]).find(x=>x.id===id);if(!t)return;try{const H=gtHashlar();await gtTekGonder(A.calendarId,t,H);}catch(e){console.warn('gtakvim oto',e);}tkAktarCiz();
 }
-function gtSilKuyruk(t){if(!t||!t.googleEventId)return;const A=gtAyar();if(A.calendarId&&gtTokenGecerli()){gtIstek('calendars/'+encodeURIComponent(A.calendarId)+'/events/'+encodeURIComponent(t.googleEventId),'DELETE').catch(()=>{});return;}
-  try{const L=JSON.parse(localStorage.getItem('gt_silinecek')||'[]');L.push(t.googleEventId);localStorage.setItem('gt_silinecek',JSON.stringify(L));}catch(e){}}
+function gtSilKuyruk(t){if(!t||!t.googleEventId)return;const A=gtAyar();
+  const kuyruk=()=>{try{const L=JSON.parse(localStorage.getItem('gt_silinecek')||'[]');L.push(t.googleEventId);localStorage.setItem('gt_silinecek',JSON.stringify(L));}catch(e){}};
+  if(!A.calendarId){kuyruk();return;}
+  gtIstek('calendars/'+encodeURIComponent(A.calendarId)+'/events/'+encodeURIComponent(t.googleEventId),'DELETE',null,true).catch(e=>{if(e&&e.status!==404&&e.status!==410)kuyruk();});}
 async function gtOtomatikDegistir(){const A=gtAyar();await gtAyarYaz({otomatik:A.otomatik===false});tkAktarCiz();}
 
 // ---------- eski fonksiyonları yeni takvime yönlendir
@@ -20099,27 +20340,20 @@ let teklifPollTimer=null;
 let sonTeklifDurumlari={};
 
 function teklifPollBaslat(){
-  if(teklifPollTimer)clearInterval(teklifPollTimer);
-  // Mevcut durumları kaydet
+  // Dijital onay sayfasından gelen onaylar artık anlık eşitlemeyle yakalanıyor (20 sn'lik sorgu kaldırıldı)
+  if(teklifPollTimer){clearInterval(teklifPollTimer);teklifPollTimer=null;}
   DB.teklifler.forEach(t=>{sonTeklifDurumlari[t.id]=t.durum;});
-  teklifPollTimer=setInterval(async()=>{
-    try{
-      const res=await sbFetch('teklifler?select=id,durum,onaylayan_isim');
-      if(!res||!res.length)return;
-      res.forEach(t=>{
-        const eskiDurum=sonTeklifDurumlari[t.id];
-        if(eskiDurum&&eskiDurum!=='Onaylandı'&&t.durum==='Onaylandı'){
-          // YENİ ONAY!
-          const teklif=DB.teklifler.find(x=>x.id===t.id);
-          const k=teklif?getKisi(teklif.kisiId):null;
-          setTimeout(()=>window.animTeklifOnaylandi&&animTeklifOnaylandi(),100);
-          aiBildirimGoster('bilgi',`🎉 Teklif onaylandı! ${k?k.isim:''} - ${t.onaylayan_isim||''}`,10000);
-          loadDB(); // Listeyi güncelle
-        }
-        sonTeklifDurumlari[t.id]=t.durum;
-      });
-    }catch(e){}
-  },20000); // 20 saniyede bir kontrol
+}
+function teklifOnayKontrol(once){
+  (DB.teklifler||[]).forEach(t=>{
+    const eski=once.get(t.id);
+    if(eski&&eski!=='Onaylandı'&&t.durum==='Onaylandı'){
+      const k=getKisi(t.kisiId);
+      setTimeout(()=>window.animTeklifOnaylandi&&animTeklifOnaylandi(),100);
+      aiBildirimGoster('bilgi',`🎉 Teklif onaylandı! ${k?k.isim:''}${t.onaylayanIsim?' - '+t.onaylayanIsim:''}`,10000);
+    }
+    sonTeklifDurumlari[t.id]=t.durum;
+  });
 }
 
 
@@ -22832,7 +23066,7 @@ function stokKarRaporuGoster(){
 function _bootApp(){
   initGlobalFileInputs();
   temaYukle();
-  checkSession();
+  checkSession().catch(e=>{console.error('oturum',e);showAuthScreen();});
 }
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',_bootApp);

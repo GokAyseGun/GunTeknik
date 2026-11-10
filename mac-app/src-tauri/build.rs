@@ -5,7 +5,7 @@ fn main() {
     tauri_build::try_build(
         tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(&[
             "cihaz_al", "cihaz_ayarla", "ac", "dis_ac", "belge_ac", "yazdir", "pano_gizle", "pano_veri", "geri_al",
-            "kasa_acik", "kasa_degistir", "surum", "guncelle_denetle", "guncelle_kur",
+            "kasa_acik", "kasa_degistir", "surum", "guncelle_denetle", "guncelle_kur", "parmak_durum", "parmak_dogrula",
         ])),
     )
     .expect("tauri build");
@@ -19,20 +19,22 @@ fn main() {
 
 fn widget_koprusu(hedef: &str) {
     let cikti = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let kaynak = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("macos/WidgetYenile.swift");
+    let kok = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let kaynaklar = [kok.join("macos/WidgetYenile.swift"), kok.join("macos/ParmakIzi.swift")];
     let mimari = if hedef.contains("aarch64") { "arm64" } else { "x86_64" };
     let sdk = komut("xcrun", &["--show-sdk-path", "--sdk", "macosx"]);
     let nesne = cikti.join("WidgetYenile.o");
     let kitaplik = cikti.join("libgt_widget.a");
     let tamam = Command::new("xcrun")
         .args(["swiftc", "-parse-as-library", "-emit-object", "-O", "-whole-module-optimization"])
+        .arg("-module-name").arg("GTKopru")
         .arg("-o").arg(&nesne)
-        .arg(&kaynak)
+        .args(&kaynaklar)
         .args(["-sdk", &sdk, "-target", &format!("{mimari}-apple-macos11.0")])
         .status()
         .expect("swiftc bulunamadı (Xcode gerekli)")
         .success();
-    assert!(tamam, "WidgetYenile.swift derlenemedi");
+    assert!(tamam, "Swift köprüsü (macos/*.swift) derlenemedi");
     assert!(Command::new("ar").arg("rcs").arg(&kitaplik).arg(&nesne).status().expect("ar").success());
 
     // Swift çalışma kitaplıkları (Mac'te /usr/lib/swift altında hazır; bağlama için SDK ve araç zinciri yolları)
@@ -49,7 +51,9 @@ fn widget_koprusu(hedef: &str) {
     println!("cargo:rustc-link-arg=-weak_framework");
     println!("cargo:rustc-link-arg=WidgetKit");
     println!("cargo:rustc-link-lib=framework=Foundation");
+    println!("cargo:rustc-link-lib=framework=LocalAuthentication");
     println!("cargo:rerun-if-changed=macos/WidgetYenile.swift");
+    println!("cargo:rerun-if-changed=macos/ParmakIzi.swift");
 }
 
 fn komut(ad: &str, arg: &[&str]) -> String {
