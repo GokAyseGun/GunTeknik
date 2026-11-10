@@ -2252,8 +2252,10 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div class="stagger-wrap" id="list-personel-kisi"></div>
 
       <div class="sec-title">Hak Ediş Hareketleri</div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-        <button class="btn btn-secondary btn-sm" onclick="avansModal()">💸 Ödeme Ekle</button>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="personel-har-donem" onchange="renderPersonel()" style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;">
+          <option value="ust">Üstteki ay seçimine göre</option><option value="ay">Bu ay</option><option value="gecen">Geçen ay</option><option value="3ay">Son 3 ay</option><option value="tum">Tümü</option></select>
+        <button class="btn btn-secondary btn-sm" onclick="avansModal()" style="flex-shrink:0;">💸 Ödeme Ekle</button>
       </div>
       <div class="stagger-wrap" id="list-personel-hareketler"></div>
     </div>
@@ -2410,7 +2412,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
             </div>
             <div class="fi" style="flex:1">
               <label>Fatura Tipi</label>
-              <select id="vf-fatura-tipi" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
+              <select id="vf-fatura-tipi" onchange="vfTipDegisti()" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
                 <option value="Satış">Satış Faturası</option>
                 <option value="İade">İade Faturası</option>
                 <option value="Tevkifatlı">Tevkifatlı Fatura</option>
@@ -2468,6 +2470,10 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
               <div class="fi" style="flex:1"><label>KDV Tutarı (₺)</label><input type="number" id="vf-kdv" inputmode="numeric" placeholder="0.00" oninput="vfGenelToplamHesapla()"></div>
               <div class="fi" style="flex:1"><label>Genel Toplam — KDV dahil (₺)</label><input type="number" id="vf-tutar" inputmode="numeric" placeholder="0.00"></div>
             </div>
+          </div>
+          <div id="vf-tevkifat-wrap" style="display:none;gap:8px;align-items:center;">
+            <div class="fi" style="flex:1"><label>Tevkifat oranı</label><select id="vf-tevkifat" onchange="vfKdvHesapla()"><option value="2/10">2/10</option><option value="3/10">3/10</option><option value="4/10">4/10</option><option value="5/10">5/10</option><option value="7/10">7/10</option><option value="9/10" selected>9/10</option><option value="10/10">10/10</option></select></div>
+            <div style="flex:1;font-size:12px;color:var(--text2);" id="vf-tevkifat-bilgi"></div>
           </div>
           <button class="btn btn-primary btn-full" onclick="saveVergiFatura(this)">Faturayı Kaydet</button>
           <div class="fi">
@@ -3773,6 +3779,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div class="fi"><label>Telefon</label><input type="tel" id="pe-tel" placeholder="05xx xxx xx xx"></div>
       <div class="fi"><label>Pozisyon</label><input type="text" id="pe-pozisyon" placeholder="Usta, Çırak, Teknisyen..."></div>
       <div class="fi"><label>Kâr Payı Oranı (%)</label><input type="number" id="pe-oran" value="30" min="0" max="100"></div>
+      <div class="fi"><label>İş türüne göre oran <span style="font-weight:400;color:var(--text3);">(isteğe bağlı)</span></label><input type="text" id="pe-oranlar" placeholder="Örn: Klima=30, Elektrik=25, Uydu=20"><div style="font-size:10.5px;color:var(--text3);margin-top:3px;">İşlemde personel seçilince bu oran kendiliğinden gelir; yazılmayan işlerde genel oran kullanılır.</div></div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:4px;">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Maaş Bilgileri</div>
         <div style="display:flex;gap:8px;">
@@ -3810,6 +3817,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         </select>
       </div>
       <div class="fi"><label>Tutar (₺)</label><input type="number" id="ma-tutar" inputmode="numeric" placeholder="0.00"></div>
+      <div class="fi"><label>Ödeme yöntemi</label><select id="ma-odeme" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;"><option>Nakit</option><option>İBAN</option><option>Kart</option></select></div>
       <div class="fi"><label>Açıklama</label><input type="text" id="ma-not" placeholder="Maaş, hak ediş, bonus..."></div>
     </div>
     <div class="modal-foot">
@@ -6419,7 +6427,7 @@ async function loadDB(o){
     const _kMap=new Map(DB.kisiler.map(x=>[String(x.id),x]));
     DB.islemler=(islemler||[]).map(i=>({id:i.id,teklifId:i.teklif_id||null,groupId:i.group_id,tarih:i.tarih,tip:i.tip,altTip:i.alt_tip||'',statu:i.statu,kisiId:i.kisi_id,kat:i.kat,altKat:i.alt_kat,tutar:parseFloat(i.tutar)||0,islemKaynagi:kaynakTuret(i.islem_kaynagi||'',i.kisi_id,_kMap),islemKaynagiHam:i.islem_kaynagi||'',baglam:i.baglam||'',degdi:('degdi' in i)?(i.degdi==null?null:Number(i.degdi)):undefined,tahsilTarihi:i.tahsil_tarihi||null,malzemeTutar:parseFloat(i.malzeme_tutar)||0,not:i.not||'',odemeYontemi:i.odeme_yontemi||'Nakit',personelIds:i.personel_ids||[],kdvVar:i.kdv_var||false,kdvTutar:parseFloat(i.kdv_tutar)||0,kdvNo:i.kdv_no||'',projeId:i.proje_id||null}));
     DB.odemeler=(odemeler||[]).map(o=>({id:o.id,tarih:o.tarih,kisiId:o.kisi_id,islemTipi:o.islem_tipi,tutar:parseFloat(o.tutar)||0,not:o.not||'',odemeYontemi:o.odeme_yontemi||'Nakit'}));
-    DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||''}));
+    DB.yardimciIslemleri=(yardimci||[]).map(y=>({id:y.id,islemId:y.islem_id,personelId:y.personel_id||null,tarih:y.tarih,tip:y.tip,tutar:parseFloat(y.tutar)||0,not:y.not||'',odemeYontemi:y.odeme_yontemi||''}));
     DB.takvim=(takvim||[]).map(t=>({id:t.id,tarih:(/^\d{4}-\d{2}-\d{2}$/.test(String(t.tarih||''))?t.tarih:(t.tarih?localDateStr(t.tarih):'')),tip:t.tip||'Bilgi',baslik:t.baslik||t.not||'',detay:t.detay||t.not||'',saat:t.saat?String(t.saat).slice(0,5):'',kisiId:t.kisi_id||null,
       durum:t.durum||(String(t.tarih||'').slice(0,10)<localToday()?'yapildi':'planlandi'),bitisSaat:t.bitis_saat?String(t.bitis_saat).slice(0,5):'',personelIds:Array.isArray(t.personel_ids)?t.personel_ids:[],tutar:t.tutar!=null?parseFloat(t.tutar):null,
       tekrar:t.tekrar||'',tekrarBitis:t.tekrar_bitis||'',tekrarDurum:(t.tekrar_durum&&typeof t.tekrar_durum==='object')?t.tekrar_durum:{},hatirlat:t.hatirlat!=null?t.hatirlat:null,
@@ -6429,7 +6437,7 @@ async function loadDB(o){
     DB.stokHareketleri=(stokHar||[]).map(h=>({id:h.id,stokId:h.stok_id,islemId:h.islem_id,tip:h.hareket_tipi,miktar:parseFloat(h.miktar)||0,not:h.not||'',tarih:h.tarih}));
     DB.sablonlar=(sablonlar||[]).map(s=>({id:s.id,baslik:s.baslik||s.isim||'',tip:s.tip||'Gider',hesap:s.hesap||'İşletme',kategori:s.kategori||s.kat||'',kisiId:s.kisi_id,tutar:parseFloat(s.tutar)||0,odemeYontemi:s.odeme_yontemi||'Nakit',periyot:s.periyot||'Aylık',baslangic:s.baslangic||null,bitis:s.bitis||null,aktif:s.aktif!==false,sonIslemTarihi:s.son_islem_tarihi||null,aciklama:s.aciklama||s.not||''}));
     DB.ekler=(ekler||[]).map(e=>({id:e.id,islemId:e.islem_id,projeId:e.proje_id||null,dosyaUrl:e.dosya_url,dosyaAdi:e.dosya_adi,dosyaTipi:e.dosya_tipi,ekTipi:e.ek_tipi||'islem'}));
-    DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||'',maasTutar:parseFloat(p.maas_tutar)||0,maasDongusu:p.maas_dongusu||'Aylık',sgkNo:p.sgk_no||'',iseBaslama:p.ise_baslama||null}));
+    DB.personeller=(personeller||[]).map(p=>({id:p.id,isim:p.isim,tel:p.tel||'',pozisyon:p.pozisyon||'',oran:parseFloat(p.oran)||30,not:p.not||'',maasTutar:parseFloat(p.maas_tutar)||0,maasDongusu:p.maas_dongusu||'Aylık',sgkNo:p.sgk_no||'',iseBaslama:p.ise_baslama||null,izinler:Array.isArray(p.izinler)?p.izinler:[],oranlar:(p.oranlar&&typeof p.oranlar==='object')?p.oranlar:{}}));
     DB.projeler=(projeler||[]).map(p=>({id:p.id,isim:p.isim,aciklama:p.aciklama||'',durum:p.durum||'Devam Ediyor',islemKaynagi:kaynakTuret(p.islem_kaynagi||'',p.musteri_id),baslangic:p.baslangic||null,bitis:p.bitis||null,musteriId:p.musteri_id||null,adres:p.adres||'',zorluk:p.zorluk||'Orta',enIyiFiyat:parseFloat(p.en_iyi_fiyat)||0,teklifFiyat:parseFloat(p.teklif_fiyat)||0,musteriTeklif:parseFloat(p.musteri_teklif)||0,malzemeTahmini:parseFloat(p.malzeme_tahmini)||0,iscilikTahmini:parseFloat(p.iscilik_tahmini)||0,gerceklesenTutar:parseFloat(p.gerceklesen_tutar)||0,malzemeler:p.malzemeler||'',teklifId:p.teklif_id||null,teklifKalemleri:p.teklif_kalemleri||'',teklifAciklama:p.teklif_aciklama||'',createdAt:p.created_at,
       ilerleme:parseInt(p.ilerleme)||0,asamalar:Array.isArray(p.asamalar)?p.asamalar:[]}));
     DB.teklifler=(teklifler||[]).map(t=>{
@@ -6442,7 +6450,7 @@ async function loadDB(o){
     });
     DB.butceLimitler=(butceLimitler||[]).map(b=>({id:b.id,kategori:b.kategori,limitTutar:parseFloat(b.limit_tutar)||0,donem:b.donem||'Aylık',aktif:b.aktif!==false}));
     // Fiyat listesi ve enflasyon geçmişini yükle (paralel)
-    await Promise.all([loadFiyatlar(), loadFiyatGecmis(), loadStokFiyatGecmis(), katYukle()]);
+    await Promise.all([loadFiyatlar(), loadFiyatGecmis(), loadStokFiyatGecmis(), katYukle(), loadVergiFaturalari()]);
     await sablonlariKontrolEt();
     renderAll();
   }catch(e){
@@ -9381,7 +9389,7 @@ function psTamponGerekli(gs,S,kapsam){
 // Aylık net KDV (hesaplanan − indirilecek): Gelir işlemlerindeki KDV ödenecek, giderlerdeki indirilecek
 function psKdvAylik(){
   const m={};(DB.islemler||[]).forEach(i=>{if(!i.kdvVar||!(i.kdvTutar>0))return;const k=(localDateStr(i.tarih)||'').slice(0,7);if(!k)return;m[k]=(m[k]||0)+(i.tip==='Gelir'?i.kdvTutar:-i.kdvTutar);});
-  (DB.vergiFaturalari||[]).forEach(v=>{const k=String(v.tarih||'').slice(0,7);if(!k)return;m[k]=(m[k]||0)+(v.tip==='giden'?v.kdvTutar:-(v.kdvTutar||0));});
+  (DB.vergiFaturalari||[]).forEach(v=>{const k=String(v.tarih||'').slice(0,7);if(!k)return;m[k]=(m[k]||0)+(v.tip==='giden'?vfKdvEtkin(v):-vfKdvEtkin(v));});
   return m;
 }
 function psKdvBorcu(gs,kdv){ // bu ayın + (28'ine kadar) geçen ayın net KDV'si
@@ -11457,6 +11465,8 @@ function onPersonelPayChk(pid){
   const chk=document.getElementById('ppchk-'+pid);
   const detay=document.getElementById('pps-detay-'+pid);
   const satir=document.getElementById('pps-'+pid);
+  if(chk?.checked){const o=document.getElementById('pps-oran-'+pid),tu=document.getElementById('pps-tutar-'+pid);
+    if(o&&!o.value&&!(tu&&tu.value)){const p=DB.personeller.find(x=>x.id===pid);const r=personelOran(p,islemFormIsTuru());if(r>0){o.value=r;setTimeout(()=>{try{personelPayOranGuncelle(pid,'oran');}catch(e){}},0);}}}
   if(detay)detay.style.display=chk?.checked?'block':'none';
   if(satir)satir.style.borderColor=chk?.checked?'var(--blue)':'var(--border)';
   calcYardimci();
@@ -12893,6 +12903,7 @@ function openPersonelEkleModal(id){
     document.getElementById('pe-tel').value=p.tel||'';
     document.getElementById('pe-pozisyon').value=p.pozisyon||'';
     document.getElementById('pe-oran').value=p.oran||30;
+    document.getElementById('pe-oranlar').value=Object.entries(p.oranlar||{}).map(([k,v])=>k+'='+v).join(', ');
     document.getElementById('pe-not').value=p.not||'';
     const mt=document.getElementById('pe-maas-tutar');if(mt)mt.value=p.maasTutar||'';
     const md=document.getElementById('pe-maas-dongusu');if(md)md.value=p.maasDongusu||'Aylık';
@@ -12902,6 +12913,7 @@ function openPersonelEkleModal(id){
   else{
     ['pe-isim','pe-tel','pe-pozisyon','pe-not','pe-sgk-no','pe-ise-baslama'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('pe-oran').value=30;
+    document.getElementById('pe-oranlar').value='';
     const mt=document.getElementById('pe-maas-tutar');if(mt)mt.value='';
   }
   openModal('modal-personel-ekle');
@@ -12917,11 +12929,12 @@ async function savePersonel(btn){
       maas_tutar:parseFloat(document.getElementById('pe-maas-tutar')?.value)||0,
       maas_dongusu:document.getElementById('pe-maas-dongusu')?.value||'Aylık',
       sgk_no:document.getElementById('pe-sgk-no')?.value||'',
-      ise_baslama:document.getElementById('pe-ise-baslama')?.value||null};
+      ise_baslama:document.getElementById('pe-ise-baslama')?.value||null,
+      oranlar:Object.fromEntries(String(document.getElementById('pe-oranlar')?.value||'').split(/[,;\n]/).map(s=>s.split(/[=:]/).map(x=>x.trim())).filter(a=>a[0]&&a[1]&&!isNaN(parseFloat(a[1].replace(',','.')))).map(a=>[a[0],parseFloat(a[1].replace(',','.'))]))};
     if(id)await sbFetch('personeller?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
     else await sbFetch('personeller',{method:'POST',prefer:'return=minimal',body:JSON.stringify(payload)});
     await loadDB();closeModal('modal-personel-ekle');showToast(id?'Güncellendi':'Personel eklendi','green');
-  }catch(e){showToast('Hata!','red');}
+  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
@@ -12959,7 +12972,7 @@ async function personelOdemeKaydet({personelId,tutar,tarih,not,odemeYontemi}){
   try{
     await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
       islem_id:islemId,personel_id:personelId||null,tip:'Avans/Ödeme',
-      tutar:tutar,tarih:tarih+'T12:00:00',not:notMetni
+      tutar:tutar,tarih:tarih+'T12:00:00',not:notMetni,odeme_yontemi:odemeYontemi||'Nakit'
     })});
   }catch(e){
     // Yarım kayıt kalmasın: işlemi geri al
@@ -12975,12 +12988,12 @@ async function saveAvans(btn){
     const t=parseTutar(document.getElementById('ma-tutar').value);if(t<=0){showToast('Tutar girin','red');return;}
     const tip=document.getElementById('ma-tip').value;const personelId=parseInt(document.getElementById('ma-personel-sec').value)||null;
     if(tip==='Avans/Ödeme'){
-      await personelOdemeKaydet({personelId,tutar:t,tarih:localToday(),not:document.getElementById('ma-not').value||'Hak ediş ödemesi'});
+      await personelOdemeKaydet({personelId,tutar:t,tarih:localToday(),not:document.getElementById('ma-not').value||'Hak ediş ödemesi',odemeYontemi:document.getElementById('ma-odeme')?.value||'Nakit'});
     }else{
       await sbFetch('yardimci_islemleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih:localISOString(new Date()),tip,tutar:t,personel_id:personelId,"not":document.getElementById('ma-not').value||tip})});
     }
     await loadDB();closeModal('modal-avans');showToast('Kaydedildi','green');
-  }catch(e){showToast('Hata!','red');}
+  }catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
@@ -13019,6 +13032,65 @@ async function deleteHareket(id,event){
   },'🗑');
 }
 
+// Hak ediş satırını kaynağı olan işle anlat: müşteri, iş türü, işin tutarı
+function hakEdisAciklama(y){
+  const i=y.islemId?DB.islemler.find(x=>x.id===y.islemId):null;
+  if(!i)return y.not||'';
+  const k=getKisi(i.kisiId);const oran=(String(y.not||'').match(/%[\d.,]+/)||[''])[0];
+  const isTur=(i.altKat&&i.altKat!=='-'?i.altKat:i.kat)||'';
+  return [k?k.isim:'',isTur.slice(0,60),y.tip==='Hak Edis'?'iş '+fmt(i.tutar)+(oran?' × '+oran:''):'' ].filter(Boolean).join(' · ');
+}
+function personelHareketFiltre(L){
+  const d=document.getElementById('personel-har-donem')?.value||'ust';const bg=localToday();
+  if(d==='ust'){const f=getMonth();return L.filter(y=>!f||String(y.tarih||'').startsWith(f));}
+  if(d==='tum')return L;
+  const ay=bg.slice(0,7);const gecen=localDateStr(new Date(new Date().getFullYear(),new Date().getMonth()-1,1)).slice(0,7);
+  if(d==='ay')return L.filter(y=>String(y.tarih||'').slice(0,7)===ay);
+  if(d==='gecen')return L.filter(y=>String(y.tarih||'').slice(0,7)===gecen);
+  const s=localDateStr(new Date(new Date().getFullYear(),new Date().getMonth()-2,1));return L.filter(y=>localDateStr(y.tarih)>=s);
+}
+// İş türüne göre oran (Personel → Düzenle → "İş türüne göre oran"), yoksa genel oran
+function personelOran(p,isTuru){
+  if(!p)return 0;const o=p.oranlar||{};
+  if(isTuru){const k=Object.keys(o).find(x=>x.toLocaleLowerCase('tr')===String(isTuru).toLocaleLowerCase('tr'));if(k&&parseFloat(o[k])>=0)return parseFloat(o[k]);}
+  return p.oran||0;
+}
+function islemFormIsTuru(){const cb=document.querySelector('.isletme-cb:checked');return cb?cb.getAttribute('data-main'):'';}
+// Personelin aylık hak ediş / ödeme / kalan dökümü
+function personelAylik(id){
+  const m={};DB.yardimciIslemleri.filter(y=>y.personelId===id).forEach(y=>{const a=String(y.tarih||'').slice(0,7);if(!a)return;m[a]=m[a]||{hak:0,ode:0};if(y.tip==='Hak Edis')m[a].hak+=y.tutar;else m[a].ode+=y.tutar;});
+  let kum=0;return Object.keys(m).sort().map(a=>{kum+=m[a].hak-m[a].ode;return {ay:a,hak:m[a].hak,ode:m[a].ode,kalan:kum};});
+}
+function personelDokum(id,wa){
+  const p=DB.personeller.find(x=>x.id===id);if(!p)return;const F=firmaBilgi();
+  const A=personelAylik(id);const H=DB.yardimciIslemleri.filter(y=>y.personelId===id).sort((a,b)=>new Date(a.tarih)-new Date(b.tarih));
+  const bak=A.length?A[A.length-1].kalan:0;
+  if(wa){
+    const son=A.slice(-3).map(a=>`• ${new Date(a.ay+'-01T12:00:00').toLocaleString('tr-TR',{month:'long',year:'numeric'})}: hak ediş ${fmt(a.hak)}, ödenen ${fmt(a.ode)}`).join('\n');
+    const msg=`Merhaba ${p.isim},\n\nHesap özetin (${new Date().toLocaleDateString('tr-TR')}):\n${son}\n\nGüncel bakiye: ${fmt(Math.abs(bak))} ${bak>=0?'(sana ödenecek)':'(fazla ödeme)'}\n\n${F.unvan}`;
+    if(p.tel)window.open('https://wa.me/'+waNumara(p.tel)+'?text='+encodeURIComponent(msg),'_blank');else navigator.clipboard.writeText(msg).then(()=>showToast('Telefon yok — metin panoya kopyalandı','amber')).catch(()=>{});
+    return;
+  }
+  let k=0;const satir=H.map(y=>{const hk=y.tip==='Hak Edis';k+=hk?y.tutar:-y.tutar;return `<tr><td>${dtS(y.tarih)}</td><td>${hk?'Hak ediş':'Ödeme'+(y.odemeYontemi?' ('+_esc(y.odemeYontemi)+')':'')}</td><td>${_esc(hakEdisAciklama(y))}</td><td class="r">${hk?fmt(y.tutar):''}</td><td class="r">${hk?'':fmt(y.tutar)}</td><td class="r b">${k<0?'− ':''}${fmt(k)}</td></tr>`;}).join('');
+  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hesap dökümü — ${_esc(p.isim)}</title>
+  <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;margin:0;padding:24px;}h1{font-size:20px;margin:0;}.a{color:#64748b;font-size:12px;}table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px;}th{background:#f1f5f9;text-align:left;padding:7px 8px;font-size:11px;}td{padding:6px 8px;border-bottom:1px solid #eef2f6;}.r{text-align:right;white-space:nowrap;}.b{font-weight:700;}.bar{text-align:right;}@media print{.bar{display:none}}</style></head><body>
+  <div class="bar"><button onclick="window.print()" style="padding:8px 16px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:600;">🖨️ Yazdır / PDF</button></div>
+  <h1>${_esc(F.unvan)}</h1><div class="a">Personel hesap dökümü · ${new Date().toLocaleDateString('tr-TR')}</div>
+  <div style="margin-top:12px;font-size:15px;"><b>${_esc(p.isim)}</b> · ${_esc(p.pozisyon||'Personel')} · genel oran %${p.oran}</div>
+  <table><thead><tr><th>Ay</th><th class="r">Hak ediş</th><th class="r">Ödenen</th><th class="r">Kümülatif kalan</th></tr></thead><tbody>${A.map(a=>`<tr><td>${new Date(a.ay+'-01T12:00:00').toLocaleString('tr-TR',{month:'long',year:'numeric'})}</td><td class="r">${fmt(a.hak)}</td><td class="r">${fmt(a.ode)}</td><td class="r b">${a.kalan<0?'− ':''}${fmt(a.kalan)}</td></tr>`).join('')}</tbody></table>
+  <table><thead><tr><th>Tarih</th><th>Tür</th><th>Açıklama</th><th class="r">Hak ediş</th><th class="r">Ödeme</th><th class="r">Bakiye</th></tr></thead><tbody>${satir}</tbody></table>
+  <div style="margin-top:14px;padding:12px;background:#eff6ff;border-radius:8px;font-size:14px;">Güncel bakiye: <b>${fmt(Math.abs(bak))}</b> ${bak>=0?'(personele ödenecek)':'(fazla ödeme)'}</div></body></html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function personelIzinEkle(id){
+  formModal('🌴 İzin / gelmediği gün',[{id:'bas',etiket:'Başlangıç',tip:'date',deger:localToday()},{id:'bit',etiket:'Bitiş',tip:'date',deger:localToday()},{id:'not',etiket:'Not',deger:'',placeholder:'Yıllık izin, rapor, bayram…'}],async d=>{
+    if(!d.bas){showToast('Tarih gir','red');return false;}const p=DB.personeller.find(x=>x.id===id);if(!p)return false;
+    const izin=[...(p.izinler||[]),{bas:d.bas,bit:d.bit&&d.bit>=d.bas?d.bit:d.bas,not:d.not||''}].sort((a,b)=>a.bas<b.bas?-1:1);
+    await sbFetch('personeller?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({izinler:izin})});await loadDB();showPersonelDetay(id);showToast('İzin eklendi','green');});
+}
+async function personelIzinSil(id,i){const p=DB.personeller.find(x=>x.id===id);if(!p)return;const izin=(p.izinler||[]).filter((_,j)=>j!==i);
+  await sbFetch('personeller?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({izinler:izin})});await loadDB();showPersonelDetay(id);}
+function izinGun(z){return Math.round((new Date(z.bit+'T12:00:00')-new Date(z.bas+'T12:00:00'))/864e5)+1;}
 function renderPersonel(c){
   if(!c)c=calcFinans();
   const listKisi=document.getElementById('list-personel-kisi');
@@ -13043,7 +13115,7 @@ function renderPersonel(c){
   // Hareketler
   const listHar=document.getElementById('list-personel-hareketler');
   if(listHar){
-    const fDate=getMonth();const items=DB.yardimciIslemleri.filter(y=>!fDate||(y.tarih||'').startsWith(fDate)).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+    const items=personelHareketFiltre(DB.yardimciIslemleri).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
     if(!items.length){listHar.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Hareket kaydı yok</div></div>';}
     else{listHar.innerHTML=items.map((y,i)=>{
       const p=getPersonel(y.personelId);const renk=y.tip==='Hak Edis'?'var(--amber)':'var(--red)';
@@ -13051,7 +13123,7 @@ function renderPersonel(c){
       const delBtn=USER_ROL==='admin'?`<button class="icon-btn" onclick="deleteHareket(${y.id},event)" style="width:28px;height:28px;font-size:13px;color:var(--red);">🗑</button>`:'';
       return `<div class="stagger-item" style="animation-delay:${i*0.05}s;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <div style="flex:1;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${p?p.isim:'Genel'} — ${y.tip}</div><div style="font-size:11px;color:var(--text2);">${dtS(y.tarih)}${y.not?' · '+y.not:''}</div></div>
+          <div style="flex:1;min-width:0;${y.islemId?'cursor:pointer;':''}" ${y.islemId?`onclick="showIslemDetay(${y.islemId})"`:''}><div style="font-weight:600;font-size:13px;margin-bottom:2px;">${_esc(p?p.isim:'Genel')} — ${y.tip==='Hak Edis'?'Hak ediş':'Ödeme'}${y.odemeYontemi?' · '+_esc(y.odemeYontemi):''}</div><div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${dtS(y.tarih)} · ${_esc(hakEdisAciklama(y))}</div></div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="font-weight:700;font-size:15px;color:${renk};" class="num">${y.tip==='Hak Edis'?'+':'-'}${fmt(y.tutar)}</div>
             <div onclick="event.stopPropagation()">${editBtn}${delBtn}</div>
@@ -14601,8 +14673,35 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.s
 // loadDB'ye vergi tablosunu ekle
 const _origLoadDB = loadDB;
 
-// DB'ye vergiFaturalari alanı
+// DB'ye vergiFaturalari alanı (loadDB içinde yüklenir)
 DB.vergiFaturalari = [];
+async function loadVergiFaturalari(){
+  try{const r=await sbFetch('vergi_faturalari?order=tarih.desc&select=*');
+    DB.vergiFaturalari=(r||[]).map(v=>({id:v.id,tarih:v.tarih,tip:v.tip,faturaNo:v.fatura_no||'',firma:v.firma||'',tutar:parseFloat(v.tutar)||0,kdvTutar:parseFloat(v.kdv_tutar)||0,
+      not:v.aciklama||'',aciklama:v.aciklama||'',kaynak:v.kaynak||'manuel',islemId:v.islem_id||null,dosyaUrl:v.dosya_url||null,dosyaAdi:v.dosya_adi||null,dosyaTipi:v.dosya_tipi||null,
+      faturaTipi:v.fatura_tipi||'Satış',kdvOran:v.kdv_oran!=null?parseFloat(v.kdv_oran):null,kdvHaric:v.kdv_haric!=null?parseFloat(v.kdv_haric):null,tevkifat:v.tevkifat||'',tevkifKdv:parseFloat(v.tevkif_kdv)||0,
+      vergiNo:v.vergi_no||'',vergiDairesi:v.vergi_dairesi||'',kisiId:v.kisi_id||null}));
+  }catch(e){DB.vergiFaturalari=DB.vergiFaturalari||[];}
+}
+// Beyana giren KDV: tevkifatlı giden faturada alıcının ödediği kısım düşer, iade faturası ters etki yapar, istisna 0
+function vfKdvEtkin(v){
+  let k=parseFloat(v.kdvTutar)||0;
+  if(v.faturaTipi==='İstisna')return 0;
+  if(v.tip==='giden'&&v.faturaTipi==='Tevkifatlı')k-=parseFloat(v.tevkifKdv)||0;
+  if(v.faturaTipi==='İade')k=-k;
+  return k;
+}
+// Tüm KDV kayıtları (işlemlerden + manuel faturalar) tek listede
+function vergiKayitlari(){
+  const islemKDV=DB.islemler.filter(i=>i.kdvVar&&i.kdvTutar>0).map(i=>({id:'i-'+i.id,tarih:i.tarih,tip:i.tip==='Gelir'?'giden':'gelen',faturaNo:i.kdvNo||'',firma:getKisi(i.kisiId)?.isim||'—',tutar:i.tutar,kdvTutar:i.kdvTutar,not:i.not||'',kaynak:'islem',islemId:i.id,faturaTipi:'Satış'}));
+  const manuel=(DB.vergiFaturalari||[]).map(v=>({...v,id:'v-'+v.id,kaynak:'manuel'}));
+  return [...islemKDV,...manuel].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
+}
+function vergiAyOzet(ay){ // 'YYYY-MM'
+  const L=vergiKayitlari().filter(v=>localDateStr(v.tarih).slice(0,7)===ay);
+  const giden=L.filter(v=>v.tip==='giden').reduce((a,v)=>a+vfKdvEtkin(v),0),gelen=L.filter(v=>v.tip==='gelen').reduce((a,v)=>a+vfKdvEtkin(v),0);
+  return {giden,gelen,net:giden-gelen,adet:L.length};
+}
 
 // loadDB override - vergi tablosunu da çek
 
@@ -14691,35 +14790,20 @@ function vergiDonemFiltre(list){
 
 function renderVergiDash(){
   // Bu ay için hızlı özet - dashboard için
-  const now=new Date();
-  const islemKDV=DB.islemler.filter(i=>i.kdvVar&&i.kdvTutar>0&&new Date(i.tarih).getMonth()===now.getMonth()&&new Date(i.tarih).getFullYear()===now.getFullYear()).map(i=>({tip:i.tip==='Gelir'?'giden':'gelen',kdvTutar:i.kdvTutar}));
-  const manuelKDV=DB.vergiFaturalari.filter(v=>{const t=new Date(v.tarih);return t.getMonth()===now.getMonth()&&t.getFullYear()===now.getFullYear();});
-  const tumü=[...islemKDV,...manuelKDV];
-  const gelen=tumü.filter(v=>v.tip==='gelen').reduce((s,v)=>s+v.kdvTutar,0);
-  const giden=tumü.filter(v=>v.tip==='giden').reduce((s,v)=>s+v.kdvTutar,0);
-  const net=giden-gelen;const yukum=Math.max(0,net);
+  const o=vergiAyOzet(localToday().slice(0,7));const yukum=Math.max(0,o.net);
   const e=id=>document.getElementById(id);
-  if(e('d-v-gelen'))ozKartSayi(e('d-v-gelen'),gelen);
-  if(e('d-v-giden'))ozKartSayi(e('d-v-giden'),-giden);
+  if(e('d-v-gelen'))ozKartSayi(e('d-v-gelen'),o.gelen);
+  if(e('d-v-giden'))ozKartSayi(e('d-v-giden'),-o.giden);
   if(e('d-v-yukum'))ozKartSayi(e('d-v-yukum'),-yukum);
 }
 
 function renderVergi(){
   renderVergiTakvimi();
-  // İşlemlerden gelen KDV kayıtları + manuel fatura kayıtları
-  const islemKDV=DB.islemler.filter(i=>i.kdvVar&&i.kdvTutar>0).map(i=>({
-    id:'i-'+i.id,tarih:i.tarih,
-    tip:i.tip==='Gelir'?'giden':'gelen',// gelir = müşteriye hesaplanan KDV = giden, gider = indirilen KDV = gelen
-    faturaNo:i.kdvNo||'',firma:getKisi(i.kisiId)?.isim||'—',
-    tutar:i.tutar,kdvTutar:i.kdvTutar,not:i.not||'',kaynak:'islem',islemId:i.id
-  }));
-  const manuelKDV=DB.vergiFaturalari.map(v=>({...v,id:'v-'+v.id,kaynak:'manuel'}));
-  const tumFaturalar=[...islemKDV,...manuelKDV].sort((a,b)=>new Date(b.tarih)-new Date(a.tarih));
-  const donemFaturalar=vergiDonemFiltre(tumFaturalar);
-
-  // Özet hesapla
-  const gelen=donemFaturalar.filter(v=>v.tip==='gelen').reduce((s,v)=>s+v.kdvTutar,0);
-  const giden=donemFaturalar.filter(v=>v.tip==='giden').reduce((s,v)=>s+v.kdvTutar,0);
+  // İşlemlerden gelen KDV kayıtları + manuel fatura kayıtları (gelir = hesaplanan/giden, gider = indirilecek/gelen)
+  const donemFaturalar=vergiDonemFiltre(vergiKayitlari());
+  // Özet hesapla (tevkifat / iade / istisna dikkate alınır)
+  const gelen=donemFaturalar.filter(v=>v.tip==='gelen').reduce((s,v)=>s+vfKdvEtkin(v),0);
+  const giden=donemFaturalar.filter(v=>v.tip==='giden').reduce((s,v)=>s+vfKdvEtkin(v),0);
   const net=giden-gelen;// pozitifse devlete borçluyuz
   const yukum=Math.max(0,net);
 
@@ -14751,7 +14835,7 @@ function renderVergi(){
     return `<div class="stagger-item" style="animation-delay:${i*0.05}s;" onclick="showVergiFaturaDetay('${v.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:2px;">${dtS(v.tarih)}${v.faturaNo?' · '+v.faturaNo:''} ${v.kaynak==='islem'?'<span class="badge bg-blue" style="font-size:9px;">İşlemden</span>':''}</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px;">${dtS(v.tarih)}${v.faturaNo?' · '+_esc(v.faturaNo):''} ${v.kaynak==='islem'?'<span class="badge bg-blue" style="font-size:9px;">İşlemden</span>':''}${v.faturaTipi&&v.faturaTipi!=='Satış'?' <span class="badge" style="font-size:9px;">'+_esc(v.faturaTipi)+(v.tevkifat?' '+_esc(v.tevkifat):'')+'</span>':''}</div>
           <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.firma||'—'}</div>
           ${v.not?`<div style="font-size:11px;color:var(--text3);">${v.not.substring(0,40)}</div>`:''}
         </div>
@@ -14821,8 +14905,13 @@ async function saveVergiFatura(btn){
   try{
     const tip=document.getElementById('vf-tip').value;
     const tarih=document.getElementById('vf-tarih').value;if(!tarih){showToast('Tarih gerekli','red');return;}
-    const kdv=parseTutar(document.getElementById('vf-kdv').value);if(kdv<=0){showToast('KDV tutarı girin','red');return;}
+    const faturaTipi=document.getElementById('vf-fatura-tipi')?.value||'Satış';
+    const kdv=faturaTipi==='İstisna'?0:parseTutar(document.getElementById('vf-kdv').value);
+    if(faturaTipi!=='İstisna'&&kdv<=0){showToast('KDV tutarı girin','red');return;}
     const tutar=parseTutar(document.getElementById('vf-tutar').value);
+    const kdvHaric=parseTutar(document.getElementById('vf-kdvsiz-tutar')?.value)||Math.max(0,tutar-kdv);
+    const tevkifat=faturaTipi==='Tevkifatlı'?(document.getElementById('vf-tevkifat')?.value||'9/10'):null;
+    const tevkifKdv=tevkifat?Math.round(kdv*vfTevkifOran()*100)/100:0;
     // Dosya yükle
     let dosyaUrl=null;
     if(selectedVfFile&&SB_TOKEN){
@@ -14837,15 +14926,19 @@ async function saveVergiFatura(btn){
       tip,tarih,fatura_no:document.getElementById('vf-no').value,
       firma:document.getElementById('vf-firma').value,
       tutar,kdv_tutar:kdv,aciklama:document.getElementById('vf-not').value,
+      fatura_tipi:faturaTipi,kdv_oran:parseFloat(document.getElementById('vf-kdv-oran')?.value)||0,kdv_haric:kdvHaric,tevkifat,tevkif_kdv:tevkifKdv,
+      vergi_no:document.getElementById('vf-vergi-no-input')?.value||null,vergi_dairesi:document.getElementById('vf-vergi-dairesi')?.value||null,
+      kisi_id:parseInt(document.getElementById('vf-kisi-id')?.value)||null,
       kaynak:'manuel',dosya_url:dosyaUrl,dosya_adi:selectedVfFile?.name||null,
       dosya_tipi:selectedVfFile?(selectedVfFile.type.includes('image')?'resim':'belge'):null
     })});
     // Formu temizle
-    ['vf-no','vf-firma','vf-tutar','vf-kdv','vf-not'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['vf-no','vf-firma','vf-tutar','vf-kdv','vf-not','vf-kdvsiz-tutar','vf-vergi-no-input','vf-vergi-dairesi'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const _ft=document.getElementById('vf-fatura-tipi');if(_ft){_ft.value='Satış';vfTipDegisti();}
     acClearVergi();document.getElementById('vf-kisi-id').value='';
     selectedVfFile=null;
     document.getElementById('vf-dosya-preview').innerHTML='';
-    ['vf-dosya-kamera','vf-dosya-galeri','vf-dosya-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['vf-file-kamera','vf-file-galeri','vf-file-belge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     await loadDB();showToast('Fatura kaydedildi','green');
   }catch(e){showToast('Hata: '+String(e?.message||e).substring(0,50),'red');}
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
@@ -16656,65 +16749,79 @@ function onayHtmlIndir(){
 
 // ============================================================ VERGİ TAKVİMİ (18)
 
+// ── Vergi takvimi: son günler hafta sonuna denk gelirse sonraki iş gününe kayar (resmi tatiller için muhasebeciye danış) ──
+function isGunu(d){const x=new Date(d+'T12:00:00');const g=x.getDay();if(g===6)x.setDate(x.getDate()+2);else if(g===0)x.setDate(x.getDate()+1);return localDateStr(x);}
+function vergiSonGunler(bas,bit){
+  const L=[];const y0=+bas.slice(0,4),y1=+bit.slice(0,4);
+  const ayAd=m=>new Date(2026,m-1,1).toLocaleString('tr-TR',{month:'long'});
+  for(let y=y0-1;y<=y1;y++)for(let m=1;m<=12;m++){
+    const ss=(gun)=>{const sm=m===12?1:m+1,sy=m===12?y+1:y;return isGunu(`${sy}-${String(sm).padStart(2,'0')}-${String(gun).padStart(2,'0')}`);};
+    const donem=`${y}-${String(m).padStart(2,'0')}`;
+    L.push({k:'kdv_'+donem,g:ss(28),ik:'🧾',ad:`KDV beyannamesi (${ayAd(m)} ${y})`,donem,tur:'kdv'});
+    L.push({k:'muhtasar_'+donem,g:ss(26),ik:'👷',ad:`Muhtasar ve prim hizmet (${ayAd(m)} ${y}) — çalışan / stopaj varsa`,donem,tur:'muhtasar'});
+    const sonGun=new Date(y,m,0).getDate();L.push({k:'bagkur_'+donem,g:isGunu(`${y}-${String(m).padStart(2,'0')}-${sonGun}`),ik:'🏛️',ad:`Bağ-Kur primi (${ayAd(m)} ${y})`,donem,tur:'bagkur'});
+  }
+  for(let y=y0;y<=y1+1;y++){
+    [[`${y}-05-17`,'I. dönem (Oca–Mar)'],[`${y}-08-17`,'II. dönem (Nis–Haz)'],[`${y}-11-17`,'III. dönem (Tem–Eyl)']].forEach(([g,d],i)=>L.push({k:`gecici_${y}_${i+1}`,g:isGunu(g),ik:'📊',ad:`Geçici vergi ${d} ${y}`,tur:'gecici'}));
+    L.push({k:`gv_${y-1}_1`,g:isGunu(`${y}-03-31`),ik:'📑',ad:`Yıllık gelir vergisi ${y-1}: beyan + 1. taksit`,tur:'gv'});
+    L.push({k:`gv_${y-1}_2`,g:isGunu(`${y}-07-31`),ik:'📑',ad:`Yıllık gelir vergisi ${y-1}: 2. taksit`,tur:'gv'});
+  }
+  return L.filter(x=>x.g>=bas&&x.g<=bit).sort((a,b)=>a.g<b.g?-1:a.g>b.g?1:0);
+}
+function vergiBeyanDurum(){return (PS.ayar&&PS.ayar.vergiBeyan)||{};}
+async function vergiBeyanIsaretle(k,alan){
+  const d=Object.assign({},vergiBeyanDurum());const x=Object.assign({},d[k]||{});x[alan]=!x[alan];x.t=localToday();d[k]=x;
+  await psAyarKaydet('vergiBeyan',d);renderVergiTakvimi();
+}
 function renderVergiTakvimi(){
   const el=document.getElementById('vergi-takvim-wrap');if(!el)return;
-  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
-
-  // KDV matrahı hesapla
-  const gelirKDV=DB.vergiFaturalari.filter(v=>v.tip==='giden').reduce((a,v)=>a+v.kdvTutar,0);
-  const giderKDV=DB.vergiFaturalari.filter(v=>v.tip==='gelen').reduce((a,v)=>a+v.kdvTutar,0);
-  const netKDV=gelirKDV-giderKDV;
-
-  // Beyanname tarihleri (her ayın 26'sı)
-  const beyanAy=new Date(yil,ay+1,26);
-  const gunKalan=Math.ceil((beyanAy-now)/(24*60*60*1000));
-  const gecikti=gunKalan<0;
-  const acil=gunKalan<=5&&gunKalan>=0;
-
+  const bg=localToday();const now=new Date();
+  const gecenAy=localDateStr(new Date(now.getFullYear(),now.getMonth()-1,1)).slice(0,7),buAy=bg.slice(0,7);
+  const G=vergiAyOzet(gecenAy),B=vergiAyOzet(buAy);
+  const D=vergiBeyanDurum();
+  const yakin=vergiSonGunler(gfGunEkle(bg,-20),gfGunEkle(bg,75)).filter(x=>!(D[x.k]&&D[x.k].o));
+  const gunFark=g=>Math.round((new Date(g+'T12:00:00')-new Date(bg+'T12:00:00'))/864e5);
+  const ayAd=a=>new Date(a+'-01T12:00:00').toLocaleString('tr-TR',{month:'long',year:'numeric'});
+  const kdvKart=(baslik,o,alt)=>`<div style="flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">${baslik}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;"><span>Hesaplanan</span><span class="num" style="color:var(--red);">${fmt(o.giden)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;"><span>İndirilecek</span><span class="num" style="color:var(--green);">${fmt(o.gelen)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:4px;"><span>${o.net>=0?'Ödenecek':'Devreden'}</span><span class="num" style="color:${o.net>0?'var(--amber)':'var(--green)'};">${fmt(Math.abs(o.net))}</span></div>
+      ${alt?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">${alt}</div>`:''}</div>`;
   el.innerHTML=`
-    <div class="card" style="border-left:3px solid ${gecikti?'var(--red)':acil?'var(--amber)':'var(--blue)'};">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <div style="font-weight:600;font-size:14px;">🏛️ KDV Beyannamesi</div>
-        <span style="font-size:11px;font-weight:600;color:${gecikti?'var(--red)':acil?'var(--amber)':'var(--blue)'};">${gecikti?'GECİKTİ':acil?gunKalan+' GÜN KALDI':gunKalan+' gün'}</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Son tarih: ${beyanAy.toLocaleDateString('tr-TR')}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Hesaplanan</div><div class="num" style="font-weight:700;color:var(--red);">${fmt(gelirKDV)}</div></div>
-        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">İndirilecek</div><div class="num" style="font-weight:700;color:var(--green);">${fmt(giderKDV)}</div></div>
-        <div style="text-align:center;"><div style="font-size:10px;color:var(--text3);">Ödenecek</div><div class="num" style="font-weight:700;color:${netKDV>0?'var(--amber)':'var(--green)'};">${fmt(Math.max(0,netKDV))}</div></div>
-      </div>
-      ${acil||gecikti?`<div style="margin-top:10px;padding:8px 10px;background:${gecikti?'rgba(255,80,80,0.1)':'rgba(255,180,0,0.1)'};border-radius:var(--r-sm);font-size:12px;color:${gecikti?'var(--red)':'var(--amber)'};">
-        ${gecikti?'⚠️ Beyanname tarihi geçti! Muhasebeciye danışın.':'⏰ Beyanname tarihi yaklaşıyor!'}</div>`:''}
-    </div>
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Yıllık Vergi Takvimi</div>
-    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>{
-      const mAdi=new Date(yil,m-1,1).toLocaleString('tr-TR',{month:'long'});
-      const gecti=m-1<ay||(m-1===ay&&now.getDate()>26);
-      const buAyMi=m-1===ay;
-      const ayKDV=DB.vergiFaturalari.filter(v=>{const d=new Date(v.tarih);return d.getMonth()===m-1&&d.getFullYear()===yil&&v.tip==='giden';}).reduce((a,v)=>a+v.kdvTutar,0);
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:${buAyMi?'var(--surface)':'var(--bg2)'};border:1px solid ${buAyMi?'var(--blue)':'var(--border)'};border-radius:var(--r-sm);margin-bottom:4px;">
-        <div style="font-size:12px;font-weight:${buAyMi?'600':'400'};">${mAdi} <span style="color:var(--text3);font-size:10px;">· 26 Beyanname</span></div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          ${ayKDV>0?`<span class="num" style="font-size:12px;color:var(--red);">${fmt(ayKDV)}</span>`:''}
-          <span style="font-size:11px;color:${gecti?'var(--green)':buAyMi?'var(--amber)':'var(--text3)'};">${gecti?'✓':buAyMi?'→':'○'}</span>
-        </div>
-      </div>`;
-    }).join('')}
-    <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="exportKDVRaporu()">📊 KDV Raporu İndir</button>`;
+    <div style="display:flex;gap:8px;margin-bottom:12px;">${kdvKart(ayAd(gecenAy)+' (bu ay beyan edilir)',G,G.adet+' kayıt')}${kdvKart(ayAd(buAy)+' (şu ana kadar)',B,B.adet+' kayıt')}</div>
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:6px 0 8px;">Yaklaşan son günler</div>
+    ${yakin.length?yakin.slice(0,10).map(x=>{const f=gunFark(x.g);const d=D[x.k]||{};const r=f<0?'var(--red)':f<=5?'var(--amber)':'var(--text2)';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid ${f<0?'var(--red)':f<=5?'var(--amber)':'var(--border)'};border-radius:var(--r-sm);margin-bottom:5px;">
+        <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;">${x.ik} ${_esc(x.ad)}</div>
+          <div style="font-size:11px;color:${r};">${dtS(x.g)} · ${f<0?Math.abs(f)+' gün geçti':f===0?'bugün':f+' gün kaldı'}${x.tur==='kdv'&&x.donem?' · '+(()=>{const o=vergiAyOzet(x.donem);return (o.net>=0?'ödenecek ':'devreden ')+fmt(Math.abs(o.net));})():''}</div></div>
+        ${x.tur!=='bagkur'&&x.tur!=='gv'||x.k.endsWith('_1')?`<button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 7px;${d.v?'color:var(--green);border-color:var(--green);':''}" onclick="vergiBeyanIsaretle('${x.k}','v')">${d.v?'✓ ':''}Verildi</button>`:''}
+        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 7px;" onclick="vergiBeyanIsaretle('${x.k}','o')">Ödendi</button></div>`;}).join('')
+      :'<div style="font-size:12px;color:var(--text3);">Yakında son gün yok.</div>'}
+    <div style="font-size:10.5px;color:var(--text3);margin:6px 0 12px;">Hafta sonuna denk gelen günler pazartesiye kaydırıldı; resmi tatil ve süre uzatmaları için muhasebecine danış. Ödendi işaretlenenler listeden kalkar.</div>
+    <details><summary style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;cursor:pointer;">${now.getFullYear()} aylık KDV</summary>
+    ${Array.from({length:12},(_,i)=>{const a=`${now.getFullYear()}-${String(i+1).padStart(2,'0')}`;const o=vergiAyOzet(a);const d=D['kdv_'+a]||{};const buAyMi=a===buAy;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:${buAyMi?'var(--surface)':'var(--bg2)'};border:1px solid ${buAyMi?'var(--blue)':'var(--border)'};border-radius:var(--r-sm);margin-top:4px;">
+        <div style="font-size:12px;font-weight:${buAyMi?'600':'400'};">${new Date(a+'-01T12:00:00').toLocaleString('tr-TR',{month:'long'})}</div>
+        <div style="display:flex;align-items:center;gap:8px;">${o.adet?`<span class="num" style="font-size:12px;color:${o.net>0?'var(--amber)':'var(--green)'};">${o.net<0?'devreden ':''}${fmt(Math.abs(o.net))}</span>`:''}
+          <span style="font-size:11px;color:${d.o?'var(--green)':d.v?'var(--blue)':'var(--text3)'};">${d.o?'✓ ödendi':d.v?'✓ verildi':a<buAy?'—':'○'}</span></div></div>`;}).join('')}</details>
+    <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="exportKDVRaporu()">📊 KDV Raporu İndir (seçili dönem)</button>`;
 }
 
 function exportKDVRaporu(){
-  const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
-  const gelirKDV=DB.vergiFaturalari.filter(v=>v.tip==='giden');
-  const giderKDV=DB.vergiFaturalari.filter(v=>v.tip==='gelen');
-  const topGelir=gelirKDV.reduce((a,v)=>a+v.kdvTutar,0);
-  const topGider=giderKDV.reduce((a,v)=>a+v.kdvTutar,0);
-  const satirlar=[...gelirKDV.map(v=>`${dtS(v.tarih)},${v.firma||'—'},Hesaplanan KDV,${fmt(v.tutar)},${fmt(v.kdvTutar)}`),...giderKDV.map(v=>`${dtS(v.tarih)},${v.firma||'—'},İndirilecek KDV,${fmt(v.tutar)},${fmt(v.kdvTutar)}`)].join('\n');
-  const csv=`Tarih,Firma,Tip,Fatura Tutarı,KDV Tutarı\n${satirlar}\n\nHesaplanan KDV Toplamı,,,,${fmt(topGelir)}\nİndirilecek KDV Toplamı,,,,${fmt(topGider)}\nÖdenecek Net KDV,,,,${fmt(Math.max(0,topGelir-topGider))}`;
-  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`kdv-raporu-${yil}.csv`;
+  // Türkçe Excel uyumlu: ; ayraçlı, ondalık virgüllü, binlik ayraçsız
+  const L=vergiDonemFiltre(vergiKayitlari());
+  if(!L.length){showToast('Seçili dönemde KDV kaydı yok','amber');return;}
+  const n=v=>(Math.round((parseFloat(v)||0)*100)/100).toFixed(2).replace('.',',');
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const satir=L.map(v=>[dtS(v.tarih),q(v.faturaNo),q(v.firma),v.tip==='giden'?'Hesaplanan (satış)':'İndirilecek (alış)',q(v.faturaTipi||'Satış'),q(v.tevkifat||''),n(v.tutar),n(v.kdvTutar),n(vfKdvEtkin(v)),v.kaynak==='islem'?'İşlem':'Manuel'].join(';'));
+  const giden=L.filter(v=>v.tip==='giden').reduce((a,v)=>a+vfKdvEtkin(v),0),gelen=L.filter(v=>v.tip==='gelen').reduce((a,v)=>a+vfKdvEtkin(v),0);
+  const csv=['Tarih;Fatura No;Firma;Tip;Fatura Tipi;Tevkifat;Toplam (KDV dahil);KDV;Beyana Giren KDV;Kaynak',...satir,'',
+    `;;;;;;;Hesaplanan KDV;${n(giden)}`,`;;;;;;;İndirilecek KDV;${n(gelen)}`,`;;;;;;;${giden-gelen>=0?'Ödenecek KDV':'Devreden KDV'};${n(Math.abs(giden-gelen))}`].join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`kdv-raporu-${localToday()}.csv`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  showToast('KDV raporu indirildi','green');
+  showToast('KDV raporu indirildi ('+L.length+' kayıt)','green');
 }
 
 // ============================================================ BİLDİRİM ÇUBUĞU (ekrandaki kısa uyarılar)
@@ -17087,14 +17194,15 @@ function showPersonelDetay(id){
   const c=calcFinans();
   const now=new Date();const ay=now.getMonth();const yil=now.getFullYear();
   const bakiye=c.personelBakiye[id]||0;
-  const buAyHak=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip!=='Avans Ödemesi'&&filterByMonth(y.tarih,ay,yil)).reduce((a,y)=>a+y.tutar,0);
-  const buAyOde=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip==='Avans Ödemesi'&&filterByMonth(y.tarih,ay,yil)).reduce((a,y)=>a+y.tutar,0);
-  const topHak=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip!=='Avans Ödemesi').reduce((a,y)=>a+y.tutar,0);
+  // hak ediş = 'Hak Edis', diğer tüm türler ödeme (Avans/Ödeme, SGK…)
+  const buAyHak=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip==='Hak Edis'&&filterByMonth(y.tarih,ay,yil)).reduce((a,y)=>a+y.tutar,0);
+  const buAyOde=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip!=='Hak Edis'&&filterByMonth(y.tarih,ay,yil)).reduce((a,y)=>a+y.tutar,0);
+  const topHak=DB.yardimciIslemleri.filter(y=>y.personelId===id&&y.tip==='Hak Edis').reduce((a,y)=>a+y.tutar,0);
   let html='';
   // Üst kart
   html+=`<div class="card" style="margin-bottom:12px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-      <div><div style="font-size:16px;font-weight:700;">${p.isim}</div><div style="font-size:12px;color:var(--text2);">${p.pozisyon||'Personel'} · %${p.oran} kâr payı</div></div>
+      <div><div style="font-size:16px;font-weight:700;">${_esc(p.isim)}</div><div style="font-size:12px;color:var(--text2);">${_esc(p.pozisyon||'Personel')} · %${p.oran} kâr payı${Object.keys(p.oranlar||{}).length?' · '+Object.entries(p.oranlar).map(([k,v])=>_esc(k)+' %'+v).join(', '):''}</div></div>
       <div style="text-align:right;"><div style="font-size:10px;color:var(--text3);">Bakiye</div><div class="num" style="font-weight:700;font-size:18px;color:${bakiye>=0?'var(--green)':'var(--red)'};">${fmt(Math.abs(bakiye))}</div></div>
     </div>
     ${p.maasTutar?`<div style="font-size:12px;color:var(--text2);">💰 Maaş: ${fmt(p.maasTutar)} ${p.maasDongusu||'Aylık'}</div>`:''}
@@ -17112,7 +17220,21 @@ function showPersonelDetay(id){
     <button class="btn btn-secondary btn-full" onclick="openAvansModal(${id})">💸 Ödeme Yap</button>
     <button class="btn btn-secondary btn-full" onclick="openSGKModal(${id})">🏛️ SGK Ödemesi</button>
     <button class="btn btn-secondary btn-full" onclick="bordroPdfIndir(${id})">📄 Bordro</button>
+    <button class="btn btn-secondary btn-full" onclick="personelDokum(${id})">🧾 Hesap dökümü</button>
+    <button class="btn btn-secondary btn-full" onclick="personelDokum(${id},true)" style="color:#25D366;">💬 Dökümü gönder</button>
   </div>`;
+  // Aylık özet
+  {const A=personelAylik(id).slice(-6).reverse();if(A.length)html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Aylık özet</div>
+    <div style="background:var(--bg2);border-radius:var(--r-sm);padding:4px 10px;margin-bottom:12px;">${A.map(a=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);"><span>${new Date(a.ay+'-01T12:00:00').toLocaleString('tr-TR',{month:'short',year:'numeric'})}</span><span><span class="num" style="color:var(--amber);">+${fmt(a.hak)}</span> · <span class="num" style="color:var(--blue);">−${fmt(a.ode)}</span> · <b class="num">${a.kalan<0?'− ':''}${fmt(a.kalan)}</b></span></div>`).join('')}</div>`;}
+  // Yaptığı işler ve ajandası
+  {const isler=DB.islemler.filter(i=>(i.personelIds||[]).map(String).includes(String(id))&&i.tip==='Gelir').sort((a,b)=>new Date(b.tarih)-new Date(a.tarih)).slice(0,6);
+   let aj=[];try{aj=tkOlaylar(localToday(),gfGunEkle(localToday(),14)).filter(o=>(o.t.personelIds||[]).map(String).includes(String(id))&&o.durum==='planlandi').slice(0,6);}catch(e){}
+   if(aj.length)html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">📅 Önümüzdeki 14 gün</div>`+aj.map(o=>`<div style="display:flex;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:3px;font-size:12px;"><span style="width:76px;color:var(--text3);">${dtS(o.gun).slice(0,5)}${o.t.saat?' '+o.t.saat:''}</span><span style="flex:1;">${_esc(o.t.baslik||o.t.tip)}</span></div>`).join('')+'<div style="height:10px;"></div>';
+   if(isler.length)html+=`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">🔧 Son işleri</div>`+isler.map(i=>{const k=getKisi(i.kisiId);return `<div style="display:flex;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:3px;font-size:12px;cursor:pointer;" onclick="closeModal('modal-info');showIslemDetay(${i.id})"><span style="width:62px;color:var(--text3);">${dtS(i.tarih).slice(0,5)}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(k?k.isim:'—')} · ${_esc(i.altKat&&i.altKat!=='-'?i.altKat:i.kat||'')}</span><span class="num">${fmt(i.tutar)}</span></div>`;}).join('')+'<div style="height:10px;"></div>';}
+  // İzinler
+  {const Z=p.izinler||[];const yil=String(new Date().getFullYear());const buYil=Z.filter(z=>z.bas.startsWith(yil)).reduce((a,z)=>a+izinGun(z),0);
+   html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;">🌴 İzinler${buYil?' · '+yil+': '+buYil+' gün':''}</div><button class="btn btn-secondary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="personelIzinEkle(${id})">+ İzin</button></div>`+
+   (Z.length?Z.slice().reverse().slice(0,8).map(z=>{const i=Z.indexOf(z);const aktif=z.bas<=localToday()&&z.bit>=localToday();return `<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:3px;font-size:12px;${aktif?'border:1px solid var(--amber);':''}"><span style="flex:1;">${dtS(z.bas)}${z.bit!==z.bas?' – '+dtS(z.bit):''} · ${izinGun(z)} gün${z.not?' · '+_esc(z.not):''}${aktif?' <b style="color:var(--amber)">(şu an izinde)</b>':''}</span><button onclick="personelIzinSil(${id},${i})" style="background:none;border:none;color:var(--red);cursor:pointer;">✕</button></div>`;}).join(''):'<div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Kayıtlı izin yok</div>')+'<div style="height:10px;"></div>';}
   // Son hareketler
   const hareketler=DB.yardimciIslemleri.filter(y=>y.personelId===id).sort((a,b)=>new Date(b.tarih)-new Date(a.tarih)).slice(0,5);
   if(hareketler.length){
@@ -20595,12 +20717,28 @@ Talebinizi detaylı bir şekilde inceledik ve ihtiyacınız olan teknik desteği
 // ============================================================ VERGİ FATURA HESAPLAMA
 
 function vfKdvHesapla(){
+  const tipF=document.getElementById('vf-fatura-tipi')?.value||'Satış';
   const kdvsiz=parseFloat(document.getElementById('vf-kdvsiz-tutar')?.value)||0;
-  const oran=parseInt(document.getElementById('vf-kdv-oran')?.value)||20;
+  const oran=tipF==='İstisna'?0:(parseInt(document.getElementById('vf-kdv-oran')?.value)||0);
   const kdv=Math.round(kdvsiz*oran/100*100)/100;
   const top=kdvsiz+kdv;
-  const kdvEl=document.getElementById('vf-kdv');if(kdvEl)kdvEl.value=kdv||'';
+  const kdvEl=document.getElementById('vf-kdv');if(kdvEl)kdvEl.value=kdv||(tipF==='İstisna'?0:'');
   const topEl=document.getElementById('vf-tutar');if(topEl)topEl.value=top||'';
+  vfTevkifatBilgi();
+}
+function vfTipDegisti(){
+  const tipF=document.getElementById('vf-fatura-tipi')?.value||'Satış';
+  const w=document.getElementById('vf-tevkifat-wrap');if(w)w.style.display=tipF==='Tevkifatlı'?'flex':'none';
+  const o=document.getElementById('vf-kdv-oran');if(o){o.disabled=tipF==='İstisna';if(tipF==='İstisna')o.value='0';}
+  vfKdvHesapla();
+}
+function vfTevkifOran(){const v=document.getElementById('vf-tevkifat')?.value||'9/10';const p=v.split('/');return (+p[0])/(+p[1]||10);}
+function vfTevkifatBilgi(){
+  const el=document.getElementById('vf-tevkifat-bilgi');if(!el)return;
+  if((document.getElementById('vf-fatura-tipi')?.value)!=='Tevkifatlı'){el.textContent='';return;}
+  const kdv=parseFloat(document.getElementById('vf-kdv')?.value)||0,o=vfTevkifOran();const tev=Math.round(kdv*o*100)/100;
+  const tip=document.getElementById('vf-tip')?.value;
+  el.innerHTML=tip==='giden'?`Alıcı öder (tevkif): <b>${fmt(tev)}</b><br>Beyana giren: <b>${fmt(kdv-tev)}</b>`:`Tevkif edilen KDV (2 no.lu beyanla sen ödersin): <b>${fmt(tev)}</b>`;
 }
 
 function vfGenelToplamHesapla(){
