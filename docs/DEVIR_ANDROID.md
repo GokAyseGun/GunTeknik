@@ -294,6 +294,12 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **RPC'ler:** `auth.uid() is null` denetimleri `erp_uye()` oldu. `push_teslim_al`, `push_tetikle` ve `push_sunucu_kontrol` dışarıdan çağrılamaz.
 - **Görünüm:** `google_ads_grup_gunluk` artık `security_invoker`.
 
+## 6w. Kasım 11 paketi
+- **Anlık eşitleme:** `erp_degisim` tablosu (tablo başına tek satır; statement tetikleyicileri, kaynak = JWT session_id) + `supabase_realtime` yayını. ERP `esKur()` kendi WebSocket istemcisiyle (Phoenix vsn 1.0.0) dinler, başka oturumdan gelen değişiklikte `loadDB({sessiz:true})`. Yedek: odak/görünürlükte `erp_degisim_son()`.
+- **Giriş:** açılış ekranı (`#acilis-ekrani`), jeton süresi cihazda (`jetonBilgi`), rol önbelleği `gt_rol`. 30 dk kullanılmayınca kilit (`kilitIzle`); Android `GTYerel.parmakDurum/parmakDogrula` (androidx.biometric), Mac `parmak_durum/parmak_dogrula` (Swift `macos/ParmakIzi.swift`, LocalAuthentication).
+- **Google kalıcı izin:** edge function `google-yetki` (baslat/kod/token/durum/kes), `google_baglanti` tablosu (yalnız service role), dönüş sayfası `google-donus.html`, gizlilik `gizlilik.html`. Gizli: `GOOGLE_CLIENT_SECRET`. Takvim eşitleme izi `takvim.google_hash`.
+- **Sayfalar:** teklif (no, KDV/indirim, şablon, red nedeni, işleme dönüştürme bağı `islemler.teklif_id`), proje (aşamalar/ilerleme, randevular, zaman çizelgesi, iş öncesi/sonrası `ekler.etiket`), hesaplar (tüm zaman bakiye, yaşlandırma, ekstre), stok (hareketler, ±, değer), fiyatlar (bölge katsayısı, toplu zam, geçmiş işler, müşteri listesi), vergi (faturalar artık yükleniyor, tevkifat/istisna/iade, son günler, verildi/ödendi), personel (iş türüne göre oran, döküm, izinler, ödeme yöntemi). Firma bilgileri `erp_ayarlar.firma`.
+
 ## 6v. Randevu alarmları (9 Kasım 2026)
 - ERP `widgetAlarmlar()` → widget anlık görüntüsüne `al[]` (14 gün, planlanmış tüm randevular): `{i:"id|gün|tur", z(ms), tur: once|an|gun, h(dk), b, k, tel, ad, yol, g, s, d}`.
   Saatli: hatırlatma kadar önce (`once`) + randevu anında (`an`); saatsiz: 09:00 (`gun`) + hatırlatma kadar önce.
