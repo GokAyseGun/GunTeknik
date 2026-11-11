@@ -66,7 +66,7 @@ jobs:
           if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
           xcodebuild -version
           brew install xcodegen >/dev/null 2>&1 || brew install xcodegen
-          sed -i '' -E 's/MARKETING_VERSION: "1\.0\.0"/MARKETING_VERSION: "1.0.${{ github.run_number }}"/; s/CURRENT_PROJECT_VERSION: "1"/CURRENT_PROJECT_VERSION: "${{ github.run_number }}"/' project.yml
+          sed -i '' -E 's/MARKETING_VERSION: "1\.0\.0"/MARKETING_VERSION: "1.0.${{ github.run_number }}"/; s/CURRENT_PROJECT_VERSION: "1"/CURRENT_PROJECT_VERSION: "1.0.${{ github.run_number }}"/' project.yml
           xcodegen generate --spec project.yml
           xcodebuild build -project GunTeknikWidget.xcodeproj -target GunTeknikWidget -configuration Release \
             SYMROOT="$PWD/build" ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
@@ -89,6 +89,13 @@ jobs:
           mkdir -p "$APP/Contents/PlugIns"
           rm -rf "$APP/Contents/PlugIns/GunTeknikWidget.appex"
           cp -R mac-app/widget/build/Release/GunTeknikWidget.appex "$APP/Contents/PlugIns/"
+          # aracın sürümü uygulamanınkiyle birebir aynı olmalı (WidgetKit: "Bundle version did not match")
+          AP="$APP/Contents/PlugIns/GunTeknikWidget.appex/Contents/Info.plist"
+          V="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")"
+          VS="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $V" "$AP"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VS" "$AP"
+          echo "uygulama $V ($VS) · araç $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$AP") ($(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$AP"))"
           codesign --force --sign - --options runtime --entitlements mac-app/widget/GunTeknikWidget.entitlements "$APP/Contents/PlugIns/GunTeknikWidget.appex"
           codesign --force --sign - --preserve-metadata=identifier,entitlements,flags "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"

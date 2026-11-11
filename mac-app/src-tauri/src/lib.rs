@@ -428,17 +428,34 @@ fn widget_tanit() {
         if let (true, Some(app_yolu)) = (ap.exists(), c.parent()) {
             // güncelleme .app'i yerine koyunca LaunchServices yeni paketi görmeyebiliyor ("not found in LS database"):
             // paketi yeniden kaydet, eski (geçici klasördeki) kayıtları sil, aracı etkinleştir
+            // Sürüm değişince (ilk açılış / güncelleme): LaunchServices'teki eski kopyaların (DMG, güncelleme geçici
+            // klasörü, eski "Gün Teknik.app") kayıtlarını sil ve chronod'u yeniden başlat. Aksi halde araç
+            // "Bundle version did not match; LaunchServices DB may need to be rebuilt" hatasıyla gri iskelette kalıyor.
             let betik = format!(
                 r#"LS=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 A={a}
+S={s}
+F="$HOME/Library/Application Support/com.gunteknik.mac/arac_surum"
+YENI=""
+if [ "$(cat "$F" 2>/dev/null)" != "$S" ]; then
+  YENI=1
+  $LS -dump 2>/dev/null | sed -n -E 's/^path:[[:space:]]+//p' | sed -E 's/ \(0x[0-9a-f]+\)$//' | grep -i -E 'teknik[^/]*\.app$' | sort -u | while IFS= read -r p; do
+    [ "$p" = "$A" ] || $LS -u "$p" 2>/dev/null
+  done
+fi
 /usr/bin/pluginkit -mAvvv -D -i com.gunteknik.mac.widget 2>/dev/null | sed -n 's/^[[:space:]]*Path = //p' | while IFS= read -r p; do
   case "$p" in "$A"/*) ;; *) /usr/bin/pluginkit -r "$p" 2>/dev/null; $LS -u "$(dirname "$(dirname "$(dirname "$p")")")" 2>/dev/null;; esac
 done
 $LS -f -R -trusted "$A"
 /usr/bin/pluginkit -a "$A/Contents/PlugIns/GunTeknikWidget.appex"
 /usr/bin/pluginkit -e use -i com.gunteknik.mac.widget
+if [ -n "$YENI" ]; then
+  /usr/bin/killall chronod 2>/dev/null
+  mkdir -p "$(dirname "$F")" && printf '%s' "$S" > "$F"
+fi
 "#,
-                a = kabuk(&app_yolu.to_string_lossy())
+                a = kabuk(&app_yolu.to_string_lossy()),
+                s = kabuk(env!("CARGO_PKG_VERSION"))
             );
             let _ = std::process::Command::new("/bin/sh").arg("-c").arg(betik).spawn();
         }
