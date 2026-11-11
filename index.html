@@ -5533,7 +5533,16 @@ function gtHtml(){
   </div>`;
 }
 function gtPiyasaHtml(){const d=BET.gtDurum||{};const y=v=>{v=(+v||0)*100;return `<b class="num" style="color:${v>0.05?'var(--green)':v<-0.05?'var(--red)':'var(--text2)'}">${v>=0?'+':'−'}%${gtSayi(Math.abs(v),2)}</b>`;};
-  return `<span>Al/sat baskısı ${y(d.prim)}</span><span>Piyasa görüşü ${y(d.gorus)}</span>`;}
+  // al/sat baskısı ve piyasa görüşü yalnız SPOT alım-satımdan oluşur; kaldıraç fiyatı etkilemez (kendi pozisyonunu şişirmesin diye)
+  const spot7=(BET.gtIslem||[]).some(i=>Date.now()-new Date(i.zaman).getTime()<=7*864e5);
+  if(!spot7&&Math.abs(+d.prim||0)<5e-5&&Math.abs(+d.gorus||0)<5e-5)
+    return `<span title="Al/sat baskısı ve piyasa görüşü yalnız spot GTCOIN alım-satımından oluşur. Kaldıraç pozisyonları fiyatı etkilemez.">Al/sat baskısı <b style="color:var(--text3)">yok</b></span><span title="Son 7 günün net spot alım-satım akışı">Piyasa görüşü <b style="color:var(--text3)">nötr</b></span>`;
+  return `<span title="Spot alım-satımın fiyata anlık etkisi; 4 saatte %20 söner">Al/sat baskısı ${y(d.prim)}</span><span title="Son 7 günün net spot alım-satım akışı">Piyasa görüşü ${y(d.gorus)}</span>`;}
+// son 24 saatte açılan ve kapanan kaldıraç pozisyonlarının büyüklüğü
+function gtKalHacim24(){const s=Date.now()-864e5;let t=0;(BET.gtPoz||[]).forEach(z=>{if(new Date(z.acilis).getTime()>=s)t+=+z.buyukluk||0;if(z.kapanis&&new Date(z.kapanis).getTime()>=s)t+=+z.buyukluk||0;});return t;}
+function gtLongShortHtml(){let L=0,S=0;gtPozlar(null,true).forEach(z=>{if(z.yon==='long')L+=+z.buyukluk||0;else S+=+z.buyukluk||0;});if(!(L+S))return '';const l=Math.round(L/(L+S)*100);
+  return `<span title="Tüm oyuncuların açık kaldıraç pozisyonları (büyüklüğe göre): long ${betTL(L)} · short ${betTL(S)}">Açık pozisyon <b class="num" style="color:var(--green)">L %${l}</b> · <b class="num" style="color:var(--red)">S %${100-l}</b></span>`;}
+function gtSonrakiTikKalan(){const off=3*36e5,ms=4*36e5;const t=(Math.floor((Date.now()+off)/ms)+1)*ms-off;const dk=Math.max(0,Math.round((t-Date.now())/6e4));return dk>=60?Math.floor(dk/60)+' sa '+(dk%60)+' dk':dk+' dk';}
 
 // ---- Canlı: sayfa açıkken dakikada bir sunucu eksik dakikaları üretir, sayfa yalnızca değişen yerleri yeniler
 var GT_ALAN='id,zaman,fiyat,hacim,kaynak,yuksek,dusuk,endeks',GT_DK_SAAT=24;
@@ -5541,8 +5550,8 @@ function gtSirala(L){const g={};const o=[];(L||[]).forEach(r=>{if(r.id!=null){if
 function gtUstFiyatHtml(){const p=gtFiyat();const c24=gtYuzde(p,gtOnce(864e5));return `<small>1 GTC =</small><b class="num">${gtTL(p)}</b><span>${gtYzHtml(c24)} <small>24s</small></span>`;}
 function gtIstHtml(){const p=gtFiyat();const c7=gtYuzde(p,gtOnce(7*864e5)),c30=gtYuzde(p,gtOnce(30*864e5));const c1=gtYuzde(p,gtOnce(36e5));
   const F24=BET.gtF.filter(r=>Date.now()-new Date(r.zaman).getTime()<=864e5);const yuk=Math.max(p,...F24.map(r=>+(r.yuksek||r.fiyat))),dus=Math.min(p,...F24.map(r=>+(r.dusuk||r.fiyat)));
-  const hacim=F24.reduce((s,r)=>s+(r.hacim||0),0);
-  return `<span>1s ${gtYzHtml(c1)}</span><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span>24s hacim <b class="num">${betTL(hacim)}</b></span>${gtPiyasaHtml()}<span>Veri güncellemesi <b class="num">${gtSonrakiTik()}</b></span>`;}
+  const hacim=F24.reduce((s,r)=>s+(r.hacim||0),0);const kh=gtKalHacim24();
+  return `<span>1s ${gtYzHtml(c1)}</span><span>7g ${gtYzHtml(c7)}</span><span>30g ${gtYzHtml(c30)}</span><span>24s yüksek <b class="num">${gtTL(yuk)}</b></span><span>24s düşük <b class="num">${gtTL(dus)}</b></span><span title="Spot ${betTL(hacim)} · kaldıraç (açılış + kapanış) ${betTL(kh)}">24s hacim <b class="num">${betTL(hacim+kh)}</b>${kh&&!hacim?' <small style="color:var(--text3)">kaldıraç</small>':''}</span>${gtLongShortHtml()}${gtPiyasaHtml()}<span title="Veri hedefi 4 saatte bir (00 04 08 12 16 20) güncellenir; fiyat arada dakika dakika yürür">Sonraki güncelleme <b class="num">${gtSonrakiTik()}</b> <small style="color:var(--text3)">${gtSonrakiTikKalan()}</small></span>`;}
 function gtCanliRozet(){const L=BET.gtIzleyen||[];return `<i></i>CANLI${L.length?' · '+L.map(_esc).join(', '):''}`;}
 function gtCanliBaslat(){
   if(BET.gtCanliT)return;
@@ -5620,7 +5629,7 @@ function gtSpotOnizleHtml(){
   const tavanNot=E=>E.tavan?`<small style="color:var(--amber)">24 saatlik fiyat etkisi sınırına yaklaştın: bu işlem fiyatı en fazla %${gtSayi(E.d*100,2)} iter.</small>`:'';
   if(al){const c=Math.floor(gtNumN(BET.gtCoin)||0);
     if(lim&&L&&L>=p)return `<span style="color:var(--red)">Limit alım fiyatı şimdiki fiyatın (${gtTL(p)}) altında olmalı</span>`;
-    if(c<2)return lim?`Fiyat seçtiğin seviyeye inerse ${gtSonrakiTik()} ya da sonraki 4 saatlik güncellemede alınır.`:`Bakiye ${betTL(ben.coin)} · komisyon %1 · büyük alım fiyatı iterken kendi ortalaman da yükselir`;
+    if(c<2)return lim?`Fiyat seçtiğin seviyeye inince alınır (her dakika kontrol edilir).`:`Bakiye ${betTL(ben.coin)} · komisyon %1 · büyük alım fiyatı iterken kendi ortalaman da yükselir`;
     if(c>ben.coin)return `<span style="color:var(--red)">Yetersiz bakiye (${betTL(ben.coin)})</span>`;
     const kom=Math.max(1,Math.ceil(c*0.01));const E=gtEtkiHesap(c,1);
     if(lim){const f=(L||p)*(1+E.d/2);return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC((c-kom)/f))}${g('Fiyat',L?gtTL(L)+' ve altı':'—')}${g('Komisyon',betTL(kom))}${g('Ayrılacak',betTL(c))}</div><small>Tutar şimdiden ayrılır; emir gerçekleşmezse iptal edip geri alırsın.</small>`;}
@@ -5628,7 +5637,7 @@ function gtSpotOnizleHtml(){
     return `<div class="gt-on-g">${g('Alacağın ≈',gtGTC(m))}${g('Ort. işlem fiyatı',gtTL(pavg))}${g('Komisyon',betTL(kom))}${g('Fiyatı iter',gtTL(p2)+' (+%'+gtSayi((p2/p-1)*100,2)+')','var(--green)')}${g('Yeni ort. maliyet',gtTL(ort))}</div>${tavanNot(E)}`;}
   const m=gtNumN(BET.gtMiktar)||0;
   if(lim&&L&&L<=p)return `<span style="color:var(--red)">Limit satış fiyatı şimdiki fiyatın (${gtTL(p)}) üstünde olmalı</span>`;
-  if(m<=0)return lim?`Fiyat seçtiğin seviyeye çıkarsa 4 saatlik güncellemede satılır.`:`Elinde ${gtGTC(ben.gt)} · komisyon %1`;
+  if(m<=0)return lim?`Fiyat seçtiğin seviyeye çıkınca satılır (her dakika kontrol edilir).`:`Elinde ${gtGTC(ben.gt)} · komisyon %1`;
   if(m>+ben.gt+1e-6)return `<span style="color:var(--red)">Elinde ${gtGTC(ben.gt)} var</span>`;
   const mal=+ben.gt>0?(+ben.gt_maliyet||0)*m/ben.gt:0;const E=gtEtkiHesap(m*(L||p),-1);
   if(lim){const br=m*L*(1-E.d/2),kom=Math.max(1,Math.ceil(br*0.01)),cik=Math.floor(br-kom),kz=cik-mal;
@@ -5681,7 +5690,7 @@ function gtCuzdanHtml(){
   if(E.length)h+=`<div class="gt-kb" style="margin-top:4px">⏳ Bekleyen emirler</div><div class="gt-emirler">${E.map(x=>`<div><span class="gt-yon ${x.tur==='al'?'long':'short'}">${x.tur==='al'?'AL':'SAT'}</span><span class="num">${x.tur==='al'?betTL(x.tutar):gtGTC(x.miktar)}</span><span class="num">${x.tur==='al'?'≤':'≥'} ${gtTL(x.limit_fiyat)}</span><button type="button" onclick="gtEmirIptal(${x.id})">İptal</button></div>`).join('')}</div>`;
   const K=gtEmirlerim(false).slice(0,5);
   if(K.length)h+=`<details class="gt-gecmis"${BET.gtEmirGAcik?' open':''} ontoggle="BET.gtEmirGAcik=this.open"><summary>Geçmiş emirler (${K.length})</summary><div class="gt-emirler">${K.map(x=>`<div><span class="gt-yon ${x.tur==='al'?'long':'short'}">${x.tur==='al'?'AL':'SAT'}</span><span class="num">${x.durum==='gerceklesti'?(x.tur==='al'?gtGTC(x.sonuc_miktar):betTL(x.sonuc_tutar)):(x.tur==='al'?betTL(x.tutar):gtGTC(x.miktar))}</span><span class="num">${x.durum==='gerceklesti'?'@ '+gtTL(x.sonuc_fiyat):'iptal'}</span><small>${gtTarihKisa(x.sonuc_zaman||x.zaman)}</small></div>`).join('')}</div></details>`;
-  h+=`<div class="gt-not">Endeks ${gtTL(e)}: al/sat baskısı hariç fiyat; kaldıraç ve varlık bunu kullanır · spot komisyon %1 · limit emirler ve kaldıraç kontrolleri 4 saatlik güncellemede çalışır.</div>`;
+  h+=`<div class="gt-not">Endeks ${gtTL(e)}: al/sat baskısı hariç fiyat; kaldıraç ve varlık bunu kullanır · spot komisyon %1 · limit emirler, likidasyon ve kâr al / zarar durdur her dakika kontrol edilir.</div>`;
   return h;
 }
 // ---- Kaldıraç (long/short): teminat × kaldıraç = pozisyon büyüklüğü. Endeks fiyatı (al/sat primi hariç) kullanılır.
@@ -6008,12 +6017,13 @@ function betKurallar(){
     <li><b>₲ GTCOIN (GTC)</b>: Gün Teknik'in kripto parası, ₺ ile alınıp satılır; fiyatı "1 GTC = x ₺" olarak gösterilir. Fiyat ERP'deki 21 ölçüden gelir: <b>Finans %45</b> (kasa, 30 gün net kâr, iş sayısı, gelir temposu, yaklaşan ödemeler, kasa tahmini, alacak-borç), <b>Talep %25</b> (son 7 ve 3 günün iş aramaları, aramadan işe dönüşüm, reklam tıklaması ve getirisi, ajanda, teklifler), <b>Psikoloji %15</b> (Gökay'ın check-in'leri), <b>Dış %15</b> (hava, mevsim). Yaklaşan evrak ve kredi ödemeleri son 21 günde ödeme gününe yaklaştıkça fiyata yavaş yavaş yansır; ödeme yapılınca kasadan düşer, fiyat sıçramaz.</li>
     <li><b>🟢 Canlı piyasa</b>: Veri hedefi <b>4 saatte bir</b> (00, 04, 08, 12, 16, 20) güncellenir ve fiyat sonraki 4 saat boyunca o hedefe doğru <b>dakika dakika</b> yürür. Yol düz değildir: fiyat dakikalık dalgalanır, sakin ve hareketli dönemler gelir, ara sıra ani sıçramalar olur; sapmalar zamanla hedefe geri çekilir. Bet sayfası açıkken grafik ve rakamlar dakikada bir kendiliğinden yenilenir; kimin izlediği başlıkta görünür. Kaldıraçta likidasyon, kâr al, zarar durdur ve limit emirler de dakikalık fiyatla kontrol edilir.</li>
     <li>Fiyat <b>4 saatte bir</b> veriye göre hedefe %35 yaklaşır; her güncellemede en az %0,15 oynar. Spot alım ve satışta %1 komisyon (en az 1 ₺).</li>
+    <li><b>24s hacim</b>: Son 24 saatteki spot alım-satım ile açılan/kapanan kaldıraç pozisyonlarının büyüklüğü. <b>Al/sat baskısı</b> ve <b>piyasa görüşü</b> yalnız spot alım-satımdan oluşur; spot işlem yokken "yok / nötr" görünür.</li>
     <li><b>Hacim ve fiyat</b>: Piyasa alımı fiyatı yukarı, satışı aşağı iter. Etki tutarın kareköküyle büyür (1.000 ₺ ≈ %1,5, 4.000 ₺ ≈ %3); son 7 günde işlem hacmi büyüdükçe piyasa derinleşir ve her işlemin etkisi azalır. İşlem, fiyatın itildiği yolun <b>ortalamasından</b> gerçekleşir (kayma): büyük alım kendi ortalamasını da yükseltir, hemen geri satmak kâr değil komisyon kadar zarar getirir. Bir kişinin 24 saatte fiyatı net itebileceği en fazla %5, toplam al/sat baskısı da en fazla ±%5'tir; baskı her 4 saatte %20 söner.</li>
     <li><b>Piyasa görüşü</b>: Son 7 günün net alım-satım akışı (eskidikçe azalarak) fiyata ikinci, yavaş bir katkı yapar. Bir kişinin akışı en fazla %4 sayılır, toplam ±%10: tek kişinin dev girişi değil, birden çok kişinin süren ilgisi değeri kalıcı taşır. Görüş her 4 saatte hedefine %25 yaklaşır ve endeks fiyatına dahildir.</li>
     <li>Sıralama ve ay şampiyonu hesabında GTC, al/sat baskısı olmayan <b>endeks fiyatından</b> değerlenir; anlık pompa varlığı şişirmez.</li>
-    <li><b>⏳ Limit emir</b>: "Fiyat şu seviyeye inerse al" ya da "şu seviyeye çıkarsa sat". Tutar (ya da GTC) emir verilince ayrılır, 4 saatlik güncellemede fiyat limite ulaştıysa o anki fiyattan gerçekleşir ve bildirim gelir. En fazla 5 bekleyen emir; istediğin an iptal edip geri alırsın.</li>
+    <li><b>⏳ Limit emir</b>: "Fiyat şu seviyeye inerse al" ya da "şu seviyeye çıkarsa sat". Tutar (ya da GTC) emir verilince ayrılır; fiyat limite ulaşınca (her dakika kontrol edilir) o anki fiyattan gerçekleşir ve bildirim gelir. En fazla 5 bekleyen emir; istediğin an iptal edip geri alırsın.</li>
     <li><b>⚡ Kaldıraç</b>: Long (yükselir) ya da Short (düşer) açarsın. Teminat 10–500 ₺, kaldıraç 1–10x, aynı anda en fazla 3 açık pozisyon. Büyüklük = teminat × kaldıraç; fiyat %1 lehine giderse büyüklüğün %1'i kadar kazanırsın, aleyhine giderse kaybedersin. Pozisyonlar al/sat primi olmayan <b>endeks fiyatını</b> kullanır, yani alım-satımla kendi pozisyonunu şişiremezsin.</li>
-    <li>Kaldıraçta açılış ve kapanışta büyüklüğün ‰1'i ücret, ayrıca her gün <b>teminatın %1'i</b> günlük ücret düşer. Zarar teminatı bitirirse pozisyon <b>likide</b> olur ve teminat gider. Kâr al ve zarar durdur fiyatı koyabilirsin; 4 saatlik güncellemede kontrol edilir ve tetiklenince bildirim gelir.</li>
+    <li>Kaldıraçta açılış ve kapanışta büyüklüğün ‰1'i ücret, ayrıca her gün <b>teminatın %1'i</b> günlük ücret düşer. Zarar teminatı bitirirse pozisyon <b>likide</b> olur ve teminat gider. Kâr al ve zarar durdur fiyatı koyabilirsin; likidasyon, kâr al ve zarar durdur her dakika kontrol edilir ve tetiklenince bildirim gelir.</li>
     <li>Başkalarının seçimleri bahis kapanınca görünür.</li>
     <li>Yeni bahisler her saat başı kendiliğinden açılır; sonuçlanınca telefona bildirim gelir.</li></ul></div></div>`;document.body.appendChild(m);}
   openModal('modal-bet-kural');
