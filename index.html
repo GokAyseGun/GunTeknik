@@ -3356,7 +3356,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
 </div>
 
 <!-- Bildirim Merkezi -->
-<div class="modal-ov" id="modal-bildirimler" style="z-index:10001;">
+<div class="modal-ov" id="modal-bildirim-merkezi" style="z-index:10001;">
   <div class="modal" style="max-width:480px;max-height:90vh;">
     <div class="modal-handle"></div>
     <div class="modal-head">
@@ -3366,7 +3366,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       </div>
       <div style="display:flex;gap:6px;">
         <button onclick="bildirimlerTemizle()" class="btn btn-secondary btn-sm">Temizle</button>
-        <button class="modal-close" onclick="closeModal('modal-bildirimler')">✕</button>
+        <button class="modal-close" onclick="closeModal('modal-bildirim-merkezi')">✕</button>
       </div>
     </div>
     <div class="modal-body" style="padding:12px;display:flex;flex-direction:column;gap:6px;" id="bildirim-listesi">
@@ -4609,7 +4609,7 @@ function esSinyal(tablo,zaman,kaynak){
   ES.bekleyen.add(tablo);
   clearTimeout(ES.zam);ES.zam=setTimeout(esUygula,800);
 }
-function esFormAcik(){return !!document.querySelector('[id^="modal-"].open:not(#modal-bildirimler):not(#modal-ayarlar)');}
+function esFormAcik(){return !!document.querySelector('[id^="modal-"].open:not(#modal-bildirimler):not(#modal-bildirim-merkezi):not(#modal-bildirim-detay):not(#modal-ayarlar)');}
 // Üst çubuk ↻: sayfayı yeniden açmadan tüm veriyi sessizce tazeler (açık sayfa yerinde yeniden çizilir)
 async function ustYenile(){
   const b=document.getElementById('ust-yenile-btn');if(b&&b.classList.contains('donuyor'))return;
@@ -18333,7 +18333,7 @@ function openBildirimMerkezi(){
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">${new Date(b.tarih).toLocaleString('tr-TR')}</div>
       </div>`).join('');
   }
-  openModal('modal-bildirimler');
+  openModal('modal-bildirim-merkezi');
 }
 
 function bildirimlerTemizle(){
@@ -24797,15 +24797,62 @@ function bildirimListeGoster(){
     return;
   }
   el.innerHTML=_bildirimler.map(b=>{
-    const d=new Date(b.created_at);
-    const tarih=d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
-    const renk=b.tip==='hata'?'var(--red)':b.tip==='uyari'?'var(--amber)':'var(--cy)';
-    return `<div style="padding:12px;border-left:3px solid ${renk};background:var(--surface2);border-radius:var(--r-sm);">
-      <div style="font-weight:600;font-size:13px;color:${renk};margin-bottom:4px;">${b.baslik}</div>
-      ${b.mesaj?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;word-break:break-all;">${b.mesaj}</div>`:''}
-      <div style="font-size:10px;color:var(--text3);">${tarih}</div>
-    </div>`;
+    const renk=bildirimRenk(b);
+    return `<button type="button" onclick="bildirimDetay(${+b.id})" style="display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:12px;border:0;border-left:3px solid ${renk};background:var(--surface2);border-radius:var(--r-sm);">
+      <div style="font-weight:600;font-size:13px;color:${renk};margin-bottom:4px;">${_esc(b.baslik)}</div>
+      ${b.mesaj&&b.mesaj!==b.baslik?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(b.mesaj)}</div>`:''}
+      <div style="font-size:10px;color:var(--text3);display:flex;justify-content:space-between;gap:8px;"><span>${bildirimZaman(b)}</span><span>Ayrıntı ›</span></div>
+    </button>`;
   }).join('');
+}
+function bildirimRenk(b){return b.tip==='hata'?'var(--red)':b.tip==='uyari'?'var(--amber)':'var(--cy)';}
+function bildirimZaman(b){const d=new Date(b.created_at);return d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}
+// Bildirimin ERP'de ait olduğu yer: {ad, git()} ya da null
+function bildirimHedef(b){
+  const m=((b.konu||'')+' '+(b.baslik||'')+' '+(b.mesaj||'')).toLocaleLowerCase('tr-TR');
+  if(b.konu==='web-talep')return {ad:'Web Talepleri',git:()=>{goPage('reklam');try{WT.hepsi=true;wtCiz();}catch(e){}setTimeout(()=>{const k=document.getElementById('wt-kart');if(k)k.scrollIntoView({behavior:'smooth',block:'start'});},400);}};
+  if(/\bads\b|google ads|senkron|reklam/.test(m))return {ad:'Reklam sayfası',git:()=>goPage('reklam')};
+  if(/fatura|sigorta|ödeme|evrak|vergi|📄|📅/.test(m)&&document.getElementById('page-evrak'))return {ad:'Evrak sayfası',git:()=>goPage('evrak')};
+  if(/randevu|takvim/.test(m))return {ad:'Takvim',git:()=>goPage('takvim')};
+  if(/teklif/.test(m))return {ad:'Teklifler',git:()=>goPage('teklifler')};
+  return null;
+}
+function bildirimMetinHtml(t){
+  // önce kaçış, sonra telefon numaralarını tıklanabilir yap
+  return _esc(t).replace(/(\+?\d[\d ]{8,15}\d)/g,m=>{const r=m.replace(/\D/g,'');return r.length>=10&&r.length<=13?`<a href="tel:${m.replace(/[^\d+]/g,'')}" style="color:var(--cy);font-weight:600;text-decoration:underline;">${m}</a>`:m;});
+}
+function bildirimDetay(id){
+  const b=_bildirimler.find(x=>+x.id===+id);if(!b)return;
+  let m=document.getElementById('modal-bildirim-detay');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='modal-bildirim-detay';document.body.appendChild(m);}
+  const renk=bildirimRenk(b),hedef=bildirimHedef(b);
+  const telM=((b.mesaj||'')+' '+(b.baslik||'')).match(/\+?\d[\d ]{8,15}\d/g)||[];
+  const tel=(telM.find(x=>{const r=x.replace(/\D/g,'');return r.length>=10&&r.length<=13;})||'').replace(/[^\d+]/g,'');
+  m.innerHTML=`<div class="modal" style="max-width:480px;"><div class="modal-handle"></div>
+    <div class="modal-head"><h3 style="color:${renk};">${_esc(b.baslik||'Bildirim')}</h3><button class="modal-close" onclick="closeModal('modal-bildirim-detay')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">${bildirimZaman(b)}</div>
+      ${b.mesaj?`<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">${bildirimMetinHtml(String(b.mesaj).replace(/ · /g,'\n'))}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+        ${tel?`<a class="btn btn-primary btn-sm" href="tel:${tel}">📞 Ara</a><a class="btn btn-secondary btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waNumara(tel)}">WhatsApp</a>`:''}
+        ${hedef?`<button type="button" class="btn btn-primary btn-sm" onclick="bildirimGit(${+b.id})">↗ ${_esc(hedef.ad)}</button>`:''}
+        <button type="button" class="btn btn-secondary btn-sm" onclick="bildirimOkundu(${+b.id})">✓ Okundu</button>
+      </div>
+    </div></div>`;
+  openModal('modal-bildirim-detay');
+}
+function bildirimGit(id){
+  const b=_bildirimler.find(x=>+x.id===+id);const h=b&&bildirimHedef(b);
+  closeModal('modal-bildirim-detay');closeModal('modal-bildirimler');
+  if(h){try{h.git();}catch(e){console.warn(e);}}
+}
+async function bildirimOkundu(id){
+  try{
+    await sbFetch('sistem_bildirimleri?id=eq.'+(+id),{method:'PATCH',body:JSON.stringify({okundu:true}),prefer:'return=minimal'});
+    _bildirimler=_bildirimler.filter(x=>+x.id!==+id);
+    closeModal('modal-bildirim-detay');bildirimListeGoster();
+    if(!_bildirimler.length){const btn=document.getElementById('bildirim-btn'),badge=document.getElementById('bildirim-badge');if(btn)btn.style.display='none';if(badge)badge.style.display='none';closeModal('modal-bildirimler');}
+  }catch(e){showToast('Güncellenemedi','red');}
 }
 
 async function bildirimHepsiniOku(){
