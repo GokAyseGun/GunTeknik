@@ -5732,8 +5732,8 @@ async function gtPozKapat(id){
 }
 async function gtPozTpsl(id){
   const z=(BET.gtPoz||[]).find(x=>x.id===id);if(!z)return;const e=gtEndeks();
-  const tp=prompt(`🎯 Kâr al fiyatı, ₺ (${z.yon==='long'?'endeksin üstünde':'endeksin altında'}; endeks ${gtTL(e)}). Boş bırakırsan kaldırılır.`,z.tp!=null?String(+z.tp).replace('.',','):'');if(tp===null)return;
-  const sl=prompt(`🛑 Zarar durdur fiyatı, ₺ (${z.yon==='long'?'endeksin altında':'endeksin üstünde'}; likidasyon ${gtTL(gtPozLikit(z))}). Boş bırakırsan kaldırılır.`,z.sl!=null?String(+z.sl).replace('.',','):'');if(sl===null)return;
+  const tp=await sorMetin('🎯 Kâr al',`Kâr al fiyatı, ₺ (${z.yon==='long'?'endeksin üstünde':'endeksin altında'}; endeks ${gtTL(e)}). Boş bırakırsan kaldırılır.`,z.tp!=null?String(+z.tp).replace('.',','):'',{tip:'text',placeholder:'₺'});if(tp===null)return;
+  const sl=await sorMetin('🛑 Zarar durdur',`Zarar durdur fiyatı, ₺ (${z.yon==='long'?'endeksin altında':'endeksin üstünde'}; likidasyon ${gtTL(gtPozLikit(z))}). Boş bırakırsan kaldırılır.`,z.sl!=null?String(+z.sl).replace('.',','):'',{tip:'text',placeholder:'₺'});if(sl===null)return;
   try{await sbFetch('rpc/bet_gt_poz_tpsl',{method:'POST',body:JSON.stringify({p_id:id,p_tp:gtNumN(tp),p_sl:gtNumN(sl)})});showToast('Kâr al / zarar durdur kaydedildi','green');}
   catch(err){showToast(betHata(err).slice(0,90),'red');}
   await betYukle(true);betCiz();
@@ -5818,9 +5818,9 @@ function gtOverlay(ad,ek,noktalar,dbId){
   if(noktalar)opt.points=noktalar;
   const id=c.createOverlay(opt);if(dbId&&id)BET.gtCizimDb[id]=dbId;return id;
 }
-function gtCizimBasla(ad){
+async function gtCizimBasla(ad){
   if((gtGos().eksen||'normal')==='percentage'){showToast('Çizim için değer eksenini Normal ya da Logaritmik yap','amber');return;}
-  let ek=null;if(ad==='simpleAnnotation'||ad==='simpleTag'){const t=prompt(ad==='simpleAnnotation'?'Not metni:':'Etiket metni:','');if(t===null)return;ek={metin:t};}
+  let ek=null;if(ad==='simpleAnnotation'||ad==='simpleTag'){const t=await sorMetin(ad==='simpleAnnotation'?'Not':'Etiket',ad==='simpleAnnotation'?'Not metni:':'Etiket metni:','');if(t===null)return;ek={metin:t};}
   gtOverlay(ad,ek,null,null);showToast('Grafikte noktaları işaretle','blue');
 }
 async function gtCizimKaydet(ov,ad,ek){
@@ -6847,9 +6847,9 @@ function calcFinans(){
 
 
   // ── Nakit Akış Projeksiyonu ─────────────────────────────
-  // Bu ayki kredi taksitini borcTop'a ekle (aylık yük)
+  // Bu ayki taksit: aldığımız borç / kredi → borcTop (aylık yük) · verdiğimiz borç → alacakTop
   const simdi=new Date();
-  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif').forEach(k=>{borcTop+=k.taksitTutari;});
+  (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif'&&(+k.kalanBorc||0)>0.5).forEach(k=>{const v=Math.min(+k.taksitTutari||0,+k.kalanBorc||0);if(k.finansmanTuru==='borc-verme')alacakTop+=v;else borcTop+=v;});
 
   // Her kutu = kasaTop (eldeki) + o tarihe kadar net nakit akışı
   function netAkisHesapla(baslangic,bitis){
@@ -8090,10 +8090,11 @@ function gfTahsilMesaj(x){
 function gfTahsilWhatsapp(k){
   const {L}=gfTahsilListe();const x=L.find(y=>y.k===String(k));if(!x)return;const msg=gfTahsilMesaj(x);const tel=gfTelNorm(x.kisi&&x.kisi.tel);
   if(tel)window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
-  else{try{navigator.clipboard.writeText(msg);showToast('Telefon kayıtlı değil — mesaj panoya kopyalandı','amber');}catch(e){prompt('Mesaj:',msg);}}
+  else{try{navigator.clipboard.writeText(msg);showToast('Telefon kayıtlı değil — mesaj panoya kopyalandı','amber');}catch(e){sorMetin('Mesaj','Kopyalayıp gönderebilirsin:',msg,{cokSatir:true,tekDugme:true,dugme:'Kapat'});}}
 }
 function gfTahsilKopyala(k){const {L}=gfTahsilListe();const x=L.find(y=>y.k===String(k));if(!x)return;const msg=gfTahsilMesaj(x);
-  try{navigator.clipboard.writeText(msg).then(()=>showToast('Mesaj kopyalandı','green'),()=>prompt('Mesaj:',msg));}catch(e){prompt('Mesaj:',msg);}}
+  const elle=()=>sorMetin('Mesaj','Kopyalayıp gönderebilirsin:',msg,{cokSatir:true,tekDugme:true,dugme:'Kapat'});
+  try{navigator.clipboard.writeText(msg).then(()=>showToast('Mesaj kopyalandı','green'),elle);}catch(e){elle();}}
 function gfTahsilSatirHtml(x){
   const up=gfCss('--green','#00E676'),dn=gfCss('--red','#FF1744'),am=gfCss('--amber','#FFAB00');
   const yasMetin=x.yas>0?`vadeden <b style="color:${x.yas>45?dn:am}">${x.yas} gün</b> geçti`:x.yas===0?'vadesi bugün':`vadesine ${-x.yas} gün var`;
@@ -8981,17 +8982,17 @@ function gfOverlayOlustur(ad,ek,noktalar,dbId){
   if(noktalar)opt.points=noktalar;
   const id=c.createOverlay(opt);if(dbId&&id)GF.cizimDb[id]=dbId;return id;
 }
-function gfCizimBasla(ad){
+async function gfCizimBasla(ad){
   if(GF.eksenMod==='yuzde'){showToast('Çizim için değer eksenini Normal veya Logaritmik yap','amber');return;}
   let ek=null;
-  if(ad==='simpleAnnotation'||ad==='simpleTag'){const t=prompt(ad==='simpleAnnotation'?'Not metni:':'Etiket metni:','');if(t===null)return;ek={metin:t};}
+  if(ad==='simpleAnnotation'||ad==='simpleTag'){const t=await sorMetin(ad==='simpleAnnotation'?'Not':'Etiket',ad==='simpleAnnotation'?'Not metni:':'Etiket metni:','');if(t===null)return;ek={metin:t};}
   gfOverlayOlustur(ad,ek,null,null);showToast('Grafikte noktaları işaretle','blue');
 }
-function gfHedefEkle(){
+async function gfHedefEkle(){
   if(GF.eksenMod==='yuzde'){showToast('Hedef çizgisi için değer eksenini Normal veya Logaritmik yap','amber');return;}
   const d=GF.defter;const v0=d?d.C[GF.ay.metrik][d.gunSay-1]:0;
-  const s=prompt('Hedef / alarm seviyesi (₺):\nTahmin, bu seviyenin altına düşme olasılığını hesaplar.',String(Math.round(Math.max(0,v0*0.5))));if(s===null)return;
-  const v=parseTutar(s);const ad=prompt('Bu hedefe bir ad ver:','Kasa alt sınırı')||'Hedef';
+  const s=await sorMetin('🎯 Hedef / alarm seviyesi','Seviye (₺). Tahmin, bu seviyenin altına düşme olasılığını hesaplar.',String(Math.round(Math.max(0,v0*0.5))),{placeholder:'₺'});if(s===null)return;
+  const v=parseTutar(s);const ad=(await sorMetin('Hedefin adı','Bu hedefe bir ad ver:','Kasa alt sınırı'))||'Hedef';
   const son=GF.barlar[GF.histSay-1];if(!son)return;
   const pts=[{timestamp:son.timestamp,value:v}];
   const id=gfOverlayOlustur('hedef',{ad},pts,null);
@@ -18525,7 +18526,7 @@ async function katAnaDisiEkle(reg,selId){
 }
 async function katAdDegistir(id){
   const r=katBulId(id);if(!r||katSistemMi(r))return;
-  const yeniHam=prompt(`"${r.ad}" için yeni ad:\n\nEski işlemler "${r.ad}" olarak kalır, yeni ad sadece bundan sonraki kayıtlarda kullanılır.`,r.ad);
+  const yeniHam=await sorMetin('Kategori adı',`"${r.ad}" için yeni ad.\nEski işlemler "${r.ad}" olarak kalır, yeni ad sadece bundan sonraki kayıtlarda kullanılır.`,r.ad);
   if(yeniHam===null)return;
   const yeni=katAdTemizle(yeniHam);if(!yeni||yeni===r.ad)return;
   const hata=katAdGecersiz(r.grup,yeni);if(hata){showToast(hata,'amber');return;}
@@ -18851,7 +18852,7 @@ async function isfFiltreKaydet(){
   if(_isfKayitli===false){showToast('Önce islem_filtreleri tablosunu oluşturun','amber');return;}
   if(!isfAktifSayisi(_isfTaslak)){showToast('Önce en az bir filtre seçin','amber');return;}
   const oneri=isfEtiketler(_isfTaslak).slice(0,3).map(x=>x.l.replace(/^[^\wÇĞİÖŞÜçğıöşü"≥≤]+\s*/,'')).join(' · ');
-  const adHam=prompt('Bu filtreye bir ad ver:',oneri);if(adHam===null)return;
+  const adHam=await sorMetin('Filtreyi kaydet','Bu filtreye bir ad ver:',oneri);if(adHam===null)return;
   const ad=katAdTemizle(adHam);if(!ad){showToast('Ad boş olamaz','amber');return;}
   const filtre=isfNormalize(JSON.parse(JSON.stringify(_isfTaslak)));
   try{
@@ -19839,8 +19840,8 @@ async function tkDurumAta(id,gun,durum){
   try{await sbFetch('takvim?id=eq.'+id,{method:'PATCH',body:JSON.stringify(satir)});showToast(TK_DURUM[durum].ik+' '+TK_DURUM[durum].ad,'green');gtOtoEsitle(id);}
   catch(e){showToast('Durum kaydı için takvim_gelistirme.sql çalıştırılmalı','amber');}
 }
-function tkErteleMenu(id,gun){
-  const sec=prompt('Hangi güne ertelensin?\n1 = yarın · 7 = bir hafta sonra · ya da tarih (GG.AA.YYYY)','1');if(sec===null)return;
+async function tkErteleMenu(id,gun){
+  const sec=await sorMetin('Ertele','Hangi güne ertelensin?\n1 = yarın · 7 = bir hafta sonra · ya da tarih (GG.AA.YYYY)','1');if(sec===null)return;
   let yeni=null;const s=sec.trim();if(/^\d{1,3}$/.test(s))yeni=gfGunEkle(gun<localToday()?localToday():gun,parseInt(s));else{const m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);if(m)yeni=(m[3].length===2?'20'+m[3]:m[3])+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}
   if(!yeni){showToast('Tarih anlaşılamadı','amber');return;}tkErtele(id,gun,yeni);
 }
@@ -21304,17 +21305,32 @@ function firmaModal(){
   ],async d=>{d.gecerlilikGun=Math.max(1,parseInt(d.gecerlilikGun)||15);const ok=await psAyarKaydet('firma',Object.assign({},firmaBilgi(),d));if(ok!==false){showToast('Firma bilgileri kaydedildi','green');try{if(FIS.model&&document.getElementById('modal-fis')?.classList.contains('open'))setTimeout(()=>fisAc(FIS.model.tur,FIS.model.id),350);}catch(e){}}});
 }
 // Basit form ve seçim pencereleri (dinamik)
-function formModal(baslik,alanlar,kaydet){
+function formModal(baslik,alanlar,kaydet,opt){opt=opt||{};
   let el=document.getElementById('modal-dinamik');
   if(!el){el=document.createElement('div');el.className='modal-ov';el.id='modal-dinamik';document.body.appendChild(el);}
   const v=x=>_esc(x==null?'':x);
   el.innerHTML=`<div class="modal" style="max-height:92vh;"><div class="modal-handle"></div>
     <div class="modal-head"><h3>${baslik}</h3><button class="modal-close" onclick="closeModal('modal-dinamik')">✕</button></div>
-    <div class="modal-body fg">${alanlar.map(a=>`<div class="fi"><label>${a.etiket}</label>${a.tip==='textarea'?`<textarea id="fm-${a.id}" rows="3" placeholder="${v(a.placeholder)}">${v(a.deger)}</textarea>`:a.tip==='select'?`<select id="fm-${a.id}">${(a.secenek||[]).map(s=>`<option value="${v(s[0])}"${String(s[0])===String(a.deger)?' selected':''}>${v(s[1])}</option>`).join('')}</select>`:`<input id="fm-${a.id}" type="${a.tip||'text'}" value="${v(a.deger)}" placeholder="${v(a.placeholder)}"${a.tip==='number'?' inputmode="decimal"':''}>`}</div>`).join('')}
-    <button class="btn btn-primary btn-full" id="fm-kaydet">Kaydet</button></div></div>`;
+    <div class="modal-body fg">${opt.aciklama?`<div style="margin-bottom:12px;">${opt.aciklama}</div>`:''}${alanlar.map(a=>`<div class="fi"><label>${a.etiket}</label>${a.tip==='textarea'?`<textarea id="fm-${a.id}" rows="3" placeholder="${v(a.placeholder)}">${v(a.deger)}</textarea>`:a.tip==='select'?`<select id="fm-${a.id}">${(a.secenek||[]).map(s=>`<option value="${v(s[0])}"${String(s[0])===String(a.deger)?' selected':''}>${v(s[1])}</option>`).join('')}</select>`:`<input id="fm-${a.id}" type="${a.tip||'text'}" value="${v(a.deger)}" placeholder="${v(a.placeholder)}"${a.tip==='number'?' inputmode="decimal"':''}>`}</div>`).join('')}
+    <button class="btn btn-primary btn-full" id="fm-kaydet">${opt.dugme||'Kaydet'}</button></div></div>`;
   el.querySelector('#fm-kaydet').onclick=async()=>{const d={};alanlar.forEach(a=>{const i=el.querySelector('#fm-'+a.id);d[a.id]=i?i.value:'';});const b=el.querySelector('#fm-kaydet');b.disabled=true;try{if(await kaydet(d)!==false)closeModal('modal-dinamik');}catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');}finally{b.disabled=false;}};
   openModal('modal-dinamik');
 }
+// window.prompt yerine: Mac uygulamasında (WKWebView) prompt hiç açılmıyor, null dönüyor. Promise<string|null>
+function sorMetin(baslik,aciklama,varsayilan,opt){opt=opt||{};return new Promise(ok=>{
+  let el=document.getElementById('modal-soru');if(!el){el=document.createElement('div');el.className='modal-ov';el.id='modal-soru';document.body.appendChild(el);}
+  let bitti=false,izle=null;const son=v=>{if(bitti)return;bitti=true;if(izle)clearInterval(izle);closeModal('modal-soru');ok(v);};
+  const d=_esc(varsayilan==null?'':String(varsayilan));
+  el.innerHTML=`<div class="modal" style="max-width:460px;"><div class="modal-handle"></div><div class="modal-head"><h3>${_esc(baslik)}</h3><button class="modal-close" data-ms="iptal">✕</button></div>
+    <div class="modal-body">${aciklama?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px;white-space:pre-line;line-height:1.5;">${_esc(aciklama)}</div>`:''}
+    <div class="fi">${opt.cokSatir?`<textarea id="ms-deger" rows="8" style="font-size:13px;">${d}</textarea>`:`<input id="ms-deger" type="${opt.tip||'text'}"${opt.tip==='number'?' inputmode="decimal"':''} value="${d}" placeholder="${_esc(opt.placeholder||'')}" autocomplete="off">`}</div>
+    <div style="display:flex;gap:8px;">${opt.tekDugme?'':'<button class="btn btn-secondary" style="flex:1" data-ms="iptal">Vazgeç</button>'}<button class="btn btn-primary" style="flex:1" data-ms="tamam">${_esc(opt.dugme||'Tamam')}</button></div></div></div>`;
+  const inp=el.querySelector('#ms-deger');
+  el.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>son(b.dataset.ms==='tamam'?inp.value:null));
+  inp.onkeydown=e=>{if(e.key==='Enter'&&!opt.cokSatir){e.preventDefault();son(inp.value);}else if(e.key==='Escape')son(null);};
+  openModal('modal-soru');setTimeout(()=>{try{inp.focus();if(!opt.cokSatir&&inp.select)inp.select();}catch(e){}},80);
+  izle=setInterval(()=>{if(!el.classList.contains('open'))son(null);},400);
+});}
 function secimModal(baslik,aciklama,secenekler,cb){
   let el=document.getElementById('modal-secim');
   if(!el){el=document.createElement('div');el.className='modal-ov';el.id='modal-secim';document.body.appendChild(el);}
@@ -23217,7 +23233,7 @@ function showKrediDetay(id){
     ${k.notlar?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">📝 ${k.notlar}</div>`:''}
     <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">📊 ${kapsam} · Başlangıç: ${k.baslangicTarihi||'—'}</div>
     <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-primary btn-full" onclick="krediTaksitOdeModal(${k.id})">💳 Taksit / Ödeme Yap</button>
+      <button class="btn btn-primary btn-full" onclick="krediTaksitOdeModal(${k.id})">${k.finansmanTuru==='borc-verme'?'💰 Gelen ödemeyi gir':'💳 Taksit / Ödeme Yap'}</button>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" style="flex:1;" onclick="openBorcModal(${k.id})">✏️ Düzenle</button>
         <button class="btn btn-secondary" style="flex:1;color:var(--red);" onclick="krediKapat(${k.id})">✓ Kapat</button>
@@ -23235,52 +23251,57 @@ function showKrediDetay(id){
 
 async function krediTaksitOdeModal(krediId){
   const k=(DB.bankaKredileri||[]).find(x=>x.id===krediId);
-  if(!k)return;
-  const tutar=k.taksitTutari||0;
+  if(!k){showToast('Kayıt bulunamadı','red');return;}
+  if(USER_ROL==='goruntule'){showToast('Görüntüleme yetkisiyle ödeme girilemez','amber');return;}
   const kapsam=k.erpKapsam||'isletme';
   const tur=k.finansmanTuru||'banka-kredi';
-  // Borç alma/kredi → geri ödeme = Gider
-  // Borç verme → tahsilat = Gelir
+  // Borç alma/kredi → geri ödeme = Gider · Borç verme → tahsilat = Gelir
   const isGider=tur!=='borc-verme';
-  const giderKat=kapsam==='isletme'?'İşletme Gideri':'Şahsi Gider';
-  const gelirKat=kapsam==='isletme'?'İşletme Geliri':'Şahsi Gelir';
-  const kat=isGider?giderKat:gelirKat;
+  const kat=isGider?(kapsam==='isletme'?'İşletme Gideri':'Şahsi Gider'):(kapsam==='isletme'?'İşletme Geliri':'Şahsi Gelir');
   const adB=(DB.kisiler||[]).find(x=>x.id===k.kisiId)?.isim||k.bankaAdi||'';
-
-  const miktar=prompt(`Ödeme tutarını girin (₺)
-Varsayılan taksit: ${fmt(tutar)}`, tutar);
-  if(!miktar)return;
-  const odeme=parseFloat(miktar)||0;
-  if(!odeme){showToast('Geçerli tutar girin','red');return;}
-
-  try{
+  const kalan=Math.max(0,+k.kalanBorc||0);const taksit=+k.taksitTutari||0;
+  const oneri=taksit>0?Math.min(taksit,kalan||taksit):kalan;
+  const fmt2=v=>(Math.round(v*100)/100).toString().replace('.',',');
+  const bilgi=`<div class="card" style="margin:0;padding:12px 14px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${isGider?'💳':'💰'} ${_esc(adB||'Finansman')}</div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);"><span>${isGider?'Kalan borcumuz':'Bize kalan borcu'}</span><b class="num" style="color:${isGider?'var(--red)':'var(--green)'};">${fmt(kalan)}</b></div>
+    ${taksit?`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:2px;"><span>Taksit tutarı</span><span class="num">${fmt(taksit)}</span></div>`:''}
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;">${isGider?'Ödeme kasadan çıkış (gider) olarak işlenir.':'Gelen ödeme kasaya giriş (gelir) olarak işlenir.'} Kısmi ödeme girebilirsin; kalan borç kapanınca kayıt otomatik kapanır.</div></div>`;
+  formModal(isGider?'💳 Ödeme yap':'💰 Gelen ödemeyi gir',[
+    {id:'tutar',etiket:'Tutar (₺)',tip:'text',deger:fmt2(oneri),placeholder:'0'},
+    {id:'tarih',etiket:'Tarih',tip:'date',deger:localToday()},
+    {id:'yontem',etiket:'Ödeme yöntemi',tip:'select',deger:'Nakit',secenek:[['Nakit','💵 Nakit'],['İBAN','🏦 İBAN / Havale'],['Kart','💳 Kart']]}
+  ],async d=>{
+    const odeme=parseTutar(d.tutar);
+    if(!(odeme>0)){showToast('Geçerli bir tutar gir','red');return false;}
+    if(kalan>0&&odeme>kalan+0.5){showToast('Tutar kalan borçtan ('+fmt(kalan)+') fazla','amber');return false;}
+    const tarih=/^\d{4}-\d{2}-\d{2}$/.test(d.tarih)?d.tarih:localToday();
     showToast('Kaydediliyor...','blue');
-    // İşlem olarak kaydet
+    const toplamTaksit=Math.max(1,(+k.odenenTaksit||0)+(+k.kalanTaksit||0));
+    const yeniKalanBorc=Math.max(0,Math.round((kalan-odeme)*100)/100);
+    const yeniKalanTaksit=yeniKalanBorc<=0.5?0:(taksit>0?Math.min(toplamTaksit,Math.max(1,Math.ceil(yeniKalanBorc/taksit-0.001))):Math.max(1,+k.kalanTaksit||1));
+    const yeniOdenen=Math.max(0,toplamTaksit-yeniKalanTaksit);
     await sbFetch('islemler',{method:'POST',prefer:'return=minimal',body:JSON.stringify([{
-      tarih:localToday()+'T12:00:00',
+      tarih:tarih+'T12:00:00',
       tip:isGider?'Gider':'Gelir',
       statu:'Tamamlandı',
       kat,
       alt_kat:tur==='banka-kredi'?'Kredi Taksit Ödemesi':isGider?'Borç Geri Ödemesi':'Borç Tahsilatı',
       tutar:odeme, malzeme_tutar:0,
       kisi_id:k.kisiId||null,
-      not:`${adB} — ${k.odenenTaksit+1}. ödeme`,
-      odeme_yontemi:'İBAN', personel_ids:[]
+      not:`${adB} — ${yeniKalanBorc<=0.5?'son ödeme':'ödeme'} (${fmt(odeme)})`,
+      odeme_yontemi:d.yontem||'Nakit', personel_ids:[]
     }])});
-    // Kredi kaydını güncelle
-    const yeniOdenen=k.odenenTaksit+1;
-    const yeniKalan=Math.max(0,k.kalanTaksit-1);
-    const yeniKalanBorc=Math.max(0,k.kalanBorc-odeme);
     await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'PATCH',body:JSON.stringify({
-      odenen_taksit:yeniOdenen, kalan_taksit:yeniKalan,
-      toplam_odenen:k.toplamOdenen+odeme, kalan_borc:yeniKalanBorc,
-      durum:yeniKalan<=0?'Kapatıldı':'Aktif'
+      odenen_taksit:yeniOdenen, kalan_taksit:yeniKalanTaksit,
+      toplam_odenen:(+k.toplamOdenen||0)+odeme, kalan_borc:yeniKalanBorc,
+      durum:yeniKalanBorc<=0.5?'Kapatıldı':'Aktif'
     })});
-    await loadDB();
     closeModal('modal-kredi-detay');
-    renderCariKrediler(); renderKrediPanel();
-    showToast('✅ Ödeme kaydedildi','green');
-  }catch(e){showToast('Hata: '+e.message,'red');}
+    await loadDB({sessiz:true});
+    try{renderCariKrediler();renderKrediPanel();}catch(e){}
+    showToast(yeniKalanBorc<=0.5?'✅ Ödeme kaydedildi, hesap kapandı':'✅ Ödeme kaydedildi · kalan '+fmt(yeniKalanBorc),'green');
+  },{aciklama:bilgi,dugme:isGider?'Ödemeyi kaydet':'Tahsilatı kaydet'});
 }
 
 function openTaksitOdeModal(krediId){
