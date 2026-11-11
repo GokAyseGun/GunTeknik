@@ -6,6 +6,7 @@ fn main() {
         tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(&[
             "cihaz_al", "cihaz_ayarla", "ac", "dis_ac", "belge_ac", "yazdir", "pano_gizle", "pano_veri", "geri_al",
             "kasa_acik", "kasa_degistir", "surum", "guncelle_denetle", "guncelle_kur", "parmak_durum", "parmak_dogrula",
+            "gorsel_panoya", "gorsel_kaydet",
         ])),
     )
     .expect("tauri build");
@@ -20,7 +21,7 @@ fn main() {
 fn widget_koprusu(hedef: &str) {
     let cikti = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let kok = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let kaynaklar = [kok.join("macos/WidgetYenile.swift"), kok.join("macos/ParmakIzi.swift")];
+    let kaynaklar = [kok.join("macos/WidgetYenile.swift"), kok.join("macos/ParmakIzi.swift"), kok.join("macos/Pano.swift")];
     let mimari = if hedef.contains("aarch64") { "arm64" } else { "x86_64" };
     let sdk = komut("xcrun", &["--show-sdk-path", "--sdk", "macosx"]);
     let nesne = cikti.join("WidgetYenile.o");
@@ -52,8 +53,10 @@ fn widget_koprusu(hedef: &str) {
     println!("cargo:rustc-link-arg=WidgetKit");
     println!("cargo:rustc-link-lib=framework=Foundation");
     println!("cargo:rustc-link-lib=framework=LocalAuthentication");
+    println!("cargo:rustc-link-lib=framework=AppKit");
     println!("cargo:rerun-if-changed=macos/WidgetYenile.swift");
     println!("cargo:rerun-if-changed=macos/ParmakIzi.swift");
+    println!("cargo:rerun-if-changed=macos/Pano.swift");
 }
 
 fn komut(ad: &str, arg: &[&str]) -> String {

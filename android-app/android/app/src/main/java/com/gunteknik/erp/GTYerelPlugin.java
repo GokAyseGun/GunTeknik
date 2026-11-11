@@ -395,6 +395,105 @@ public class GTYerelPlugin extends Plugin {
         }
     }
 
+    // ---------------------------------------------------------------- fiş görseli → WhatsApp
+    private boolean kurulu(String paket) {
+        try {
+            getContext().getPackageManager().getPackageInfo(paket, 0);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Hangi WhatsApp'lar kurulu: {normal, isletme} */
+    @PluginMethod
+    public void whatsappDurum(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("normal", kurulu("com.whatsapp"));
+        r.put("isletme", kurulu("com.whatsapp.w4b"));
+        call.resolve(r);
+    }
+
+    /**
+     * Fiş görselini (PNG, base64) mesaj metniyle birlikte doğrudan müşterinin WhatsApp sohbetine gönderir.
+     * tel: 90 ile başlayan rakamlar (boşsa WhatsApp kişi seçtirir). paket: com.whatsapp / com.whatsapp.w4b.
+     */
+    @PluginMethod
+    public void whatsappGonder(PluginCall call) {
+        String veri = call.getString("veri");
+        String tel = call.getString("tel", "");
+        String metin = call.getString("metin", "");
+        String paket = call.getString("paket", "");
+        String ad = temizAd(call.getString("ad", "fis.png"));
+        if (veri == null || veri.isEmpty()) {
+            call.reject("Görsel yok");
+            return;
+        }
+        try {
+            byte[] bayt = Base64.decode(veri, Base64.DEFAULT);
+            File dizin = new File(getContext().getCacheDir(), "fis");
+            if (!dizin.exists()) dizin.mkdirs();
+            File[] eski = dizin.listFiles();
+            if (eski != null) {
+                for (File x : eski) {
+                    if (System.currentTimeMillis() - x.lastModified() > 86_400_000L) x.delete();
+                }
+            }
+            if (!ad.toLowerCase().endsWith(".png")) ad = ad + ".png";
+            File f = new File(dizin, ad);
+            try (FileOutputStream fos = new FileOutputStream(f)) {
+                fos.write(bayt);
+            }
+            Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", f);
+
+            final Intent gonder = new Intent(Intent.ACTION_SEND);
+            gonder.setType("image/png");
+            gonder.putExtra(Intent.EXTRA_STREAM, uri);
+            if (metin != null && !metin.isEmpty()) gonder.putExtra(Intent.EXTRA_TEXT, metin);
+            gonder.setClipData(android.content.ClipData.newRawUri("fis", uri));
+            gonder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            String secilen = null;
+            if (paket != null && !paket.isEmpty() && kurulu(paket)) secilen = paket;
+            else if (kurulu("com.whatsapp")) secilen = "com.whatsapp";
+            else if (kurulu("com.whatsapp.w4b")) secilen = "com.whatsapp.w4b";
+            String no = tel == null ? "" : tel.replaceAll("\\D", "");
+            if (secilen != null) {
+                gonder.setPackage(secilen);
+                // müşterinin sohbetini doğrudan açar (WhatsApp'ın belgelenmemiş ama yaygın kullanılan alanı)
+                if (!no.isEmpty()) gonder.putExtra("jid", no + "@s.whatsapp.net");
+            }
+            final String sonPaket = secilen;
+            Activity a = getActivity();
+            if (a == null) {
+                call.reject("Uygulama penceresi yok");
+                return;
+            }
+            a.runOnUiThread(() -> {
+                try {
+                    if (sonPaket != null) a.startActivity(gonder);
+                    else a.startActivity(Intent.createChooser(gonder, "Fişi gönder"));
+                    JSObject r = new JSObject();
+                    r.put("paket", sonPaket == null ? "" : sonPaket);
+                    call.resolve(r);
+                } catch (Exception e) {
+                    try {
+                        gonder.setPackage(null);
+                        gonder.removeExtra("jid");
+                        a.startActivity(Intent.createChooser(gonder, "Fişi gönder"));
+                        JSObject r = new JSObject();
+                        r.put("paket", "");
+                        call.resolve(r);
+                    } catch (Exception e2) {
+                        call.reject("Gönderilemedi: " + e2.getMessage());
+                    }
+                }
+            });
+        } catch (Exception e) {
+            call.reject("Gönderilemedi: " + e.getMessage(), e);
+        }
+    }
+
     private static String temizAd(String ad) {
         if (ad == null || ad.trim().isEmpty()) return "dosya";
         return ad.trim().replaceAll("[\\\\/:*?\"<>|]", "_");

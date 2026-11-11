@@ -294,6 +294,12 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **RPC'ler:** `auth.uid() is null` denetimleri `erp_uye()` oldu. `push_teslim_al`, `push_tetikle` ve `push_sunucu_kontrol` dışarıdan çağrılamaz.
 - **Görünüm:** `google_ads_grup_gunluk` artık `security_invoker`.
 
+## 6y. Fiş sayfası (11 Kasım 2026)
+- **Liste** (`fisListe`): işletme gelirleri (şahsi gelir ve borç/kredi/hak ediş hareketleri hariç; taksit grupları tek fiş) + tamamlanmış ama ödemesi kayda geçmemiş projeler (`projeFisToplam` − bağlı gelirler). Arama, filtre (Tümü/Ödendi/Bekleniyor/Proje), işlem ve proje detayında "🧾 Fiş".
+- **Model** (`fisModel`): kalemler `islem_kalemleri`nden; yoksa (tutar proje toplamına denkse) `proje_iscilikler`/`proje_malzemeler`/teklif; yoksa işçilik + malzeme tutarı. Kalem toplamı tutmazsa "Ek işçilik"/"İndirim" fark satırı. Adres: proje → rehber ana adresi.
+- **Şablonlar:** `fisYaziciHtml` (Brother QL-600, 62 mm, siyah-beyaz; yazdırırken `body.fis-yazdir`, yalnız `#irs-print-area` basılır — telefonda gizli), `fisMusteriHtml` (540 px, html2canvas ×2 → PNG; pembe/turkuaz, az hardal/buz mavisi). Logo `FIS_LOGO` çokgenleri canvas'a çizilir; yorum QR'ı qrcodejs. Mesaj `fisMesaj` (ödendi: garanti + yorum linki; bekliyor: kalan + IBAN). Firma bilgilerine IBAN alıcı adı, slogan, garanti, yorum linki, teşekkür notu eklendi.
+- **Gönderim:** Android `GTYerel.whatsappGonder` (cache/fis + FileProvider, ACTION_SEND, `jid` ile müşterinin sohbeti; iki WhatsApp varsa seçim `gt_wa_paket`), `whatsappDurum`. Mac `gorsel_panoya` / `gorsel_kaydet` (Swift `macos/Pano.swift`, NSPasteboard PNG+TIFF) + `whatsapp://send`. Tarayıcı: panoya kopyala + wa.me.
+
 ## 6x. Kasım 11 düzeltmeleri (2)
 - **Pencere katmanı:** `openModal` pencereyi önce `document.body`'ye taşır (#app içindeki pencereler kendi yığın bağlamında kalıp silme onayını altta bırakıyordu).
 - **Proje:** silme hatası `proje_iscilikler` FK'sinin NO ACTION olmasıydı → `ON DELETE CASCADE` (migration `proje_iscilikler_fk_cascade`). Yeni/düzenle penceresinde "Kim için?" (Müşteri/Firma/Kurum/Şahıs → `proje-kisi-kat`, `acGetKisiler` filtresi). Adres isteğe bağlı: boşsa rehberdeki ana adres gösterilir (`projeAdresMetin`), "Adresi değiştir" ile `projeler.adres`e projeye özel adres yazılır.

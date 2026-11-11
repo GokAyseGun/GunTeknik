@@ -317,6 +317,52 @@ async fn parmak_dogrula(app: AppHandle, neden: Option<String>) -> bool {
     }
 }
 
+// ---------------------------------------------------------------- fiş görseli (panoya / İndirilenler'e)
+#[cfg(target_os = "macos")]
+extern "C" {
+    fn gt_pano_png(b64: *const std::os::raw::c_char) -> i32;
+    fn gt_png_kaydet(b64: *const std::os::raw::c_char, ad: *const std::os::raw::c_char) -> i32;
+}
+
+/// ERP'nin ürettiği fiş görselini (PNG, base64) panoya koyar; WhatsApp'ta ⌘V ile yapıştırılır.
+#[tauri::command]
+fn gorsel_panoya(veri: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let c = std::ffi::CString::new(veri).map_err(|e| e.to_string())?;
+        if unsafe { gt_pano_png(c.as_ptr()) } == 1 {
+            Ok(())
+        } else {
+            Err("Görsel panoya kopyalanamadı".into())
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = veri;
+        Err("Yalnız Mac".into())
+    }
+}
+
+/// Fiş görselini İndirilenler klasörüne kaydeder ve Finder'da gösterir.
+#[tauri::command]
+fn gorsel_kaydet(veri: String, ad: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let c = std::ffi::CString::new(veri).map_err(|e| e.to_string())?;
+        let a = std::ffi::CString::new(ad).map_err(|e| e.to_string())?;
+        if unsafe { gt_png_kaydet(c.as_ptr(), a.as_ptr()) } == 1 {
+            Ok(())
+        } else {
+            Err("Kaydedilemedi".into())
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (veri, ad);
+        Err("Yalnız Mac".into())
+    }
+}
+
 // ---------------------------------------------------------------- masaüstü araçları (WidgetKit)
 #[cfg(target_os = "macos")]
 extern "C" {
@@ -757,7 +803,8 @@ pub fn run() {
         .manage(Durum::default())
         .invoke_handler(tauri::generate_handler![
             cihaz_al, cihaz_ayarla, ac, dis_ac, belge_ac, yazdir, pano_gizle, pano_veri, geri_al,
-            kasa_acik, kasa_degistir, surum, guncelle_denetle, guncelle_kur, parmak_durum, parmak_dogrula
+            kasa_acik, kasa_degistir, surum, guncelle_denetle, guncelle_kur, parmak_durum, parmak_dogrula,
+            gorsel_panoya, gorsel_kaydet
         ])
         .setup(|app| {
             let h = app.handle().clone();
