@@ -8130,7 +8130,7 @@ async function islemTamamlaPatch(id){
 // ============================================================ GELİŞMİŞ FİNANS GRAFİĞİ — ARAYÜZ (KLineChart)
 var GF={chart:null,defter:null,barlar:[],tahmin:null,tahminAnahtar:'',geriTest:null,geriTestAnahtar:'',ek:{versiyon:0},ekZaman:0,ekYukleniyor:false,
   olusanGostergeler:[],cizimDb:{},toplucaSil:false,seciliCizim:null,cizimModu:false,hedefler:[],gorunur:null,kayitUyari:false,ay:null};
-var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],par:{},karsilastir:[],karsAyri:true,gecenYil:false,olaylar:true,sifir:true,yEksen:'normal',
+var GF_AYAR_VARSAYILAN={metrik:'kasa',periyot:'gun',tip:'candle_solid',anaGosterge:['MA'],altGosterge:['GF_AKIS','VOL'],par:{},karsilastir:[],karsAyri:true,gecenYil:false,hava:false,olaylar:true,sifir:true,yEksen:'normal',
   tahminAcik:true,tahminUfuk:90,gelirPct:0,giderPct:0,tahsilatPct:85,eskiTahmin:false,sekme:'ozet',isiMetrik:'isNet',miknatis:false,
   maP:[{n:5,on:true},{n:10,on:true},{n:30,on:true},{n:60,on:true}],emaP:[{n:6,on:true},{n:12,on:true},{n:20,on:true}],
   donemTip:'ay',donemMod:'liste',donemBekleyen:false,donemKat:'',donemEsit:true};
@@ -8304,6 +8304,29 @@ function gfGostergeKaydet(){
         ctx.fillStyle=sr;ctx.fillRect(bounding.width-tw-2,ys-8,tw,16);ctx.fillStyle='#000';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(txt,bounding.width-tw+3,ys);ctx.textBaseline='alphabetic';}
       // risk işaretleri
       for(let i=Math.max(fi,from);i<to;i++){const b=kLineDataList[i];if(b&&b.riskIsaret){ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('⚠️',X(i),Y(b.t.p10)+14);}}
+      ctx.restore();return true;
+    }});
+  // Sıcaklık + hava (kendi ölçeğinde; her noktada gök durumu ikonu)
+  klinecharts.registerIndicator({name:'GF_HAVA',shortName:'Hava',precision:0,figures:[],calc:list=>list.map(()=>({})),
+    createTooltipDataSource:({kLineDataList,crosshair})=>{const h=gfHavaBarBilgi(kLineDataList[crosshair.dataIndex]);if(!h)return {name:'',calcParamsText:'',icons:[],values:[]};
+      return {name:'🌡️ Hava',calcParamsText:'',icons:[],values:[{title:'',value:{text:gfHavaBarMetin(h),color:'#FF8A65'}}]};},
+    draw:({ctx,kLineDataList,visibleRange,bounding,xAxis})=>{
+      const from=Math.max(0,visibleRange.from-1),to=Math.min(kLineDataList.length,visibleRange.to+1);const P=[];
+      for(let i=from;i<to;i++){const h=gfHavaBarBilgi(kLineDataList[i]);if(h)P.push([i,h]);}
+      if(!P.length)return false;
+      let mn=Infinity,mx=-Infinity;P.forEach(([,h])=>{mn=Math.min(mn,h.t);mx=Math.max(mx,h.t);});if(mx-mn<8){const o=(8-(mx-mn))/2;mn-=o;mx+=o;}
+      const ust=bounding.height*0.1,alt=bounding.height*0.78;const Y=v=>alt-(v-mn)/(mx-mn)*(alt-ust);const X=i=>xAxis.convertToPixel(i);
+      ctx.save();
+      // çizgi (veri olmayan aralıkta kopar)
+      ctx.strokeStyle='rgba(255,138,101,0.9)';ctx.lineWidth=1.6;ctx.setLineDash([]);ctx.beginPath();let onceki=null;
+      P.forEach(([i,h])=>{const x=X(i),y=Y(h.t);if(onceki!=null&&i-onceki===1)ctx.lineTo(x,y);else ctx.moveTo(x,y);onceki=i;});ctx.stroke();
+      // ikonlar: noktalar arası yer kadar seyrelt
+      const w=P.length>1?Math.abs(X(P[1][0])-X(P[0][0]))/Math.max(1,P[1][0]-P[0][0]):40;const fs=Math.round(Math.max(11,Math.min(16,w*0.85)));const adim=Math.max(1,Math.ceil((fs+2)/Math.max(1,w)));
+      ctx.font=fs+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      P.forEach(([i,h])=>{if(!h.ik||i%adim)return;const x=X(i);if(x<-fs||x>bounding.width+fs)return;ctx.fillText(h.ik,x,Math.max(fs/2,Math.min(bounding.height-fs/2,Y(h.t))));});
+      // ölçek: en yüksek / en düşük °C
+      ctx.font='600 10px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='rgba(255,138,101,0.85)';
+      ctx.fillText('🌡️ '+Math.round(mx)+'°',4,ust);ctx.fillText(Math.round(mn)+'°',4,alt);
       ctx.restore();return true;
     }});
   // Giriş / çıkış / net akış paneli
@@ -8551,6 +8574,25 @@ function gfIlkGorunum(){
   const gorunenGelecek=Math.min(gelecekSay,Math.round(hedefBar*0.45));
   if(gelecekSay>gorunenGelecek)c.scrollToDataIndex(GF.histSay-1+gorunenGelecek,0);else c.scrollToRealTime(0);
 }
+// ana grafik hava katmanı: mumun kapsadığı günlerin en yüksek sıcaklık ortalaması + en sık gök durumu
+function gfHavaBarAralik(k,p){
+  if(!k)return null;if(p==='gun'||!p)return [k,k];if(p==='hafta')return [k,gfGunEkle(k,6)];
+  const [y,m]=k.split('-').map(Number);if(p==='ay')return [k,localDateObjStr(new Date(y,m,0))];if(p==='ceyrek')return [k,localDateObjStr(new Date(y,m+2,0))];return [k,y+'-12-31'];
+}
+function gfHavaBarBilgi(b){
+  if(!b||!b.anahtar||typeof GF_HAVA==='undefined'||!GF_HAVA.gun)return null;
+  const p=(GF.ay&&GF.ay.periyot)||'gun';const imza=p+'|'+Object.keys(GF_HAVA.gun).length+'|'+Object.keys(GF_HAVA.det||{}).length;
+  if(!GF._havaBar||GF._havaBar.imza!==imza)GF._havaBar={imza,m:{}};const C=GF._havaBar.m;if(b.anahtar in C)return C[b.anahtar];
+  const r=gfHavaBarAralik(b.anahtar,p);let s=0,n=0,mm=0;const say={};
+  for(let g=r[0];g<=r[1];g=gfGunEkle(g,1)){const t=GF_HAVA.gun[g];if(t==null)continue;s+=t;n++;
+    const hv=typeof tkHava==='function'?tkHava(g):null;if(hv&&hv.ik)say[hv.ik]=(say[hv.ik]||0)+1;const d=GF_HAVA.det&&GF_HAVA.det[g];if(d&&d.mm)mm+=d.mm;}
+  let ik=null,bn=0;Object.entries(say).forEach(([k,c])=>{if(c>bn){bn=c;ik=k;}});
+  return C[b.anahtar]=n?{t:s/n,ik,n,mm,tek:r[0]===r[1],a:r[0],z:r[1],say}:null;
+}
+function gfHavaBarMetin(h){
+  if(h.tek){const hv=typeof tkHava==='function'?tkHava(h.a):null;return (hv?hv.ik+' '+(hv.ad||'')+' · ':'')+(hv&&hv.min!=null?Math.round(hv.min)+'° / ':'')+Math.round(h.t)+'°C'+(h.mm>=0.5?' · '+(Math.round(h.mm*10)/10).toString().replace('.',',')+' mm':'');}
+  return Object.entries(h.say).sort((a,b)=>b[1]-a[1]).map(([k,c])=>k+c).join(' ')+' · ort. en yüksek '+Math.round(h.t)+'°C'+(h.mm>=0.5?' · '+Math.round(h.mm)+' mm yağış':'');
+}
 function gfGostergeleriKur(kars,tahmin,eski){
   const c=GF.chart;const ay=GF.ay;
   GF.olusanGostergeler.forEach(g=>{try{c.removeIndicator(g.pane,g.ad);}catch(e){}});GF.olusanGostergeler=[];
@@ -8563,6 +8605,7 @@ function gfGostergeleriKur(kars,tahmin,eski){
       const ofs=g==='EMA'?3:0;ana(g,{calcParams:acik.map(p=>p.n),precision:0,styles:{lines:acik.map(p=>({color:GF_CIZGI_RENK[(p.i+ofs)%GF_CIZGI_RENK.length],size:g==='MA'?1.2:1.4,style:g==='MA'?'solid':'dashed',smooth:false,dashedValue:[4,2]}))}});return;}
     ana(g,gosOpt(ay.par,g));});
   if(ay.gecenYil)ana('GF_GECENYIL');
+  if(ay.hava){ana('GF_HAVA');if(typeof GF_HAVA!=='undefined'&&!Object.keys(GF_HAVA.gun||{}).length&&GF_HAVA.durum!=='yukleniyor')gfHavaYukle().catch(()=>{});}
   if(eski)ana('GF_ESKI');
   const kucuk=typeof gfKucukMu==='function'&&gfKucukMu(); // masaüstü küçük hâl: alt paneller gizli
   if(kars.length){const opt={calcParams:kars,styles:{lines:kars.map(k=>({color:GF_METRIK[k].renk,size:1.4,style:'solid',smooth:false,dashedValue:[2,2]}))}};if(ay.karsAyri&&!kucuk)alt('GF_KARSI',opt,90);else ana('GF_KARSI',opt);}
@@ -8836,7 +8879,8 @@ function gfGostergeModalAc(){gfGostergeModalCiz();openModal('modal-gf-gosterge')
 function gfGostergeModalCiz(){
   const ay=GF.ay;const el=document.getElementById('gf-gosterge-body');if(!el)return;
   const chip=(on,l,fn)=>`<button class="isf-chip${on?' on':''}" onclick="${fn}">${l}</button>`;
-  el.innerHTML=`<div class="isf-grup-b">Ana grafik üzerinde</div><div class="isf-chips">${GF_ANA_GOSTERGE.map(([k,l])=>chip(ay.anaGosterge.includes(k),l,`gfGostergeTik('anaGosterge','${k}')`)).join('')}</div>
+  el.innerHTML=`<div class="isf-grup-b">Ana grafik üzerinde</div><div class="isf-chips">${chip(ay.hava,'🌡️ Sıcaklık + hava',"GF.ay.hava=!GF.ay.hava;gfGostergeUygula()")}${GF_ANA_GOSTERGE.map(([k,l])=>chip(ay.anaGosterge.includes(k),l,`gfGostergeTik('anaGosterge','${k}')`)).join('')}</div>
+  ${ay.hava?`<div class="isf-ipucu" style="margin-top:4px;">Turuncu çizgi o günün (haftalık/aylık görünümde ortalama) en yüksek sıcaklığı, üstündeki ikon gök durumu. Çizgi kendi ölçeğinde çizilir; solda en düşük–en yüksek °C yazar.</div>`:''}
   ${ay.anaGosterge.includes('MA')?gfParamHtml('MA'):''}${ay.anaGosterge.includes('EMA')?gfParamHtml('EMA'):''}
   <div class="isf-grup-b">Alt paneller</div><div class="isf-chips">${GF_ALT_GOSTERGE.map(([k,l])=>chip(ay.altGosterge.includes(k),l,`gfGostergeTik('altGosterge','${k}')`)).join('')}</div>
   ${gosAyarHtml(ay.anaGosterge.filter(g=>g!=='MA'&&g!=='EMA').concat(ay.altGosterge),ay.par||{},'gfGosPar',{gun:'gün',hafta:'hafta',ay:'ay',ceyrek:'çeyrek',yil:'yıl'}[ay.periyot]||'mum')}
@@ -13891,7 +13935,7 @@ async function fisProjeKalemleriAl(p){
 }
 async function fisModel(tur,id){
   const F=firmaBilgi();
-  const m={tur,id,no:'',tarih:'',kisi:null,adres:'',baslik:'',hizmetler:[],kalemler:[],toplam:0,odenen:0,kalan:0,odemeYontemi:'',odemeTarihi:'',taksit:[],not:'',projeAd:'',kdv:0,F};
+  const m={tur,id,no:'',tarih:'',kisi:null,adres:'',baslik:'',hizmetler:[],kalemler:[],toplam:0,odenen:0,kalan:0,odemeYontemi:'',odemeTarihi:'',taksit:[],projeAd:'',kdv:0,F}; // not alanı bilerek yok: işlem/proje/rehber notları müşteriye gitmez
   let p=null;
   if(tur==='islem'){
     const i=(DB.islemler||[]).find(x=>x.id===id);if(!i)return null;
@@ -13902,7 +13946,6 @@ async function fisModel(tur,id){
     const od=G.filter(x=>x.statu==='Tamamlandı');m.odenen=od.reduce((s,x)=>s+(x.tutar||0),0);
     m.odemeYontemi=[...new Set(od.map(x=>x.odemeYontemi||'Nakit'))].join(', ');m.odemeTarihi=od.length?localDateStr(od[od.length-1].tahsilTarihi||od[od.length-1].tarih):'';
     m.hizmetler=fisHizmetler(ilk.altKat);
-    m.not=String(ilk.not||'').replace(/^\[\d+\/\d+ Taksit\]\s*/,'').trim();
     m.kdv=G.reduce((s,x)=>s+(x.kdvVar?(x.kdvTutar||0):0),0);
     if(G.length>1)m.taksit=G.map(x=>({tarih:localDateStr(x.tarih),tutar:x.tutar||0,odendi:x.statu==='Tamamlandı'}));
     p=ilk.projeId?(DB.projeler||[]).find(x=>String(x.id)===String(ilk.projeId)):null;
@@ -13982,7 +14025,6 @@ function fisMusteriHtml(m){
   ${durum}
   ${m.taksit.length?`<div class="fm-plan"><span class="fm-et">ÖDEME PLANI</span>${m.taksit.map((t,n)=>`<div><span>${n+1}. taksit · ${gfTrTarih(t.tarih)}</span><span>${fisTL(t.tutar)} ${t.odendi?'<i class="ok">✓</i>':'<i>⏳</i>'}</span></div>`).join('')}</div>`:''}
   ${ibanVar?`<div class="fm-iban"><span class="fm-et">ÖDEME BİLGİLERİ</span>${F.banka?`<div>${_esc(F.banka)}</div>`:''}<div>Alıcı: <b>${_esc(F.ibanAd||F.unvan)}</b></div><div class="fm-ibn">${_esc(F.iban)}</div></div>`:''}
-  ${m.not?`<div class="fm-not">${_esc(m.not)}</div>`:''}
   ${F.garanti?`<div class="fm-garanti"><span>🛡️</span><div>${_esc(F.garanti)}</div></div>`:''}
   <div class="fm-alt">
     ${m.qr?`<img class="fm-qr" src="${m.qr}" alt=""><div class="fm-yorum"><b>Memnun kaldınız mı?</b><small>Kodu okutup Google'da değerlendirebilirsiniz. Yorumunuz bizim için çok değerli.</small></div>`:`<div class="fm-yorum"><b>${_esc(F.unvan)}</b><small>${_esc(F.adres||'')}</small></div>`}
@@ -14023,7 +14065,6 @@ function fisYaziciHtml(m){
     :`<div class="fy-durum">ÖDEME BEKLENİYOR</div>${m.odenen>0.5?satir('Ödenen',fisTL(m.odenen)):''}${satir('<b>Kalan</b>','<b>'+fisTL(m.kalan)+'</b>')}`}
   ${m.taksit.length?`<div class="fy-c"></div><div class="fy-bas">ÖDEME PLANI</div>${m.taksit.map((t,n)=>satir((n+1)+'. '+gfTrTarih(t.tarih),fisTL(t.tutar)+(t.odendi?' ✓':''))).join('')}`:''}
   ${m.durum!=='odendi'&&F.iban?`<div class="fy-c"></div><div class="fy-bas">ÖDEME BİLGİLERİ</div>${F.banka?`<div class="fy-b">${_esc(F.banka)}</div>`:''}<div class="fy-b">Alıcı: ${_esc(F.ibanAd||F.unvan)}</div><div class="fy-b fy-ibn">${_esc(F.iban)}</div>`:''}
-  ${m.not?`<div class="fy-c"></div><div class="fy-b">Not: ${_esc(m.not)}</div>`:''}
   <div class="fy-c"></div>
   ${F.garanti?`<div class="fy-kucuk">${_esc(F.garanti)}</div>`:''}
   ${m.qr?`<div class="fy-qr"><img src="${m.qr}" alt=""><div>Memnun kaldıysanız<br>Google'da<br>değerlendirin</div></div>`:''}
@@ -21240,7 +21281,7 @@ function teklifSablonUygula(i){
   hesaplaTeklifToplam();showToast('Şablon eklendi: '+s.ad,'green');
 }
 // ── Firma bilgileri (teklif, iş raporu, ekstre çıktıları) ──
-function firmaBilgi(){const f=(PS.ayar&&PS.ayar.firma)||{};const o=Object.assign({unvan:'Gün Elektrik & Klima',alt:'Elektrik · Klima · Su Pompası · Uydu · İnternet',slogan:'İhtiyacınız olduğu anda...',adres:'Ortaca / Muğla',tel:'+90 544 652 94 86',eposta:'',vergiDairesi:'',vergiNo:'',banka:'',iban:'',ibanAd:'',teklifNot:'',gecerlilikGun:15,garanti:'İşçiliğimiz 15 gün garantilidir. Malzemelerde üreticinin garanti hakları saklıdır.',yorumLink:'https://g.page/r/Cdq32mSn9e6KEBE/review',fisNot:'Bizi tercih ettiğiniz için teşekkür ederiz.'},f);if(!o.tel)o.tel='+90 544 652 94 86';return o;}
+function firmaBilgi(){const f=(PS.ayar&&PS.ayar.firma)||{};const o=Object.assign({unvan:'Gün Elektrik & Klima',alt:'Elektrik · Klima · Uydu · İnternet',slogan:'İhtiyacınız olduğu anda...',adres:'Ortaca / Muğla',tel:'+90 544 652 94 86',eposta:'',vergiDairesi:'',vergiNo:'',banka:'',iban:'',ibanAd:'',teklifNot:'',gecerlilikGun:15,garanti:'İşçiliğimiz 15 gün garantilidir. Malzemelerde üreticinin garanti hakları saklıdır.',yorumLink:'https://g.page/r/Cdq32mSn9e6KEBE/review',fisNot:'Bizi tercih ettiğiniz için teşekkür ederiz.'},f);if(!o.tel)o.tel='+90 544 652 94 86';return o;}
 function firmaModal(){
   const f=firmaBilgi();
   formModal('🏢 Firma Bilgileri',[
