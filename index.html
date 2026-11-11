@@ -460,6 +460,8 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:auto;width:18px;he
   @page{size:62mm auto;margin:0;}
 }
 /* ---------- FİŞ: liste, pencere, müşteri görseli (.fm) ve 62 mm yazdırma (.fy) */
+.kredi-kapali{opacity:.55;filter:grayscale(1);background:var(--bg2);}
+.kredi-kapali:hover{opacity:.8;}
 .fis-ust{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
 .fis-ust-s{display:flex;gap:8px;}
 .fis-ust input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:13px;outline:none;font-family:inherit;}
@@ -11410,35 +11412,35 @@ async function finansmanBildirimKontrol(){
 
 function renderCariKrediler(){
   const list=document.getElementById('list-cari-kredi');
-  const baslik=document.getElementById('cari-kredi-baslik');
   if(!list)return;
-  const tumKrediler=(DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif');
-  if(!tumKrediler.length){
-    list.innerHTML='<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px;">Henüz kayıt yok</div>';
-    return;
-  }
-  const alacakKalan=tumKrediler.filter(k=>k.finansmanTuru==='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
-  const borcKalan=tumKrediler.filter(k=>k.finansmanTuru!=='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
+  const tum=(DB.bankaKredileri||[]);
+  const aktif=tum.filter(k=>k.durum==='Aktif');
+  // kapalı hesaplar silinmez: gri, ayrı listede kalır; yalnız elle silinirse gider
+  const kapali=tum.filter(k=>k.durum!=='Aktif').sort((a,b)=>String(b.baslangicTarihi||'').localeCompare(String(a.baslangicTarihi||''))||b.id-a.id);
+  if(!tum.length){list.innerHTML='<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px;">Henüz kredi / borç kaydı yok</div>';return;}
   const ikonMap={'borc-alma':'💰','borc-verme':'💸','banka-kredi':'🏦'};
   const adMap={'borc-alma':'Aldığımız borç','borc-verme':'Verdiğimiz borç','banka-kredi':'Banka Kredisi'};
-  const ozS=(e,v,r)=>`<div style="flex:1;"><div style="font-size:11px;color:var(--text2);">${e}</div><div class="num" style="font-weight:700;font-size:16px;color:${r};">${fmt(v)}</div></div>`;
-  list.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin:6px 2px 6px;">🏦 Kredi ve borç kayıtları</div><div class="card" style="margin-bottom:8px;background:rgba(30,58,138,0.08);border-color:rgba(30,58,138,0.25);">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-      ${alacakKalan?ozS('Verdiğimiz (alacak)',alacakKalan,'var(--green)'):''}${borcKalan?ozS('Kalan borcumuz',borcKalan,'var(--red)'):''}
-    </div></div>`+
-  tumKrediler.map(k=>{
-    const tur=k.finansmanTuru||'banka-kredi';
-    const icon=ikonMap[tur]||'💰';
-    const turAdi=adMap[tur]||tur;
-    const ad=k.bankaAdi||(k.kisiId?((DB.kisiler||[]).find(x=>x.id===k.kisiId)?.isim||''):'');
-    const ilerleme=k.vadeAy>0?Math.round((k.odenenTaksit/k.vadeAy)*100):0;
-    const donguAdi={tek:'Tek Seferlik',gunluk:'Günlük',haftalik:'Haftalık',aylik:'Aylık',yillik:'Yıllık'}[k.odemeDongusu]||'Aylık';
-    const kapsamBadge=k.erpKapsam==='isletme'?'🏢 İşletme':'👤 Şahsi';
-    const krR=tur==='borc-verme'?'var(--green)':'var(--red)';
-    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:3px solid ${krR};" onclick="showKrediDetay(${k.id})">
+  const donguMap={tek:'Tek Seferlik',gunluk:'Günlük',haftalik:'Haftalık',aylik:'Aylık',yillik:'Yıllık'};
+  const adBul=k=>k.bankaAdi||(k.kisiId?((DB.kisiler||[]).find(x=>x.id===k.kisiId)?.isim||''):'');
+  let h='';
+  if(aktif.length){
+    const alacakKalan=aktif.filter(k=>k.finansmanTuru==='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
+    const borcKalan=aktif.filter(k=>k.finansmanTuru!=='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
+    const ozS=(e,v,r)=>`<div style="flex:1;"><div style="font-size:11px;color:var(--text2);">${e}</div><div class="num" style="font-weight:700;font-size:16px;color:${r};">${fmt(v)}</div></div>`;
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin:6px 2px 6px;">🏦 Kredi ve borç kayıtları</div><div class="card" style="margin-bottom:8px;background:rgba(30,58,138,0.08);border-color:rgba(30,58,138,0.25);">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        ${alacakKalan?ozS('Verdiğimiz (alacak)',alacakKalan,'var(--green)'):''}${borcKalan?ozS('Kalan borcumuz',borcKalan,'var(--red)'):''}
+      </div></div>`+
+    aktif.map(k=>{
+      const tur=k.finansmanTuru||'banka-kredi';const icon=ikonMap[tur]||'💰';const turAdi=adMap[tur]||tur;const ad=adBul(k);
+      const ilerleme=k.vadeAy>0?Math.round((k.odenenTaksit/k.vadeAy)*100):0;
+      const donguAdi=donguMap[k.odemeDongusu]||'Aylık';
+      const kapsamBadge=k.erpKapsam==='isletme'?'🏢 İşletme':'👤 Şahsi';
+      const krR=tur==='borc-verme'?'var(--green)':'var(--red)';
+      return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:3px solid ${krR};" onclick="showKrediDetay(${k.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;">${icon} ${ad||turAdi}</div>
+          <div style="font-size:13px;font-weight:700;">${icon} ${_esc(ad||turAdi)}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:2px;">${turAdi} · ${donguAdi} · ${kapsamBadge}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
@@ -11449,8 +11451,27 @@ function renderCariKrediler(){
       ${k.vadeAy>1?`<div style="background:var(--border);border-radius:3px;height:4px;margin-bottom:4px;">
         <div style="background:var(--green);height:4px;border-radius:3px;width:${ilerleme}%;"></div></div>
         <div style="font-size:10px;color:var(--text3);">${k.odenenTaksit}/${k.vadeAy} taksit · %${ilerleme} tamamlandı</div>`:''}
-    </div>`;
-  }).join('');
+    </div>`;}).join('');
+  }
+  if(kapali.length){
+    h+=`<div style="font-size:12px;font-weight:700;color:var(--text3);margin:14px 2px 6px;">🔒 Kapalı hesaplar (${kapali.length})</div>`+
+    kapali.map(k=>{
+      const tur=k.finansmanTuru||'banka-kredi';const icon=ikonMap[tur]||'💰';const turAdi=adMap[tur]||tur;const ad=adBul(k);
+      const odenen=(+k.toplamOdenen||0)>0?k.toplamOdenen:(+k.anapara||0);
+      return `<div class="card kredi-kapali" style="margin-bottom:6px;cursor:pointer;border-left:3px solid var(--border2);" onclick="showKrediDetay(${k.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text2);">${icon} ${_esc(ad||turAdi)}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${turAdi} · ${k.erpKapsam==='isletme'?'İşletme':'Şahsi'}${k.baslangicTarihi?' · '+gfTrTarih(String(k.baslangicTarihi).slice(0,10)):''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div class="num" style="font-size:13px;font-weight:700;color:var(--text3);">${fmt(k.anapara)}</div>
+          <div style="font-size:10px;color:var(--text3);">✓ Kapatıldı${odenen&&Math.abs(odenen-k.anapara)>0.5?' · ödenen '+fmt(odenen):''}</div>
+        </div>
+      </div>
+    </div>`;}).join('');
+  }
+  list.innerHTML=h;
 }
 
 
@@ -23232,12 +23253,14 @@ function showKrediDetay(id){
     ${k.kefil?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">👤 Kefil: ${k.kefil}</div>`:''}
     ${k.notlar?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">📝 ${k.notlar}</div>`:''}
     <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">📊 ${kapsam} · Başlangıç: ${k.baslangicTarihi||'—'}</div>
+    ${krediOdemeGecmisiHtml(k)}
+    ${k.durum!=='Aktif'?`<div class="gf-not" style="margin-bottom:10px;">🔒 Bu hesap kapatıldı. Kapalı hesaplar listesinde kalır; tamamen kaldırmak için aşağıdan sil.</div>`:''}
     <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-primary btn-full" onclick="krediTaksitOdeModal(${k.id})">${k.finansmanTuru==='borc-verme'?'💰 Gelen ödemeyi gir':'💳 Taksit / Ödeme Yap'}</button>
+      ${k.durum==='Aktif'?`<button class="btn btn-primary btn-full" onclick="krediTaksitOdeModal(${k.id})">${k.finansmanTuru==='borc-verme'?'💰 Gelen ödemeyi gir':'💳 Taksit / Ödeme Yap'}</button>`:''}
       <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" style="flex:1;" onclick="openBorcModal(${k.id})">✏️ Düzenle</button>
-        <button class="btn btn-secondary" style="flex:1;color:var(--red);" onclick="krediKapat(${k.id})">✓ Kapat</button>
-        <button class="btn btn-secondary" style="flex:1;color:var(--red);" onclick="deleteKredi(${k.id})">🗑</button>
+        ${k.durum==='Aktif'?`<button class="btn btn-secondary" style="flex:1;color:var(--red);" onclick="krediKapat(${k.id})">✓ Kapat</button>`:`<button class="btn btn-secondary" style="flex:1;" onclick="krediYenidenAc(${k.id})">↺ Yeniden aç</button>`}
+        <button class="btn btn-secondary" style="flex:1;color:var(--red);" onclick="deleteKredi(${k.id})">🗑 Sil</button>
       </div>
     </div>`;
 
@@ -23386,14 +23409,40 @@ async function taksitOde(btn){
   finally{if(btn)setTimeout(()=>btn.disabled=false,1000);}
 }
 
-async function krediKapat(krediId){
-  await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'PATCH',body:JSON.stringify({durum:'Kapatıldı',kalan_borc:0,kalan_taksit:0})});
-  await loadDB();closeModal('modal-kredi-detay');renderKrediPanel();showToast('Kredi kapatıldı','green');
+function krediKapat(krediId){
+  const k=(DB.bankaKredileri||[]).find(x=>x.id===krediId);if(!k)return;
+  showConfirm('Hesap kapatılsın mı?',(k.kalanBorc>0.5?'Kalan '+fmt(k.kalanBorc)+' sıfırlanır. ':'')+'Kayıt silinmez; gri olarak "Kapalı hesaplar" listesinde kalır.',async()=>{
+    try{await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'PATCH',body:JSON.stringify({durum:'Kapatıldı',kalan_borc:0,kalan_taksit:0})});
+      closeModal('modal-kredi-detay');await loadDB({sessiz:true});try{renderCariKrediler();renderKrediPanel();}catch(e){}showToast('Hesap kapatıldı · kapalı hesaplarda duruyor','green');}
+    catch(e){showToast('Kapatılamadı: '+e.message,'red');}
+  },'🔒');
 }
-
-async function deleteKredi(krediId){
-  await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'DELETE'});
-  await loadDB();closeModal('modal-kredi-detay');renderKrediPanel();showToast('Silindi','amber');
+function krediYenidenAc(krediId){
+  const k=(DB.bankaKredileri||[]).find(x=>x.id===krediId);if(!k)return;
+  sorMetin('↺ Hesabı yeniden aç','Kalan borç ne kadar? (₺)',String(Math.max(0,(+k.anapara||0)-(+k.toplamOdenen||0))||k.taksitTutari||'')).then(async s=>{
+    if(s===null)return;const v=parseTutar(s);if(!(v>0)){showToast('Geçerli bir tutar gir','amber');return;}
+    const taksit=+k.taksitTutari||v;const kt=Math.max(1,Math.ceil(v/taksit-0.001));
+    try{await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'PATCH',body:JSON.stringify({durum:'Aktif',kalan_borc:v,kalan_taksit:kt})});
+      closeModal('modal-kredi-detay');await loadDB({sessiz:true});try{renderCariKrediler();renderKrediPanel();}catch(e){}showToast('Hesap yeniden açıldı','green');}
+    catch(e){showToast('Açılamadı: '+e.message,'red');}
+  });
+}
+function deleteKredi(krediId){
+  const k=(DB.bankaKredileri||[]).find(x=>x.id===krediId);if(!k)return;
+  showConfirm('Kayıt tamamen silinsin mi?','Bu kredi / borç kaydı kalıcı olarak silinir ve geri alınamaz. Bu hesaba girilmiş ödeme işlemleri (kasa kayıtları) silinmez.',async()=>{
+    try{await sbFetch('banka_kredileri?id=eq.'+krediId,{method:'DELETE'});
+      closeModal('modal-kredi-detay');await loadDB({sessiz:true});try{renderCariKrediler();renderKrediPanel();}catch(e){}showToast('Silindi','amber');}
+    catch(e){showToast('Silinemedi: '+e.message,'red');}
+  },'🗑');
+}
+// hesaba girilmiş ödemeler (aynı kişi, borç/kredi alt kategorileri, başlangıçtan bu yana)
+function krediOdemeGecmisiHtml(k){
+  if(!k.kisiId)return '';
+  const bas=String(k.baslangicTarihi||'').slice(0,10);
+  const L=(DB.islemler||[]).filter(i=>i.kisiId===k.kisiId&&/Borç Tahsilatı|Borç Geri Ödemesi|Kredi Taksit|Verilen Borç|Alınan Borç/.test(i.altKat||'')&&(!bas||localDateStr(i.tarih)>=bas))
+    .sort((a,b)=>new Date(b.tarih)-new Date(a.tarih)).slice(0,12);
+  if(!L.length)return '';
+  return `<div style="font-size:11px;font-weight:700;color:var(--text3);margin:4px 0 6px;">HAREKETLER</div><div class="card" style="padding:4px 12px;margin-bottom:12px;">${L.map(i=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2);">${gfTrTarih(localDateStr(i.tarih))} · ${_esc(i.altKat||'')}</span><b class="num" style="color:${i.tip==='Gelir'?'var(--green)':'var(--red)'};">${i.tip==='Gelir'?'+':'−'}${fmt(i.tutar)}</b></div>`).join('')}</div>`;
 }
 
 // ── Borç Modal Dönüşüm Fonksiyonları ────────────────────
