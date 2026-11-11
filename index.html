@@ -2470,6 +2470,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <div id="rk-grafik-not" class="rk-grafik-not"></div>
         <div id="rk-grafik-ozet"></div>
       </div>
+      <section class="card rk-kart" id="wt-kart" hidden></section>
       <section class="card rk-kart" id="at-kart"></section>
       <section class="card rk-kart" id="rk-musteri"></section>
       <section class="card rk-kart" id="rk-isi"></section>
@@ -14381,8 +14382,47 @@ async function rkYukle(zorla){
   })();
   try{await RK.yukleniyor;}finally{RK.yukleniyor=null;}
 }
+
+// ── Web sitesindeki teklif formundan gelen talepler (web_talepler) ──
+const WT={liste:[],hepsi:false};
+async function wtYukle(){
+  try{const r=await sbFetch('web_talepler?select=*&order=created_at.desc&limit=200');WT.liste=Array.isArray(r)?r:[];}catch(e){WT.liste=[];}
+  wtCiz();
+}
+function wtCiz(){
+  const el=document.getElementById('wt-kart');if(!el)return;
+  const yeni=WT.liste.filter(t=>t.durum==='yeni'),goster=WT.hepsi?WT.liste:yeni;
+  if(!WT.liste.length){el.hidden=true;return;}
+  el.hidden=false;
+  let h=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div class="sec-title mt0" style="margin:0">🌐 Web Talepleri${yeni.length?` <span style="color:var(--red)">(${yeni.length} yeni)</span>`:''}</div><button type="button" class="btn btn-secondary btn-sm" onclick="WT.hepsi=!WT.hepsi;wtCiz()">${WT.hepsi?'Yalnızca yeniler':'Tümünü göster ('+WT.liste.length+')'}</button></div>`;
+  if(!goster.length)h+=`<div style="font-size:12px;color:var(--text2);margin-top:10px;">Bekleyen yeni talep yok.</div>`;
+  h+=goster.map(t=>{
+    const z=new Date(t.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const tel=String(t.tel||'').replace(/[^0-9+]/g,'');
+    return `<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;${t.durum==='yeni'?'':'opacity:.6;'}">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><b>${_esc(t.ad)}</b><span style="font-size:11px;color:var(--text3);">${z}${t.reklam?' · reklamdan':''}</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px;">${[t.hizmet,t.bolge].filter(Boolean).map(_esc).join(' · ')||'-'}</div>
+      ${t.aciklama?`<div style="font-size:12px;margin-top:4px;white-space:pre-wrap;">${_esc(t.aciklama)}</div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <a class="btn btn-primary btn-sm" href="tel:${_esc(tel)}">📞 ${_esc(t.tel)}</a>
+        <a class="btn btn-secondary btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waNumara(tel)}">WhatsApp</a>
+        ${t.durum==='yeni'?`<button type="button" class="btn btn-secondary btn-sm" onclick="wtDurum(${+t.id},'arandi')">✓ Arandı</button>`:`<button type="button" class="btn btn-secondary btn-sm" onclick="wtDurum(${+t.id},'yeni')">Yeniye al</button>`}
+        <button type="button" class="btn btn-secondary btn-sm" onclick="wtSil(${+t.id})">Sil</button>
+      </div></div>`;
+  }).join('');
+  el.innerHTML=h;
+}
+async function wtDurum(id,durum){
+  try{await sbFetch('web_talepler?id=eq.'+id,{method:'PATCH',body:JSON.stringify({durum}),prefer:'return=minimal'});const t=WT.liste.find(x=>x.id===id);if(t)t.durum=durum;wtCiz();}
+  catch(e){showToast('Güncellenemedi','red');}
+}
+async function wtSil(id){
+  if(!confirm('Bu web talebi silinsin mi?'))return;
+  try{await sbFetch('web_talepler?id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});WT.liste=WT.liste.filter(x=>x.id!==id);wtCiz();showToast('Silindi','green');}
+  catch(e){showToast('Silinemedi','red');}
+}
 async function renderReklam(){
-  rkDonemCiz();
+  rkDonemCiz();try{wtYukle();}catch(e){}
   if(!RK.yuklu||Date.now()-RK.yuklemeZamani>30*60*1000){const el=document.getElementById('rk-kpi');if(el&&!RK.yuklu)el.innerHTML='<div class="rk-iskelet">'+Array(8).fill('<div></div>').join('')+'</div>';await rkYukle(true);}
   rkCiz();
 }
@@ -16815,7 +16855,7 @@ function renderTeklifler(){
 function teklifHatirlat(id){
   const t=DB.teklifler.find(x=>x.id===id);if(!t)return;const k=getKisi(t.kisiId);
   if(!k||!k.tel){showToast('Müşterinin telefonu kayıtlı değil','amber');return;}
-  const link=t.onayToken?`${location.origin}${location.pathname.replace('index.html','')}onay.html?token=${t.onayToken}`:'';
+  const link=t.onayToken?`https://www.gunelektrikklima.com/onay.html?token=${t.onayToken}`:'';
   const msg=`Merhaba ${k.isim},\n\n${dtS(t.gonderimTarihi||t.tarih)} tarihinde gönderdiğimiz ${teklifNoYaz(t)} numaralı teklifimizi (${fmt(t.toplam)}) inceleme fırsatınız oldu mu? Sorunuz varsa memnuniyetle yardımcı oluruz.${link?'\n\nTeklifi görüntülemek / onaylamak için:\n'+link:''}\n\n${firmaBilgi().unvan}`;
   window.open('https://wa.me/'+waNumara(k.tel)+'?text='+encodeURIComponent(msg),'_blank');
 }
@@ -17351,7 +17391,7 @@ function teklifOnayLinki(teklifId){
   const t=DB.teklifler.find(x=>x.id===teklifId);if(!t)return;
   const k=getKisi(t.kisiId);
   if(!t.onayToken){showToast('Önce teklifi kaydedin','amber');return;}
-  const onayUrl=`${location.origin}${location.pathname.replace('index.html','')}onay.html?token=${t.onayToken}`;
+  const onayUrl=`https://www.gunelektrikklima.com/onay.html?token=${t.onayToken}`;
   navigator.clipboard.writeText(onayUrl).then(()=>showToast('Link panoya kopyalandı','green')).catch(()=>{});
   const gecerlilik=t.gecerlilikTarihi?`\nGeçerlilik tarihi: ${t.gecerlilikTarihi}`:'';
   const kalemSayisi=(t.kalemler||[]).length;
