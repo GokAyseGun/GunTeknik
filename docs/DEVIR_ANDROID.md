@@ -294,6 +294,13 @@ Gökay'ın isteği: **çeşitli widget'ları olan, tüm bildirim ve ek pencere s
 - **RPC'ler:** `auth.uid() is null` denetimleri `erp_uye()` oldu. `push_teslim_al`, `push_tetikle` ve `push_sunucu_kontrol` dışarıdan çağrılamaz.
 - **Görünüm:** `google_ads_grup_gunluk` artık `security_invoker`.
 
+## 6x. Kasım 11 düzeltmeleri (2)
+- **Pencere katmanı:** `openModal` pencereyi önce `document.body`'ye taşır (#app içindeki pencereler kendi yığın bağlamında kalıp silme onayını altta bırakıyordu).
+- **Proje:** silme hatası `proje_iscilikler` FK'sinin NO ACTION olmasıydı → `ON DELETE CASCADE` (migration `proje_iscilikler_fk_cascade`). Yeni/düzenle penceresinde "Kim için?" (Müşteri/Firma/Kurum/Şahıs → `proje-kisi-kat`, `acGetKisiler` filtresi). Adres isteğe bağlı: boşsa rehberdeki ana adres gösterilir (`projeAdresMetin`), "Adresi değiştir" ile `projeler.adres`e projeye özel adres yazılır.
+- **Hesaplar:** aktif `banka_kredileri` satırları cariye girer (`cariFinansmanSatirlari`): borç verme = bize borçlu, borç alma = biz borçluyuz (listede), banka kredisi yalnız toplamda. Kredi paneli alacak/borç ayrı.
+- **Üst çubuk ↻** (`ustYenile`): sessiz `loadDB` + arama takip + reklam + `renderAll`.
+- **Reklam:** "Bu Ay" (1'inden bugüne, geçen ayın aynı günleriyle kıyas, ay sonu tahmini) ve "Geçen Ay"; seçim `rk_donem_v1`. Sıcaklık katmanında her noktada hava ikonu (`rkHavaEklenti`, veri `GF_HAVA.det` = takvimdeki hava). Yeni kart "Hava ve reklam" (`rkHavaKartHtml`: gök durumu / sıcaklık bandına göre tık-arama-iş, önümüzdeki 7 gün), gün ayrıntısında ve yapay zekâ özetinde hava.
+
 ## 6w. Kasım 11 paketi
 - **Anlık eşitleme:** `erp_degisim` tablosu (tablo başına tek satır; statement tetikleyicileri, kaynak = JWT session_id) + `supabase_realtime` yayını. ERP `esKur()` kendi WebSocket istemcisiyle (Phoenix vsn 1.0.0) dinler, başka oturumdan gelen değişiklikte `loadDB({sessiz:true})`. Yedek: odak/görünürlükte `erp_degisim_son()`.
 - **Giriş:** açılış ekranı (`#acilis-ekrani`), jeton süresi cihazda (`jetonBilgi`), rol önbelleği `gt_rol`. 30 dk kullanılmayınca kilit (`kilitIzle`); Android `GTYerel.parmakDurum/parmakDogrula` (androidx.biometric), Mac `parmak_durum/parmak_dogrula` (Swift `macos/ParmakIzi.swift`, LocalAuthentication).

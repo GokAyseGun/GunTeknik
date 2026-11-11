@@ -239,6 +239,8 @@ input.isim-input{text-transform:capitalize;}
 .topbar{height:var(--top-h);flex-shrink:0;background:rgba(6,6,6,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative;z-index:100;}:where([data-tema="zarif"]) .topbar{background:rgba(17,19,22,0.92);}:where([data-tema="chill"]) .topbar{background:rgba(244,236,218,0.92);}
 .topbar-title{font-size:16px;font-weight:600;letter-spacing:-0.4px;color:var(--text);}
 .topbar-actions{display:flex;align-items:center;gap:6px;}
+#ust-yenile-btn.donuyor svg{animation:ustDon .8s linear infinite;}
+@keyframes ustDon{to{transform:rotate(360deg);}}
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;appearance:textfield;}
@@ -1275,6 +1277,14 @@ body.gf-tam-acik .fab-container,body.gf-tam-acik #fab-container,body.gf-tam-acik
 .rk-donem::-webkit-scrollbar{display:none;}
 .rk-dbtn{flex-shrink:0;padding:7px 12px;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;}
 .rk-dbtn.on{border-color:var(--blue);background:var(--blue-lt);color:var(--blue);}
+.rk-dbtn.rk-ay:not(.on){border-style:dashed;}
+.rk-hv-tab{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr));gap:4px 6px;font-size:12px;align-items:center;}
+.rk-hv-tab>span{padding:5px 2px;border-bottom:1px solid var(--border);}
+.rk-hv-tab>span.bas{font-size:10px;color:var(--text3);font-weight:600;}
+.rk-hv-tab>span.r{text-align:right;}
+.rk-hv-gel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:8px 0 4px;}
+.rk-hv-gel>div{flex-shrink:0;min-width:46px;text-align:center;padding:6px 4px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg2);font-size:11px;color:var(--text2);}
+.rk-hv-gel>div b{display:block;font-size:18px;line-height:1.3;}
 .rk-tazelik{font-size:11px;color:var(--text3);margin:0 0 10px;}
 .rk-tik{cursor:pointer;}
 .rk-bos-kart{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:28px 16px;background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r-md);margin-bottom:12px;font-size:13px;color:var(--text2);}
@@ -2037,6 +2047,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span id="bildirim-badge" style="position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--red);display:none;"></span>
       </button>
+      <button class="icon-btn" id="ust-yenile-btn" onclick="ustYenile()" title="Yenile" aria-label="Yenile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
       <button class="icon-btn" onclick="openModal('modal-ayarlar')">⚙️</button>
       
     </div>
@@ -2360,6 +2371,7 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <section class="card rk-kart" id="at-kart"></section>
       <section class="card rk-kart" id="rk-musteri"></section>
       <section class="card rk-kart" id="rk-isi"></section>
+      <section class="card rk-kart" id="rk-hava"></section>
       <div class="rk-izgara">
         <section class="card rk-kart" id="rk-aylik"></section>
         <section class="card rk-kart" id="rk-kanal"></section>
@@ -4033,7 +4045,14 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
     <div class="modal-body fg">
       <input type="hidden" id="proje-id">
       <div class="fi"><label>Proje Adı</label><input type="text" id="proje-isim" placeholder="Proje adı" autocapitalize="words"></div>
-      <div class="fi"><label>Müşteri</label>
+      <div class="fi"><label>Kim için?</label>
+        <input type="hidden" id="proje-kisi-kat" value="Müşteri">
+        <div id="proje-kat-sec" class="isf-chips" style="margin-bottom:8px;">
+          <button type="button" class="isf-chip on" data-k="Müşteri" onclick="projeKatSec('Müşteri')">👤 Müşteri</button>
+          <button type="button" class="isf-chip" data-k="Firma" onclick="projeKatSec('Firma')">🏢 Firma</button>
+          <button type="button" class="isf-chip" data-k="Kurum" onclick="projeKatSec('Kurum')">🏛️ Kurum</button>
+          <button type="button" class="isf-chip" data-k="Şahıs" onclick="projeKatSec('Şahıs')">🙋 Şahıs</button>
+        </div>
         <div style="display:flex;gap:8px;">
           <div class="kisi-ac-wrap" style="flex:1" id="proje-ac-wrap">
             <input type="text" class="kisi-ac-input" id="proje-ac-input" placeholder="Müşteri seç..." autocapitalize="words" oninput="acSearch('proje-ac')" onfocus="acSearch('proje-ac')" autocomplete="off">
@@ -4043,7 +4062,11 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
           <input type="hidden" id="proje-kisi">
         </div>
       </div>
-      <div class="fi"><label>Proje Adresi</label><input type="text" id="proje-adres" placeholder="İş yeri adresi" autocapitalize="words"></div>
+      <div class="fi"><label>Proje Adresi <span style="font-weight:400;color:var(--text3);">(isteğe bağlı)</span></label>
+        <input type="hidden" id="proje-adres-ozel" value="0">
+        <div id="proje-adres-rehber"></div>
+        <input type="text" id="proje-adres" placeholder="Projeye özel adres (iş yeri, şantiye...)" autocapitalize="words" style="display:none;margin-top:6px;">
+      </div>
       <div style="display:flex;gap:8px;">
         <div class="fi" style="flex:1"><label>Durum</label>
           <select id="proje-durum" style="padding:13px 15px;border:1px solid var(--border2);border-radius:var(--r-sm);background:var(--bg2);color:var(--text);font-size:14px;outline:none;appearance:none;font-family:inherit;">
@@ -4484,6 +4507,26 @@ function esSinyal(tablo,zaman,kaynak){
   clearTimeout(ES.zam);ES.zam=setTimeout(esUygula,800);
 }
 function esFormAcik(){return !!document.querySelector('[id^="modal-"].open:not(#modal-bildirimler):not(#modal-ayarlar)');}
+// Üst çubuk ↻: sayfayı yeniden açmadan tüm veriyi sessizce tazeler (açık sayfa yerinde yeniden çizilir)
+async function ustYenile(){
+  const b=document.getElementById('ust-yenile-btn');if(b&&b.classList.contains('donuyor'))return;
+  if(b)b.classList.add('donuyor');const bas=Date.now();
+  try{
+    await jetonTaze().catch(()=>{});
+    if(ES&&ES.bekleyen)ES.bekleyen.clear();
+    await loadDB({sessiz:true});
+    const ek=[];
+    try{if(typeof atYukle==='function')ek.push(Promise.resolve(atYukle(true)).catch(()=>{}));}catch(e){}
+    try{if(typeof gfEkYukle==='function')ek.push(Promise.resolve(gfEkYukle(true)).catch(()=>{}));}catch(e){}
+    try{if(typeof RK!=='undefined'&&RK.yuklu&&typeof rkYukle==='function')ek.push(Promise.resolve(rkYukle(true)).catch(()=>{}));}catch(e){}
+    await Promise.all(ek);
+    renderAll();
+    try{if(document.querySelector('#page-reklam.active')&&typeof rkCiz==='function')rkCiz();}catch(e){}
+    try{esKontrol(true);}catch(e){}
+    showToast('Güncellendi','green');
+  }catch(e){console.warn('yenile',e);showToast('Yenilenemedi: bağlantıyı kontrol et','red');}
+  finally{const k=Math.max(0,500-(Date.now()-bas));setTimeout(()=>{if(b)b.classList.remove('donuyor');},k);}
+}
 async function esUygula(){
   if(!ES.bekleyen.size)return;
   if(document.hidden)return; // görünür olunca uygulanır
@@ -6516,6 +6559,8 @@ function openModal(id){
   if(id==='modal-bildirimler')setTimeout(bildirimListeGoster,50);
   if(id==='modal-ayarlar')setTimeout(()=>{try{pushKartCiz();}catch(e){}try{gBaglantiKartCiz();gDurum();}catch(e){}},30);
   const el=document.getElementById(id);if(!el)return;
+  // #app içindeki pencereler kendi katmanında kalıp dışarıdakilerin altında kalıyordu (ör. sil onayı): hepsi en üst seviyeye
+  if(el.parentElement!==document.body)document.body.appendChild(el);
   zIdx+=10;el.style.zIndex=zIdx;el.classList.add('open');
   // Overlay tıklamasında kapat — zaten listener yoksa ekle
   if(!el._overlayBound){
@@ -11226,13 +11271,14 @@ function renderCariKrediler(){
     list.innerHTML='<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px;">Henüz kayıt yok</div>';
     return;
   }
-  const toplamKalan=tumKrediler.reduce((a,k)=>a+k.kalanBorc,0);
+  const alacakKalan=tumKrediler.filter(k=>k.finansmanTuru==='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
+  const borcKalan=tumKrediler.filter(k=>k.finansmanTuru!=='borc-verme').reduce((a,k)=>a+k.kalanBorc,0);
   const ikonMap={'borc-alma':'💰','borc-verme':'💸','banka-kredi':'🏦'};
-  const adMap={'borc-alma':'Borç Alma','borc-verme':'Borç Verme','banka-kredi':'Banka Kredisi'};
-  list.innerHTML=`<div class="card" style="margin-bottom:8px;background:rgba(30,58,138,0.08);border-color:rgba(30,58,138,0.25);">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:11px;color:var(--text2);">Toplam Kalan Borç</div>
-      <div class="num" style="font-weight:700;font-size:16px;color:var(--red);">${fmt(toplamKalan)}</div>
+  const adMap={'borc-alma':'Aldığımız borç','borc-verme':'Verdiğimiz borç','banka-kredi':'Banka Kredisi'};
+  const ozS=(e,v,r)=>`<div style="flex:1;"><div style="font-size:11px;color:var(--text2);">${e}</div><div class="num" style="font-weight:700;font-size:16px;color:${r};">${fmt(v)}</div></div>`;
+  list.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin:6px 2px 6px;">🏦 Kredi ve borç kayıtları</div><div class="card" style="margin-bottom:8px;background:rgba(30,58,138,0.08);border-color:rgba(30,58,138,0.25);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      ${alacakKalan?ozS('Verdiğimiz (alacak)',alacakKalan,'var(--green)'):''}${borcKalan?ozS('Kalan borcumuz',borcKalan,'var(--red)'):''}
     </div></div>`+
   tumKrediler.map(k=>{
     const tur=k.finansmanTuru||'banka-kredi';
@@ -11242,14 +11288,15 @@ function renderCariKrediler(){
     const ilerleme=k.vadeAy>0?Math.round((k.odenenTaksit/k.vadeAy)*100):0;
     const donguAdi={tek:'Tek Seferlik',gunluk:'Günlük',haftalik:'Haftalık',aylik:'Aylık',yillik:'Yıllık'}[k.odemeDongusu]||'Aylık';
     const kapsamBadge=k.erpKapsam==='isletme'?'🏢 İşletme':'👤 Şahsi';
-    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:3px solid var(--blue);" onclick="showKrediDetay(${k.id})">
+    const krR=tur==='borc-verme'?'var(--green)':'var(--red)';
+    return `<div class="card" style="margin-bottom:8px;cursor:pointer;border-left:3px solid ${krR};" onclick="showKrediDetay(${k.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:700;">${icon} ${ad||turAdi}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:2px;">${turAdi} · ${donguAdi} · ${kapsamBadge}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div class="num" style="font-size:14px;font-weight:700;color:var(--red);">${fmt(k.kalanBorc)}</div>
+          <div class="num" style="font-size:14px;font-weight:700;color:${krR};">${fmt(k.kalanBorc)}</div>
           <div style="font-size:10px;color:var(--text3);">${fmt(k.taksitTutari)}/${donguAdi.toLowerCase()}</div>
         </div>
       </div>
@@ -11570,7 +11617,7 @@ function acGetKisiler(prefix){
   // Gelir/Gider kapsam filtresi SADECE işlem giriş formlarında (mi-ac, mb-ac) uygulanır.
   // Diğer tüm formlar (teklif, proje, villa vb.) rehberdeki TÜM kişileri görmeli.
   const isIslemFormu = prefix==='mi-ac' || prefix==='mb-ac';
-  const katSel=prefix==='mi-ac'?document.getElementById('mi-kisi-kat'):null;
+  const katSel=prefix==='mi-ac'?document.getElementById('mi-kisi-kat'):(prefix==='proje-ac'?document.getElementById('proje-kisi-kat'):null);
   const kat=katSel?.value||'';
   if(!isIslemFormu){
     return DB.kisiler.filter(k=>{
@@ -11625,6 +11672,7 @@ function acSelect(prefix,id,isim,tip){
   if(sel)sel.style.display='flex';
   if(input)input.style.display='none';
   if(drop)drop.classList.remove('open');
+  if(prefix==='proje-ac'){try{projeAdresGuncelle();}catch(e){}}
 }
 
 function acClear(prefix){
@@ -11635,6 +11683,7 @@ function acClear(prefix){
   if(sel)sel.style.display='none';
   if(input){input.style.display='block';input.value='';input.focus();}
   if(drop)drop.classList.remove('open');
+  if(prefix==='proje-ac'){try{projeAdresGuncelle();}catch(e){}}
 }
 
 function acReset(prefix){
@@ -12696,6 +12745,24 @@ function cariYaslandir(kisiId,yon){
   const yaklasan=L.map(i=>localDateStr(i.tarih)).filter(g=>g>=bg).sort()[0]||null;
   return {ilk,gun,yaklasan,adet:L.length};
 }
+// Finansman kayıtları (banka_kredileri): sıradaki taksit tarihi ve cari satırları
+function finansmanVade(k){
+  if(!k||!k.ilkTaksitTarihi)return null;
+  const d=new Date(k.ilkTaksitTarihi+'T00:00');if(isNaN(d))return null;const n=k.odenenTaksit||0;const dg=k.odemeDongusu||'aylik';
+  if(dg==='aylik')d.setMonth(d.getMonth()+n);else if(dg==='haftalik')d.setDate(d.getDate()+7*n);else if(dg==='gunluk')d.setDate(d.getDate()+n);else if(dg==='yillik')d.setFullYear(d.getFullYear()+n);
+  return d;
+}
+function cariFinansmanSatirlari(){
+  const bugun=new Date();bugun.setHours(0,0,0,0);
+  const gs=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return (DB.bankaKredileri||[]).filter(k=>k.durum==='Aktif'&&(k.kalanBorc||0)>0.01).map(k=>{
+    const tur=k.finansmanTuru||'banka-kredi';const kisi=k.kisiId?getKisi(k.kisiId):null;
+    const v=finansmanVade(k);const gun=v?Math.floor((bugun-v)/864e5):0;
+    return {fin:true,krediId:k.id,id:k.kisiId||null,ad:(tur==='banka-kredi'?(k.bankaAdi||(kisi&&kisi.isim)):((kisi&&kisi.isim)||k.bankaAdi))||'—',tel:kisi&&kisi.tel,tur,
+      bakiye:tur==='borc-verme'?k.kalanBorc:-k.kalanBorc,
+      yas:v?{gun:gun>0?gun:0,yaklasan:gun<=0?gs(v):null}:null};
+  });
+}
 function renderCari(c){
   if(!c)c=calcFinans();
   const fTip=document.getElementById('f-cari-tip')?.value||'Tümü';
@@ -12705,15 +12772,19 @@ function renderCari(c){
   const kisiMap=new Map(DB.kisiler.map(k=>[String(k.id),k]));
   const tum=Object.values(c.cD||{}).filter(x=>{const k=kisiMap.get(String(x.id));return k&&k.tip!=='Banka'&&Math.abs(x.bakiyeAll)>=0.01;})
     .map(x=>{const k=kisiMap.get(String(x.id));return {id:x.id,ad:x.ad,tip:x.tip,tel:k&&k.tel,bakiye:x.bakiyeAll,yas:cariYaslandir(x.id,x.bakiyeAll>0?1:-1)};});
+  // finansman: verdiğimiz borç = alacak, aldığımız borç = borç (listeye girer); banka kredileri yalnız toplama girer (aşağıda ayrı panelde)
+  const finTum=cariFinansmanSatirlari();
+  finTum.filter(f=>f.tur!=='banka-kredi').forEach(f=>tum.push(f));
+  const bankaKr=finTum.filter(f=>f.tur==='banka-kredi');
   // özet + yaşlandırma
   const al=tum.filter(x=>x.bakiye>0),br=tum.filter(x=>x.bakiye<0);
-  const alTop=al.reduce((a,x)=>a+x.bakiye,0),brTop=br.reduce((a,x)=>a-x.bakiye,0);
+  const alTop=al.reduce((a,x)=>a+x.bakiye,0),brTop=br.reduce((a,x)=>a-x.bakiye,0)+bankaKr.reduce((a,x)=>a-x.bakiye,0);
   const kova=[0,0,0,0];al.forEach(x=>{const g=x.yas?x.yas.gun:0;kova[g<=0?0:g<=30?1:g<=60?2:3]+=x.bakiye;});
   const oz=document.getElementById('cari-ozet');
   if(oz){const kart=(e,d,r,alt)=>`<div class="card" style="padding:10px 12px;"><div class="lbl">${e}</div><div class="val num" style="font-size:17px;color:${r};">${d}</div>${alt?`<div style="font-size:10px;color:var(--text3);">${alt}</div>`:''}</div>`;
     const kb=(e,v,r)=>`<div style="flex:1;min-width:0;text-align:center;padding:6px 4px;background:var(--bg2);border-radius:var(--r-sm);"><div style="font-size:10px;color:var(--text3);">${e}</div><div class="num" style="font-size:12px;font-weight:700;color:${r};">${fmt(v)}</div></div>`;
     oz.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px;">
-      ${kart('🟢 Bize borçlu',fmt(alTop),'var(--green)',al.length+' kişi')}${kart('🔴 Biz borçluyuz',fmt(brTop),'var(--red)',br.length+' kişi')}${kart('⚖️ Net',(alTop-brTop<0?'− ':'')+fmt(alTop-brTop),alTop>=brTop?'var(--green)':'var(--red)')}</div>
+      ${kart('🟢 Bize borçlu',fmt(alTop),'var(--green)',al.length+' kayıt')}${kart('🔴 Biz borçluyuz',fmt(brTop),'var(--red)',br.length+' kayıt'+(bankaKr.length?' · '+bankaKr.length+' kredi':''))}${kart('⚖️ Net',(alTop-brTop<0?'− ':'')+fmt(alTop-brTop),alTop>=brTop?'var(--green)':'var(--red)')}</div>
       ${alTop?`<div style="font-size:10px;color:var(--text3);margin:2px 0 4px;">Alacak yaşlandırma (en eski vadeye göre)</div><div style="display:flex;gap:6px;margin-bottom:10px;">${kb('Vadesi gelmedi',kova[0],'var(--text2)')}${kb('0–30 gün',kova[1],'var(--green)')}${kb('30–60 gün',kova[2],'var(--amber)')}${kb('60+ gün',kova[3],'var(--red)')}</div>`:''}
       ${getMonth()?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">ℹ️ Bakiyeler seçili aydan bağımsız, tüm kayıtlardan hesaplanır.</div>`:''}`;}
   let items=tum.filter(x=>{
@@ -12724,11 +12795,22 @@ function renderCari(c){
   else if(sira==='isim')items.sort((a,b)=>(a.ad||'').localeCompare(b.ad||'','tr'));
   else items.sort((a,b)=>Math.abs(b.bakiye)-Math.abs(a.bakiye));
   if(!items.length){
-    list.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><div class="empty-title">Açık hesap yok</div><div class="empty-sub">'+(fAra?'Aramayla eşleşen yok':'Tüm hesaplar kapalı')+'</div></div>';
+    list.innerHTML=(fAra||fTip!=='Tümü'||!bankaKr.length)?'<div class="empty-state"><div class="empty-icon">💳</div><div class="empty-title">'+(fAra||fTip!=='Tümü'?'Eşleşen hesap yok':'Açık hesap yok')+'</div><div class="empty-sub">'+(fAra?'Aramayla eşleşen yok':fTip!=='Tümü'?'Bu filtrede kayıt yok':'Tüm hesaplar kapalı')+'</div></div>':'';
     renderCariKrediler();return;
   }
   list.innerHTML=items.map((x,i)=>{
     const renk=x.bakiye>0?'var(--green)':'var(--red)';const y=x.yas;
+    if(x.fin){
+      const yR=!y?'var(--text3)':y.gun>30?'var(--red)':y.gun>0?'var(--amber)':'var(--text3)';
+      const yM=!y?'':y.gun>0?`⏰ taksit ${y.gun} gün gecikti`:(y.yaklasan?`📅 taksit ${dtS(y.yaklasan)}`:'');
+      return `<div class="stagger-item" style="animation-delay:${i*0.05}s;border-left:3px solid ${renk};" onclick="showKrediDetay(${x.krediId})">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.tur==='borc-verme'?'💸':'💰'} ${_esc(x.ad||'—')}${x.id?` <span class="id-badge">${fmtKId(x.id)}</span>`:''}</div>
+          <div style="font-size:11px;color:${yR};">${x.tur==='borc-verme'?'Verdiğimiz borç · bize borçlu':'Aldığımız borç · biz borçluyuz'}${yM?' · '+yM:''}</div></div>
+        <div style="font-weight:700;font-size:16px;color:${renk};" class="num">${fmt(Math.abs(x.bakiye))}</div>
+      </div>
+    </div>`;
+    }
     const yasR=!y?'':y.gun>60?'var(--red)':y.gun>30?'var(--amber)':y.gun>0?'var(--text2)':'var(--text3)';
     const yasM=!y?'':y.gun>0?`⏰ ${y.gun} gündür bekliyor`:(y.yaklasan?`📅 vade ${dtS(y.yaklasan)}`:'');
     return `<div class="stagger-item" style="animation-delay:${i*0.05}s" onclick="showKisiDetay(${x.id})">
@@ -13779,7 +13861,8 @@ async function sendWhatsappImg(){
 // ============================================================ REKLAM (Google Ads) — veri Google Ads Script ile Supabase'e gelir
 var RK={yuklu:false,yukleniyor:null,donem:'30',kampanya:'',metrikler:['harcama','tiklama'],tip:'line',birikimli:false,isiMetrik:'tiklama',kelSirala:'harcama',kelTum:false,terimTum:false,sifirAcik:false,negSec:{},chart:null,
   m:[],k:[],kl:[],t:[],s:[],ko:[],a:[],kp:[],log:[],manuel:[],tabloYok:{},yuklemeZamani:0};
-var RK_DONEMLER=[['bugun','Bugün'],['dun','Dün'],['7','7 gün'],['30','30 gün'],['60','60 gün'],['90','90 gün'],['buay','Bu ay'],['6ay','6 ay'],['1yil','1 yıl']];
+var RK_DONEMLER=[['bugun','Bugün'],['dun','Dün'],['7','7 gün'],['30','Son 30 gün'],['buay','Bu Ay'],['gecenay','Geçen Ay'],['60','60 gün'],['90','90 gün'],['6ay','6 ay'],['1yil','1 yıl']];
+(function(){try{const d=localStorage.getItem('rk_donem_v1');if(d&&RK_DONEMLER.some(x=>x[0]===d))RK.donem=d;}catch(e){}})();
 var RK_KAYNAKLAR=['Google Ads','Armut','Dışarıdan','Eski Müşteri','Tavsiye'];
 var RK_METRIK={
   harcama:{ad:'Harcama',renk:'#7eb3f0',tl:true},tiklama:{ad:'Tıklama',renk:'#6fcf97'},gosterim:{ad:'Gösterim',renk:'#b39ddb'},
@@ -13797,9 +13880,14 @@ function rkAralik(kod){
   if(kod==='bugun'){bas=bit=b;ad='Bugün';}
   else if(kod==='dun'){bas=bit=dun;ad='Dün';}
   else if(kod==='buay'){bas=b.slice(0,8)+'01';bit=b;ad='Bu ay';}
+  else if(kod==='gecenay'){const [y,m]=b.split('-').map(Number);const d0=new Date(y,m-2,1),d1=new Date(y,m-1,0);bas=localDateObjStr(d0);bit=localDateObjStr(d1);ad='Geçen ay';}
   else if(kod==='6ay'||kod==='1yil'){const [y,m,d]=b.split('-').map(Number);bas=gfGunEkle(localDateObjStr(new Date(kod==='6ay'?y:y-1,kod==='6ay'?m-7:m-1,d)),1);bit=b;ad=kod==='6ay'?'Son 6 ay':'Son 1 yıl';}
   else{const n=parseInt(kod)||30;bas=gfGunEkle(b,-(n-1));bit=b;ad='Son '+n+' gün';}  // veri saatlik geldiği için bugün dahil
-  const gun=gfGunFark(bas,bit)+1;return {bas,bit,oBas:gfGunEkle(bas,-gun),oBit:gfGunEkle(bas,-1),gun,ad,kod};
+  const gun=gfGunFark(bas,bit)+1;let oBas=gfGunEkle(bas,-gun),oBit=gfGunEkle(bas,-1),kiyas='önceki '+gun+' günle';
+  // ay dönemleri: geçen ayın aynı günleriyle kıyas (reklam ödemesi her ayın 1'inde)
+  if(kod==='buay'||kod==='gecenay'){const [y,m]=bas.split('-').map(Number);const p0=new Date(y,m-2,1);const pSon=new Date(y,m-1,0).getDate();
+    oBas=localDateObjStr(p0);oBit=localDateObjStr(new Date(p0.getFullYear(),p0.getMonth(),Math.min(gun,pSon)));kiyas=kod==='buay'?'geçen ayın aynı günleriyle':'bir önceki ayla';}
+  return {bas,bit,oBas,oBit,gun,ad,kod,kiyas};
 }
 function rkIcinde(t,A,once){return once?(t>=A.oBas&&t<=A.oBit):(t>=A.bas&&t<=A.bit);}
 function rkKf(r){return !RK.kampanya||String(r.kampanya_id)===RK.kampanya;}
@@ -13870,18 +13958,21 @@ function rkKopyala(metin,mesaj){try{navigator.clipboard.writeText(metin).then(()
 function rkKopyalaYedek(metin,mesaj){const t=document.createElement('textarea');t.value=metin;document.body.appendChild(t);t.select();try{document.execCommand('copy');showToast(mesaj||'Kopyalandı','green');}catch(e){}t.remove();}
 
 // ---------- ana çizim
-function rkDonemCiz(){const el=document.getElementById('rk-donem');if(!el)return;el.innerHTML=RK_DONEMLER.map(([k,ad])=>`<button type="button" class="rk-dbtn${RK.donem===k?' on':''}" onclick="rkDonemSec('${k}')">${ad}</button>`).join('');}
-function rkDonemSec(k){RK.donem=k;rkDonemCiz();rkCiz();}
+function rkDonemCiz(){const el=document.getElementById('rk-donem');if(!el)return;el.innerHTML=RK_DONEMLER.map(([k,ad])=>`<button type="button" class="rk-dbtn${RK.donem===k?' on':''}${k==='buay'||k==='gecenay'?' rk-ay':''}" onclick="rkDonemSec('${k}')"${k==='buay'?' title="Ayın 1\'inden bugüne (reklam ödemesi her ayın 1\'inde)"':''}>${ad}</button>`).join('');
+  try{const on=el.querySelector('.on');if(on&&el.scrollWidth>el.clientWidth){const h=on.offsetLeft-el.offsetLeft-(el.clientWidth-on.offsetWidth)/2;el.scrollLeft=Math.max(0,h);}}catch(e){}}
+function rkDonemSec(k){RK.donem=k;try{localStorage.setItem('rk_donem_v1',k);}catch(e){}rkDonemCiz();rkCiz();}
 function rkKampanyaSec(v){RK.kampanya=v;rkCiz();}
 function rkCiz(){
   const sayfa=document.getElementById('page-reklam');if(!sayfa)return;
   rkDonemCiz();rkKampanyaListeCiz();
+  // hava verisi (takvimdeki ile aynı kaynak) yoksa bir kez iste
+  if(!RK._havaIstendi&&typeof GF_HAVA!=='undefined'&&(!GF_HAVA.det||!Object.keys(GF_HAVA.det).length)&&typeof gfHavaYukle==='function'){RK._havaIstendi=true;gfHavaYukle().then(()=>{if(document.querySelector('#page-reklam.active')&&GF_HAVA.det&&Object.keys(GF_HAVA.det).length)rkCiz();}).catch(()=>{});}
   const A=rkAralik();
   const bolum=(id,fn)=>{const el=document.getElementById(id);if(!el)return;try{el.innerHTML=fn(A);}catch(e){console.warn('reklam '+id,e);el.innerHTML='<div class="gf-not">Bu bölüm çizilemedi.</div>';}};
   bolum('rk-durum',rkDurumHtml);
   const bos=!RK.m.length;sayfa.classList.toggle('rk-veriyok',bos);
   bolum('rk-kpi',rkKpiHtml);
-  bolum('rk-kanal',rkKanalHtml);bolum('rk-butce',rkButceHtml);bolum('rk-musteri',rkMusteriHtml);bolum('rk-sektor',rkSektorHtml);bolum('rk-aylik',()=>rkAylikHtml());bolum('rk-isi',rkIsiHtml);bolum('rk-aramalar',rkAramalarHtml);
+  bolum('rk-kanal',rkKanalHtml);bolum('rk-butce',rkButceHtml);bolum('rk-musteri',rkMusteriHtml);bolum('rk-sektor',rkSektorHtml);bolum('rk-aylik',()=>rkAylikHtml());bolum('rk-isi',rkIsiHtml);bolum('rk-hava',rkHavaKartHtml);bolum('rk-aramalar',rkAramalarHtml);
   bolum('rk-konum',rkKonumHtml);bolum('rk-terimler',rkTerimlerHtml);bolum('rk-kelimeler',rkKelimelerHtml);bolum('rk-kampanyalar',rkKampanyalarHtml);
   rkGrafikAracCiz();rkGrafikCiz();
   try{atCiz();}catch(e){console.warn('arama takip',e);}
@@ -13934,7 +14025,7 @@ function rkKpiHtml(A){
   const getiri=T.harcama?ciro/T.harcama:0,getiriO=O.harcama?ciroO/O.harcama:0;
   const k=(ad,deger,fark,alt,renk,tik)=>`<div class="rk-k"${renk?` style="--rk:${renk}"`:''}${tik?` onclick="${tik}"`:''}><div class="rk-k-v num">${deger}</div><div class="rk-k-a">${ad} ${fark}</div>${alt?`<div class="rk-k-alt">${alt}</div>`:''}</div>`;
   return `<div class="rk-kpi">`+
-    k('Harcama','−'+fmt(T.harcama),rkFark(T.harcama,O.harcama,false),`günde ort. ${fmt(T.harcama/Math.max(1,A.gun))}`,'#7eb3f0')+
+    k(A.kod==='buay'?'Bu ay harcanan':'Harcama','−'+fmt(T.harcama),rkFark(T.harcama,O.harcama,false),A.kod==='buay'?(()=>{const [y,m,d]=A.bit.split('-').map(Number);const ayGun=new Date(y,m,0).getDate();const ort=T.harcama/Math.max(1,A.gun);return `günde ort. ${fmt(ort)} · ay sonu ≈ ${fmt(ort*ayGun)}`;})():`günde ort. ${fmt(T.harcama/Math.max(1,A.gun))}`,'#7eb3f0')+
     k('Tıklama',rkSayi(T.tiklama),rkFark(T.tiklama,O.tiklama,true),`${rkSayi(T.gosterim)} gösterim`,'#6fcf97')+
     k('Tıklama oranı',rkYuzde(T.ctr/100,2),rkFark(T.ctr,O.ctr,true),'tıklama / gösterim','#f0c472')+
     k('Ort. TBM',fmt(T.cpc),rkFark(T.cpc,O.cpc,false),'tıklama başına maliyet','#f08080')+
@@ -13943,7 +14034,7 @@ function rkKpiHtml(A){
     k('Dönüşüm',T.donusum.toLocaleString('tr-TR',{maximumFractionDigits:1}),rkFark(T.donusum,O.donusum,true),T.donusum?`dönüşüm başı ${fmt(T.dm)}`:'Google\'ın saydığı','#7ecec4')+
     k('Ads işleri',`${adsL.length} iş`,rkFark(adsL.length,adsO.length,true),`+${fmt(ciro)} ciro`,'#4488ff')+
     k('Reklam getirisi',T.harcama?getiri.toFixed(1).replace('.',',')+'×':'—',rkFark(getiri,getiriO,true),T.harcama?`1 ₺ reklam → ${fmt(getiri)} ciro`:'harcama yok','#00e676')+
-    `</div><div class="rk-kpi-not">Oklar önceki ${A.gun} günle karşılaştırma (${gfTrTarih(A.oBas)}${A.oBas!==A.oBit?' – '+gfTrTarih(A.oBit):''}).</div>`;
+    `</div><div class="rk-kpi-not">Oklar ${A.kiyas||('önceki '+A.gun+' günle')} karşılaştırma (${gfTrTarih(A.oBas)}${A.oBas!==A.oBit?' – '+gfTrTarih(A.oBit):''}).</div>`;
 }
 
 // ---------- grafik
@@ -13961,7 +14052,7 @@ function rkGrafikAracCiz(){
     <div class="rk-gr-sag"><button type="button" class="rk-mini${RK.tip==='line'?' on':''}" onclick="rkGrafikDegis(()=>RK.tip='line')" title="Çizgi">📈</button><button type="button" class="rk-mini${RK.tip==='bar'?' on':''}" onclick="rkGrafikDegis(()=>RK.tip='bar')" title="Çubuk">📊</button><button type="button" class="rk-mini${RK.birikimli?' on':''}" title="Birikimli (dönem başından toplam)" onclick="rkGrafikDegis(()=>RK.birikimli=!RK.birikimli)">∑</button></div></div>`+
     (V?'':`<div class="rk-chips">${Object.entries(RK_METRIK).map(([k,m])=>`<button type="button" class="rk-mc${RK.metrikler.includes(k)?' on':''}" style="--rk:${m.renk}" onclick="rkMetrikTik('${k}')">${m.ad}</button>`).join('')}</div>`)+
     `<div class="rk-katlar">${V?'':ch(RK.ort,'〰 7 gün ort.',"rkGrafikDegis(()=>RK.ort=!RK.ort)",'Günlük dalgalanmayı yumuşatan 7 günlük ortalama')+ch(RK.hayalet,'👻 Önceki dönem',"rkGrafikDegis(()=>RK.hayalet=!RK.hayalet)",'Aynı uzunluktaki önceki dönem soluk çizgiyle')}
-      ${ch(RK.kat.hs,'▦ Hafta sonu',"rkGrafikDegis(()=>RK.kat.hs=!RK.kat.hs)")}${ch(RK.kat.butce,'┄ Günlük bütçe',"rkGrafikDegis(()=>RK.kat.butce=!RK.kat.butce)",'Aktif kampanyaların günlük bütçe toplamı')}${ch(RK.kat.sic,'🌡️ Sıcaklık',"rkGrafikDegis(()=>RK.kat.sic=!RK.kat.sic)",'Günlük en yüksek sıcaklık')}</div>`;
+      ${ch(RK.kat.hs,'▦ Hafta sonu',"rkGrafikDegis(()=>RK.kat.hs=!RK.kat.hs)")}${ch(RK.kat.butce,'┄ Günlük bütçe',"rkGrafikDegis(()=>RK.kat.butce=!RK.kat.butce)",'Aktif kampanyaların günlük bütçe toplamı')}${ch(RK.kat.sic,'🌡️ Sıcaklık + hava',"rkGrafikDegis(()=>RK.kat.sic=!RK.kat.sic)",'Günlük en yüksek sıcaklık')}</div>`;
 }
 function rkMetrikTik(k){rkGrafikDegis(()=>{const i=RK.metrikler.indexOf(k);if(i>=0){if(RK.metrikler.length>1)RK.metrikler.splice(i,1);}else RK.metrikler.push(k);});}
 // gün gün ham değerler
@@ -13997,6 +14088,63 @@ function rkSeri(A,opt){
 // hafta sonu gölgesi
 var rkHsEklenti={id:'rkHs',beforeDatasetsDraw(ch,args,o){const V=ch.$rk;if(!V||!RK.kat.hs||V.haftalik)return;const x=ch.scales.x,a=ch.chartArea;if(!x||!a)return;const c=ch.ctx;const w=V.K.length>1?Math.abs(x.getPixelForValue(1)-x.getPixelForValue(0)):a.right-a.left;
   c.save();c.fillStyle=gfCss('--text3','#888')+'1f';V.K.forEach((g,i)=>{const d=new Date(g+'T12:00:00').getDay();if(d===0||d===6){const px=x.getPixelForValue(i);c.fillRect(Math.max(a.left,px-w/2),a.top,Math.min(w,a.right-px+w/2),a.bottom-a.top);}});c.restore();}};
+// sıcaklık çizgisinin her noktasına o günün hava ikonu (takvimdeki hava verisi)
+var rkHavaEklenti={id:'rkHava',afterDatasetsDraw(ch){const i=ch.data.datasets.findIndex(d=>d.rk==='sic');if(i<0||!ch.isDatasetVisible(i))return;const ds=ch.data.datasets[i];if(!ds.havaIk)return;
+  const pts=ch.getDatasetMeta(i).data;if(!pts||!pts.length)return;const a=ch.chartArea;const w=pts.length>1?Math.abs(pts[1].x-pts[0].x):40;
+  const fs=Math.round(Math.max(11,Math.min(17,w*0.9)));const adim=Math.max(1,Math.ceil((fs+1)/Math.max(1,w)));
+  const c=ch.ctx;c.save();c.font=fs+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';
+  pts.forEach((p,k)=>{const ik=ds.havaIk[k];if(!ik||k%adim||ds.data[k]==null)return;if(!isFinite(p.x)||!isFinite(p.y)||p.x<a.left-4||p.x>a.right+4)return;c.fillText(ik,p.x,Math.max(a.top+fs/2,Math.min(a.bottom-fs/2,p.y)));});c.restore();}};
+// gün hava özeti: ikon, ad, en düşük/en yüksek, yağış (mm / olasılık)
+function rkHavaGun(g){if(typeof tkHava!=='function')return null;const h=tkHava(g);if(!h)return null;const d=GF_HAVA.det&&GF_HAVA.det[g];return Object.assign({},h,{kod:d?d.kod:null,mm:d&&d.mm!=null?d.mm:null});}
+var RK_HAVA_GRUP=[['acik','☀️','Açık / az bulutlu'],['bulut','☁️','Bulutlu / sisli'],['yagis','🌧️','Yağışlı'],['kar','🌨️','Karlı']];
+var RK_SIC_BANT=[['s1','🥶','15°C altı',-99,15],['s2','🙂','15–24°C',15,25],['s3','🌤️','25–31°C',25,32],['s4','🔥','32°C ve üstü',32,99]];
+function rkHavaGrup(kod){if(kod==null)return null;if(kod<=2)return 'acik';if(kod===3||kod===45||kod===48)return 'bulut';if((kod>=71&&kod<=77)||kod===85||kod===86)return 'kar';return 'yagis';}
+// gün gün reklam verisini hava grubuna göre toplar (bugün hariç: veri eksik)
+function rkHavaAnaliz(bas,bit){
+  const det=(typeof GF_HAVA!=='undefined'&&GF_HAVA.det)||{};const G=rkGunVeri(bas,bit);const bg=localToday();
+  const yeni=()=>({gun:0,tiklama:0,gosterim:0,harcama:0,telefon:0,elle:0,elleGun:0,adsIs:0,adsCiro:0,sic:0});
+  const Gr={},Sb={};let n=0,elleGun=0;
+  Object.keys(G).forEach(g=>{const o=G[g];if(g>=bg||!o.veri)return;const d=det[g];if(!d||d.max==null)return;const k=rkHavaGrup(d.kod);const sb=RK_SIC_BANT.find(b=>d.max>=b[3]&&d.max<b[4]);
+    [[Gr,k],[Sb,sb&&sb[0]]].forEach(([H,key])=>{if(!key)return;const x=H[key]||(H[key]=yeni());x.gun++;x.tiklama+=o.tiklama;x.gosterim+=o.gosterim;x.harcama+=o.harcama;x.telefon+=o.telefon;x.adsIs+=o.adsIs;x.adsCiro+=o.adsCiro;x.sic+=d.max;if(o.elleVar){x.elle+=o.elle;x.elleGun++;}});
+    n++;if(o.elleVar)elleGun++;});
+  return {Gr,Sb,n,elle:elleGun>=Math.max(5,n*0.5)};
+}
+function rkHavaArama(x,elle){return elle?(x.elleGun?x.elle/x.elleGun:null):x.telefon/Math.max(1,x.gun);}
+// kısa yorum: yağışlı / sıcak günlerde talep nasıl değişiyor
+function rkHavaYorum(H){
+  if(!H||H.n<10)return '';const p=[];const elle=H.elle;const ar=x=>rkHavaArama(x,elle);const yz=(a,b)=>{const f=Math.round((a/b-1)*100);return (f>=0?'%'+f+' daha fazla':'%'+(-f)+' daha az');};
+  const A=H.Gr.acik,Y=H.Gr.yagis,B=H.Gr.bulut;
+  if(A&&Y&&A.gun>=3&&Y.gun>=3){const ta=A.tiklama/A.gun,ty=Y.tiklama/Y.gun;if(ta>0&&Math.abs(ty/ta-1)>=0.08)p.push(`yağışlı günlerde günlük tıklama açık günlere göre <b>${yz(ty,ta)}</b>`);
+    const aa=ar(A),ay=ar(Y);if(aa>0&&ay!=null&&Math.abs(ay/aa-1)>=0.1)p.push(`arama <b>${yz(ay,aa)}</b>`);
+    const ia=A.adsIs/A.gun,iy=Y.adsIs/Y.gun;if(ia>0&&Math.abs(iy/ia-1)>=0.15)p.push(`Ads işi <b>${yz(iy,ia)}</b>`);}
+  else if(A&&B&&A.gun>=3&&B.gun>=3){const ta=A.tiklama/A.gun,tb=B.tiklama/B.gun;if(ta>0&&Math.abs(tb/ta-1)>=0.08)p.push(`bulutlu günlerde günlük tıklama açık günlere göre <b>${yz(tb,ta)}</b>`);}
+  const S4=H.Sb.s4,S2=H.Sb.s2,S3=H.Sb.s3;const ref=S2&&S2.gun>=3?S2:(S3&&S3.gun>=3?S3:null);
+  if(S4&&S4.gun>=3&&ref&&ref!==S4){const a=S4.tiklama/S4.gun,b=ref.tiklama/ref.gun;if(b>0&&Math.abs(a/b-1)>=0.08)p.push(`32°C üstü günlerde tıklama ${ref===S2?'15–24°C':'25–31°C'} günlerine göre <b>${yz(a,b)}</b>`);}
+  return p.length?p.join(', ')+'.':'';
+}
+function rkHavaKartHtml(A){
+  let h=`<div class="rk-b">🌦️ Hava ve reklam · ${_esc(A.ad)}</div>`;
+  if(typeof GF_HAVA==='undefined'||!GF_HAVA.det||!Object.keys(GF_HAVA.det).length)return h+`<div class="gf-not">${GF_HAVA&&GF_HAVA.durum==='yukleniyor'?'Hava verisi yükleniyor…':'Hava verisi henüz yok (takvimdeki hava ile aynı kaynak). İnternet bağlantısı gelince otomatik yüklenir.'}</div>`;
+  if(!RK.m.length)return h+`<div class="gf-not">Google Ads verisi gelince günlerin hava durumuna göre tıklama, arama ve iş karşılaştırması burada görünür.</div>`;
+  let bas=A.bas,bit=A.bit,not='';let H=rkHavaAnaliz(bas,bit);
+  if(H.n<20){bas=gfGunEkle(localToday(),-180);bit=localToday();H=rkHavaAnaliz(bas,bit);not=`Seçili dönemde az gün olduğu için son 6 ay (${H.n} gün) kullanıldı.`;}
+  if(H.n<5)return h+`<div class="gf-not">Karşılaştırma için yeterli gün yok.</div>`;
+  const elle=H.elle;const sf=v=>v==null?'—':(Math.round(v*10)/10).toString().replace('.',',');
+  const tablo=(liste,K)=>`<div class="rk-hv-tab"><span class="bas">${K}</span><span class="bas r">Gün</span><span class="bas r">Tık/gün</span><span class="bas r">${elle?'Elle arama':'Arama'}/gün</span><span class="bas r">İş/gün</span>`+
+    liste.map(([ik,ad,x])=>`<span>${ik} ${ad}</span><span class="r num">${x.gun}</span><span class="r num">${sf(x.tiklama/x.gun)}</span><span class="r num">${sf(rkHavaArama(x,elle))}</span><span class="r num">${sf(x.adsIs/x.gun)}</span>`).join('')+`</div>`;
+  const gk=RK_HAVA_GRUP.filter(g=>H.Gr[g[0]]).map(g=>[g[1],g[2],H.Gr[g[0]]]);
+  const sb=RK_SIC_BANT.filter(g=>H.Sb[g[0]]).map(g=>[g[1],g[2],H.Sb[g[0]]]);
+  h+=tablo(gk,'Gök durumu');
+  if(sb.length>1)h+=`<div style="height:8px"></div>`+tablo(sb,'En yüksek sıcaklık');
+  const y=rkHavaYorum(H);if(y)h+=`<div class="gf-not">💡 ${y.charAt(0).toUpperCase()+y.slice(1)}</div>`;
+  if(not)h+=`<div class="gf-ipucu">${not}</div>`;
+  // önümüzdeki günler
+  const b=localToday();const G=[];for(let i=0;i<7;i++){const g=gfGunEkle(b,i);const hv=rkHavaGun(g);if(hv)G.push([g,hv]);}
+  if(G.length){const GN=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+    h+=`<div class="gf-bolum">Önümüzdeki günler</div><div class="rk-hv-gel">${G.map(([g,hv])=>`<div title="${_esc(hv.ad)}${hv.yag!=null?' · yağış %'+hv.yag:''}">${g===b?'Bugün':GN[new Date(g+'T12:00:00').getDay()]}<b>${hv.ik}</b>${Math.round(hv.max)}°${hv.yag!=null&&hv.yag>=40?`<br><small style="color:var(--blue)">%${hv.yag}</small>`:''}</div>`).join('')}</div>`;}
+  try{h+=`<div class="gf-not">🌡️ ${rkHavaMetin(rkHavaKlima())}</div>`;}catch(e){}
+  return h;
+}
 function rkGrafikCiz(){
   const cv=document.getElementById('rk-chart'),bos=document.getElementById('rk-grafik-bos'),oz=document.getElementById('rk-grafik-ozet'),not=document.getElementById('rk-grafik-not');if(!cv)return;
   if(!window.Chart){perfScriptYukle('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js').then(()=>rkGrafikCiz()).catch(()=>showToast('Grafik kütüphanesi yüklenemedi','red'));return;}
@@ -14044,7 +14192,11 @@ function rkGrafikCiz(){
     if(b>0)ekle({type:'line',label:'Günlük bütçe',rk:'butce',data:V.K.map(()=>b),borderColor:'#FFAB00',borderDash:[6,4],borderWidth:1.5,pointRadius:0,yAxisID:'tl',katman:true});}
   if(RK.kat.sic){if(typeof GF_HAVA!=='undefined'&&(!GF_HAVA.gun||!Object.keys(GF_HAVA.gun).length)&&GF_HAVA.durum!=='yukleniyor'&&typeof gfHavaYukle==='function'){gfHavaYukle().then(()=>{if(document.querySelector('#page-reklam.active'))rkGrafikCiz();}).catch(()=>{});}
     const H=(typeof GF_HAVA!=='undefined'&&GF_HAVA.gun)||{};const d=V.K.map(a=>{const [g0,g1]=V.Kgun[a];const v=[];for(let g=g0;g<=g1;g=gfGunEkle(g,1))if(H[g]!=null)v.push(H[g]);return v.length?Math.round(gfOrt(v)*10)/10:null;});
-    if(d.some(v=>v!=null))ekle({type:'line',label:'Sıcaklık (en yüksek)',rk:'sic',data:d,borderColor:'#FF8A65',backgroundColor:'transparent',borderWidth:1.3,pointRadius:0,cubicInterpolationMode:'monotone',yAxisID:'sic',katman:true});}
+    const hv=V.K.map(a=>{const [g0,g1]=V.Kgun[a];const say={};let mm=0,n=0,ilk=null;for(let g=g0;g<=g1;g=gfGunEkle(g,1)){const h=rkHavaGun(g);if(!h)continue;n++;if(!ilk)ilk=h;say[h.ik]=(say[h.ik]||0)+1;mm+=h.mm||0;}
+      if(!n)return null;let ik=null,bn=0;Object.entries(say).forEach(([k,c])=>{if(c>bn){bn=c;ik=k;}});
+      const ad=g0===g1?(ilk.ik+' '+ilk.ad+(ilk.min!=null?' · '+Math.round(ilk.min)+'°/'+Math.round(ilk.max)+'°':'')+(ilk.mm>=0.5?' · '+(Math.round(ilk.mm*10)/10).toString().replace('.',',')+' mm':'')+(ilk.yag!=null&&g0>=localToday()?' · yağış %'+ilk.yag:'')):Object.entries(say).map(([k,c])=>k+' '+c).join(' ')+(mm>=0.5?' · '+Math.round(mm)+' mm':'');
+      return {ik,ad};});
+    if(d.some(v=>v!=null))ekle({type:'line',label:'Sıcaklık (en yüksek)',rk:'sic',data:d,havaIk:hv.map(x=>x&&x.ik),havaAd:hv.map(x=>x&&x.ad),borderColor:'#FF8A65',backgroundColor:'transparent',borderWidth:1.3,pointRadius:0,pointHoverRadius:4,cubicInterpolationMode:'monotone',yAxisID:'sic',katman:true});}
   const tk={color:t3,font:{size:10}};const sol=kul.has('tl');
   const tlBicim=v=>gfKisa(v)+'₺';
   const scales={x:{ticks:{...tk,maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:br+'55'}},
@@ -14055,14 +14207,14 @@ function rkGrafikCiz(){
     sic:{axis:'y',display:kul.has('sic'),position:'right',ticks:{...tk,callback:v=>v+'°'},grid:{drawOnChartArea:false}},
     isr:{axis:'y',position:'right',display:false,min:0,max:Math.max(4,(RK._isrMax||1)*4)}};
   const bicim=(k,y)=>{if(k==='sic')return y+'°C';if(k==='butce')return fmt(y);if(k==='elle')return y+' arama';if(k==='adsIs')return Math.round(y)+' iş';const m=RK_METRIK[k];if(!m)return y;return m.yuzde?y.toFixed(2).replace('.',',')+'%':m.tl?fmt(y):rkSayi(y);};
-  RK.chart=new Chart(cv,{type:'bar',data:{labels:V.etiket,datasets:ds},plugins:[rkHsEklenti],
+  RK.chart=new Chart(cv,{type:'bar',data:{labels:V.etiket,datasets:ds},plugins:[rkHsEklenti,rkHavaEklenti],
     options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:'index',intersect:false},
       onClick:(e,els,ch)=>{const p=ch.getElementsAtEventForMode(e,'index',{intersect:false},true);if(!p.length)return;const a=V.K[p[0].index];const [g0,g1]=V.Kgun[a];rkGunDetay(g0,g1);},
       onHover:(e,els)=>{try{e.native.target.style.cursor=els.length?'pointer':'default';}catch(x){}},
       plugins:{legend:{display:false},tooltip:{filter:c=>c.raw!=null,callbacks:{
         title:it=>{if(!it.length)return '';const a=V.K[it[0].dataIndex];const [g0,g1]=V.Kgun[a];const gun=new Date(g0+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'short'});return V.haftalik?gfTrTarih(g0).slice(0,5)+' – '+gfTrTarih(g1).slice(0,5)+' haftası':gun;},
         label:c=>{const d=c.dataset;const y=c.parsed.y;if(d.isaret&&d.rk==='adsIs')return ' Ads işi: '+Math.round(y)+' iş';
-          let s=' '+d.label+': '+bicim(d.rk,y);if(d.once&&O){const a=O.K[c.dataIndex];if(a)s+=' ('+gfTrTarih(a).slice(0,5)+')';}
+          let s=' '+d.label+': '+bicim(d.rk,y);if(d.rk==='sic'&&d.havaAd&&d.havaAd[c.dataIndex])s+=' · '+d.havaAd[c.dataIndex];if(d.once&&O){const a=O.K[c.dataIndex];if(a)s+=' ('+gfTrTarih(a).slice(0,5)+')';}
           if(c.dataIndex===V.kopya&&RK_ADS_M.includes(d.rk)&&!d.once)s+=' · dünün kopyası';return s;},
         footer:()=>'Ayrıntı için dokun'}}},
       scales}});
@@ -14078,6 +14230,8 @@ function rkGunDetay(g0,g1){
   const gunS=Object.keys(G).length;const A=rkAralik();const D=rkTopla(A);const dg=v=>v/Math.max(1,A.gun)*gunS; // dönem ortalaması (aynı gün sayısı için)
   const kar=(v,o,iyi)=>o>0?` <small style="color:${Math.abs(v/o-1)<0.1?'var(--text3)':(v>o)===iyi?'var(--green)':'var(--red)'}">${v>=o?'▲':'▼'}${Math.abs(Math.round((v/o-1)*100))}%</small>`:'';
   const bg=localToday();let h='';
+  try{if(tek){const hv=rkHavaGun(g0);if(hv)h+=`<div class="gf-not" style="margin:0 0 8px;">${hv.ik} <b>${_esc(hv.ad||'Hava')}</b> · ${hv.min!=null?Math.round(hv.min)+'° / ':''}${Math.round(hv.max)}°C${hv.mm>=0.5?' · '+(Math.round(hv.mm*10)/10).toString().replace('.',',')+' mm yağış':''}${hv.yag!=null&&g0>=bg?' · yağış olasılığı %'+hv.yag:''}</div>`;}
+    else{const say={};let mx=[],n=0;for(let g=g0;g<=g1;g=gfGunEkle(g,1)){const hv=rkHavaGun(g);if(!hv)continue;n++;say[hv.ik]=(say[hv.ik]||0)+1;mx.push(hv.max);}if(n)h+=`<div class="gf-not" style="margin:0 0 8px;">Hava: ${Object.entries(say).map(([k,c])=>k+' '+c+' gün').join(' · ')} · ort. en yüksek ${Math.round(gfOrt(mx))}°C</div>`;}}catch(e){}
   if(tek&&g0===bg&&!T.veri)h+=`<div class="gf-risk orta">Google Ads bugünün verisini henüz göndermedi; grafikte bugün için dünün değerleri gösteriliyor. Aşağıdaki reklam rakamları gerçek (şu an boş olabilir).</div>`;
   h+=`<div class="rk-bt"><div><small>Harcama</small><b class="num">−${fmt(T.harcama)}</b>${kar(T.harcama,dg(D.harcama),false)}</div><div><small>Tıklama</small><b class="num">${rkSayi(T.tiklama)}</b>${kar(T.tiklama,dg(D.tiklama),true)}</div><div><small>TO / TBM</small><b class="num">${T.gosterim?rkYuzde(T.tiklama/T.gosterim):'—'} · ${T.tiklama?fmt(T.harcama/T.tiklama):'—'}</b></div><div><small>Dönüşüm</small><b class="num">${(T.donusum||0).toLocaleString('tr-TR',{maximumFractionDigits:1})}</b></div>
     <div><small>Telefon (Google)</small><b class="num">${T.telefon}</b></div><div><small>Elle arama</small><b class="num">${T.elle}</b></div><div><small>Ads işi</small><b class="num">${T.adsIs} · +${gfKisa(T.adsCiro)}₺</b></div><div><small>Getiri</small><b class="num">${T.harcama?(T.adsCiro/T.harcama).toFixed(1).replace('.',',')+'×':'—'}</b></div></div>
@@ -14338,6 +14492,11 @@ function ozBolumReklam(A,kisa){
   try{const S=rkSektorAnaliz(A.bas,A.bit).L;if(S.length)h+=`- Sektör bazında (reklam grubu harcaması / elle arama / Ads işi / ciro / getiri): `+S.map(x=>`${x.sektor}: ${ozN(x.harcama)} / ${x.arama} arama / ${Math.round(x.is*10)/10} iş / ${ozN(x.ciro)} / ${x.getiri!=null?x.getiri.toFixed(1).replace('.',',')+'×':'—'}`).join('; ')+'\n';}catch(e){}
   try{h+='- Aramadan işe gecikme: '+rkGecikmeMetin(rkGecikme()).replace(/<[^>]+>/g,'')+'\n';}catch(e){}
   try{h+='- Hava ve talep: '+rkHavaMetin(rkHavaKlima()).replace(/<[^>]+>/g,'')+'\n';}catch(e){}
+  try{if(RK.yuklu&&RK.m.length){let H=rkHavaAnaliz(A.bas,A.bit);if(H.n<20)H=rkHavaAnaliz(gfGunEkle(localToday(),-180),localToday());
+    const sf=v=>v==null?'—':(Math.round(v*10)/10).toString().replace('.',',');const L=RK_HAVA_GRUP.filter(g=>H.Gr[g[0]]).map(g=>{const x=H.Gr[g[0]];return `${g[2]} ${x.gun} gün: ${sf(x.tiklama/x.gun)} tık/gün, ${sf(rkHavaArama(x,H.elle))} arama/gün, ${sf(x.adsIs/x.gun)} iş/gün`;});
+    if(L.length)h+='- Gök durumuna göre reklam (günlük ortalama): '+L.join('; ')+'\n';const y=rkHavaYorum(H);if(y)h+='- Hava yorumu: '+y.replace(/<[^>]+>/g,'')+'\n';
+    const G=[];for(let i=1;i<=7;i++){const g=gfGunEkle(localToday(),i);const hv=rkHavaGun(g);if(hv)G.push(ozTr(g)+' '+hv.ad+' '+Math.round(hv.max)+'°C'+(hv.yag!=null?' (yağış %'+hv.yag+')':''));}
+    if(G.length)h+='- Önümüzdeki 7 günün havası: '+G.join(', ')+'\n';}}catch(e){}
   if(!kisa)try{const L=rkAylik(12).filter(x=>x.harcama>0);if(L.length>=2)h+=`- Aylık reklam getirisi: `+L.map(x=>`${GF_AYLAR_UZUN[x.ay].slice(0,3)} ${x.k.slice(2,4)} ${ozN(x.harcama)} → ${x.is} iş, ${ozN(x.ciro)} (${x.getiri!=null?x.getiri.toFixed(1).replace('.',',')+'×':'—'})`).join('; ')+'\n';}catch(e){}
   try{const U=rkUyarilar();if(U.length)h+=`- Reklam uyarıları: `+U.map(u=>u.m.replace(/<[^>]+>/g,'')).join(' | ')+'\n';}catch(e){}
   if(RK.yuklu&&!kisa){
@@ -14601,6 +14760,7 @@ function rkOzetSekmeHtml(){
   try{const S=rkSektorAnaliz(a,b).L.filter(x=>x.getiri!=null&&x.harcama>=100).sort((x,y)=>y.getiri-x.getiri);if(S.length)h+=`<div class="gf-not">🧩 Sektör getirisi: ${S.slice(0,4).map(x=>`${_esc(x.sektor)} <b>${x.getiri.toFixed(1).replace('.',',')}×</b>`).join(' · ')}</div>`;}catch(e){}
   try{h+=`<div class="gf-not">⏱️ ${rkGecikmeMetin(rkGecikme())}</div>`;}catch(e){}
   try{h+=`<div class="gf-not">🌡️ ${rkHavaMetin(rkHavaKlima())}</div>`;}catch(e){}
+  try{if(RK.yuklu&&RK.m.length){const y=rkHavaYorum(rkHavaAnaliz(gfGunEkle(b,-180),b));if(y)h+=`<div class="gf-not">🌦️ Son 6 ayda ${y}</div>`;}}catch(e){}
   return h+`<button class="isf-chip" onclick="goPage('reklam')">📈 Reklam sayfasına git</button>`;
 }
 (function(){try{const _oz=gfOzetSekme;gfOzetSekme=function(){const m=GF.ay&&GF.ay.metrik;let ust='';if(['reklamH','elleArama','adsCiro','reklamGetiri'].includes(m)){try{ust=rkOzetSekmeHtml();}catch(e){console.warn('reklam özet',e);}}return ust+_oz.apply(this,arguments);};}catch(e){console.warn(e);}})();
@@ -15979,7 +16139,7 @@ async function renderProjeler(){
   const ara=(document.getElementById('proje-ara')?.value||'').toLocaleLowerCase('tr').trim();
   const durumRenk={'Devam Ediyor':'var(--blue)','Tamamlandı':'var(--green)','Beklemede':'var(--amber)','İptal':'var(--red)'};
   let projeler=DB.projeler.filter(p=>!filtre||p.durum===filtre);
-  if(ara)projeler=projeler.filter(p=>{const k=getKisi(p.musteriId);return [p.isim,p.adres,p.aciklama,k&&k.isim].join(' ').toLocaleLowerCase('tr').includes(ara);});
+  if(ara)projeler=projeler.filter(p=>{const k=getKisi(p.musteriId);return [p.isim,projeAdresMetin(p),p.aciklama,k&&k.isim].join(' ').toLocaleLowerCase('tr').includes(ara);});
   // Tüm projelerin tahmini gider toplamlarını tek seferde çek
   let tahminGiderMap={};
   try{
@@ -16035,6 +16195,8 @@ function openProjeModal(id){
   ['proje-en-iyi-fiyat','proje-teklif-fiyat','proje-musteri-teklif','proje-malzeme-tahmini','proje-iscilik-tahmini'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
   document.getElementById('proje-durum').value='Devam Ediyor';
   const zEl=document.getElementById('proje-zorluk');if(zEl)zEl.value='Orta';
+  document.getElementById('proje-adres-ozel').value='0';
+  projeKatSec('Müşteri',true);
   acClear('proje-ac');
   if(id){
     const p=DB.projeler.find(x=>x.id===id);if(!p)return;
@@ -16051,8 +16213,16 @@ function openProjeModal(id){
     const musteriTekEl=document.getElementById('proje-musteri-teklif');if(musteriTekEl)musteriTekEl.value=p.musteriTeklif||'';
     const malzTahEl=document.getElementById('proje-malzeme-tahmini');if(malzTahEl)malzTahEl.value=p.malzemeTahmini||'';
     const iscTahEl=document.getElementById('proje-iscilik-tahmini');if(iscTahEl)iscTahEl.value=p.iscilikTahmini||'';
-    if(p.musteriId){const k=getKisi(p.musteriId);if(k)acSelect('proje-ac',k.id,k.isim,k.tip);}
+    const pk=p.musteriId?getKisi(p.musteriId):null;
+    projeKatSec(pk&&PROJE_KATLAR.includes(pk.tip)?pk.tip:(pk?'':'Müşteri'),true);
+    // kayıtlı adres rehberdekinden farklıysa projeye özel adrestir
+    const ra=pk&&hrKisiAnaAdres(pk);const rm=ra?hrAdresSatir(ra):'';
+    const ozel=!!(p.adres&&p.adres.trim()&&p.adres.trim()!==rm.trim());
+    document.getElementById('proje-adres-ozel').value=ozel?'1':'0';
+    if(adresEl)adresEl.value=ozel?p.adres:'';
+    if(pk)acSelect('proje-ac',pk.id,pk.isim,pk.tip);
   }
+  projeAdresGuncelle();
   openModal('modal-proje');
   // Ekleri modal açıldıktan sonra arka planda yükle
   setTimeout(()=>eklerModalAc('proje', id||null), 50);
@@ -16063,6 +16233,47 @@ function openProjeModal(id){
   if(id){const p=DB.projeler.find(x=>x.id===parseInt(id));if(p?.islemKaynagi){if(prjInp)prjInp.value=p.islemKaynagi;document.querySelectorAll('.proje-kaynak-btn').forEach(b=>{const aktif=b.dataset.val===p.islemKaynagi;b.style.background=aktif?'var(--blue-lt,#dbeafe)':'var(--bg2)';b.style.color=aktif?'var(--blue,#2563eb)':'var(--text3)';b.style.borderColor=aktif?'var(--blue-md,#1d4ed8)':'var(--border2)';});}}
 }
 
+// ---------- Proje: kim için (tip) + adres (rehberden otomatik, istenirse projeye özel)
+const PROJE_KATLAR=['Müşteri','Firma','Kurum','Şahıs'];
+function projeAdresMetin(p){
+  if(!p)return '';
+  if(p.adres&&p.adres.trim())return p.adres.trim();
+  const k=p.musteriId?getKisi(p.musteriId):null;const a=k&&hrKisiAnaAdres(k);
+  return a?hrAdresSatir(a):'';
+}
+function projeKatSec(kat,ilk){
+  const h=document.getElementById('proje-kisi-kat');if(h)h.value=kat||'';
+  document.querySelectorAll('#proje-kat-sec .isf-chip').forEach(b=>b.classList.toggle('on',b.dataset.k===(kat||'')));
+  const inp=document.getElementById('proje-ac-input');if(inp)inp.placeholder=(kat||'Kişi')+' seç...';
+  if(ilk)return;
+  const kid=parseInt(document.getElementById('proje-kisi')?.value)||null;const k=kid?getKisi(kid):null;
+  if(k&&kat&&k.tip!==kat)acClear('proje-ac');
+  else if(!k)acFilter('proje-ac');
+}
+function projeAdresMod(ozel){
+  document.getElementById('proje-adres-ozel').value=ozel?'1':'0';
+  const inp=document.getElementById('proje-adres');
+  if(ozel&&inp&&!inp.value){const kid=parseInt(document.getElementById('proje-kisi')?.value)||null;const k=kid?getKisi(kid):null;const a=k&&hrKisiAnaAdres(k);if(a)inp.value=hrAdresSatir(a);}
+  if(!ozel&&inp)inp.value='';
+  projeAdresGuncelle();
+  if(ozel)setTimeout(()=>{const i=document.getElementById('proje-adres');if(i){i.focus();i.select&&i.select();}},50);
+}
+function projeAdresGuncelle(){
+  const kutu=document.getElementById('proje-adres-rehber');const inp=document.getElementById('proje-adres');if(!kutu||!inp)return;
+  const ozel=document.getElementById('proje-adres-ozel')?.value==='1';
+  const kid=parseInt(document.getElementById('proje-kisi')?.value)||null;const k=kid?getKisi(kid):null;
+  const a=k&&hrKisiAnaAdres(k);const metin=a?hrAdresSatir(a):'';
+  const kutuCss='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;border:1px dashed var(--border2);border-radius:var(--r-sm);background:var(--bg2);';
+  if(ozel){
+    inp.style.display='block';
+    kutu.innerHTML=`<div style="${kutuCss}"><span style="font-size:12px;color:var(--text3);">✏️ Bu projeye özel adres</span>${metin?`<button type="button" class="btn btn-secondary btn-sm" onclick="projeAdresMod(false)">↺ Rehber adresi</button>`:`<button type="button" class="btn btn-secondary btn-sm" onclick="projeAdresMod(false)">Vazgeç</button>`}</div>`;
+  }else{
+    inp.style.display='none';
+    const yazi=metin?`📍 ${_esc(metin)} <small style="color:var(--text3);">(rehberden)</small>`:(k?'Rehberde kayıtlı adresi yok':'Kişi seçince rehberdeki adresi buraya gelir');
+    kutu.innerHTML=`<div style="${kutuCss}"><span style="font-size:13px;color:${metin?'var(--text2)':'var(--text3)'};flex:1;">${yazi}</span><button type="button" class="btn btn-secondary btn-sm" style="white-space:nowrap;" onclick="projeAdresMod(true)">${metin?'Adresi değiştir':'+ Adres yaz'}</button></div>`;
+  }
+}
+
 async function saveProje(btn){
   if(btn)btn.disabled=true;
   try{
@@ -16070,7 +16281,7 @@ async function saveProje(btn){
     const isim=document.getElementById('proje-isim').value.trim();
     if(!isim){showToast('Proje adı gerekli','red');return;}
     const projeKaynak=null; // kaynak müşteriden gelir
-    const payload={isim,durum:document.getElementById('proje-durum').value,zorluk:document.getElementById('proje-zorluk')?.value||'Orta',islem_kaynagi:projeKaynak,baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,adres:document.getElementById('proje-adres')?.value||'',malzemeler:document.getElementById('proje-malzemeler')?.value||'',en_iyi_fiyat:parseFloat(document.getElementById('proje-en-iyi-fiyat')?.value)||null,teklif_fiyat:parseFloat(document.getElementById('proje-teklif-fiyat')?.value)||null,musteri_teklif:parseFloat(document.getElementById('proje-musteri-teklif')?.value)||null,malzeme_tahmini:parseFloat(document.getElementById('proje-malzeme-tahmini')?.value)||null,iscilik_tahmini:parseFloat(document.getElementById('proje-iscilik-tahmini')?.value)||null,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
+    const payload={isim,durum:document.getElementById('proje-durum').value,zorluk:document.getElementById('proje-zorluk')?.value||'Orta',islem_kaynagi:projeKaynak,baslangic:document.getElementById('proje-baslangic').value||null,bitis:document.getElementById('proje-bitis').value||null,aciklama:document.getElementById('proje-aciklama').value,adres:(document.getElementById('proje-adres-ozel')?.value==='1'?(document.getElementById('proje-adres')?.value||'').trim():''),malzemeler:document.getElementById('proje-malzemeler')?.value||'',en_iyi_fiyat:parseFloat(document.getElementById('proje-en-iyi-fiyat')?.value)||null,teklif_fiyat:parseFloat(document.getElementById('proje-teklif-fiyat')?.value)||null,musteri_teklif:parseFloat(document.getElementById('proje-musteri-teklif')?.value)||null,malzeme_tahmini:parseFloat(document.getElementById('proje-malzeme-tahmini')?.value)||null,iscilik_tahmini:parseFloat(document.getElementById('proje-iscilik-tahmini')?.value)||null,musteri_id:parseInt(document.getElementById('proje-kisi').value)||null};
     let projeKayitId = id ? parseInt(id) : null;
     if(id)await sbFetch('projeler?id=eq.'+id,{method:'PATCH',body:JSON.stringify(payload)});
     else{
@@ -22012,7 +22223,7 @@ tr{border-bottom:1px solid #f1f5f9;}tr:last-child{border-bottom:none;}
     <div class="accent"></div>
   </div>
   <div class="info-band">
-    <div class="ic"><div class="il">Proje</div><div class="iv">${p.isim}</div>${p.adres?`<div class="is">📍 ${p.adres}</div>`:''}</div>
+    <div class="ic"><div class="il">Proje</div><div class="iv">${p.isim}</div>${projeAdresMetin(p)?`<div class="is">📍 ${projeAdresMetin(p)}</div>`:''}</div>
     <div class="ic"><div class="il">Müşteri</div><div class="iv">${k?k.isim:'—'}</div>${k?.tel?`<div class="is">📞 ${k.tel}</div>`:''}</div>
     <div class="ic"><div class="il">Durum</div><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${drn}18;color:${drn};border:1px solid ${drn}44;margin-top:2px;">${p.durum}</span></div>
   </div>
@@ -22189,7 +22400,7 @@ async function showProjeDetay(id){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
       <div style="flex:1;"><div style="font-size:17px;font-weight:700;margin-bottom:4px;">${p.isim}</div>
       ${k?`<div style="font-size:13px;color:var(--text2);">👤 ${k.isim}${k.tel?' · 📞 '+k.tel:''}</div>`:''}
-      ${p.adres?`<div style="font-size:12px;color:var(--text3);">📍 ${p.adres}</div>`:''}
+      ${projeAdresMetin(p)?`<div style="font-size:12px;color:var(--text3);">📍 ${_esc(projeAdresMetin(p))}${p.adres?'':' <span style="font-size:10px;">(rehber)</span>'}</div>`:''}
       </div>
       <span style="background:${renk}22;color:${renk};font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;flex-shrink:0;">${p.durum}</span>
     </div>
