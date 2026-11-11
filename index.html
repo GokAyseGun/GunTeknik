@@ -5313,7 +5313,7 @@ function macBaslat(){if(!macAktif())return;macKaydol().then(ok=>{if(ok){try{push
 async function macGuncelle(){
   try{const s=await macCagir('guncelle_denetle');
     if(!s||!s.var){showToast('Mac uygulaması güncel (sürüm '+_esc(window.GT_MAC.surum)+')','green');return;}
-    if(!confirm('Yeni sürüm 1.0.'+s.no+' hazır. Şimdi kurulsun mu? Uygulama kapanıp yeniden açılacak.'))return;
+    if(!await onaySor('Yeni sürüm 1.0.'+s.no+' hazır. Şimdi kurulsun mu? Uygulama kapanıp yeniden açılacak.'))return;
     showToast('İndiriliyor… uygulama birazdan yeniden açılacak','blue');await macCagir('guncelle_kur');}
   catch(e){showToast('Güncellenemedi: '+String(e&&e.message||e).slice(0,80),'red');}
 }
@@ -5659,7 +5659,7 @@ async function gtIslem(){
   await betYukle(true);betCiz();
 }
 async function gtEmirIptal(id){
-  if(!confirm('Bu emir iptal edilsin mi? Ayrılan tutar geri döner.'))return;
+  if(!await onaySor('Bu emir iptal edilsin mi? Ayrılan tutar geri döner.'))return;
   try{await sbFetch('rpc/bet_gt_emir_iptal',{method:'POST',body:JSON.stringify({p_id:id})});showToast('Emir iptal edildi','green');}catch(e){showToast(betHata(e).slice(0,90),'red');}
   await betYukle(true);betCiz();
 }
@@ -5726,7 +5726,7 @@ async function gtPozAc(){
 }
 async function gtPozKapat(id){
   const z=(BET.gtPoz||[]).find(x=>x.id===id);if(!z)return;const od=gtPozOdeme(z,gtEndeks());
-  if(!confirm(`${z.yon==='long'?'Long':'Short'} ${z.kaldirac}x kapatılsın mı?\nŞu anki endeksle ≈ ${betTL(od)} geri alırsın (kapanış ücreti dahil).`))return;
+  if(!await onaySor(`${z.yon==='long'?'Long':'Short'} ${z.kaldirac}x kapatılsın mı?\nŞu anki endeksle ≈ ${betTL(od)} geri alırsın (kapanış ücreti dahil).`))return;
   try{const r=await sbFetch('rpc/bet_gt_poz_kapat',{method:'POST',body:JSON.stringify({p_id:id})});
     showToast(`Kapandı · ${betTL(r.odeme)} geri (${betTLi(r.kar)})`,r.kar>=0?'green':'amber');}
   catch(e){showToast(betHata(e).slice(0,90),'red');}
@@ -5835,7 +5835,7 @@ async function gtCizimGuncelle(ov){const id=BET.gtCizimDb[ov.id];if(!id)return;c
 async function gtCizimSilDb(ovId){const id=BET.gtCizimDb[ovId];if(!id)return;delete BET.gtCizimDb[ovId];try{await sbFetch('grafik_cizimler?id=eq.'+id,{method:'DELETE'});}catch(e){}BET.gtCizimler=BET.gtCizimler.filter(x=>x.id!==id);}
 function gtSeciliSil(){if(!BET.gtSecili){showToast('Önce silmek istediğin çizime dokun','amber');return;}BET.gtChart.removeOverlay({id:BET.gtSecili});BET.gtSecili=null;}
 async function gtTumCizimSil(){
-  if(!BET.gtCizimler.length){showToast('Çizim yok','amber');return;}if(!confirm(`GTCOIN grafiğindeki ${BET.gtCizimler.length} çizimin silinsin mi?`))return;
+  if(!BET.gtCizimler.length){showToast('Çizim yok','amber');return;}if(!await onaySor(`GTCOIN grafiğindeki ${BET.gtCizimler.length} çizimin silinsin mi?`))return;
   BET.gtTopluSil=true;try{BET.gtChart.removeOverlay({groupId:'gtc'});}catch(e){}BET.gtTopluSil=false;
   for(const r of BET.gtCizimler){try{await sbFetch('grafik_cizimler?id=eq.'+r.id,{method:'DELETE'});}catch(e){}}BET.gtCizimler=[];BET.gtCizimDb={};
 }
@@ -6375,7 +6375,7 @@ async function atSpam(){
   catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,60),'red');}
 }
 async function atSil(id){
-  if(!confirm('Bu arama kaydı silinsin mi?'))return;
+  if(!await onaySor('Bu arama kaydı silinsin mi?'))return;
   try{await sbFetch('rpc/arama_sil',{method:'POST',body:JSON.stringify({p_token:null,p_id:id})});AT.liste=AT.liste.filter(x=>x.id!==id);closeModal('modal-at');AT.duzen=null;showToast('Silindi','green');
     await rkManuelYukle();atCiz();try{rkAramaSonrasi();}catch(e){}}
   catch(e){showToast('Silinemedi','red');}
@@ -8952,7 +8952,7 @@ async function gfSenaryoEkle(){
   await gfEkYukle(true);gfTahminModalCiz();
 }
 async function gfSenaryoAktif(id){const s=(GF.ek.senaryolar||[]).find(x=>x.id===id);if(!s)return;try{await sbFetch('grafik_senaryolar?id=eq.'+id,{method:'PATCH',body:JSON.stringify({aktif:s.aktif===false})});}catch(e){showToast('Güncellenemedi','red');}await gfEkYukle(true);gfTahminModalCiz();}
-async function gfSenaryoSil(id){if(!confirm('Senaryo kalemi silinsin mi?'))return;try{await sbFetch('grafik_senaryolar?id=eq.'+id,{method:'DELETE'});}catch(e){showToast('Silinemedi','red');}await gfEkYukle(true);gfTahminModalCiz();}
+async function gfSenaryoSil(id){if(!await onaySor('Senaryo kalemi silinsin mi?'))return;try{await sbFetch('grafik_senaryolar?id=eq.'+id,{method:'DELETE'});}catch(e){showToast('Silinemedi','red');}await gfEkYukle(true);gfTahminModalCiz();}
 async function gfTahminOtoKaydet(T){
   const kay=GF.ek.tahminKayitlari;if(!Array.isArray(kay)||USER_ROL==='goruntule'||GF._otoKayitDenendi)return;
   const ay=localToday().slice(0,7);if(kay.some(k=>(k.metrik||'kasa')==='kasa'&&String(k.kayit_tarihi||'').startsWith(ay)))return;
@@ -9021,7 +9021,7 @@ async function gfCizimDbSil(dbId,sessiz){
 function gfSeciliSil(){if(!GF.seciliCizim){showToast('Önce silmek istediğin çizime dokun','amber');return;}GF.chart.removeOverlay({id:GF.seciliCizim});GF.seciliCizim=null;}
 async function gfTumCizimSil(){
   const rows=(GF.ek.cizimler||[]).filter(r=>r.metrik===GF.ay.metrik&&r.ad!=='aylik_hedef');
-  if(!confirm(`Bu metrikteki tüm çizimler (${rows.length}) silinsin mi?`))return;
+  if(!await onaySor(`Bu metrikteki tüm çizimler (${rows.length}) silinsin mi?`))return;
   GF.toplucaSil=true;try{GF.chart.removeOverlay({groupId:'gfc'});}catch(e){}GF.toplucaSil=false;
   for(const r of rows){try{await sbFetch('grafik_cizimler?id=eq.'+r.id,{method:'DELETE'});}catch(e){}}
   GF.ek.cizimler=(GF.ek.cizimler||[]).filter(r=>r.metrik!==GF.ay.metrik||r.ad==='aylik_hedef');GF.cizimDb={};GF.tahminAnahtar='';gfCiz();
@@ -9336,7 +9336,7 @@ async function gfHedefKaydet(){
   await gfEkYukle(true);gfTahminModalCiz();gfHedefKartCiz();
 }
 async function gfHedefSil(){
-  const H=gfAylikHedef();if(!H)return;if(!confirm('Aylık hedef kaldırılsın mı?'))return;
+  const H=gfAylikHedef();if(!H)return;if(!await onaySor('Aylık hedef kaldırılsın mı?'))return;
   try{await sbFetch('grafik_cizimler?id=eq.'+H.id,{method:'DELETE'});}catch(e){showToast('Silinemedi','red');return;}
   await gfEkYukle(true);gfTahminModalCiz();gfHedefKartCiz();
 }
@@ -11057,7 +11057,7 @@ async function openProjeTamamlaModal(projeId){
   });
   if(stokHatalar.length){
     showToast('Stok yetersiz — düzenleyip tekrar deneyin','red');
-    alert('Stok yetersizliği tespit edildi:\n\n'+stokHatalar.join('\n')+'\n\nLütfen stok miktarını güncelleyip tekrar deneyin.');
+    await onaySor('Stok yetersizliği tespit edildi:\n\n'+stokHatalar.join('\n')+'\n\nLütfen stok miktarını güncelleyip tekrar deneyin.',{tek:true,ikon:'📦'});
     return;
   }
 
@@ -12681,9 +12681,9 @@ function googleTokenAl(cb){
   client.requestAccessToken({prompt:''});
 }
 
-function googleAktar(kisiId){
+async function googleAktar(kisiId){
   const k=DB.kisiler.find(x=>x.id===kisiId);if(!k)return;
-  if(!confirm('"'+(k.isim||'—')+'" kişiyi Google Rehbere aktarmak istiyor musunuz?'))return;
+  if(!await onaySor('"'+(k.isim||'—')+'" kişiyi Google Rehbere aktarmak istiyor musunuz?'))return;
   googleTokenAl(token=>googleKisiGonder(token,kisiId));
 }
 
@@ -14747,7 +14747,7 @@ async function rkManuelKaydet(tip){
   try{await sbFetch('reklam_manuel',{method:'POST',prefer:'return=minimal',body:JSON.stringify({tarih,tip,deger:tip==='ads_arama'?Math.round(v):v,aciklama})});RK.manuel=await sbFetchAll('reklam_manuel?select=*&order=tarih.asc')||[];showToast('Kaydedildi','green');rkManuelModal(tip);rkCiz();}
   catch(e){showToast('Kaydedilemedi','red');}
 }
-async function rkManuelSil(id,tip){if(!confirm('Kayıt silinsin mi?'))return;try{await sbFetch('reklam_manuel?id=eq.'+id,{method:'DELETE'});RK.manuel=(RK.manuel||[]).filter(r=>r.id!==id);rkManuelModal(tip);rkCiz();}catch(e){showToast('Silinemedi','red');}}
+async function rkManuelSil(id,tip){if(!await onaySor('Kayıt silinsin mi?'))return;try{await sbFetch('reklam_manuel?id=eq.'+id,{method:'DELETE'});RK.manuel=(RK.manuel||[]).filter(r=>r.id!==id);rkManuelModal(tip);rkCiz();}catch(e){showToast('Silinemedi','red');}}
 // eski adlar
 function adsAramaModalAc(){rkAramaGirAc();}
 function armutHarcamaModalAc(){rkManuelModal('armut_harcama');}
@@ -18542,7 +18542,7 @@ async function katYeniGrup(){
 async function katTanimsizEkle(reg){const o=_katReg[reg];if(!o)return;await katEkleDogrudan(o.grup,o.ana,o.ad);}
 async function katAnaDisiEkle(reg,selId){
   const o=_katReg[reg];const ana=document.getElementById(selId)?.value;if(!o||!ana)return;
-  if(!confirm(`"${o.ad}", ${o.tip} › ${ana} altına alt kategori olarak eklensin mi?\n\nEski kayıtlar "${o.ad}" ana kategorisinde aynen kalır.`))return;
+  if(!await onaySor(`"${o.ad}", ${o.tip} › ${ana} altına alt kategori olarak eklensin mi?\n\nEski kayıtlar "${o.ad}" ana kategorisinde aynen kalır.`))return;
   await katEkleDogrudan(o.tip,ana,o.ad);
 }
 async function katAdDegistir(id){
@@ -18557,7 +18557,7 @@ async function katAdDegistir(id){
 async function katGizle(id){
   const r=katBulId(id);if(!r||katSistemMi(r))return;
   const say=katKullanimSay();const n=(r.grup==='Hizmet'?say.hiz[r.ana_kat+'|'+r.ad]:say.kat[r.grup+'|'+r.ana_kat+'|'+r.ad])||0;
-  if(!confirm(`"${r.ad}" listeden kaldırılsın mı?\n\n${n?n+' eski işlemde kullanılıyor. Bu işlemler hiç değişmeden "'+r.ad+'" olarak kalır.\n\n':''}"Kaldırılanlar" bölümünden istediğin zaman geri alabilirsin.`))return;
+  if(!await onaySor(`"${r.ad}" listeden kaldırılsın mı?\n\n${n?n+' eski işlemde kullanılıyor. Bu işlemler hiç değişmeden "'+r.ad+'" olarak kalır.\n\n':''}"Kaldırılanlar" bölümünden istediğin zaman geri alabilirsin.`))return;
   await katIslem(()=>sbFetch('islem_kategorileri?id=eq.'+r.id,{method:'PATCH',body:JSON.stringify({aktif:false})}),'Listeden kaldırıldı');
 }
 async function katGeriAl(id){
@@ -18878,7 +18878,7 @@ async function isfFiltreKaydet(){
   const filtre=isfNormalize(JSON.parse(JSON.stringify(_isfTaslak)));
   try{
     const ayni=(_isfKayitli||[]).find(x=>_trk(x.ad)===_trk(ad));
-    if(ayni){if(!confirm(`"${ayni.ad}" adlı filtre zaten var. Üzerine yazılsın mı?`))return;
+    if(ayni){if(!await onaySor(`"${ayni.ad}" adlı filtre zaten var. Üzerine yazılsın mı?`))return;
       await sbFetch('islem_filtreleri?id=eq.'+ayni.id,{method:'PATCH',body:JSON.stringify({filtre})});}
     else await sbFetch('islem_filtreleri',{method:'POST',prefer:'return=minimal',body:JSON.stringify({ad,filtre})});
     showToast('Filtre kaydedildi','green');
@@ -18887,7 +18887,7 @@ async function isfFiltreKaydet(){
 }
 async function isfKayitliSil(id){
   const k=(_isfKayitli||[]).find(x=>String(x.id)===String(id));if(!k)return;
-  if(!confirm(`"${k.ad}" kayıtlı filtresi silinsin mi?`))return;
+  if(!await onaySor(`"${k.ad}" kayıtlı filtresi silinsin mi?`))return;
   try{await sbFetch('islem_filtreleri?id=eq.'+k.id,{method:'DELETE'});showToast('Silindi','amber');}
   catch(e){showToast('Silinemedi: '+String(e.message||e).slice(0,80),'red');}
   await isfKayitliListeYukle();
@@ -19152,10 +19152,10 @@ function hrAlan(i,k,v,sessiz){const a=HR.form[i];if(!a)return;a[k]=v;
   if(!sessiz)hrFormCiz();else hrOzetGuncelle();}
 function hrMahalleDogrula(i){const a=HR.form[i];if(!a)return;const m=hrMahalleBul(a.il,a.ilce,a.mahalle);if(m&&m.ad!==a.mahalle){a.mahalle=m.ad;a.postaKodu=m.pk;hrFormCiz();}}
 function hrAdresEkle(){HR.form.push(hrBosAdres());const a=HR.form[HR.form.length-1];const ilk=HR.form[0];if(ilk){a.il=ilk.il;}a.etiket=HR.form.length===2?'Villa':'Diğer';hrFormCiz();setTimeout(()=>document.getElementById('hr-kart-'+(HR.form.length-1))?.scrollIntoView({behavior:'smooth',block:'center'}),50);}
-function hrAdresYokDegistir(){
-  if(!HR.adresYok&&HR.form.some(a=>hrAdresDolu(a)||a._eski)&&!confirm('Bu kayıt "adresi yok" olarak işaretlenecek ve kaydedince girilmiş adres bilgileri silinecek. Devam edilsin mi?'))return;
+async function hrAdresYokDegistir(){
+  if(!HR.adresYok&&HR.form.some(a=>hrAdresDolu(a)||a._eski)&&!await onaySor('Bu kayıt "adresi yok" olarak işaretlenecek ve kaydedince girilmiş adres bilgileri silinecek. Devam edilsin mi?'))return;
   HR.adresYok=!HR.adresYok;if(!HR.adresYok&&!HR.form.length)HR.form=[hrBosAdres()];hrFormCiz();}
-function hrAdresSil(i){if(HR.form.length<=1)return;const a=HR.form[i];if(hrAdresDolu(a)&&!confirm('Bu adres silinsin mi?'))return;HR.form.splice(i,1);hrFormCiz();}
+async function hrAdresSil(i){if(HR.form.length<=1)return;const a=HR.form[i];if(hrAdresDolu(a)&&!await onaySor('Bu adres silinsin mi?'))return;HR.form.splice(i,1);hrFormCiz();}
 function hrKonumSil(i){const a=HR.form[i];a.enlem=null;a.boylam=null;a.plusCode='';a.konumKaynagi='';a.konumHassasiyet=null;hrFormCiz();}
 // kişinin "adres" metin alanı (eski ekranlar, arama ve raporlar için): ilk dolu adresin tek satırı
 function hrOzetGuncelle(){const h=document.getElementById('mk-adres');if(!h)return;if(HR.adresYok){h.value='';return;}const a=HR.form.find(hrAdresDolu);h.value=a?(hrAdresSatir(a)||a._eski||''):((HR.form[0]&&HR.form[0]._eski)||'');}
@@ -19181,7 +19181,7 @@ async function hrAdresYokKaydet(kisiId,yok){
 // konumu eksik listesinden tek dokunuşla "adresi yok"
 async function hrAdresYokIsaretle(id){
   const k=getKisi(id);if(!k)return;
-  if(hrKisiAdresleri(id).length&&!confirm(k.isim+' için kayıtlı adres bilgileri silinecek. Devam edilsin mi?'))return;
+  if(hrKisiAdresleri(id).length&&!await onaySor(k.isim+' için kayıtlı adres bilgileri silinecek. Devam edilsin mi?'))return;
   if(!await hrAdresYokKaydet(id,true))return;
   try{for(const a of hrKisiAdresleri(id))await sbFetch('kisi_adresler?id=eq.'+a.id,{method:'DELETE'});DB.kisiAdresleri=(DB.kisiAdresleri||[]).filter(a=>String(a.kisiId)!==String(id));}catch(e){console.warn(e);}
   showToast(k.isim+' → adresi yok','green');hrKonumEksikAc();try{hrRehberUstCiz();}catch(e){}
@@ -19491,7 +19491,7 @@ async function hrAyarKaydet(){
 async function hrGoogleTopluGuncelle(){
   const ids=[...new Set((DB.kisiAdresleri||[]).map(a=>a.kisiId))].filter(id=>getKisi(id));
   if(!ids.length){showToast('Ayrıntılı adresi olan kişi yok','amber');return;}
-  if(!confirm(ids.length+' kişi Google Rehber\'de güncellenecek. Devam edilsin mi?'))return;
+  if(!await onaySor(ids.length+' kişi Google Rehber\'de güncellenecek. Devam edilsin mi?'))return;
   closeModal('modal-hr-ayar');
   googleTokenAl(async token=>{let ok=0,hata=0;
     for(let i=0;i<ids.length;i++){showToast(`Google Rehber güncelleniyor ${i+1}/${ids.length}…`,'blue');const r=await googleKisiGonder(token,ids[i],true);if(r)ok++;else hata++;await new Promise(r=>setTimeout(r,1100));}
@@ -21337,6 +21337,22 @@ function formModal(baslik,alanlar,kaydet,opt){opt=opt||{};
   el.querySelector('#fm-kaydet').onclick=async()=>{const d={};alanlar.forEach(a=>{const i=el.querySelector('#fm-'+a.id);d[a.id]=i?i.value:'';});const b=el.querySelector('#fm-kaydet');b.disabled=true;try{if(await kaydet(d)!==false)closeModal('modal-dinamik');}catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,80),'red');}finally{b.disabled=false;}};
   openModal('modal-dinamik');
 }
+// window.confirm / alert yerine: Mac uygulamasında (WKWebView) bu pencereler hiç açılmıyor, confirm hep false dönüyor.
+function onaySor(mesaj,opt){opt=opt||{};return new Promise(ok=>{
+  let el=document.getElementById('modal-onay-sor');if(!el){el=document.createElement('div');el.className='modal-ov';el.id='modal-onay-sor';document.body.appendChild(el);}
+  let bitti=false,izle=null;const son=v=>{if(bitti)return;bitti=true;if(izle)clearInterval(izle);closeModal('modal-onay-sor');ok(v);};
+  const tehlike=opt.tehlike!=null?opt.tehlike:/silin|kaldırıl|iptal|kapatıl|silmek|üzerine yaz/i.test(mesaj);
+  el.innerHTML=`<div class="modal" style="max-width:430px;"><div class="modal-handle"></div>
+    <div class="modal-body" style="text-align:center;padding-top:22px;">
+      <div style="font-size:34px;margin-bottom:8px;">${opt.ikon||(opt.tek?'ℹ️':'⚠️')}</div>
+      ${opt.baslik?`<div style="font-size:16px;font-weight:700;margin-bottom:8px;">${_esc(opt.baslik)}</div>`:''}
+      <div style="font-size:14px;color:var(--text2);white-space:pre-line;line-height:1.5;margin-bottom:18px;text-align:${String(mesaj).length>140?'left':'center'};">${_esc(mesaj)}</div>
+      <div style="display:flex;gap:8px;">${opt.tek?'':`<button class="btn btn-secondary" style="flex:1" data-o="0">${_esc(opt.hayir||'Vazgeç')}</button>`}<button class="btn ${tehlike&&!opt.tek?'btn-danger':'btn-primary'}" style="flex:1" data-o="1">${_esc(opt.evet||(opt.tek?'Tamam':'Evet'))}</button></div>
+    </div></div>`;
+  el.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>son(b.dataset.o==='1'));
+  openModal('modal-onay-sor');setTimeout(()=>{try{el.querySelector('[data-o="1"]').focus();}catch(e){}},80);
+  izle=setInterval(()=>{if(!el.classList.contains('open'))son(false);},400);
+});}
 // window.prompt yerine: Mac uygulamasında (WKWebView) prompt hiç açılmıyor, null dönüyor. Promise<string|null>
 function sorMetin(baslik,aciklama,varsayilan,opt){opt=opt||{};return new Promise(ok=>{
   let el=document.getElementById('modal-soru');if(!el){el=document.createElement('div');el.className='modal-ov';el.id='modal-soru';document.body.appendChild(el);}
@@ -21697,7 +21713,7 @@ async function saveFiyat(btn){
 
 async function deleteFiyat(id,e){
   e.stopPropagation();
-  if(!confirm('Bu fiyatı silmek istiyor musunuz?'))return;
+  if(!await onaySor('Bu fiyatı silmek istiyor musunuz?'))return;
   await sbFetch('fiyatlar?id=eq.'+id,{method:'DELETE'});
   await loadDB();renderFiyatlar();showToast('Silindi','amber');
 }
@@ -24140,7 +24156,7 @@ function showSablonDetay(id){
 }
 
 async function deleteSablon(id){
-  if(!confirm('Bu şablonu ve otomatik döngüyü silmek istediğinizden emin misiniz?'))return;
+  if(!await onaySor('Bu şablonu ve otomatik döngüyü silmek istediğinizden emin misiniz?'))return;
   await sbFetch('sablonlar?id=eq.'+id,{method:'DELETE'});
   await loadDB();renderSablonlar();showToast('Şablon silindi','amber');
 }
@@ -24562,7 +24578,7 @@ function tavsiyeDuzenleAc(){
 }
 
 async function deleteTavsiye(id){
-  if(!confirm('Bu tavsiyeyi silmek istediğinizden emin misiniz?'))return;
+  if(!await onaySor('Bu tavsiyeyi silmek istediğinizden emin misiniz?'))return;
   await eklerTopluSil('tavsiye',id);
   await sbFetch('tavsiyeler?id=eq.'+id,{method:'DELETE'});
   await loadDB();renderTavsiyeler();
