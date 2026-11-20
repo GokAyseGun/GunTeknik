@@ -20756,7 +20756,7 @@ function vlNorm(v){
   return {id:v.id,kisiId:v.kisi_id||null,tur:v.tur==='Otel'?'Otel':'Villa',ad:v.villa_adi||'',hizmetler:String(v.verilen_hizmetler||'').split(/\s*[,;\n]\s*/).map(x=>x.trim()).filter(Boolean),
     siklik:vlSiklikNorm(v.hizmet_dongusu,gunler),gunler,acilHak:parseInt(v.acil_cagri_hakki)||0,anlasma:v.anlasma_tipi||'degisken',tutar:parseFloat(v.odeme_tutari)||0,pb:v.odeme_para_birimi||'TRY',
     bas:String(v.odeme_periyot_bas||'1'),bit:String(v.odeme_periyot_bit||v.odeme_periyot_bas||'15'),baslangic:bas,zBaslangic:v.ziyaret_baslangic?String(v.ziyaret_baslangic).slice(0,10):bas,
-    saat:v.ziyaret_saat||'',adresId:v.adres_id||null,aktif:v.aktif!==false,not:v.notlar||'',createdAt:v.created_at};
+    saat:v.ziyaret_saat||'',adresId:v.adres_id||null,aktif:v.aktif!==false,not:v.notlar||'',createdAt:v.created_at,kapanis:v.hesap_kapanis?String(v.hesap_kapanis).slice(0,10):null};
 }
 function vlHarNorm(h){const n=x=>x==null?0:(parseFloat(x)||0);
   return {id:h.id,villaId:h.villa_id,tur:h.tur,tarih:String(h.tarih||'').slice(0,10),donem:h.donem,aciklama:h.aciklama||'',pb:h.para_birimi||'TRY',kur:h.kur!=null?parseFloat(h.kur):null,
@@ -20826,31 +20826,36 @@ function vlDurum(v){
     const aAl=vlTopla(tah,h=>vlTl(h,h.aylik)),eAl=vlTopla(tah,h=>vlTl(h,h.ekstra)),mAl=vlTopla(tah,h=>vlTl(h,h.malzeme));
     const eBorc=vlTopla(eks,h=>vlTl(h)),mBorc=vlTopla(har.filter(h=>h.yansit),h=>vlTl(h))+vlTopla(evo,o=>o.tl);
     const takipte=k>=ilk;const bek=vlBeklenen(v,aylikL);
+    const kapali=!!(v.kapanis&&takipte&&p.son<=v.kapanis);
     let aOdendi=aAl>0.5,aKalan=0;
-    if(v.anlasma==='sabit_tl'&&v.tutar>0){aOdendi=aAl>=v.tutar-1;aKalan=takipte?Math.max(0,v.tutar-aAl):0;}
+    if(kapali)aOdendi=true;
+    else if(v.anlasma==='sabit_tl'&&v.tutar>0){aOdendi=aAl>=v.tutar-1;aKalan=takipte?Math.max(0,v.tutar-aAl):0;}
     else if(v.anlasma==='sabit_doviz'&&v.tutar>0){const pbAl=vlTopla(tah.filter(h=>h.pb===v.pb),h=>h.aylik);aOdendi=pbAl>=v.tutar*0.98||(bek>0&&aAl>=bek*0.95);aKalan=takipte&&!aOdendi?Math.max(0,(bek||0)-aAl):0;}
     else aKalan=takipte&&!aOdendi?(bek||0):0;
     const eIn=eC,mIn=mC;eC=Math.max(0,eC+eBorc-eAl);mC=Math.max(0,mC+mBorc-mAl);
+    if(kapali){eC=0;mC=0;}
     if(aAl>0)aylikL.push(aAl);
-    const kalan=aKalan+eC+mC;const pesin=Math.max(0,eAl-eBorc-eIn)+Math.max(0,mAl-mBorc-mIn);
-    let durum;if(!takipte)durum=Hk.length||evo.length?'once':'yok';else if(kalan<=0.5)durum=p.son<bg||aAl>0||tah.length?'odendi':(p.bas>bg?'gelecek':'odendi');
+    const kalan=aKalan+eC+mC;const pesin=0;
+    let durum;if(!takipte)durum=Hk.length||evo.length?'once':'yok';else if(kapali)durum='odendi';else if(kalan<=0.5)durum=p.son<bg||aAl>0||tah.length?'odendi':(p.bas>bg?'gelecek':'odendi');
     else durum=p.son<bg?'gecikti':p.bas<=bg?'donem':'gelecek';
-    D.push({k,ad:p.ad,bas:p.bas,son:p.son,takipte,tah,eks,har,evo,aAl,eAl,mAl,eBorc,mBorc,eIn,mIn,eOut:eC,mOut:mC,bek,aOdendi,aKalan,kalan,pesin,durum,bekOrt:v.anlasma==='degisken'||(v.anlasma==='sabit_doviz'&&!VL.kur[v.pb])});
+    D.push({k,ad:p.ad,bas:p.bas,son:p.son,takipte,tah,eks,har,evo,aAl,eAl,mAl,eBorc,mBorc,eIn,mIn,eOut:eC,mOut:mC,bek,aOdendi,aKalan,kalan,pesin,durum,kapandi:kapali,bekOrt:v.anlasma==='degisken'||(v.anlasma==='sabit_doviz'&&!VL.kur[v.pb])});
   }
-  // sonradan kapanan borçlar: ileride ekstra/harcama devri sıfırlandıysa o dönem "sonra ödendi" sayılır
-  let eSifir=false,mSifir=false;
-  for(let i=D.length-1;i>=0;i--){const p=D[i];if(p.durum==='gecikti'&&p.aKalan<=0.5&&(p.eOut<=0.5||eSifir)&&(p.mOut<=0.5||mSifir)){p.durum='odendi';p.sonra=true;}if(p.eOut<=0.5)eSifir=true;if(p.mOut<=0.5)mSifir=true;}
+  // ekstra/harcama ödemeleri hangi döneme girilmiş olursa olsun önce en eski borcu kapatır (FIFO):
+  // bir dönemin bugün kalan borcu = o dönemin devri − sonraki dönemlerde alınan ekstra/malzeme
+  let se=0,sm=0;
+  for(let i=D.length-1;i>=0;i--){const p=D[i];p.eSimdi=Math.max(0,p.eOut-se);p.mSimdi=Math.max(0,p.mOut-sm);se+=p.eAl;sm+=p.mAl;
+    if(p.durum==='gecikti'&&p.aKalan<=0.5&&p.eSimdi<=0.5&&p.mSimdi<=0.5){p.durum='odendi';p.sonra=true;}}
   const gecen=D.filter(p=>p.takipte&&p.son<bg);const sonGecen=gecen[gecen.length-1]||null;
   const gecAylik=gecen.filter(p=>p.aKalan>0.5);
-  const gecTutar=vlTopla(gecAylik,p=>p.aKalan)+(sonGecen?sonGecen.eOut+sonGecen.mOut:0);
+  const gecTutar=vlTopla(gecAylik,p=>p.aKalan)+(sonGecen?sonGecen.eSimdi+sonGecen.mSimdi:0);
   const gecikmis=gecen.filter(p=>p.durum==='gecikti');
-  const enEski=gecAylik.length?gecAylik[0]:(sonGecen&&(sonGecen.eOut+sonGecen.mOut)>0.5?(gecen.find(p=>p.eOut+p.mOut>0.5)||sonGecen):null);
+  const enEski=gecen.find(p=>p.aKalan>0.5||p.eSimdi+p.mSimdi>0.5)||null;
   const simdiki=D.find(p=>p.takipte&&p.bas<=bg&&bg<=p.son)||null;
   const sonraki=D.find(p=>p.takipte&&p.son>=bg&&p.kalan>0.5)||D.find(p=>p.takipte&&p.bas>bg)||null;
   const ort=vlOrtalama(aylikL);const ortTum=aylikL.length?Math.round(aylikL.reduce((a,b)=>a+b,0)/aylikL.length):null;
   let renk='yesil',metin='',alt='';
   if(!v.aktif){renk='pasif';metin='Pasif';}
-  else if(gecTutar>0.5){renk='kirmizi';metin=(gecikmis.length===1?gecikmis[0].ad+' ödemesi gelmedi':gecikmis.length+' dönem ödenmedi');alt='Son ödeme günü geçti · '+evTarih((enEski||gecikmis[0]||{}).son)+' · ≈ '+fmt(gecTutar);}
+  else if(gecTutar>0.5){renk='kirmizi';metin=gecikmis.length===1?gecikmis[0].ad+' ödemesi gelmedi':gecikmis.length>1?gecikmis.length+' dönem ödenmedi':'Ödenmemiş ekstra / harcama var';alt='Son ödeme günü geçti · '+evTarih((enEski||gecikmis[0]||{}).son)+' · ≈ '+fmt(gecTutar);}
   else if(simdiki&&simdiki.kalan>0.5){renk='sari';const kg=evGunFark(bg,simdiki.son);metin=kg===0?'Bugün son ödeme günü!':'Ödeme dönemi · '+kg+' gün kaldı';alt=simdiki.ad+' · son gün '+evTarih(simdiki.son)+' · ≈ '+fmt(simdiki.kalan);}
   else{const p=simdiki||sonraki;metin=simdiki?'Bu dönem ödendi':'Ödeme dönemi dışında';alt=sonraki?'Sonraki: '+sonraki.ad+' · '+evKisa(sonraki.bas)+' – '+evKisa(sonraki.son)+(sonraki.kalan>0.5?' · ≈ '+fmt(sonraki.kalan):''):'';}
   const R={v,donemler:D,gecikmis,gecTutar,enEski,simdiki,sonraki,ort,ortTum,renk,metin,alt,H};
@@ -21080,16 +21085,18 @@ function vlGrafikHtml(v,R){
 function vlDonemAc(k){VL.acik[k]=!VL.acik[k];vlDetayCiz();}
 function vlDonemKartHtml(v,p,kompakt){
   const bekM=p.aAl>0?`<b class="num">${fmt(p.aAl)}</b> <small>alındı${p.aOdendi?' ✓':''}</small>`:(p.bek?`<b class="num">≈ ${fmt(p.bek)}</b> <small>${p.takipte?'bekleniyor':''}${p.bekOrt?' · ort. tahmin':''}</small>`:'<small>tutar girilmemiş</small>');
-  const hat=(ad,inn,borc,al,out)=>{if(!(inn>0.5||borc>0.5||al>0.5))return '';
+  const gecti=p.son<localToday();
+  const hat=(ad,inn,borc,al,out,simdi)=>{if(!(inn>0.5||borc>0.5||al>0.5))return '';
     const parca=[inn>0.5?'devreden '+fmt(inn):'',borc>0.5?'bu dönem '+fmt(borc):'',al>0.5?'alınan '+fmt(al):''].filter(Boolean).join(' · ');
-    return `<div class="vl-ds"><span>${ad}<small>${parca}</small></span><b class="num${out>0.5?'':' ok'}">${out>0.5?fmt(out):'✓'}</b></div>`;};
+    const k=gecti&&simdi!=null?simdi:out;
+    return `<div class="vl-ds"><span>${ad}<small>${parca}</small></span><b class="num${k>0.5?'':' ok'}">${k>0.5?fmt(k):(out>0.5?'✓ sonra ödendi':'✓')}</b></div>`;};
   const icerik=`<div class="vl-ds"><span>Aylık ücret<small>${_esc(vlBekMetin(v))}</small></span><span class="vl-ds-s">${bekM}</span></div>`+
-    hat('Ekstra işler',p.eIn,p.eBorc,p.eAl,p.eOut)+hat('Harcamalar <small>(müşteriye yansıyan)</small>',p.mIn,p.mBorc,p.mAl,p.mOut)+
+    hat('Ekstra işler',p.eIn,p.eBorc,p.eAl,p.eOut,p.eSimdi)+hat('Harcamalar <small>(müşteriye yansıyan)</small>',p.mIn,p.mBorc,p.mAl,p.mOut,p.mSimdi)+
     `<div class="vl-ds top"><span>${p.durum==='gecikti'?'Ödenmemiş':p.k<localToday().slice(0,7)?'Kalan':'Ödenecek'}</span><b class="num">${p.sonra?'✓ Sonra ödendi':p.kalan>0.5?(p.aKalan>0.5&&p.bekOrt&&!p.aAl?'≈ ':'')+fmt(p.kalan):'✓ Ödendi'}</b></div>`+
-    (p.pesin>0.5?`<div class="gf-ipucu" style="margin:4px 0 0">Bu dönemde fazla/peşin tahsil: ${fmt(p.pesin)} (sonraki aylara devretmez)</div>`:'');
+''; 
   const acik=!kompakt&&VL.acik[p.k];
   return `<div class="vl-donem d-${p.durum}">
-    <div class="vl-donem-u"${kompakt?'':` onclick="vlDonemAc('${p.k}')"`}><div><b>${_esc(p.ad)}</b> <span class="vl-rozet d-${p.durum}">${p.sonra?'✓ Sonra ödendi':VL_DURUM_AD[p.durum]||''}</span></div><small>ödeme ${evKisa(p.bas)} – ${evKisa(p.son)}${kompakt?'':(acik?' ▴':' ▾')}</small></div>
+    <div class="vl-donem-u"${kompakt?'':` onclick="vlDonemAc('${p.k}')"`}><div><b>${_esc(p.ad)}</b> <span class="vl-rozet d-${p.durum}">${p.kapandi?'✓ Kapatıldı':p.sonra?'✓ Sonra ödendi':VL_DURUM_AD[p.durum]||''}</span></div><small>ödeme ${evKisa(p.bas)} – ${evKisa(p.son)}${kompakt?'':(acik?' ▴':' ▾')}</small></div>
     ${icerik}
     ${acik?vlDonemKalemleri(v,p):''}
     <div class="vl-donem-e">${p.takipte&&p.durum!=='odendi'||p.kalan>0.5?`<button class="ev-ode kucuk" onclick="vlHarAc(${v.id},'tahsilat',null,'${p.k}')">💳 Ödeme al</button>`:''}<button class="isf-chip" onclick="VL.rapor.donem='${p.k}';vlAc(${v.id},'rapor')">📄 Rapor</button>${kompakt?`<button class="isf-chip" onclick="vlSekme('donem')">Tüm dönemler</button>`:''}</div>
@@ -21106,11 +21113,17 @@ function vlDonemlerHtml(v,R){
   D=D.slice().reverse();
   const tum=VL.tumDonem;const goster=tum?D:D.slice(0,8);
   return `<div class="gf-ipucu" style="margin-top:0">${_esc(vlPencereMetin(v))} · aylık ücret dönemine, ekstra işler ve harcamalar ödenene kadar sonraki döneme devreder. Başlığa dokununca dönemin kayıtları açılır.</div>`+
+    (v.kapanis?`<div class="gf-ipucu">📌 Son ödeme günü ${evTarih(v.kapanis)} ve öncesinde olan dönemler kapatıldı (ödenmiş sayılır). <a href="#" onclick="event.preventDefault();vlKapanis(${v.id},null)">Geri al</a> · <a href="#" onclick="event.preventDefault();vlKapanis(${v.id},localToday())">Bugüne taşı</a></div>`
+      :`<div class="gf-ipucu"><a href="#" onclick="event.preventDefault();vlKapanis(${v.id},localToday())">🧹 Bugüne kadarki dönemleri kapat</a> — geçmişte başka şekilde ödenmiş ama burada açık görünen tutarları sıfırlar; kayıtlara dokunmaz.</div>`)+
     goster.map(p=>vlDonemKartHtml(v,p,false)).join('')+
     (D.length>goster.length?`<button class="btn btn-secondary btn-full" onclick="VL.tumDonem=true;vlDetayCiz()">Daha eski ${D.length-goster.length} dönem</button>`:'')+
     `<button class="btn btn-secondary btn-full" style="margin-top:6px" onclick="vlHarAc(${v.id},'tahsilat',null,'${vlAyEkle(D.length?D[D.length-1].k:bg.slice(0,7),-1)}')">＋ Daha eski bir aya ödeme gir</button>`;
 }
 
+async function vlKapanis(id,tarih){const v=vlBul(id);if(!v)return;
+  if(tarih&&!(await onaySor('Son ödeme günü '+evTarih(tarih)+' ve öncesinde olan dönemler ödenmiş sayılacak; devreden ekstra/harcama borcu sıfırlanacak. Ödeme ve harcama kayıtlarına dokunulmaz.',{ikon:'🧹',baslik:'Geçmiş dönemleri kapat',evet:'Kapat',tehlike:false})))return;
+  try{await sbFetch('villa_oteller?id=eq.'+id,{method:'PATCH',body:JSON.stringify({hesap_kapanis:tarih||null})});await loadDB({sessiz:true});vlYenile();showToast(tarih?'Geçmiş dönemler kapatıldı':'Kapatma geri alındı','green');}
+  catch(e){showToast('Kaydedilemedi: '+String(e.message||e).slice(0,70),'red');}}
 // ---------- hareket listesi
 function vlHarIk(h){return h.tur==='tahsilat'?'💶':h.tur==='ekstra'?'🛠️':'🧾';}
 function vlHarBaslik(h){if(h.aciklama)return h.aciklama;return h.tur==='tahsilat'?'Ödeme alındı':h.tur==='ekstra'?'Ekstra iş':'Harcama';}
