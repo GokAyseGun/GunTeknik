@@ -4639,10 +4639,40 @@ const SB_URL='https://zfflnrerdevnflchscqe.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZmxucmVyZGV2bmZsY2hzY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzQ3MjUsImV4cCI6MjA5NjQxMDcyNX0.uby8MidaKpnsceel5E_zTJm3LTYwoMrbKUryr5ZszcI';
 let SB_TOKEN=null,SB_REFRESH_TOKEN=null,CURRENT_USER=null,USER_ROL='goruntule';
 
-async function sbFetch(path,opts={},_retry=false){
+// Ağ dayanıklılığı: Safari / Mac uygulaması (WKWebView) boşta kalıp sunucunun kapattığı bağlantıda gönderilen
+// POST'u "Load failed" ile düşürür (GET'leri kendisi tekrar dener). Yazmadan önce bağlantı ısıtılır; ağ hatasında
+// GET/PATCH/DELETE bir kez tekrar denenir. POST yalnız istek_id'li tablolarda tekrar denenir (tekil anahtar
+// sayesinde aynı kayıt iki kez yazılamaz; ilk deneme aslında yazıldıysa o kayıt döner).
+var _sbSonAg=0;
+var SB_ISTEK_TABLO=new Set(['islemler','villa_hareketler','villa_ziyaretler']);
+function sbAgHatasi(e){return !!e&&(e.name==='TypeError'||/load failed|failed to fetch|networkerror|network connection|ağ bağlantısı/i.test(String(e.message||e)));}
+function sbAgMesaj(e){return sbAgHatasi(e)?new Error('Bağlantı koptu, kayıt sunucuya ulaşmadı. Tekrar dene.'):e;}
+function sbIstekId(){try{const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2,12);}}
+async function sbIsit(){if(Date.now()-_sbSonAg<20000)return;let t=null;
+  try{const c=typeof AbortController!=='undefined'?new AbortController():null;if(c)t=setTimeout(()=>c.abort(),4000);
+    await fetch(SB_URL+'/auth/v1/health',{headers:{'apikey':SB_KEY},cache:'no-store',...(c?{signal:c.signal}:{})});_sbSonAg=Date.now();}catch(e){}finally{if(t)clearTimeout(t);}}
+async function sbFetch(path,opts={},_retry=false,_ag=false){
+  const yontem=opts.method||'GET';const tablo=String(path).split('?')[0];
+  if(yontem==='POST'&&!opts.istekId&&SB_ISTEK_TABLO.has(tablo)&&typeof opts.body==='string'){
+    try{const g=JSON.parse(opts.body);const L=Array.isArray(g)?g:[g];const taban=sbIstekId();let n=0;
+      L.forEach((r,i)=>{if(r&&typeof r==='object'&&!r.istek_id){r.istek_id=i?taban+'-'+i:taban;n++;}});
+      if(n)opts=Object.assign({},opts,{body:JSON.stringify(g),istekId:taban});}catch(e){}}
+  if(yontem!=='GET'&&!_ag)await sbIsit();
   const h={'apikey':SB_KEY,'Content-Type':'application/json',...(opts.prefer?{'Prefer':opts.prefer}:{}),...(opts.headers||{})};
   h['Authorization']=SB_TOKEN?('Bearer '+SB_TOKEN):('Bearer '+SB_KEY);
-  const res=await fetch(SB_URL+'/rest/v1/'+path,{method:opts.method||'GET',headers:h,...(opts.body?{body:opts.body}:{})});
+  let res;
+  try{res=await fetch(SB_URL+'/rest/v1/'+path,{method:yontem,headers:h,...(opts.body?{body:opts.body}:{})});}
+  catch(e){
+    if(_ag||!sbAgHatasi(e)||(yontem==='POST'&&!opts.istekId))throw sbAgMesaj(e);
+    console.warn('sbFetch ağ hatası, tekrar deneniyor:',yontem,tablo,e&&e.message);
+    await new Promise(r=>setTimeout(r,900));_sbSonAg=0;if(yontem!=='GET')await sbIsit();
+    try{return await sbFetch(path,opts,_retry,true);}
+    catch(e2){
+      if(yontem==='POST'&&opts.istekId&&/23505|duplicate key|istek_id/i.test(String(e2&&e2.message))){
+        const r=await sbFetch(tablo+'?istek_id=like.'+encodeURIComponent(opts.istekId)+'*&select=*&order=id.asc',{},false,true);if(Array.isArray(r)&&r.length)return r;}
+      throw e2;}
+  }
+  _sbSonAg=Date.now();
   if(res.status===401&&!_retry){const ok=await tryRefreshToken();if(ok)return sbFetch(path,opts,true);showAuthScreen();return null;}
   if(!res.ok){const e=await res.text();console.error('sbFetch:',res.status,path,e);throw new Error(e||'HTTP '+res.status);}
   if((opts.method||'GET')!=='GET'&&!/^rpc\/(widget_|push_|cihaz_|bet_)/.test(path)){try{widgetYazGecikmeli();}catch(e){}}
@@ -21344,7 +21374,7 @@ async function vlHarKaydet(btn){
   if(P.tur==='ekstra'){satir.aktarim='kayit';satir.islem_id=null;}
   else if(P.aktarim==='kayit'){satir.aktarim='kayit';satir.islem_id=null;}
   else if(P.aktarim==='bagla'){satir.aktarim='bagla';satir.islem_id=parseInt(P.bagliId);}
-  if(btn)btn.disabled=true;let mesaj=P.id?'Güncellendi':'Kaydedildi';
+  if(btn){btn.disabled=true;btn.dataset.yazi=btn.dataset.yazi||btn.textContent;btn.textContent='⏳ Kaydediliyor…';}let mesaj=P.id?'Güncellendi':'Kaydedildi';
   try{
     let id=P.id;
     if(P.id)await sbFetch('villa_hareketler?id=eq.'+P.id,{method:'PATCH',body:JSON.stringify(satir)});
@@ -21361,8 +21391,8 @@ async function vlHarKaydet(btn){
     }catch(err){console.error('villa→ERP',err);showToast('⚠️ Villa kaydı tamam ama ERP işlemi yazılamadı: '+String(err.message||err).slice(0,60),'red');mesaj='';}
     if(P.dosyalar.length&&id){const h=await evDosyaYukle(P.dosyalar,'villa_hareket',id);if(h)showToast(h+' dosya yüklenemedi','amber');}
     await loadDB({sessiz:true});closeModal('modal-vl-har');if(mesaj)showToast(mesaj,'green');vlYenile();
-  }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,70),'red');}
-  finally{if(btn)setTimeout(()=>btn.disabled=false,600);}
+  }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,90),'red');}
+  finally{if(btn){btn.textContent=btn.dataset.yazi||'Kaydet';setTimeout(()=>btn.disabled=false,600);}}
 }
 function vlHarSil(id){
   const h=(DB.vlHareket||[]).find(x=>String(x.id)===String(id));if(!h)return;const i=h.islemId?(DB.islemler||[]).find(x=>String(x.id)===String(h.islemId)):null;
@@ -21454,9 +21484,9 @@ function vlZyPersonel(id){const L=VL.zy.personel;const i=L.indexOf(String(id));i
 function vlZyDosya(){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=()=>{VL.zy.dosyalar.push(...inp.files);vlZyCiz();};inp.click();}
 async function vlZyKaydet(btn){
   const Z=VL.zy;const v=vlBul(Z.villaId);if(!Z.tarih){showToast('Tarih gir','red');return;}
-  if((Z.serbest||'').trim())vlZySerbest();
+  if((Z.serbest||'').trim())vlZySerbest();const _y=btn?btn.textContent:'';
   const satir={villa_id:Z.villaId,tarih:Z.tarih,tip:Z.tip,durum:Z.durum,saat:Z.saat||null,yapilanlar:Z.durum==='yapildi'?Z.yapilanlar.join('\n'):'',personel_ids:Z.durum==='yapildi'?Z.personel.map(x=>isNaN(+x)?x:+x):[],sure_dk:parseInt(Z.sure)||null,notlar:Z.not||''};
-  if(btn)btn.disabled=true;
+  if(btn){btn.disabled=true;btn.textContent='⏳ Kaydediliyor…';}
   try{
     let id=Z.id;
     if(!id&&Z.tip==='plan'){const var_=vlZiyaretleri(Z.villaId).find(x=>x.tip==='plan'&&x.tarih===Z.tarih);if(var_)id=var_.id;}
@@ -21470,7 +21500,7 @@ async function vlZyKaydet(btn){
       if(await onaySor('Bu ayki acil çağrı hakkı ('+v.acilHak+') aşıldı. Bu çağrı için ekstra ücret eklensin mi?',{ikon:'🚨',evet:'Ekstra iş ekle',hayir:'Hayır'})){
         vlHarAc(v.id,'ekstra');VL.har.tarih=Z.tarih;VL.har.donem=vlTarihDonem(v,Z.tarih);VL.har.aciklama='Acil çağrı ('+gfTrTarih(Z.tarih).slice(0,5)+')';vlHarCiz();}}
   }catch(err){console.error(err);showToast('Kaydedilemedi: '+String(err.message||err).slice(0,70),'red');}
-  finally{if(btn)setTimeout(()=>btn.disabled=false,600);}
+  finally{if(btn){btn.textContent=_y||'Kaydet';setTimeout(()=>btn.disabled=false,600);}}
 }
 async function vlZySil(id){
   if(!(await onaySor('Bu ziyaret kaydı ve fotoğrafları silinsin mi? Planlı bir günse takvimde tekrar "planlı" görünür.')))return;
