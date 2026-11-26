@@ -977,6 +977,7 @@ async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyo
   catch(e){console.warn('Health Connect',e);S.hcMesaj='Eşitlenemedi: '+String(e.message||e).slice(0,90);if(!sessiz)toast(S.hcMesaj,'red');hcKartGuncelle();}
   finally{HC.calisiyor=false;}}
 S.hcEsitle=(g)=>hcEsitle(g||(hcSon()?14:60));
+S.hcGecmis=()=>{if(!confirm('Saatin ve Foodvisor\'ın son 1 yıllık verisi yüklensin mi? Birkaç dakika sürebilir; bu sırada uygulamayı kapatma.'))return;toast('📥 1 yıllık veri okunuyor…','blue');hcEsitle(365);};
 S.hcBagla=async()=>{if(!hcVar()){toast('Bu bağlantı Android uygulamasında çalışır','amber');return;}
   try{const d=await andYerel('saglikIzin');HC.durum=d;if(d.sdk!==2){toast(d.sdk===1?'Health Connect güncellenmeli: Play Store açıldı':'Health Connect yüklü değil: Play Store açıldı','amber');hcKartGuncelle();return;}
     if(!(d.izinler||[]).length){toast('İzin verilmedi','amber');hcKartGuncelle();return;}await hcEsitle(hcSon()?14:60);}
@@ -987,7 +988,7 @@ function hcKartHtml(){if(!hcVar())return `<div class="sg-alt">Mi Fitness (saat) 
   if(d.eski)return `<div class="sg-alt">Uygulamanın yeni sürümü gerekiyor. Güncelleme gelince burada "Bağlan" çıkacak.</div>`;
   if(d.sdk===0||d.sdk===1)return `<div class="sg-alt">Health Connect ${d.sdk===1?'güncellenmeli':'telefonda yok'}.</div><div class="sg-dug"><button onclick="SGL.hcBagla()">Play Store'da aç</button></div>`;
   if(!hcBagli())return `<div class="sg-alt">Mi Fitness ve Foodvisor'da Health Connect paylaşımını aç, sonra buradan izin ver.</div><div class="sg-dug"><button class="on" onclick="SGL.hcBagla()">⌚ Bağlan</button></div>`;
-  return `<div class="sg-alt">● Bağlı · ${(d.izinler||[]).length} veri türü${d.tam?'':' (bazı izinler kapalı)'}<br>${esc(S.hcMesaj||(hcSon()?'Son eşitleme: '+trT(zGun(hcSon()))+' '+saat(hcSon()):'Henüz eşitlenmedi'))}</div><div class="sg-dug"><button onclick="SGL.hcEsitle()" ${HC.calisiyor?'disabled':''}>🔄 Şimdi eşitle</button>${d.tam?'':'<button onclick="SGL.hcBagla()">İzinleri düzenle</button>'}</div>`;}
+  return `<div class="sg-alt">● Bağlı · ${(d.izinler||[]).length} veri türü${d.tam?'':' (bazı izinler kapalı)'}<br>${esc(S.hcMesaj||(hcSon()?'Son eşitleme: '+trT(zGun(hcSon()))+' '+saat(hcSon()):'Henüz eşitlenmedi'))}</div><div class="sg-dug"><button onclick="SGL.hcEsitle()" ${HC.calisiyor?'disabled':''}>🔄 Şimdi eşitle</button><button onclick="SGL.hcGecmis()" ${HC.calisiyor?'disabled':''}>📥 Geçmişi yükle (1 yıl)</button>${d.tam?'':'<button onclick="SGL.hcBagla()">İzinleri düzenle</button>'}</div>`;}
 function hcKartGuncelle(){const el=document.getElementById('sg-hc');if(el)el.innerHTML=hcKartHtml();}
 // ───────────────────────────────────────── Strava (yürüyüş, koşu, bisiklet, trekking: rota, irtifa, nabız)
 // Jetonlar ve anahtarlar sunucuda (strava fonksiyonu); sayfa yalnız fonksiyonu çağırır.
