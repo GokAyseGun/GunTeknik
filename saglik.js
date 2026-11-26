@@ -287,6 +287,10 @@ function stilEkle(){if(document.getElementById('sg-stil'))return;const st=docume
 .sg-buyuk{font:700 26px var(--fd);color:var(--text);line-height:1.05}.sg-buyuk small{font:500 12px var(--fu);color:var(--text3);margin-left:3px}
 .sg-alt{font-size:12px;color:var(--text2);line-height:1.35}
 .sg-dug{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.sg-harita{height:230px;border-radius:var(--r-md);overflow:hidden;background:var(--surface2);border:1px solid var(--border);z-index:0}.sg-harita .leaflet-control-attribution{font-size:9px;background:rgba(0,0,0,.45);color:#bbb}.sg-harita .leaflet-control-attribution a{color:#ddd}
+.sg-istat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.sg-istat div{background:var(--surface2);border-radius:10px;padding:8px}.sg-istat small{display:block;font-size:10.5px;color:var(--text3)}.sg-istat b{font:700 15px var(--fd);color:var(--text)}
+.sg-tik{cursor:pointer}.sg-strava{font-size:10px;color:#FC4C02;margin-top:6px;font-weight:600}.sg-strava-a{color:#FC4C02!important;border-color:#FC4C02!important;text-decoration:none}.sg-st-alt{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.sg-nok{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px 0 6px}.sg-prof{touch-action:pan-y}
 .sg-dug button,.sg-btn{border:1px solid var(--border2);background:var(--surface2);color:var(--text);border-radius:999px;padding:6px 11px;font:600 12px var(--fu);cursor:pointer}
 .sg-dug button.on,.sg-btn.on{background:var(--green-lt);border-color:var(--green);color:var(--green)}
 .sg-dug button.kirmizi{border-color:var(--red);color:var(--red);background:var(--red-lt)}
@@ -349,7 +353,7 @@ async function ciz(){
   let govde='';try{govde=ic();}catch(e){console.error('sağlık çizim',e);govde='<div class="sg-bos">Bu bölüm çizilemedi: '+esc(e.message)+'</div>';}
   const kaydir=el.querySelector('.sg-sekmeler')?.scrollLeft||0;
   el.innerHTML=`<div class="sg-ust"><div class="sg-sekmeler">${SEKMELER.map(([k,a])=>`<button class="${S.sekme===k?'on':''}" onclick="SGL.git('${k}')">${a}</button>`).join('')}</div><button class="sg-arti" onclick="SGL.hizliMenu()" aria-label="Hızlı kayıt">＋</button></div><div class="sg-ic">${govde}</div>`;
-  grBagla(el);
+  grBagla(el);if(S.sekme==='aktivite'&&S._haritaA)haritaCiz('sg-harita',S._haritaA);
   const gs=el.querySelector('#sg-gunler');if(gs){const on=gs.querySelector('.on');gs.scrollLeft=on?on.offsetLeft-gs.clientWidth+on.offsetWidth+40:gs.scrollWidth;}
   const sk=el.querySelector('.sg-sekmeler');if(sk){sk.scrollLeft=kaydir;const on=sk.querySelector('.on');if(on&&(on.offsetLeft<sk.scrollLeft||on.offsetLeft+on.offsetWidth>sk.scrollLeft+sk.clientWidth))sk.scrollLeft=on.offsetLeft-20;}
 }
@@ -363,7 +367,7 @@ function ozetHtml(){
     return `<div class="sg-bolum"><h4>Ana sayfayı düzenle <button class="sg-btn ana" onclick="SGL.duzenleBitir()">Bitti</button></h4><div class="sg-not" style="margin-bottom:6px">Göz ile paneli aç/kapat, oklarla sırala.</div>${sira.map((p,i)=>{const on=A.paneller.includes(p);
       return `<div class="sg-duz ${on?'':'kapali'}"><button onclick="SGL.panelGoster('${p}')">${on?'👁':'○'}</button><span class="ad">${esc(PANELLER[p].ad)}</span>${on?`<button onclick="SGL.panelTasi('${p}',-1)">↑</button><button onclick="SGL.panelTasi('${p}',1)">↓</button>`:''}</div>`;}).join('')}</div>`;}
   const kartlar=A.paneller.map(p=>{try{return panelHtml(p);}catch(e){console.warn('panel',p,e);return '';}}).join('');
-  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div><div class="sg-bolum"><h4>⌚ Saat ve Foodvisor <small>Health Connect</small></h4><div id="sg-hc">${hcKartHtml()}</div></div>`;
+  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div><div class="sg-bolum"><h4>⌚ Saat ve Foodvisor <small>Health Connect</small></h4><div id="sg-hc">${hcKartHtml()}</div></div><div class="sg-bolum"><h4>🗺️ Strava <small>yürüyüş, koşu, bisiklet, trekking</small></h4><div id="sg-st">${stKartHtml()}</div></div>`;
 }
 S.duzenleAc=()=>{S.duzenle=true;ciz();};S.duzenleBitir=()=>{S.duzenle=false;ciz();};
 S.panelGoster=async p=>{const A=ayar();let L=A.paneller.slice();if(L.includes(p))L=L.filter(x=>x!==p);else L.push(p);S.v.ayar={veri:Object.assign({},(S.v.ayar||{}).veri,{paneller:L})};ciz();try{await ayarKaydet({paneller:L});}catch(e){toast('Kaydedilemedi','red');}};
@@ -429,16 +433,17 @@ function aktiviteHtml(){
   const adim=kovaTop(adimG);const dolu=adim.filter(x=>x>0);
   h+=`<div class="sg-bolum"><h4>👣 Adım <small>${dolu.length?'ort. '+n1(ort(dolu),0)+' / gün':''}</small></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Adım',renk:(v)=>v>=H.adim?'var(--green)':'var(--cy)',v:adim}],hedef:{v:H.adim,ad:n1(H.adim,0)},bos:'Adım verisi saat bağlanınca gelir; şimdilik elle girebilirsin.'})}</div>`;
   const L=aktiviteler();const ab=gEkle(bugun(),-(S.aralik-1));const LA=L.filter(a=>zGun(a.baslangic)>=ab);
+  if(!(ST.durum&&ST.durum.bagli))h+=`<div class="sg-bolum"><h4>🗺️ Strava</h4><div id="sg-st">${stKartHtml()}</div></div>`;
   // haftalık km, spor türüne göre
   const hk=[];let hb=haftaBas(ab);while(hb<=bugun()){hk.push(hb);hb=gEkle(hb,7);}
   const kmSeri=DIS_TURLER.map(t=>({ad:TUR_AD[t].replace(/^\S+\s/,''),renk:TUR_RENK[t],v:hk.map(b=>top(LA.filter(a=>a.tur===t&&zGun(a.baslangic)>=b&&zGun(a.baslangic)<=gEkle(b,6)).map(a=>(a.mesafe_m||0)/1000)))})).filter(s=>s.v.some(x=>x>0));
   h+=`<div class="sg-bolum"><h4>🗺️ Haftalık km <small>spor türüne göre</small></h4>${grafikCubuk({etiket:hk.map(trK),seriler:kmSeri.length?kmSeri:[{renk:'var(--cy)',v:hk.map(()=>0)}],bos:'Bu aralıkta dış aktivite yok.'})}</div>`;
   // gün seçici + o günün aktiviteleri
   const G=gunler(21);if(!S.gun)S.gun=bugun();
-  const gunAkt=L.filter(a=>zGun(a.baslangic)===S.gun);
+  const gunAkt=L.filter(a=>zGun(a.baslangic)===S.gun);S._haritaA=gunAkt.some(a=>a.rota)?gunAkt:null;
   h+=`<div class="sg-bolum"><h4>📅 Gün gün <button class="sg-btn" onclick="SGL.aktiviteAc()">＋ Aktivite</button></h4><div class="sg-gunler" id="sg-gunler">${G.map(g=>`<button class="${S.gun===g?'on':''}" onclick="SGL.gunSec('${g}')">${trGun(g)}<b>${Number(g.slice(8))}</b><i class="${L.some(a=>zGun(a.baslangic)===g)?'var':''}"></i></button>`).join('')}</div>
-    <div style="margin-top:8px">${gunAkt.length?gunAkt.map(aktiviteKart).join(''):`<div class="sg-bos">${trT(S.gun)} için aktivite yok.${adimG(S.gun)?' Adım: '+n1(adimG(S.gun),0):''}</div>`}</div>
-    <div class="sg-not">🗺️ Strava bağlandığında yürüyüş, koşu, bisiklet ve trekking rotaları burada harita üzerinde, irtifa ve nabız profiliyle görünecek.</div></div>`;
+    ${S._haritaA?'<div id="sg-harita" class="sg-harita" style="margin-top:8px"></div>':''}<div style="margin-top:8px">${gunAkt.length?gunAkt.map(aktiviteKart).join(''):`<div class="sg-bos">${trT(S.gun)} için aktivite yok.${adimG(S.gun)?' Adım: '+n1(adimG(S.gun),0):''}</div>`}</div>
+    <div class="sg-not">${ST.durum&&ST.durum.bagli?'Aktiviteye dokun: harita, irtifa ve nabız profili.':'🗺️ Strava bağlandığında rotalar burada harita üzerinde, irtifa ve nabız profiliyle görünür.'}</div>${ST.durum&&ST.durum.bagli?`<div id="sg-st" class="sg-st-alt">${stKartHtml()}</div>`:''}</div>`;
   // tempo gelişimi
   const tempo=t=>LA.filter(a=>a.tur===t&&a.mesafe_m>500&&a.sure_sn).map(a=>[new Date(a.baslangic).getTime(),(a.hareket_sn||a.sure_sn)/60/(a.mesafe_m/1000)]);
   const ts=[{ad:'Yürüyüş (dk/km)',renk:TUR_RENK.yuruyus,n:tempo('yuruyus')},{ad:'Koşu (dk/km)',renk:TUR_RENK.kosu,n:tempo('kosu')}].filter(s=>s.n.length);
@@ -460,7 +465,7 @@ function aktiviteHtml(){
 }
 function sureYaz(sn){sn=Math.round(sn);const s=Math.floor(sn/3600),d=Math.floor(sn%3600/60),k=sn%60;return (s?s+' sa ':'')+d+' dk'+(s?'':' '+pad(k)+' sn');}
 function aktiviteKart(a){const km=a.mesafe_m?a.mesafe_m/1000:null;const tempo=km&&a.sure_sn?a.sure_sn/60/km:null;const atk=(S.v.atak||[]).filter(x=>x.aktivite_id===a.id);
-  return `<div class="sg-sat"><div class="ana"><b>${TUR_AD[a.tur]||a.tur}</b> ${a.ad?'· '+esc(a.ad):''} <span class="sg-ek">${saat(a.baslangic)} · ${esc(a.kaynak)}</span>
+  return `<div class="sg-sat"><div class="ana sg-tik" onclick="SGL.aktiviteDetay(${a.id})"><b>${TUR_AD[a.tur]||a.tur}</b>${a.rota?' <span class="sg-ek">🗺️</span>':''} ${a.ad?'· '+esc(a.ad):''} <span class="sg-ek">${saat(a.baslangic)} · ${esc(a.kaynak)}</span>
     <small>${[km?n1(km,2)+' km':'',a.sure_sn?sureYaz(a.sure_sn):'',tempo&&a.tur!=='bisiklet'?n1(tempo,1)+' dk/km':'',km&&a.sure_sn&&a.tur==='bisiklet'?n1(km/(a.sure_sn/3600),1)+' km/sa':'',a.irtifa_m?'↗ '+n1(a.irtifa_m,0)+' m':'',a.nabiz_ort?'❤️ '+a.nabiz_ort+(a.nabiz_max?'/'+a.nabiz_max:''):'',a.kcal?n1(a.kcal,0)+' kcal':''].filter(Boolean).join(' · ')}</small>
     ${(a.hareketler||[]).length?`<small>${esc(a.hareketler.map(x=>x.ad+' '+(x.set||'')+'×'+(x.tekrar||'')).join(' · '))}</small>`:''}${atk.length?`<small style="color:var(--mg)">⚡ Bu aktiviteyle eşleşen ${atk.length} atak</small>`:''}</div>${a.kaynak==='elle'?`<button class="sg-x" onclick="SGL.silAktivite(${a.id})">🗑</button>`:''}</div>`;}
 S.gunSec=g=>{S.gun=g;ciz();};
@@ -983,9 +988,121 @@ function hcKartHtml(){if(!hcVar())return `<div class="sg-alt">Mi Fitness (saat) 
   if(!hcBagli())return `<div class="sg-alt">Mi Fitness ve Foodvisor'da Health Connect paylaşımını aç, sonra buradan izin ver.</div><div class="sg-dug"><button class="on" onclick="SGL.hcBagla()">⌚ Bağlan</button></div>`;
   return `<div class="sg-alt">● Bağlı · ${(d.izinler||[]).length} veri türü${d.tam?'':' (bazı izinler kapalı)'}<br>${esc(S.hcMesaj||(hcSon()?'Son eşitleme: '+trT(zGun(hcSon()))+' '+saat(hcSon()):'Henüz eşitlenmedi'))}</div><div class="sg-dug"><button onclick="SGL.hcEsitle()" ${HC.calisiyor?'disabled':''}>🔄 Şimdi eşitle</button>${d.tam?'':'<button onclick="SGL.hcBagla()">İzinleri düzenle</button>'}</div>`;}
 function hcKartGuncelle(){const el=document.getElementById('sg-hc');if(el)el.innerHTML=hcKartHtml();}
+// ───────────────────────────────────────── Strava (yürüyüş, koşu, bisiklet, trekking: rota, irtifa, nabız)
+// Jetonlar ve anahtarlar sunucuda (strava fonksiyonu); sayfa yalnız fonksiyonu çağırır.
+const ST={durum:null,calisiyor:false,yokla:null,harita:{}};
+function stSon(){try{return +localStorage.getItem('sg_st_son')||0;}catch(e){return 0;}}
+async function stCagir(islem,ek){try{if(typeof jetonTaze==='function')await jetonTaze();}catch(e){}
+  const r=await fetch(SB_URL+'/functions/v1/strava',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_TOKEN,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({islem},ek||{}))});
+  return r.json().catch(()=>({hata:'HTTP '+r.status}));}
+async function stDurum(){try{ST.durum=await stCagir('durum');}catch(e){ST.durum={hata:'ag',mesaj:String(e.message||e)};}stKartGuncelle();return ST.durum;}
+async function stEsitle(sessiz){if(ST.calisiyor)return;ST.calisiyor=true;S.stMesaj='Strava’dan alınıyor…';stKartGuncelle();
+  try{const r=await stCagir('cek',{gun:90});
+    if(r.hata){if(r.hata==='bagli_degil'&&ST.durum)ST.durum.bagli=false;throw new Error(r.mesaj||(r.hata==='bagli_degil'?'Strava bağlı değil':r.hata));}
+    try{localStorage.setItem('sg_st_son',String(Date.now()));}catch(e){}
+    if(ST.durum)ST.durum.son_cekim=new Date().toISOString();
+    S.stMesaj='Son eşitleme: '+saat(Date.now())+(r.yeni?' · '+r.yeni+' yeni aktivite':'');
+    if(!sessiz)toast('🗺️ Strava: '+(r.yeni?r.yeni+' yeni aktivite':'yeni aktivite yok'),'green');
+    if(r.yeni||!sessiz){await yukle(true);ciz();}}
+  catch(e){S.stMesaj='Eşitlenemedi: '+String(e.message||e).slice(0,90);if(!sessiz)toast(S.stMesaj,'red');}
+  finally{ST.calisiyor=false;stKartGuncelle();}}
+async function stOtomatik(){const d=await stDurum();if(d&&d.bagli&&Date.now()-stSon()>30*60000)stEsitle(true);}
+S.stDurum=stDurum;S.stEsitle=()=>stEsitle(false);
+S.stBagla=async()=>{toast('Strava açılıyor…','blue');let r=null;try{r=await stCagir('baslat');}catch(e){r={mesaj:String(e.message||e)};}
+  if(!r||!r.url){toast('Açılamadı: '+((r&&(r.mesaj||r.hata))||'?'),'red');return;}
+  const u=hcVar()&&r.mobil?r.mobil:r.url;
+  if(typeof macAktif==='function'&&macAktif())macCagir('dis_ac',{url:u}).catch(()=>window.open(u,'_blank'));else window.open(u,'_blank');
+  // izin verilip uygulamaya dönülünce durumu yakala
+  clearInterval(ST.yokla);let n=0;
+  ST.yokla=setInterval(async()=>{n++;if(n>72){clearInterval(ST.yokla);return;}if(document.hidden)return;const d=await stDurum();
+    if(d&&d.bagli){clearInterval(ST.yokla);try{localStorage.setItem('sg_st_son',String(Date.now()));}catch(e){}toast('✅ Strava bağlandı'+(d.ad?': '+d.ad:''),'green');await yukle(true);ciz();}},5000);};
+S.stKes=async()=>{if(!confirm('Strava bağlantısı kaldırılsın mı? Gelmiş aktiviteler silinmez.'))return;
+  const r=await stCagir('kes').catch(()=>null);toast(r&&r.ok?'Strava bağlantısı kaldırıldı':'Kaldırılamadı','amber');S.stMesaj='';await stDurum();};
+function stKartHtml(){const d=ST.durum;if(!d)return '<div class="sg-alt">Durum okunuyor…</div>';
+  if(d.hata)return `<div class="sg-alt">Strava durumu okunamadı (${esc(d.mesaj||d.hata)}).</div><div class="sg-dug"><button onclick="SGL.stDurum()">Tekrar dene</button></div>`;
+  if(!d.hazir)return '<div class="sg-alt">Strava anahtarları sunucuya eklenince burada "Bağlan" çıkacak.</div>';
+  if(!d.bagli)return `<div class="sg-alt">Yürüyüş, koşu, bisiklet ve trekking; rota, irtifa ve nabızla birlikte gelir.${d.durum&&d.durum!=='bagli'?'<br>Durum: '+esc(d.durum):''}</div><div class="sg-dug"><button class="on" onclick="SGL.stBagla()">🔗 Strava'ya bağlan</button></div>`;
+  const son=d.son_cekim?new Date(d.son_cekim).getTime():stSon();
+  return `<div class="sg-alt">● Bağlı${d.ad?' · '+esc(d.ad):''}<br>${esc(S.stMesaj||(son?'Son eşitleme: '+trT(zGun(son))+' '+saat(son):'Henüz eşitlenmedi'))}</div><div class="sg-dug"><button onclick="SGL.stEsitle()" ${ST.calisiyor?'disabled':''}>🔄 Şimdi eşitle</button><button onclick="SGL.stKes()">Bağlantıyı kaldır</button></div><div class="sg-strava">Powered by Strava</div>`;}
+function stKartGuncelle(){const el=document.getElementById('sg-st');if(el)el.innerHTML=stKartHtml();}
+
+// ── Harita (Leaflet, gerekince yüklenir) ve rota çözümü
+function polyCoz(s){const P=[];let i=0,la=0,lo=0;const oku=()=>{let b,sh=0,r=0;do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5;}while(b>=32&&i<s.length);return (r&1)?~(r>>1):(r>>1);};
+  while(i<s.length){la+=oku();if(i>=s.length)break;lo+=oku();P.push([la/1e5,lo/1e5]);}return P;}
+let _lf=null;
+function leafletYukle(){if(window.L&&window.L.map)return Promise.resolve(window.L);if(_lf)return _lf;
+  _lf=new Promise((ok,no)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';s.onload=()=>ok(window.L);s.onerror=()=>{_lf=null;no(new Error('Harita yüklenemedi (internet?)'));};document.head.appendChild(s);});
+  return _lf;}
+function koyuTema(){const t=document.documentElement.getAttribute('data-tema');return t!=='acik'&&t!=='chill';}
+function mesafeM(a,b){const R=6371000,r=Math.PI/180,d1=(b[0]-a[0])*r,d2=(b[1]-a[1])*r;const x=Math.sin(d1/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(d2/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+async function haritaCiz(elId,A){const el=document.getElementById(elId);if(!el)return null;
+  const R=A.filter(a=>a.rota).map(a=>({a,P:polyCoz(a.rota)})).filter(x=>x.P.length>1);if(!R.length){el.style.display='none';return null;}
+  let Lf;try{Lf=await leafletYukle();}catch(e){el.innerHTML='<div class="sg-bos">'+esc(e.message)+'</div>';return null;}
+  if(!document.body.contains(el))return null;
+  if(ST.harita[elId]){try{ST.harita[elId].m.remove();}catch(e){}}
+  const m=Lf.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:true});
+  Lf.tileLayer('https://{s}.basemaps.cartocdn.com/'+(koyuTema()?'dark_all':'light_all')+'/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap · © CARTO'}).addTo(m);
+  m.attributionControl.setPrefix(false);
+  const B=Lf.latLngBounds([]);
+  R.forEach(({a,P})=>{const c=TUR_RENK[a.tur]||'#00E5FF';
+    Lf.polyline(P,{color:'#000',weight:7,opacity:.25}).addTo(m);
+    Lf.polyline(P,{color:c,weight:4,opacity:.95}).addTo(m).on('click',()=>{if(A.length>1)S.aktiviteDetay(a.id);});
+    Lf.circleMarker(P[0],{radius:5,color:'#fff',weight:2,fillColor:'#00E676',fillOpacity:1}).addTo(m);
+    Lf.circleMarker(P[P.length-1],{radius:5,color:'#fff',weight:2,fillColor:'#E8197A',fillOpacity:1}).addTo(m);P.forEach(p=>B.extend(p));});
+  m.fitBounds(B,{padding:[18,18]});
+  // rota boyunca toplam mesafe (profil imleci için)
+  const P0=R[0].P,K=[0];for(let i=1;i<P0.length;i++)K.push(K[i-1]+mesafeM(P0[i-1],P0[i]));
+  const h={m,R,P0,K,imlec:null,Lf};ST.harita[elId]=h;return h;}
+function haritaImlec(h,oran){if(!h)return;const top_=h.K[h.K.length-1]||1,hedef=top_*Math.max(0,Math.min(1,oran));let i=1;while(i<h.K.length-1&&h.K[i]<hedef)i++;
+  const a=h.P0[i-1],b=h.P0[i],k=(hedef-h.K[i-1])/((h.K[i]-h.K[i-1])||1);const p=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];
+  if(!h.imlec)h.imlec=h.Lf.circleMarker(p,{radius:7,color:'#fff',weight:2.5,fillColor:'#FFAB00',fillOpacity:1}).addTo(h.m);else h.imlec.setLatLng(p);}
+
+// ── Rota profili: irtifa (alan) + nabız (çizgi), x = mesafe
+function profilHtml(a){const k=a.akis||{};const n=(k.mesafe||k.zaman||[]).length;if(n<3)return '';
+  const X=k.mesafe&&k.mesafe[n-1]>0?k.mesafe:k.zaman,km=X===k.mesafe;const ir=k.irtifa&&k.irtifa.some(v=>v!=null)?k.irtifa:null,nb=k.nabiz&&k.nabiz.some(v=>v!=null)?k.nabiz:null;
+  if(!ir&&!nb)return '';
+  const W=GW,H=140,PL=4,PR=30,PT=8,PB=18,x1=X[n-1]||1;const XP=v=>PL+(W-PL-PR)*v/x1;
+  const ol=(L)=>{const f=L.filter(v=>v!=null);let a=Math.min(...f),b=Math.max(...f);if(b-a<5){a-=3;b+=3;}const p=(b-a)*0.08;return [a-p,b+p];};
+  let s=`<svg class="sg-svg sg-prof" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  if(ir){const [y0,y1]=ol(ir);const Y=v=>PT+(H-PT-PB)*(1-(v-y0)/(y1-y0));const px=X.map((x,i)=>[XP(x),Y(ir[i]??y0)]);const yol='M'+px.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join('L');
+    s+=`<path d="${yol}L${px[n-1][0].toFixed(1)},${H-PB}L${px[0][0].toFixed(1)},${H-PB}Z" style="fill:var(--green)" opacity="0.14"/><path d="${yol}" fill="none" style="stroke:var(--green)" stroke-width="1.5" stroke-linejoin="round"/>`;
+    tikler(y0,y1,3).forEach(v=>{s+=`<line x1="${PL}" x2="${W-PR}" y1="${Y(v)}" y2="${Y(v)}" class="sg-izg"/><text x="${W-PR+4}" y="${Y(v)+3}" class="sg-ax">${n1(v,0)}m</text>`;});}
+  if(nb){const [y0,y1]=ol(nb);const Y=v=>PT+(H-PT-PB)*(1-(v-y0)/(y1-y0));let yol='',ac=false;X.forEach((x,i)=>{if(nb[i]==null){ac=false;return;}yol+=(ac?'L':'M')+XP(x).toFixed(1)+','+Y(nb[i]).toFixed(1);ac=true;});
+    s+=`<path d="${yol}" fill="none" style="stroke:var(--mg)" stroke-width="1.4" stroke-linejoin="round" opacity="0.9"/>`;}
+  [0,x1/2,x1].forEach((v,i)=>{s+=`<text x="${XP(v)}" y="${H-4}" class="sg-ax" text-anchor="${i===0?'start':i===2?'end':'middle'}">${km?n1(v/1000,1)+' km':Math.round(v/60)+' dk'}</text>`;});
+  s+=`<line class="sg-im-c sg-prof-c" y1="${PT}" y2="${H-PB}" style="display:none"/></svg>`;
+  const ozet=[ir?`↗ ${n1(a.irtifa_m||0,0)} m tırmanış · ${n1(Math.min(...ir.filter(v=>v!=null)),0)}–${n1(Math.max(...ir.filter(v=>v!=null)),0)} m`:'',nb?`❤️ ort. ${a.nabiz_ort||n1(ort(nb.filter(v=>v!=null)),0)}${a.nabiz_max?' · en yüksek '+a.nabiz_max:''}`:''].filter(Boolean).join(' · ');
+  return `<div class="sg-bolum" style="margin-top:10px"><h4>📈 Rota profili <small>${ir?'<i class="sg-nok" style="background:var(--green)"></i>irtifa ':''}${nb?'<i class="sg-nok" style="background:var(--mg)"></i>nabız':''}</small></h4><div class="sg-gb kk" id="sg-prof-b"><div class="sg-gb-sol">${esc(ozet)}</div><div class="sg-gb-sag"></div></div>${s}</div>`;}
+function profilBagla(a,h){const sv=document.querySelector('#sg-m-det .sg-prof');if(!sv)return;const k=a.akis;const n=(k.mesafe||k.zaman).length;const X=k.mesafe&&k.mesafe[n-1]>0?k.mesafe:k.zaman,km=X===k.mesafe;const x1=X[n-1]||1;
+  const W=GW,PL=4,PR=30;const c=sv.querySelector('.sg-prof-c'),b=document.getElementById('sg-prof-b');const ilk=b.children[0].innerHTML;
+  const git=e=>{const r=sv.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX;const xv=Math.max(0,Math.min(1,((cx-r.left)/r.width*W-PL)/(W-PL-PR)))*x1;
+    let i=0;while(i<n-1&&X[i]<xv)i++;const px=PL+(W-PL-PR)*X[i]/x1;c.style.display='';c.setAttribute('x1',px);c.setAttribute('x2',px);
+    b.children[0].innerHTML=`<b>${km?n1(X[i]/1000,2)+' km':Math.round(X[i]/60)+' dk'}</b>${k.irtifa&&k.irtifa[i]!=null?' · ↗ '+n1(k.irtifa[i],0)+' m':''}${k.nabiz&&k.nabiz[i]!=null?' · ❤️ '+Math.round(k.nabiz[i]):''}${k.zaman&&km?' · '+sureYaz(k.zaman[i]):''}`;
+    haritaImlec(h,X[i]/x1);};
+  const birak=()=>{c.style.display='none';b.children[0].innerHTML=ilk;if(h&&h.imlec){h.imlec.remove();h.imlec=null;}};
+  sv.addEventListener('pointermove',git);sv.addEventListener('pointerdown',git);sv.addEventListener('pointerleave',birak);sv.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')setTimeout(birak,1600);});}
+
+// ── Aktivite ayrıntısı
+S.aktiviteDetay=id=>{const a=(S.v.aktivite||[]).find(x=>x.id===id);if(!a)return;
+  const km=a.mesafe_m?a.mesafe_m/1000:null,hs=a.hareket_sn||a.sure_sn;const tempo=km&&hs?hs/60/km:null;const atk=(S.v.atak||[]).filter(x=>x.aktivite_id===a.id);
+  const ist=[km?['Mesafe',n1(km,2)+' km']:null,a.sure_sn?['Süre',sureYaz(a.sure_sn)]:null,a.hareket_sn&&a.hareket_sn<a.sure_sn-60?['Hareket',sureYaz(a.hareket_sn)]:null,
+    tempo&&a.tur!=='bisiklet'?['Tempo',n1(tempo,1)+' dk/km']:null,km&&hs&&a.tur==='bisiklet'?['Hız',n1(km/(hs/3600),1)+' km/sa']:null,a.irtifa_m?['Tırmanış',n1(a.irtifa_m,0)+' m']:null,
+    a.nabiz_ort?['Nabız',a.nabiz_ort+(a.nabiz_max?' / '+a.nabiz_max:'')]:null,a.kcal?['Kalori',n1(a.kcal,0)+' kcal']:null].filter(Boolean);
+  const ikiz=(S.v.aktivite||[]).filter(x=>x.ikiz_id===a.id);
+  const govde=`<div class="sg-alt">${trT(zGun(a.baslangic))} · ${saat(a.baslangic)}${a.bitis?'–'+saat(a.bitis):''} · ${esc(a.kaynak==='hc'?'saat':a.kaynak)}${ikiz.length?' · saat kaydıyla birleştirildi':''}</div>
+    ${a.rota?'<div id="sg-dharita" class="sg-harita" style="margin-top:8px"></div>':''}
+    <div class="sg-istat">${ist.map(x=>`<div><small>${x[0]}</small><b>${x[1]}</b></div>`).join('')}</div>
+    ${profilHtml(a)}
+    ${(a.hareketler||[]).length?`<div class="sg-not">${esc(a.hareketler.map(x=>x.ad+' '+(x.set||'')+'×'+(x.tekrar||'')+(x.kg?' '+x.kg+'kg':'')).join(' · '))}</div>`:''}
+    ${atk.length?`<div class="sg-not" style="color:var(--mg)">⚡ Bu aktiviteyle eşleşen ${atk.length} atak: ${atk.map(x=>saat(x.zaman)+(x.siddet?' (şiddet '+x.siddet+')':'')).join(', ')}</div>`:''}
+    ${a.notu?`<div class="sg-not">${esc(a.notu)}</div>`:''}
+    ${a.kaynak==='strava'&&a.dis_id?`<div class="sg-dug" style="margin-top:10px"><a class="sg-btn sg-strava-a" href="https://www.strava.com/activities/${encodeURIComponent(a.dis_id)}" target="_blank" rel="noopener">Strava'da görüntüle</a></div>`:''}`;
+  pencere('sg-m-det',(TUR_AD[a.tur]||a.tur)+(a.ad?' · '+esc(a.ad):''),govde);
+  setTimeout(async()=>{const h=a.rota?await haritaCiz('sg-dharita',[a]):null;if(h){h.m.invalidateSize();h.m.fitBounds(h.Lf.latLngBounds(h.P0),{padding:[18,18]});}if(a.akis)profilBagla(a,h);},260);};
 S.baslat=async()=>{stilEkle();try{await yukle();hatirlatPlanla(true);}catch(e){console.warn('sağlık yükle',e);}
-  setTimeout(()=>hcOtomatik().catch(()=>{}),2500);
-  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){setTimeout(sabahKontrol,1500);setTimeout(()=>hcOtomatik().catch(()=>{}),2500);}else if(S.yuklendi)hatirlatPlanla(true);});
+  setTimeout(()=>hcOtomatik().catch(()=>{}),2500);setTimeout(()=>stOtomatik().catch(()=>{}),4000);
+  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){setTimeout(sabahKontrol,1500);setTimeout(()=>hcOtomatik().catch(()=>{}),2500);setTimeout(()=>stOtomatik().catch(()=>{}),4000);}else if(S.yuklendi)hatirlatPlanla(true);});
   setInterval(()=>{if(document.visibilityState==='visible')sabahKontrol();},5*60*1000);
   if(document.getElementById('page-saglik')?.classList.contains('active'))ciz();};
 S.yenile=async()=>{await yukle(true);ciz();};
