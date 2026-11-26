@@ -1,0 +1,20 @@
+-- Sabah formu bildirimi (yalnız sağlık sahibine): her gün 09:00–14:59 arası saat başı, form doldurulana kadar.
+-- push_sunucu_kontrol() içine "-- temizlik" satırından hemen önce eklenen blok. Gövde metni ilaç adı veya tanı içermez (kilit ekranı).
+-- declare bölümüne: sahip_s uuid;
+--
+--  sahip_s := coalesce((select (deger->>'sahip')::uuid from erp_ayarlar where anahtar = 'saglik'), sahip);
+--  if sahip_s is not null then
+--    delete from push_kuyruk where gonderildi is null and anahtar like 'sabah:' || bugun || ':%'
+--      and exists(select 1 from saglik_sabah where kullanici_id = sahip_s and tarih = bugun);
+--    if yerel::time >= time '09:00' and yerel::time < time '15:00'
+--       and not exists(select 1 from saglik_sabah where kullanici_id = sahip_s and tarih = bugun) then
+--      insert into push_kuyruk(anahtar, zaman, baslik, govde, url, kaynak, oncelik, hedef)
+--      values('sabah:' || bugun || ':' || extract(hour from yerel)::int, now(), '☀️ Sabah formu',
+--        'Uyku, kahvaltı, kahve ve sabah ilaçları. 1 dakika.', './?sabah=1', 'sunucu', 1, sahip_s)
+--      on conflict do nothing;
+--    end if;
+--    -- dün doldurulmadıysa "kaçırıldı"
+--    if yerel::time >= time '00:20' then
+--      insert into saglik_sabah(kullanici_id, tarih, kacirildi) values(sahip_s, dun, true) on conflict (kullanici_id, tarih) do nothing;
+--    end if;
+--  end if;

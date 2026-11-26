@@ -2411,6 +2411,9 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
       <div id="ev-liste"></div>
     </div>
 
+    <!-- SAĞLIK (yalnız sağlık sahibinin hesabında görünür; içerik saglik.js) -->
+    <div class="page" id="page-saglik"></div>
+
     <!-- VİLLA & OTEL -->
     <div class="page" id="page-villa">
       <div id="vl-ozet"></div>
@@ -2801,6 +2804,10 @@ html[data-tema="chill"]{background-color:#E6D7B8;background-image:radial-gradien
     <div class="nav-item active" onclick="goPage('dashboard',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
       <span>Özet</span>
+    </div>
+    <div class="nav-item" id="nav-saglik" style="display:none" onclick="goPage('saglik',this)">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/><path d="M3.5 12h4l2-3 3 6 2-3h6"/></svg></span>
+      <span>Sağlık</span>
     </div>
     <div class="nav-item" onclick="goPage('islemler',this)">
       <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
@@ -5301,6 +5308,7 @@ async function startApp(){
   // Sistem bildirim kontrolü
   setTimeout(bildirimKontrol,3000);
   try{psFormBagla();ckBaslat();}catch(e){console.warn('davranış başlat',e);}
+  try{sglBaslat();}catch(e){console.warn('sağlık başlat',e);}
   setTimeout(()=>{try{gfRiskBildirimKontrol();}catch(e){console.warn('gf risk',e);}},7000);
   setInterval(bildirimKontrol,15*60*1000);
   try{pushBaslat();}catch(e){console.warn('push başlat',e);}
@@ -5397,9 +5405,10 @@ async function pushPlanla(zorla){
 // bildirime / kısayola dokununca: ?arama=YYYY-MM-DD|bugun · ?sayfa=evrak · ?islem=ID
 function bildirimUrlIsle(href){
   let u;try{u=new URL(href,location.href);}catch(e){return;}const p=u.searchParams;
-  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin'),randevu=p.get('randevu');if(!arama&&!sayfa&&!islem&&!checkin&&!randevu)return;
+  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin'),randevu=p.get('randevu'),sabah=p.get('sabah');if(!arama&&!sayfa&&!islem&&!checkin&&!randevu&&!sabah)return;
   try{if(location.search)history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
   if(checkin){(async()=>{try{if(PS.checkinler==null&&!GF.ekZaman)await gfEkYukle(true);}catch(e){}ckModalAc();})();return;}
+  if(sabah){(async()=>{try{if(await sglYukle())SGL.sabahAc();}catch(e){console.warn('sabah formu',e);}})();return;}
   if(arama){rkAramaGirAc(arama==='bugun'?localToday():arama);return;}
   if(randevu){try{goPage('takvim');}catch(e){}setTimeout(()=>{try{ustRandevuEkle();}catch(e){}},350);return;}
   if(islem){try{showIslemDetay(Number(islem));}catch(e){}return;}
@@ -6867,7 +6876,7 @@ function observeStagger(){
 }
 
 // ============================================================ SAYFA
-const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',evrak:'📄 Evrak Takibi',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı',bet:'🎲 Bet',villa:'🏡 Villa & Otel'};
+const PAGE_TITLES={dashboard:'📊 Genel Özet',islemler:'💳 İşlemler',takvim:'📅 Takvim & Ajanda',evrak:'📄 Evrak Takibi',rehber:'👥 Rehber',cari:'🏦 Açık Hesaplar',personel:'👷 Personel',stok:'📦 Stok & Malzeme',irsaliye:'🖨️ Fiş',vergi:'🏛️ Vergi',projeler:'🏗️ Projeler',teklifler:'📋 Teklifler',fiyatlar:'💰 Fiyat Listesi',sablonlar:'📑 Şablonlar',tavsiyeler:'💡 Tavsiyeler',reklam:'📈 Reklam Performansı',bet:'🎲 Bet',villa:'🏡 Villa & Otel',saglik:'❤️ Sağlık'};
 
 let _goPageBusy=false;
 function goPage(id,navEl){
@@ -7085,6 +7094,7 @@ function renderAll(){
     if(e('kasa-dagitim'))e('kasa-dagitim').innerHTML=[['💵',c.kasaNakit],['💳',c.kasaKart],['🏦',c.kasaIBAN]].map(([ik,v])=>`<span class="badge ${v<0?'bg-red':v>0?'bg-green':'bg-gray'}">${ik} ${v<0?'−':''}${fmt(v)}</span>`).join('');
     const _activePageId=document.querySelector('.page.active')?.id;
     if(_activePageId==='page-dashboard'){renderVadeUyari();renderDashVade();renderDashBugun();renderDashGrafik();}
+    if(_activePageId==='page-saglik'){try{sglCiz();}catch(er){console.warn('sağlık',er);}}
   setTimeout(()=>{
     initRipple();
     const activePage=document.querySelector('.page.active');
@@ -10138,7 +10148,6 @@ var CK_GUNLUK=[
   {k:'kaygi',s:'Bugün kaygı seviyen?',yon:-1,uc:['Çok düşük','Çok yüksek'],kisa:'Kaygı'},
   {k:'eglence',s:'Bugün ne kadar keyif aldın, eğlendin?',yon:1,uc:['Hiç','Çok'],kisa:'Keyif'},
   {k:'enerji',s:'Bugün enerjin nasıldı?',yon:1,uc:['Bitkin','Çok enerjik'],kisa:'Enerji'},
-  {k:'uyku',s:'Dün gece nasıl uyudun?',yon:1,uc:['Çok kötü','Çok iyi'],kisa:'Uyku'},
   {k:'umut',s:'Yarından umudun, beklentin nasıl?',yon:1,uc:['Umutsuz','Çok umutlu'],kisa:'Yarına umut'}
 ];
 var CK_ETKEN=[['is','💼 İş'],['para','💰 Para'],['aile','👨‍👩‍👧 Aile'],['iliski','❤️ İlişki'],['saglik','🩺 Sağlık'],['sosyal','🎉 Sosyal'],['yorgunluk','😴 Yorgunluk'],['hava','🌦 Hava'],['diger','✨ Diğer']];
@@ -10178,6 +10187,32 @@ async function ckKontrol(){
     ckModalAc();
   }catch(e){console.warn('check-in',e);}
 }
+// ============================================================ SAĞLIK (yalnız sağlık sahibinin hesabı; veri saglik_* tablolarında, "sadece sahibi" kurallı)
+var SGL_SAHIP=null,_sglYuk=null;
+function sglSahibiMi(){
+  if(typeof CURRENT_USER==='undefined'||!CURRENT_USER||!CURRENT_USER.id)return false;
+  const s=SGL_SAHIP||(PS.ayar&&PS.ayar.saglik&&PS.ayar.saglik.sahip)||(PS.ayar&&PS.ayar.checkin&&PS.ayar.checkin.sahip);
+  return !!s&&String(s)===String(CURRENT_USER.id);
+}
+async function sglSahipOku(){
+  if(SGL_SAHIP)return SGL_SAHIP;
+  try{const r=await sbFetch('erp_ayarlar?anahtar=in.(saglik,checkin)&select=anahtar,deger');const m={};(r||[]).forEach(x=>m[x.anahtar]=x.deger||{});
+    SGL_SAHIP=(m.saglik&&m.saglik.sahip)||(m.checkin&&m.checkin.sahip)||null;}catch(e){}
+  return SGL_SAHIP;
+}
+function sglYukle(){
+  if(window.SGL&&SGL.baslat)return Promise.resolve(true);
+  if(_sglYuk)return _sglYuk;
+  _sglYuk=(async()=>{await sglSahipOku();if(!sglSahibiMi())return false;
+    await perfScriptYukle('saglik.js?v=1');return !!(window.SGL&&SGL.baslat);})().catch(e=>{console.warn('saglik.js',e);_sglYuk=null;return false;});
+  return _sglYuk;
+}
+async function sglBaslat(){
+  if(!(await sglYukle()))return;
+  const n=document.getElementById('nav-saglik');if(n)n.style.display='';
+  try{await SGL.baslat();}catch(e){console.warn('sağlık',e);}
+}
+function sglCiz(){if(window.SGL&&SGL.ciz)SGL.ciz();else sglYukle().then(ok=>{if(ok)SGL.ciz();else{const p=document.getElementById('page-saglik');if(p)p.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Bu sayfa yalnızca sahibinin hesabında açılır.</div>';}});}
 function ckBaslat(){
   setTimeout(ckKontrol,2600);
   if(CK.izliyor)return;CK.izliyor=true;
@@ -10205,6 +10240,7 @@ function ckModalAc(){
   let h=`<div class="ck-giris">${CK.haftalik?'Pazar akşamı: önce bugün, sonra haftanın işleri ve gelecek hafta beklentilerin.':'Bugün nasıl geçti, yarından ne bekliyorsun? Bir dakika sürer.'} 24:00'te kapanır. Sadece sen görürsün.</div>`;
   if(CK.gunluk){
     h+=`<div class="ck-bolum">🌙 Bugün</div>`+CK_GUNLUK.map(q=>ckPuanHtml(q,CK.secim,'ck',sonG)).join('');
+    if(window.SGL&&SGL.aksamIlacHtml){try{h+=SGL.aksamIlacHtml();}catch(e){console.warn('akşam ilaç',e);}}
     h+=`<div class="ck-soru"><div class="ck-soru-b">Bugün ruh halini en çok ne etkiledi? <small>(birden fazla seçebilirsin)</small></div><div class="isf-chips" id="ck-etken">${CK_ETKEN.map(([k,a])=>`<button type="button" class="isf-chip" data-k="${k}" onclick="ckEtken('${k}')">${a}</button>`).join('')}</div></div>
       <div class="fi" style="margin-top:6px;"><label>Bugünden not (isteğe bağlı)</label><textarea id="ck-not" rows="2" placeholder="Aklında ne var?" class="ck-ta"></textarea></div>`;
   }
@@ -10231,11 +10267,11 @@ function ckEtken(k){CK.etken[k]=!CK.etken[k];document.querySelectorAll('#ck-etke
 function ckBekIs(d){CK.bek.is=Math.max(0,Math.min(60,(CK.bek.is==null?ckOnerilenIs():CK.bek.is)+d));const el=document.getElementById('ck-bek-is');if(el)el.textContent=CK.bek.is;ckKaydetDurum();}
 function ckOnerilenIs(){try{const g=localToday();const s=ckHaftaGercek(gfGunEkle(g,-6),g);return s.is;}catch(e){return 3;}}
 function ckEksik(){const L=[];
-  if(CK.gunluk)CK_GUNLUK.forEach(q=>{if(!CK.secim[q.k])L.push(q.kisa);});
+  if(CK.gunluk){CK_GUNLUK.forEach(q=>{if(!CK.secim[q.k])L.push(q.kisa);});if(window.SGL&&SGL.aksamEksik)try{L.push(...SGL.aksamEksik());}catch(e){}}
   if(CK.haftalik){CK_HAFTALIK.forEach(q=>{if(!CK.hsecim[q.k])L.push(q.kisa);});if(CK.bek.is==null)L.push('beklenen iş');
     if(!(parseTutar(document.getElementById('ck-bek-gelir')?.value||'')>0))L.push('beklenen gelir');if(!(parseTutar(document.getElementById('ck-bek-gider')?.value||'')>0))L.push('beklenen harcama');}
   return L;}
-function ckKaydetDurum(){const top=(CK.gunluk?CK_GUNLUK.length:0)+(CK.haftalik?CK_HAFTALIK.length+3:0);const n=top-ckEksik().length;const b=document.getElementById('ck-kaydet');
+function ckKaydetDurum(){const top=(CK.gunluk?CK_GUNLUK.length+((window.SGL&&SGL.aksamSayi)?SGL.aksamSayi():0):0)+(CK.haftalik?CK_HAFTALIK.length+3:0);const n=top-ckEksik().length;const b=document.getElementById('ck-kaydet');
   if(b){b.textContent=n<top?`Kaydet (${n}/${top})`:'Kaydet ✓';b.disabled=n<top;b.style.opacity=n<top?0.55:1;}}
 function ckDegdiSec(id,v){if(CK.degdi[id]===v)delete CK.degdi[id];else CK.degdi[id]=v;document.querySelectorAll('#ck-body .ps-degdi[data-id="'+id+'"] .ps-bc').forEach((b,j)=>b.classList.toggle('on',CK.degdi[id]===PS_DEGDI[j][0]));}
 function ckSonra(){CK.sonraZaman=Date.now();closeModal('modal-checkin');}
@@ -10249,6 +10285,7 @@ async function ckKaydet(){
       row.etkenler=Object.keys(CK.etken).filter(k=>CK.etken[k]);const nt=(document.getElementById('ck-not')?.value||'').trim();if(nt)row.notu=nt;
       const r=await sbFetch('checkinler?on_conflict=kullanici_id,tarih',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:JSON.stringify(row)});const rec=Array.isArray(r)?r[0]:r;
       PS.checkinler=(PS.checkinler||[]).filter(c=>c.tarih!==g).concat([rec||row]).sort((a,b)=>a.tarih.localeCompare(b.tarih));
+      if(window.SGL&&SGL.aksamKaydet){await SGL.aksamKaydet();try{SGL.ckUykuBirlestir();if(SGL.yuklendi&&SGL.v.ck){SGL.v.ck=SGL.v.ck.filter(c=>c.tarih!==g).concat([rec||row]).sort((a,b)=>a.tarih.localeCompare(b.tarih));}}catch(e){}}
     }
     if(CK.haftalik){
       const row={tarih:g};CK_HAFTALIK.forEach(q=>row[q.k]=CK.hsecim[q.k]);
