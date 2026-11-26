@@ -363,7 +363,7 @@ function ozetHtml(){
     return `<div class="sg-bolum"><h4>Ana sayfayı düzenle <button class="sg-btn ana" onclick="SGL.duzenleBitir()">Bitti</button></h4><div class="sg-not" style="margin-bottom:6px">Göz ile paneli aç/kapat, oklarla sırala.</div>${sira.map((p,i)=>{const on=A.paneller.includes(p);
       return `<div class="sg-duz ${on?'':'kapali'}"><button onclick="SGL.panelGoster('${p}')">${on?'👁':'○'}</button><span class="ad">${esc(PANELLER[p].ad)}</span>${on?`<button onclick="SGL.panelTasi('${p}',-1)">↑</button><button onclick="SGL.panelTasi('${p}',1)">↓</button>`:''}</div>`;}).join('')}</div>`;}
   const kartlar=A.paneller.map(p=>{try{return panelHtml(p);}catch(e){console.warn('panel',p,e);return '';}}).join('');
-  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div>`;
+  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div><div class="sg-bolum"><h4>⌚ Saat ve Foodvisor <small>Health Connect</small></h4><div id="sg-hc">${hcKartHtml()}</div></div>`;
 }
 S.duzenleAc=()=>{S.duzenle=true;ciz();};S.duzenleBitir=()=>{S.duzenle=false;ciz();};
 S.panelGoster=async p=>{const A=ayar();let L=A.paneller.slice();if(L.includes(p))L=L.filter(x=>x!==p);else L.push(p);S.v.ayar={veri:Object.assign({},(S.v.ayar||{}).veri,{paneller:L})};ciz();try{await ayarKaydet({paneller:L});}catch(e){toast('Kaydedilemedi','red');}};
@@ -940,10 +940,52 @@ S.doktorKopyala=async()=>{const t=doktorMetin(S.doktorSon||doktorOzet(S.doktorGu
 S.doktorYazdir=()=>{const o=S.doktorSon||doktorOzet(S.doktorGun);
   const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sağlık özeti ${trT(o.bit)}</title><style>body{font:13px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;max-width:760px;margin:24px auto;padding:0 18px}h2{margin:0;font-size:20px}h3{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}.dk-alt{color:#666;margin-bottom:6px}ul,ol{margin:4px 0;padding-left:20px}li{margin:2px 0}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #eee}th{background:#f5f5f5}.bar{position:sticky;top:0;background:#fff;padding:8px 0;margin-bottom:8px}@media print{.bar{display:none}body{margin:0}}</style></head><body><div class="bar"><button onclick="window.print()" style="padding:9px 18px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:600">🖨️ Yazdır / PDF olarak kaydet</button></div>${doktorHtml(o,true)}<script>setTimeout(function(){window.print()},500)<\/script></body></html>`;
   try{if(typeof macAktif==='function'&&macAktif()){macCagir('belge_ac',{html});return;}}catch(e){}
-  if(typeof andAktif==='function'&&andAktif()){toast('Uygulama içinden yazdırma bir sonraki uygulama güncellemesiyle gelecek. Şimdilik "Metni kopyala"yı kullan ya da ERP\'yi Chrome\'da aç.','amber');return;}
+  if(typeof andAktif==='function'&&andAktif()){const sade=html.replace(/<div class="bar">[\s\S]*?<\/div>/,'').replace(/<script>[\s\S]*?<\/script>/,'');
+    andYerel('yazdir',{html:sade,ad:'Saglik ozeti '+o.bit}).catch(e=>toast(/not implemented|unimplemented/i.test(String(e.message||e))?'Yazdırma için uygulamayı güncelle. Şimdilik "Metni kopyala"yı kullan.':'Yazdırılamadı: '+String(e.message||e).slice(0,60),'amber'));return;}
   const u=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));const w=window.open(u,'_blank');if(!w)toast('Açılır pencere engellendi','amber');setTimeout(()=>URL.revokeObjectURL(u),60000);};
+// ───────────────────────────────────────── Health Connect (Android uygulaması: Mi Fitness saat verisi, Foodvisor)
+const HC={durum:null,calisiyor:false};
+function hcVar(){return typeof andAktif==='function'&&andAktif();}
+function hcSon(){try{return +localStorage.getItem('sg_hc_son')||0;}catch(e){return 0;}}
+async function hcDurum(){if(!hcVar())return null;try{HC.durum=await andYerel('saglikDurum');}catch(e){HC.durum={eski:/not implemented|unimplemented|bulunamad/i.test(String(e.message||e)),hata:String(e.message||e)};}return HC.durum;}
+function hcBagli(){const d=HC.durum;return !!(d&&d.sdk===2&&(d.izinler||[]).length);}
+// aynı anahtar takımına sahip satırları birlikte gönder (PostgREST toplu yazımda anahtarlar ortak olmalı)
+function gruplar(L){const m={};L.forEach(r=>{const k=Object.keys(r).sort().join(',');(m[k]=m[k]||[]).push(r);});return Object.values(m);}
+async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyor=true;S.hcMesaj='Eşitleniyor…';if(S.sekme==='ozet'||S.sekme==='aktivite')hcKartGuncelle();
+  try{const r=await andYerel('saglikOku',{gun:gun||30});let nG=0,nO=0,nA=0;
+    // günlük toplamlar: yalnız Health Connect'te olan alanlar yazılır (elle girilenler korunur)
+    const G=(r.gunluk||[]).map(x=>{const o={tarih:x.tarih,kaynak:'hc',guncelleme:new Date().toISOString()};Object.keys(x).forEach(k=>{if(k!=='tarih'&&x[k]!=null)o[k]=x[k];});['adim','kat','uyku_dk','uyku_derin_dk','uyku_rem_dk','uyku_hafif_dk','uyku_uyanik_dk','nabiz_dinlenik','nabiz_min','nabiz_max','nabiz_ort'].forEach(k=>{if(o[k]!=null)o[k]=Math.round(o[k]);});return o;}).filter(o=>Object.keys(o).length>3);
+    for(const grp of gruplar(G)){await sbFetch('saglik_gunluk?on_conflict=kullanici_id,tarih',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:JSON.stringify(grp)});nG+=grp.length;}
+    const varO=new Set((S.v.olcum||[]).map(o=>o.dis_id).filter(Boolean));
+    const O=(r.olcum||[]).filter(o=>!varO.has(o.dis_id)).map(o=>Object.assign({kaynak:'hc'},o,o.tur==='kilo'||o.tur==='tansiyon'?{baglam:new Date(o.zaman).getHours()<12?'sabah':'aksam'}:{}));
+    for(const grp of gruplar(O)){await sbFetch('saglik_olcum',{method:'POST',prefer:'return=minimal',body:JSON.stringify(grp)});nO+=grp.length;}
+    const varA=new Set((S.v.aktivite||[]).filter(a=>a.kaynak==='hc').map(a=>a.dis_id));const diger=(S.v.aktivite||[]).filter(a=>a.kaynak!=='hc');
+    const A=(r.aktivite||[]).filter(a=>!varA.has(a.dis_id)).map(a=>{const t=new Date(a.baslangic).getTime();
+      const ikiz=diger.find(x=>Math.abs(new Date(x.baslangic).getTime()-t)<=15*60000&&(x.tur===a.tur||x.tur==='diger'||a.tur==='diger'));
+      const o={kaynak:'hc',dis_id:a.dis_id,tur:a.tur,baslangic:a.baslangic,bitis:a.bitis,sure_sn:a.sure_sn,ad:a.ad||null,mesafe_m:a.mesafe_m??null,kcal:a.kcal??null,nabiz_ort:a.nabiz_ort!=null?Math.round(a.nabiz_ort):null,nabiz_max:a.nabiz_max!=null?Math.round(a.nabiz_max):null,ikiz_id:ikiz?ikiz.id:null};
+      if(o.mesafe_m&&o.sure_sn)o.hiz_ort=Math.round(o.mesafe_m/o.sure_sn*36)/10;return o;});
+    if(A.length){await sbFetch('saglik_aktivite',{method:'POST',prefer:'return=minimal',body:JSON.stringify(A)});nA=A.length;}
+    try{localStorage.setItem('sg_hc_son',String(Date.now()));}catch(e){}
+    await yukle(true);S.hcMesaj='Son eşitleme: '+saat(Date.now())+' · '+nG+' gün'+(nO?' · '+nO+' ölçüm':'')+(nA?' · '+nA+' aktivite':'');
+    if(!sessiz)toast('⌚ Eşitlendi: '+nG+' gün'+(nO?', '+nO+' ölçüm':'')+(nA?', '+nA+' aktivite':''),'green');ciz();hatirlatPlanla();}
+  catch(e){console.warn('Health Connect',e);S.hcMesaj='Eşitlenemedi: '+String(e.message||e).slice(0,90);if(!sessiz)toast(S.hcMesaj,'red');hcKartGuncelle();}
+  finally{HC.calisiyor=false;}}
+S.hcEsitle=(g)=>hcEsitle(g||(hcSon()?14:60));
+S.hcBagla=async()=>{if(!hcVar()){toast('Bu bağlantı Android uygulamasında çalışır','amber');return;}
+  try{const d=await andYerel('saglikIzin');HC.durum=d;if(d.sdk!==2){toast(d.sdk===1?'Health Connect güncellenmeli: Play Store açıldı':'Health Connect yüklü değil: Play Store açıldı','amber');hcKartGuncelle();return;}
+    if(!(d.izinler||[]).length){toast('İzin verilmedi','amber');hcKartGuncelle();return;}await hcEsitle(hcSon()?14:60);}
+  catch(e){toast(/not implemented|unimplemented/i.test(String(e.message||e))?'Önce uygulamayı güncelle (Ayarlar → Uygulama güncellemesi)':'Açılamadı: '+String(e.message||e).slice(0,80),'red');}};
+async function hcOtomatik(){if(!hcVar())return;await hcDurum();hcKartGuncelle();if(hcBagli()&&Date.now()-hcSon()>30*60000)hcEsitle(hcSon()?3:60,true);}
+function hcKartHtml(){if(!hcVar())return `<div class="sg-alt">Mi Fitness (saat) ve Foodvisor verisi, Android uygulamasında Health Connect ile otomatik gelir.</div>`;
+  const d=HC.durum;if(!d)return '<div class="sg-alt">Durum okunuyor…</div>';
+  if(d.eski)return `<div class="sg-alt">Uygulamanın yeni sürümü gerekiyor. Güncelleme gelince burada "Bağlan" çıkacak.</div>`;
+  if(d.sdk===0||d.sdk===1)return `<div class="sg-alt">Health Connect ${d.sdk===1?'güncellenmeli':'telefonda yok'}.</div><div class="sg-dug"><button onclick="SGL.hcBagla()">Play Store'da aç</button></div>`;
+  if(!hcBagli())return `<div class="sg-alt">Mi Fitness ve Foodvisor'da Health Connect paylaşımını aç, sonra buradan izin ver.</div><div class="sg-dug"><button class="on" onclick="SGL.hcBagla()">⌚ Bağlan</button></div>`;
+  return `<div class="sg-alt">● Bağlı · ${(d.izinler||[]).length} veri türü${d.tam?'':' (bazı izinler kapalı)'}<br>${esc(S.hcMesaj||(hcSon()?'Son eşitleme: '+trT(zGun(hcSon()))+' '+saat(hcSon()):'Henüz eşitlenmedi'))}</div><div class="sg-dug"><button onclick="SGL.hcEsitle()" ${HC.calisiyor?'disabled':''}>🔄 Şimdi eşitle</button>${d.tam?'':'<button onclick="SGL.hcBagla()">İzinleri düzenle</button>'}</div>`;}
+function hcKartGuncelle(){const el=document.getElementById('sg-hc');if(el)el.innerHTML=hcKartHtml();}
 S.baslat=async()=>{stilEkle();try{await yukle();hatirlatPlanla(true);}catch(e){console.warn('sağlık yükle',e);}
-  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(sabahKontrol,1500);else if(S.yuklendi)hatirlatPlanla(true);});
+  setTimeout(()=>hcOtomatik().catch(()=>{}),2500);
+  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){setTimeout(sabahKontrol,1500);setTimeout(()=>hcOtomatik().catch(()=>{}),2500);}else if(S.yuklendi)hatirlatPlanla(true);});
   setInterval(()=>{if(document.visibilityState==='visible')sabahKontrol();},5*60*1000);
   if(document.getElementById('page-saglik')?.classList.contains('active'))ciz();};
 S.yenile=async()=>{await yukle(true);ciz();};
