@@ -151,42 +151,54 @@ function rId(){return 'sgg'+(++grNo);}
 // Başlık şeridi: soldaki büyük değer + sağda diğer seriler; dokunulan noktada güncellenir
 function grBaslik(id,sol,sag,kk){return `<div class="sg-gb${kk?' kk':''}" id="${id}-b"><div class="sg-gb-sol">${sol}</div><div class="sg-gb-sag">${sag||''}</div></div>`;}
 function vYaz(v,birim,d){return v==null?'—':n1(v,d==null?(Math.abs(v)<1000?1:0):d)+(birim?`<small> ${esc(birim)}</small>`:'');}
+// hareketli ortalama (zamana göre): her nokta için son `gun` gündeki değerlerin ortalaması
+function hareketli(P,gun){const w=gun*864e5;let j=0,t=0;return P.map((p,i)=>{t+=p[1];while(p[0]-P[j][0]>=w){t-=P[j][1];j++;}return [p[0],t/(i-j+1)];});}
 function grafikCizgi(o){
   const H=o.h||150,PL=4,PR=30,PT=8,PB=18,W=GW;const bas=o.bas,bit=o.bit;
   const tum=[];o.seriler.forEach(s=>s.n.forEach(p=>tum.push(p[1])));
   if(!tum.length)return bosGrafik(o.bos);
-  const ek=[];(o.hedef||[]).forEach(h=>ek.push(h.v));if(o.bant){if(o.bant[0]!=null)ek.push(o.bant[0]);if(o.bant[1]!=null)ek.push(o.bant[1]);}
-  const [y0,y1]=o.y?o.y:yAralik(tum,ek.filter(x=>x!=null));
+  const dmin=Math.min(...tum),dmax=Math.max(...tum),pay=Math.max(1,(dmax-dmin)*0.35);
+  const ek=[];(o.hedef||[]).forEach(h=>{if(h.v!=null&&(!o.yakin||(h.v>=dmin-pay&&h.v<=dmax+pay)))ek.push(h.v);});if(o.bant&&!o.yakin){if(o.bant[0]!=null)ek.push(o.bant[0]);if(o.bant[1]!=null)ek.push(o.bant[1]);}
+  const [y0,y1]=o.y?o.y:yAralik(tum,ek);
   const X=t=>PL+(W-PL-PR)*(bit===bas?0.5:(t-bas)/(bit-bas)),Y=v=>PT+(H-PT-PB)*(1-(v-y0)/(y1-y0));
   const id=rId(),bir=o.birim||'';
-  const SR=o.seriler.map(sr=>({sr,P:sr.n.slice().sort((a,b)=>a[0]-b[0])})).filter(x=>x.P.length);
+  const SR=o.seriler.map(sr=>{const P=sr.n.slice().sort((a,b)=>a[0]-b[0]);return {sr,P,A:sr.trend&&P.length>2?hareketli(P,sr.trend):null};}).filter(x=>x.P.length);
   let s=`<svg class="sg-svg" id="${id}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs>`;
   SR.forEach((x,j)=>{s+=`<linearGradient id="${id}-g${j}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${x.sr.renk};stop-opacity:${j===0?0.22:0.10}"/><stop offset="1" style="stop-color:${x.sr.renk};stop-opacity:0.01"/></linearGradient>`;});
   s+='</defs>';
   if(o.bant){const a=Math.max(o.bant[0]??y0,y0),b=Math.min(o.bant[1]??y1,y1);if(b>a)s+=`<rect x="${PL}" y="${Y(b)}" width="${W-PL-PR}" height="${Y(a)-Y(b)}" style="fill:var(--green)" opacity="0.07"/>`;}
   tikler(y0,y1,3).forEach(v=>{s+=`<line x1="${PL}" x2="${W-PR}" y1="${Y(v)}" y2="${Y(v)}" class="sg-izg"/><text x="${W-PR+4}" y="${Y(v)+3}" class="sg-ax">${n1(v,2)}</text>`;});
   eksenTarih(bas,bit,3).forEach((t,i)=>{s+=`<text x="${X(t)}" y="${H-4}" class="sg-ax" text-anchor="${i===0?'start':i===2?'end':'middle'}">${tKisa(t)}</text>`;});
+  if(o.bugunCizgi&&bit>Date.now()+864e5){const xb=X(Date.now());s+=`<line x1="${xb}" x2="${xb}" y1="${PT}" y2="${H-PB}" class="sg-izg" stroke-dasharray="1 2"/><text x="${xb+3}" y="${H-PB-3}" class="sg-ax">bugün</text>`;}
   (o.dikey||[]).forEach(d=>{if(d.t<bas||d.t>bit)return;s+=`<line x1="${X(d.t)}" x2="${X(d.t)}" y1="${PT}" y2="${H-PB}" style="stroke:${d.renk||'var(--amber)'}" stroke-dasharray="2 3" stroke-width="1" opacity="0.8"/><text x="${X(d.t)+3}" y="${PT+7}" class="sg-ax" style="fill:${d.renk||'var(--amber)'}">${esc(d.ad)}</text>`;});
   (o.hedef||[]).forEach(h=>{if(h.v==null||h.v<y0||h.v>y1)return;s+=`<line x1="${PL}" x2="${W-PR}" y1="${Y(h.v)}" y2="${Y(h.v)}" style="stroke:${h.renk||'var(--green)'}" stroke-dasharray="4 4" stroke-width="1" opacity="0.85"/><text x="${PL+2}" y="${Y(h.v)-3}" class="sg-ax" style="fill:${h.renk||'var(--green)'}">${esc(h.ad||'')}</text>`;});
   const veri=[];
-  SR.forEach((x,j)=>{const sr=x.sr,P=x.P;const px=P.map(p=>[X(p[0]),Y(p[1])]);s+=`<g class="sg-sr" data-s="${j}" ${sr.gizli?'style="display:none"':''}>`;
+  SR.forEach((x,j)=>{const sr=x.sr,P=x.P,A=x.A;const px=P.map(p=>[X(p[0]),Y(p[1])]);s+=`<g class="sg-sr" data-s="${j}" ${sr.gizli?'style="display:none"':''}>`;
+    if(A){// ham değerler soluk, 7 günlük ortalama kalın eğri
+      const pa=A.map(p=>[X(p[0]),Y(p[1])]);const yol=egri(pa);
+      if(sr.alan!==false&&j<2)s+=`<path d="${yol}L${pa[pa.length-1][0].toFixed(1)},${H-PB}L${pa[0][0].toFixed(1)},${H-PB}Z" fill="url(#${id}-g${j})"/>`;
+      if(P.length<=120)px.forEach((q,i)=>{s+=`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="1.7" style="fill:${P[i][2]||sr.renk}" opacity="0.45"/>`;});
+      s+=`<path d="${yol}" fill="none" style="stroke:${sr.renk}" stroke-width="${sr.kalin||2.3}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const son=pa[pa.length-1];s+=`<circle cx="${son[0].toFixed(1)}" cy="${son[1].toFixed(1)}" r="3" style="fill:${sr.renk}" stroke="var(--surface)" stroke-width="1.5"/>`;}
+    else{
     if(sr.cizgi!==false&&P.length>1){const yol=P.length>12?egri(px):'M'+px.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join('L');
       if(sr.alan!==false&&!sr.kesik&&j<2&&P.length>12)s+=`<path d="${yol}L${px[px.length-1][0].toFixed(1)},${H-PB}L${px[0][0].toFixed(1)},${H-PB}Z" fill="url(#${id}-g${j})"/>`;
-      s+=`<path d="${yol}" fill="none" style="stroke:${sr.renk}" stroke-width="${sr.kalin||1.8}" ${sr.kesik?'stroke-dasharray="4 3"':''} stroke-linejoin="round" stroke-linecap="round"/>`;}
+      s+=`<path d="${yol}" fill="none" style="stroke:${sr.renk}" stroke-width="${sr.kalin||1.8}" ${sr.kesik?'stroke-dasharray="4 3"':''} stroke-linejoin="round" stroke-linecap="round" ${sr.soluk?'opacity="0.55"':''}/>`;}
     const tekil=sr.cizgi===false||P.length<=12;
-    P.forEach((p,i)=>{if(tekil||p[2])s+=`<circle cx="${px[i][0].toFixed(1)}" cy="${px[i][1].toFixed(1)}" r="${sr.r||(tekil?2.6:2)}" style="fill:${p[2]||sr.renk}"/>`;});
-    const son=px[px.length-1];if(!tekil)s+=`<circle cx="${son[0].toFixed(1)}" cy="${son[1].toFixed(1)}" r="3" style="fill:${sr.renk}" stroke="var(--surface)" stroke-width="1.5"/>`;s+='</g>';
-    veri.push({ad:sr.ad||'',renk:sr.renk,birim:sr.birim||bir,ara:!!sr.kesik,gizli:!!sr.gizli,P:P.map((p,i)=>({t:p[0],v:p[1],x:px[i][0],y:px[i][1],r:p[2]}))});});
+    if(sr.nokta!==false)P.forEach((p,i)=>{if(tekil||p[2])s+=`<circle cx="${px[i][0].toFixed(1)}" cy="${px[i][1].toFixed(1)}" r="${sr.r||(tekil?2.6:2)}" style="fill:${p[2]||sr.renk}"/>`;});
+    const son=px[px.length-1];if(!tekil&&!sr.kesik)s+=`<circle cx="${son[0].toFixed(1)}" cy="${son[1].toFixed(1)}" r="3" style="fill:${sr.renk}" stroke="var(--surface)" stroke-width="1.5"/>`;}
+    s+='</g>';
+    veri.push({ad:sr.ad||'',renk:sr.renk,birim:sr.birim||bir,ara:!!sr.kesik,gizli:!!sr.gizli,trend:A?sr.trend:0,P:P.map((p,i)=>({t:p[0],v:p[1],x:px[i][0],y:A?Y(A[i][1]):px[i][1],o:A?A[i][1]:null,r:p[2]}))});});
   s+=`<g class="sg-imlec" style="display:none"><line y1="${PT}" y2="${H-PB}" class="sg-im-c"/>${veri.map(v=>`<circle r="3.6" style="fill:${v.renk}" stroke="var(--surface)" stroke-width="1.6"/>`).join('')}</g></svg>`;
   S.gr[id]={tip:'cizgi',W,PL,PR,veri,gun:o.gunluk!==false,kk:!!o.kompakt};
   const vs=grVarsayilan(S.gr[id]);
-  const sec=SR.length>2;return grBaslik(id,vs[0],vs[1],o.kompakt)+s+(sec?`<div class="sg-lej sg-lej-sec">${SR.map((x,j)=>`<span class="${x.sr.gizli?'kapali':''}" onclick="SGL.serGoster('${id}',${j},this)"><i style="background:${x.sr.renk}"></i>${esc(x.sr.ad)}</span>`).join('')}${(o.lejantEk||[]).map(([r,a])=>`<span class="ek"><i style="background:${r}"></i>${esc(a)}</span>`).join('')}</div>`:lejant(o.seriler.filter(x=>x.ad).map(x=>[x.renk,x.ad]).concat(o.lejantEk||[])));
+  const sec=SR.length>2;return grBaslik(id,vs[0],vs[1],o.kompakt)+s+(o.altYazi?`<div class="sg-alty">${o.altYazi}</div>`:'')+(sec?`<div class="sg-lej sg-lej-sec">${SR.map((x,j)=>x.sr.lejantYok?'':`<span class="${x.sr.gizli?'kapali':''}" onclick="SGL.serGoster('${id}',${j},this)"><i style="background:${x.sr.renk}"></i>${esc(x.sr.ad)}</span>`).join('')}${(o.lejantEk||[]).map(([r,a])=>`<span class="ek"><i style="background:${r}"></i>${esc(a)}</span>`).join('')}</div>`:lejant(o.seriler.filter(x=>x.ad&&!x.lejantYok).map(x=>[x.renk,x.ad]).concat(o.lejantEk||[]).concat(o.seriler.some(x=>x.trend)?[['var(--text3)','çizgi = 7 günlük ortalama, noktalar günlük']]:[])));
 }
 function grVarsayilan(G){if(G.tip==='cubuk'){const i=G.son;return grCubukYazi(G,i,true);}
-  const V=G.veri.filter(v=>!v.gizli).map(v=>({v,p:v.P[v.P.length-1]}));if(!V.length)return ['',''];const t=Math.max(...V.map(x=>x.p.t));return grCizgiYazi(G,V,t,true);}
+  const V=G.veri.filter(v=>!v.gizli).map(v=>({v,p:v.P[v.P.length-1]}));if(!V.length)return ['',''];const t=V[0].p.t;return grCizgiYazi(G,V.map(x=>({v:x.v,p:x.v.P.filter(q=>q.t<=t).slice(-1)[0]||null})),t,true);}
 function grCizgiYazi(G,V,t,ilk){const a=V[0];
-  const sol=`<span class="sg-gb-t">${ilk?'Son · ':''}${G.gun?tUzun(t):tKisa(t)}</span><b style="color:${G.kk&&a.p&&a.p.r?a.p.r:'var(--text)'}">${a.p?vYaz(a.p.v,a.v.birim):'—'}</b>${a.v.ad&&V.length>1?`<span class="sg-gb-a"><i style="background:${a.v.renk}"></i>${esc(a.v.ad)}</span>`:''}`;
-  const sag=V.slice(1).map(x=>`<div><i style="background:${x.v.renk}"></i>${esc(x.v.ad)} <b>${x.p?vYaz(x.p.v,x.v.birim):'—'}</b></div>`).join('');return [sol,sag];}
+  const sol=`<span class="sg-gb-t">${ilk?'Son · ':''}${G.gun?tUzun(t):tKisa(t)}</span><b style="color:${G.kk&&a.p&&a.p.r?a.p.r:'var(--text)'}">${a.p?vYaz(a.p.v,a.v.birim):'—'}</b>${a.p&&a.p.o!=null?`<span class="sg-gb-a">${a.v.trend} günlük ort. <b style="color:var(--text);margin-left:3px">${n1(a.p.o,Math.abs(a.p.o)<20?1:0)}</b></span>`:''}${a.v.ad&&V.length>1?`<span class="sg-gb-a"><i style="background:${a.v.renk}"></i>${esc(a.v.ad)}</span>`:''}`;
+  const sag=V.slice(1).map(x=>`<div><i style="background:${x.v.renk}"></i>${esc(x.v.ad)} <b>${x.p?vYaz(x.p.o!=null?x.p.o:x.p.v,x.v.birim):'—'}</b>${x.p&&x.p.o!=null?' <small>ort.</small>':''}</div>`).join('');return [sol,sag];}
 function grafikCubuk(o){
   const H=o.h||140,PL=4,PR=30,PT=8,PB=18,W=GW;const n=o.etiket.length;if(!n)return bosGrafik(o.bos);
   const toplamlar=o.etiket.map((_,i)=>o.yigin===false?Math.max(...o.seriler.map(s=>s.v[i]||0)):top(o.seriler.map(s=>s.v[i]||0)));
@@ -202,19 +214,21 @@ function grafikCubuk(o){
     else{const dolu=o.seriler.map(sr=>sr.v[i]||0);const ustJ=dolu.reduce((a,v,j)=>v?j:a,-1);o.seriler.forEach((sr,j)=>{const v=sr.v[i]||0;if(!v)return;const h=(H-PT-PB)*v/mx;y-=h;s+=`<rect x="${x}" y="${y}" width="${w}" height="${h+(j===ustJ?0:0.4)}" rx="${j===ustJ?rr:0}" style="fill:${typeof sr.renk==='function'?sr.renk(v,i):sr.renk}"/>`;});}
     s+='</g>';
     const adim=Math.ceil(n/6);if(i%adim===0||i===n-1)s+=`<text x="${PL+i*bw+bw/2}" y="${H-4}" class="sg-ax" text-anchor="middle">${esc(et)}</text>`;});
+  let ortL=null;if(o.ort&&n>=10){ortL=toplamlar.map((_,i)=>{const w=toplamlar.slice(Math.max(0,i-6),i+1).filter(v=>v>0);return w.length?top(w)/w.length:null;});
+    const pa=ortL.map((v,i)=>v==null?null:[PL+i*bw+bw/2,Y(v)]).filter(Boolean);if(pa.length>1)s+=`<path d="${egri(pa)}" fill="none" style="stroke:${o.ortRenk||'var(--text)'}" stroke-width="2" opacity="0.85" stroke-linejoin="round" stroke-linecap="round"/>`;}
   if(o.hedef)s+=`<line x1="${PL}" x2="${W-PR}" y1="${Y(o.hedef.v)}" y2="${Y(o.hedef.v)}" style="stroke:var(--green)" stroke-dasharray="4 4" stroke-width="1" opacity="0.85"/><text x="${PL+2}" y="${Y(o.hedef.v)-3}" class="sg-ax" style="fill:var(--green)">${esc(o.hedef.ad||'hedef')}</text>`;
   s+=`<rect class="sg-im-k" x="0" y="${PT}" width="${bw}" height="${H-PT-PB}" style="display:none"/></svg>`;
   S.gr[id]={tip:'cubuk',W,PL,PR,bw,n,son:sonDolu,et:o.etiket,uzun:o.uzun||o.etiket,toplam:toplamlar,birim:o.birim||'',yigin:o.yigin!==false,
-    seriler:o.seriler.map(sr=>({ad:sr.ad||'',renk:typeof sr.renk==='string'?sr.renk:null,v:sr.v})),hedef:o.hedef?o.hedef.v:null,ust:!!(o.hedef&&o.hedef.ust)};
+    seriler:o.seriler.map(sr=>({ad:sr.ad||'',renk:typeof sr.renk==='string'?sr.renk:null,v:sr.v})),hedef:o.hedef?o.hedef.v:null,ust:!!(o.hedef&&o.hedef.ust),ort:ortL,ana:o.ana||null,anaAd:o.anaAd||''};
   const vs=grVarsayilan(S.gr[id]);
-  return grBaslik(id,vs[0],vs[1])+s+lejant(o.seriler.filter(x=>x.ad&&typeof x.renk==='string').map(x=>[x.renk,x.ad]));
+  return grBaslik(id,vs[0],vs[1])+s+lejant(o.seriler.filter(x=>x.ad&&typeof x.renk==='string').map(x=>[x.renk,x.ad]).concat(ortL?[[o.ortRenk||'var(--text)','7 günlük ortalama']]:[]));
 }
 function grCubukYazi(G,i,ilk){const tek=G.seriler.length===1||!G.yigin;const T=G.yigin?G.toplam[i]:null;
-  const ana=tek&&G.seriler.length===1?G.seriler[0].v[i]:T;
-  const sol=`<span class="sg-gb-t">${ilk?'Son · ':''}${esc(G.uzun[i])}</span><b>${vYaz(ana||0,G.birim,ana>=100?0:1)}</b>${G.hedef&&ana!=null?(G.ust?`<span class="sg-gb-a" style="color:${ana<=G.hedef?'var(--green)':'var(--amber)'}">${ana<=G.hedef?'✓ sınır içinde':'+'+n1(ana-G.hedef,G.hedef<10?1:0)+' fazla'}</span>`:`<span class="sg-gb-a" style="color:${ana>=G.hedef?'var(--green)':'var(--text3)'}">${ana>=G.hedef?'✓ hedef':'hedefe '+n1(G.hedef-ana,G.hedef<10?1:0)}</span>`):''}`;
-  const sag=G.seriler.length>1?G.seriler.filter(sr=>sr.v[i]).map(sr=>`<div>${sr.renk?`<i style="background:${sr.renk}"></i>`:''}${esc(sr.ad)} <b>${n1(sr.v[i],sr.v[i]>=100?0:1)}</b></div>`).join(''):'';return [sol,sag];}
+  const ana=G.ana?G.ana[i]:tek&&G.seriler.length===1?G.seriler[0].v[i]:T;
+  const sol=`<span class="sg-gb-t">${ilk?'Son · ':''}${esc(G.uzun[i])}</span><b>${vYaz(ana||0,G.birim,Math.abs(ana)>=100?0:1)}</b>${G.anaAd?`<span class="sg-gb-a">${G.anaAd}</span>`:''}${G.hedef&&ana!=null?(G.ust?`<span class="sg-gb-a" style="color:${ana<=G.hedef?'var(--green)':'var(--amber)'}">${ana<=G.hedef?'✓ sınır içinde':'+'+n1(ana-G.hedef,G.hedef<10?1:0)+' fazla'}</span>`:`<span class="sg-gb-a" style="color:${ana>=G.hedef?'var(--green)':'var(--text3)'}">${ana>=G.hedef?'✓ hedef':'hedefe '+n1(G.hedef-ana,G.hedef<10?1:0)}</span>`):''}`;
+  const sag=(G.seriler.length>1?G.seriler.filter(sr=>sr.v[i]).map(sr=>`<div>${sr.renk?`<i style="background:${sr.renk}"></i>`:''}${esc(sr.ad)} <b>${n1(sr.v[i],sr.v[i]>=100?0:1)}</b></div>`).join(''):'')+(G.ort&&G.ort[i]!=null?`<div>7 gün ort. <b>${n1(G.ort[i],G.ort[i]>=100?0:1)}</b></div>`:'');return [sol,sag];}
 // Dokunma / fare: en yakın noktaya imleç, üst şeritte değer
-function grHareket(e){const sv=e.target.closest&&e.target.closest('svg.sg-svg');if(!sv)return;const G=S.gr[sv.id];if(!G)return;
+function grHareket(e){const sv=e.target.closest&&e.target.closest('svg.sg-svg');if(!sv)return;const G=S.gr[sv.id];if(!G||(G.tip!=='cizgi'&&G.tip!=='cubuk'))return;
   const r=sv.getBoundingClientRect();const cx=(e.touches?e.touches[0].clientX:e.clientX);const x=(cx-r.left)/r.width*G.W;const b=document.getElementById(sv.id+'-b');
   if(G.tip==='cizgi'){let enT=null,enD=1e9;G.veri.forEach(v=>!v.gizli&&v.P.forEach(p=>{const d=Math.abs(p.x-x);if(d<enD){enD=d;enT=p;}}));if(!enT)return;
     const V=G.veri.map(v=>{if(v.gizli)return {v,p:null,g:1};let q=null,qd=1e9;v.P.forEach(p=>{const d=Math.abs(p.x-enT.x);if(d<qd){qd=d;q=p;}});if(qd>Math.max(6,G.W*0.03)&&v.ara){for(let i=0;i<v.P.length-1;i++){const a=v.P[i],c=v.P[i+1];if(enT.x>=a.x&&enT.x<=c.x){const k=(enT.x-a.x)/((c.x-a.x)||1);return {v,p:{t:enT.t,v:a.v+(c.v-a.v)*k,x:enT.x,y:a.y+(c.y-a.y)*k}};}}}return {v,p:qd<=Math.max(6,G.W*0.03)?q:null};});
@@ -224,7 +238,7 @@ function grHareket(e){const sv=e.target.closest&&e.target.closest('svg.sg-svg');
   else{const i=Math.max(0,Math.min(G.n-1,Math.floor((x-G.PL)/G.bw)));const k=sv.querySelector('.sg-im-k');k.style.display='';k.setAttribute('x',G.PL+i*G.bw);
     sv.classList.add('secili');sv.querySelectorAll('.sg-cb').forEach(c=>c.classList.toggle('on',+c.dataset.i===i));
     if(b){const [sl,sg]=grCubukYazi(G,i,false);b.children[0].innerHTML=sl;b.children[1].innerHTML=sg;}}}
-function grBirak(e){const sv=e.target.closest&&e.target.closest('svg.sg-svg');if(!sv)return;const G=S.gr[sv.id];if(!G)return;
+function grBirak(e){const sv=e.target.closest&&e.target.closest('svg.sg-svg');if(!sv)return;const G=S.gr[sv.id];if(!G||(G.tip!=='cizgi'&&G.tip!=='cubuk'))return;
   const g=sv.querySelector('.sg-imlec');if(g)g.style.display='none';const k=sv.querySelector('.sg-im-k');if(k)k.style.display='none';sv.classList.remove('secili');
   sv.querySelectorAll('.sg-cb.on').forEach(c=>c.classList.remove('on'));const b=document.getElementById(sv.id+'-b');if(b){const [sl,sg]=grVarsayilan(G);b.children[0].innerHTML=sl;b.children[1].innerHTML=sg;}}
 function grBagla(el){if(el.dataset.sgGr)return;el.dataset.sgGr='1';
@@ -289,7 +303,19 @@ function stilEkle(){if(document.getElementById('sg-stil'))return;const st=docume
 .sg-dug{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .sg-harita{height:230px;border-radius:var(--r-md);overflow:hidden;background:var(--surface2);border:1px solid var(--border);z-index:0}.sg-harita .leaflet-control-attribution{font-size:9px;background:rgba(0,0,0,.45);color:#bbb}.sg-harita .leaflet-control-attribution a{color:#ddd}
 .sg-istat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.sg-istat div{background:var(--surface2);border-radius:10px;padding:8px}.sg-istat small{display:block;font-size:10.5px;color:var(--text3)}.sg-istat b{font:700 15px var(--fd);color:var(--text)}
-.sg-tik{cursor:pointer}.sg-strava{font-size:10px;color:#FC4C02;margin-top:6px;font-weight:600}.sg-strava-a{color:#FC4C02!important;border-color:#FC4C02!important;text-decoration:none}.sg-st-alt{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.sg-acil{cursor:pointer}.sg-strava{font-size:10px;color:#FC4C02;margin-top:6px;font-weight:600}.sg-strava-a{color:#FC4C02!important;border-color:#FC4C02!important;text-decoration:none}.sg-st-alt{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.sg-fark{display:block;font-size:11px;font-weight:600;margin-top:2px}.sg-fark small{font-weight:500;color:var(--text3);font-size:10px}
+.sg-alty{font-size:11.5px;color:var(--text2);line-height:1.45;margin-top:6px}.sg-alty b{color:var(--text)}
+.sg-tk{display:grid;grid-template-columns:24px repeat(var(--sut),minmax(0,24px));gap:3px;align-items:center}.sg-tk-ay{margin-bottom:2px}.sg-tk-ay span{font-size:9px;color:var(--text3);white-space:nowrap;overflow:visible}.sg-tk-g{font-size:9px;color:var(--text3)}
+.sg-tk i{aspect-ratio:1;border-radius:3px;background:var(--surface2);cursor:pointer}.sg-tk i.bos{background:none;cursor:default}.sg-tk i.bugun{outline:1.5px solid var(--text2);outline-offset:-1px}.sg-tk i.sec{outline:2px solid var(--text);outline-offset:0}
+.sg-ks{display:flex;flex-direction:column;gap:9px}.sg-ks-l{display:flex;gap:14px;font-size:10.5px;color:var(--text3)}.sg-ks-l i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.sg-ks-s{display:grid;grid-template-columns:118px 1fr;gap:8px;align-items:center}.sg-ks-ad{font-size:12px;color:var(--text);line-height:1.25}.sg-ks-ad small{display:block;font-size:10.5px;color:var(--text3)}.sg-ks-ad small span{color:var(--border2)}
+.sg-ks-c{position:relative;height:18px}.sg-ks-0{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2)}.sg-ks-c i{position:absolute;top:5px;height:8px;border-radius:4px;min-width:2px}.sg-ks-c b{position:absolute;top:2px;font:700 10.5px var(--fu);white-space:nowrap}
+.sg-serit{cursor:pointer}.sg-gunler button i.atk{background:var(--mg)}
+.sg-ub{display:flex;flex-direction:column;gap:8px}.sg-ub-s{display:grid;grid-template-columns:96px 1fr;gap:2px 8px;align-items:center}.sg-ub-s .ad{grid-row:span 2;font-size:12px;color:var(--text)}.sg-ub-s .ad small{display:block;color:var(--text3);font-size:10.5px}
+.sg-ub-s .ct{display:flex;align-items:center;gap:6px}.sg-ub-s .ct i{display:block;height:9px;border-radius:5px;background:var(--mg);min-width:2px}.sg-ub-s .ct b{font:600 11px var(--fu);white-space:nowrap}.sg-ub-s .md{font-size:11px;color:var(--text3)}.sg-ub-s .md b{color:var(--text2)}
+.sg-puan-p{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px 12px;margin-top:4px}.sg-puan-p span{position:relative;display:flex;justify-content:space-between;font-size:11.5px;color:var(--text2);padding-bottom:5px}.sg-puan-p span i{position:absolute;left:0;bottom:0;height:3px;border-radius:2px}.sg-puan-p span::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--surface2);z-index:-1;border-radius:2px}.sg-puan-p em{font-style:normal}.sg-puan-p b{color:var(--text)}
+.sg-tablo{overflow-x:auto;margin-top:10px}.sg-tablo table{border-collapse:collapse;width:100%;font-size:11.5px}.sg-tablo th,.sg-tablo td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}.sg-tablo th{color:var(--text3);font-weight:600}.sg-tablo th:first-child,.sg-tablo td:first-child{text-align:left}
 .sg-nok{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px 0 6px}.sg-prof{touch-action:pan-y}
 .sg-dug button,.sg-btn{border:1px solid var(--border2);background:var(--surface2);color:var(--text);border-radius:999px;padding:6px 11px;font:600 12px var(--fu);cursor:pointer}
 .sg-dug button.on,.sg-btn.on{background:var(--green-lt);border-color:var(--green);color:var(--green)}
@@ -360,6 +386,102 @@ async function ciz(){
 S.ciz=ciz;
 S.git=(k,ek)=>{S.sekme=k;if(ek)Object.assign(S,ek);ciz();try{document.querySelector('.content')?.scrollTo(0,0);}catch(e){}};
 
+// ───────────────────────────────────────── 2. tur grafikler: kıyas, takvim, şerit, puan, kalori dengesi
+// Geçen haftaya göre fark rozeti. iyi: 1 = artış iyi, -1 = azalış iyi, 0 = nötr
+function fark(bu,gecen,d,iyi,birim){if(bu==null||gecen==null||!isFinite(bu)||!isFinite(gecen))return '';const f=bu-gecen;const esik=d===0?0.5:Math.pow(10,-d)/2;
+  if(Math.abs(f)<esik)return `<span class="sg-fark">= geçen haftayla aynı</span>`;
+  const renk=!iyi?'var(--text3)':(f*iyi>0?'var(--green)':'var(--red)');return `<span class="sg-fark" style="color:${renk}">${f>0?'▲':'▼'} ${n1(Math.abs(f),d)}${birim||''} <small>geçen haftaya göre</small></span>`;}
+const haftaOrt=(fn,kac)=>ort(gunler(7,gEkle(bugun(),-7*(kac||0))).map(fn));
+const haftaTop=(fn,kac)=>top(gunler(7,gEkle(bugun(),-7*(kac||0))).map(fn));
+function kiloAtG(g){let v=null;const km=kiloGun();Object.keys(km).sort().forEach(x=>{if(x<=g)v=km[x];});return v;}
+
+// Takvim ısı haritası: sütun = hafta, satır = Pzt…Paz; dokununca üst şeritte o gün
+function takvimIsi(o){const son=bugun();const n=Math.max(35,o.gun||S.aralik);let bas=haftaBas(gEkle(son,-(n-1)));const H=[];
+  for(let h=bas;h<=son;h=gEkle(h,7))H.push(h);const D={};let mx=0;
+  H.forEach(h=>{for(let i=0;i<7;i++){const g=gEkle(h,i);if(g>son)continue;const d=o.deger(g);D[g]=d;if(d&&d.v>mx)mx=d.v;}});
+  const id=rId();S.gr[id]={tip:'takvim',D,et:o.et};
+  let ay='<span></span>';let onceki='';H.forEach(h=>{const a=new Date(gTs(h)).toLocaleDateString('tr-TR',{month:'short'});ay+=`<span>${a!==onceki?a:''}</span>`;onceki=a;});
+  let s=`<div class="sg-tk sg-tk-ay" style="--sut:${H.length}">${ay}</div><div class="sg-tk" style="--sut:${H.length}">`;
+  ['Pzt','','Çar','','Cum','','Paz'].forEach((ad,i)=>{s+=`<span class="sg-tk-g">${ad}</span>`;H.forEach(h=>{const g=gEkle(h,i);if(g>son){s+='<i class="bos"></i>';return;}const d=D[g];const v=d?d.v:0;
+    s+=`<i data-g="${g}" class="${g===son?'bugun':''}" style="${v?`background:${o.renk(v/(mx||1),d)}`:''}" onclick="SGL.takvimSec('${id}','${g}',this)"></i>`;});});
+  s+='</div>';const sonD=D[son]||{v:0};
+  return `<div class="sg-gb" id="${id}-b"><div class="sg-gb-sol"><span class="sg-gb-t">${tUzun(gTs(son))}</span><b>${o.et(sonD,son)}</b></div><div class="sg-gb-sag">${o.ozet||''}</div></div>${s}<div class="sg-lej"><span>az</span>${[0.2,0.45,0.7,1].map(x=>`<span><i style="background:${o.renk(x,{})};border-radius:2px"></i></span>`).join('')}<span>çok</span>${o.lejEk||''}</div>`;}
+S.takvimSec=(id,g,el)=>{const G=S.gr[id];if(!G)return;const b=document.getElementById(id+'-b');el.parentNode.querySelectorAll('i.sec').forEach(x=>x.classList.remove('sec'));el.classList.add('sec');
+  if(b)b.children[0].innerHTML=`<span class="sg-gb-t">${tUzun(gTs(g))}</span><b>${G.et(G.D[g]||{v:0},g)}</b>`;};
+
+// Karşılaştırma çubukları (atak olan / olmayan günler)
+function karsilastirma(satir,etA,etB){const R=satir.filter(r=>r.a!=null&&r.b!=null);if(!R.length)return bosGrafik('Karşılaştırma için atak olan ve olmayan günlerde veri gerekiyor.');
+  // her satır: ortada 0 çizgisi; atak olan günlerde daha kötüyse sağa pembe, daha iyiyse sola yeşil (fark %, en fazla ±50)
+  return `<div class="sg-ks"><div class="sg-ks-l"><span>◀ ${esc(etA)} daha iyi</span><span style="margin-left:auto">${esc(etA)} daha kötü ▶</span></div>${R.map(r=>{const fk=r.b?(r.a-r.b)/Math.abs(r.b):0;const kotu=r.kotu?fk*r.kotu>0:null;
+    const w=Math.min(50,Math.abs(fk)*100);const renk=kotu==null?'var(--text3)':kotu?'var(--mg)':'var(--green)';const sag=kotu==null?fk>0:kotu;
+    return `<div class="sg-ks-s"><div class="sg-ks-ad">${esc(r.ad)}<small>${n1(r.a,r.d)}${r.bir||''} <span>↔</span> ${n1(r.b,r.d)}${r.bir||''}</small></div><div class="sg-ks-c"><span class="sg-ks-0"></span><i style="${sag?'left:50%':'right:50%'};width:${w}%;background:${renk}"></i><b style="${sag?'left:calc(50% + '+w+'% + 4px)':'right:calc(50% + '+w+'% + 4px)'};color:${Math.abs(fk)>=0.15?renk:'var(--text3)'}">${Math.round(fk*100)>0?'+':''}${Math.round(fk*100)}%</b></div></div>`;}).join('')}</div>`;}
+
+// Günün şeridi: 24 saatlik tek çizgide ataklar, kahve/öğün, ilaç, aktivite, ölçüm
+function seritOlaylar(g){const E=[];const ic=z=>zGun(z)===g;const dk=z=>{const d=new Date(z);return d.getHours()*60+d.getMinutes();};
+  (S.v.atak||[]).filter(a=>ic(a.zaman)).forEach(a=>E.push({s:0,b:dk(a.zaman),e:dk(a.zaman)+Math.max(10,a.sure_dk||10),renk:'var(--mg)',ad:'⚡ Atak'+(a.siddet?' · şiddet '+a.siddet:'')+(a.sure_dk?' · '+a.sure_dk+' dk':''),z:a.zaman,tur:'atak'}));
+  (S.v.giris||[]).filter(x=>ic(x.zaman)&&(x.tur==='kafein'||x.tur==='ogun')).forEach(x=>E.push({s:1,b:dk(x.zaman),renk:x.tur==='kafein'?(x.ac?'var(--red)':'#A1887F'):'var(--amber)',ad:x.tur==='kafein'?'☕ '+(x.alt||'Kahve')+(x.ac?' · aç karnına':''):'🍽️ '+({kahvalti:'Kahvaltı',ogle:'Öğle',aksam:'Akşam',ara:'Ara öğün'}[x.alt]||'Öğün')+(x.miktar>1?' · '+n1(x.miktar,0)+' kcal':''),z:x.zaman,tur:x.tur,ac:x.ac}));
+  (S.v.giris||[]).filter(x=>ic(x.zaman)&&x.tur==='su').forEach(x=>E.push({s:1,b:dk(x.zaman),renk:'var(--cy)',ad:'💧 Su',z:x.zaman,tur:'su',kucuk:1}));
+  (S.v.alim||[]).filter(a=>a.alindi&&a.tarih===g&&a.zaman&&ic(a.zaman)).forEach(a=>{const i=(S.v.ilac||[]).find(x=>x.id===a.ilac_id);E.push({s:2,b:dk(a.zaman),renk:a.dilim==='kriz'?'var(--red)':'var(--green)',ad:'💊 '+(i?i.ad:'İlaç')+(a.secim?' ('+a.secim+')':''),z:a.zaman,tur:'ilac'});});
+  aktiviteler().filter(a=>ic(a.baslangic)).forEach(a=>{const b=dk(a.baslangic);E.push({s:3,b,e:Math.min(1440,b+Math.max(10,(a.sure_sn||1800)/60)),renk:TUR_RENK[a.tur]||'var(--cy)',ad:(TUR_AD[a.tur]||a.tur)+(a.sure_sn?' · '+Math.round(a.sure_sn/60)+' dk':'')+(a.mesafe_m?' · '+n1(a.mesafe_m/1000,1)+' km':''),z:a.baslangic,tur:'aktivite'});});
+  (S.v.olcum||[]).filter(o=>ic(o.zaman)&&['tansiyon','kilo'].includes(o.tur)).forEach(o=>E.push({s:4,b:dk(o.zaman),renk:'var(--purple)',ad:o.tur==='kilo'?'⚖️ '+n1(o.deger)+' kg':'🩺 '+o.deger+'/'+o.deger2+(o.deger3?' · '+o.deger3+' bpm':''),z:o.zaman,tur:o.tur}));
+  return E.sort((a,b)=>a.b-b.b);}
+function seritHtml(g){const E=seritOlaylar(g);const W=GW,PL=58,PR=6,PT=6,SH=24,H=PT+5*SH+16;const X=m=>PL+(W-PL-PR)*m/1440;const id=rId();
+  const SAT=['⚡ Atak','☕ Kahve/öğün','💊 İlaç','🏃 Hareket','🩺 Ölçüm'];
+  let s=`<svg class="sg-svg sg-serit" id="${id}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  SAT.forEach((a,i)=>{const y=PT+i*SH;s+=`<rect x="${PL}" y="${y+3}" width="${W-PL-PR}" height="${SH-6}" rx="4" style="fill:var(--surface2)" opacity="0.6"/><text x="2" y="${y+SH/2+3}" class="sg-ax" style="font-size:9.5px">${a}</text>`;});
+  [0,6,12,18,24].forEach(h=>{s+=`<line x1="${X(h*60)}" x2="${X(h*60)}" y1="${PT}" y2="${PT+5*SH}" class="sg-izg"/><text x="${X(h*60)}" y="${H-3}" class="sg-ax" text-anchor="${h===0?'start':h===24?'end':'middle'}">${pad(h%24===0&&h?24:h)}:00</text>`;});
+  if(g===bugun()){const d=new Date();const m=d.getHours()*60+d.getMinutes();s+=`<line x1="${X(m)}" x2="${X(m)}" y1="${PT}" y2="${PT+5*SH}" style="stroke:var(--text2)" stroke-width="1" stroke-dasharray="2 2"/>`;}
+  E.forEach((e,k)=>{const y=PT+e.s*SH+SH/2;const t=`onclick="SGL.seritSec('${id}',${k})"`;
+    if(e.e!=null)s+=`<rect x="${X(e.b)}" y="${y-6}" width="${Math.max(4,X(e.e)-X(e.b))}" height="12" rx="3" style="fill:${e.renk}" ${t}/>`;
+    else s+=`<circle cx="${X(e.b)}" cy="${y}" r="${e.kucuk?3:5}" style="fill:${e.renk}" stroke="var(--surface)" stroke-width="1.2" ${t}/>`;});
+  s+='</svg>';S.gr[id]={tip:'serit',E};
+  // ataklardan önce ne vardı
+  const notlar=E.filter(e=>e.tur==='atak').map(a=>{const once=t=>E.filter(e=>e.tur===t&&e.b<=a.b).slice(-1)[0];const ara=e=>{const m=a.b-e.b;return m<60?m+' dk':Math.floor(m/60)+' sa '+(m%60?m%60+' dk':'');};
+    const kh=once('kafein'),og=once('ogun'),il=once('ilac'),ak=E.filter(e=>e.tur==='aktivite'&&e.b<=a.b&&a.b<=e.e+60).slice(-1)[0];
+    const L=[kh?'☕ '+(kh.ac?'aç kahveden ':'kahveden ')+ara(kh)+' sonra':'☕ öncesinde kahve yok',og?'🍽️ son öğünden '+ara(og)+' sonra':'🍽️ öncesinde öğün kaydı yok',ak?'🏃 hareket sırasında/sonrasında':'',il?'💊 son ilaçtan '+ara(il)+' sonra':''].filter(Boolean);
+    return `<div class="sg-sat"><div class="ana"><b style="color:var(--mg)">⚡ ${pad(Math.floor(a.b/60))}:${pad(a.b%60)}</b> ${esc(a.ad.replace('⚡ Atak','').replace(/^ · /,''))}<small>${L.map(esc).join(' · ')}</small></div></div>`;}).join('');
+  const r=gunluk(g),u=uykuSaatG(g),sb=sabahG(g);
+  const ust=[u!=null?'😴 '+n1(u,1)+' sa uyku':null,sb&&sb.uyku_kalite?'kalite '+sb.uyku_kalite+'/10':null,r&&r.adim?'👣 '+n1(r.adim,0):null,kcalG(g)?'🔥 '+n1(kcalG(g),0)+' kcal':null,ckG(g)?'🧠 mod '+ckG(g).ruh+' · stres '+ckG(g).stres:null].filter(Boolean).join(' · ');
+  return `<div class="sg-gb kk" id="${id}-b"><div class="sg-gb-sol"><span class="sg-gb-t">${tUzun(gTs(g))}</span><b>${E.length?E.length+' olay':'Kayıt yok'}</b></div><div class="sg-gb-sag"></div></div>${s}<div class="sg-not">${esc(ust)||'Bu gün için özet veri yok.'}</div>${notlar?`<div class="sg-liste" style="margin-top:4px">${notlar}</div>`:''}`;}
+S.seritSec=(id,k)=>{const G=S.gr[id];if(!G)return;const e=G.E[k];const b=document.getElementById(id+'-b');if(b){b.children[0].innerHTML=`<span class="sg-gb-t">${saat(e.z)}</span><b>${esc(e.ad)}</b>`;}};
+S.seritGun=g=>{S.sgun=g;ciz();};
+
+// Haftalık sağlık puanı (0–100): uyku, adım, spor, ilaç, atak, kalori, su
+function haftaPuan(h){const H=ayar().hedef;const son=gEkle(h,6)>bugun()?bugun():gEkle(h,6);const G=[];for(let g=h;g<=son;g=gEkle(g,1))G.push(g);const kap=x=>Math.max(0,Math.min(1,x));
+  const P={};const uy=ort(G.map(uykuSaatG));if(uy!=null)P.uyku=kap(uy/H.uyku);
+  const ad=ort(G.map(adimG));if(ad!=null)P.adim=kap(ad/H.adim);
+  const spor=new Set(aktiviteler().filter(a=>zGun(a.baslangic)>=h&&zGun(a.baslangic)<=son&&(a.tur==='ev'||(a.sure_sn||0)>=1200)).map(a=>zGun(a.baslangic))).size;P.spor=kap(spor/(H.spor*G.length/7));
+  const il=ilacUyum(G);if(il!=null)P.ilac=il;
+  const at=top(G.map(g=>atakG(g).length));const kayit=G.some(g=>sabahG(g)||ckG(g)||atakG(g).length);if(kayit)P.atak=1/(1+at/G.length);
+  const kc=G.map(kcalG).filter(v=>v&&v>=800);if(kc.length)P.kalori=ort(kc.map(v=>kap(1-Math.max(0,v-H.kcal)/H.kcal*2.5)));
+  const su=G.map(suG);if(su.some(v=>v>0))P.su=kap(ort(su)/H.su);
+  const k=Object.keys(P);return {puan:k.length?Math.round(100*ort(k.map(x=>P[x]))):null,P,gun:G.length};}
+const PUAN_AD={uyku:'😴 Uyku',adim:'👣 Adım',spor:'🏋️ Spor',ilac:'💊 İlaç',atak:'⚡ Ataksızlık',kalori:'🔥 Kalori',su:'💧 Su'};
+function puanRenk(p){return p==null?'var(--text3)':p>=75?'var(--green)':p>=55?'var(--amber)':'var(--red)';}
+function haftaPuanHtml(){const HB=[];let h=haftaBas(bugun());for(let i=0;i<12;i++){HB.unshift(h);h=gEkle(h,-7);}const R=HB.map(haftaPuan);const bu=R[R.length-1],once=R[R.length-2];if(bu.puan==null&&once.puan==null)return '';
+  return `<div class="sg-kart tam sg-puan-k" onclick="SGL.puanAc()"><div class="sg-kb">🏅 Haftalık sağlık puanı <small>bu hafta · ${bu.gun} gün</small></div>
+    <div style="display:flex;align-items:flex-end;gap:12px"><div class="sg-buyuk" style="font-size:38px;color:${puanRenk(bu.puan)}">${bu.puan??'—'}<small>/100</small></div><div style="padding-bottom:6px;flex:1">${fark(bu.puan,once.puan,0,1)}</div><div style="width:110px">${sparkCubuk(R.map(r=>r.puan||0),'var(--green)')}</div></div>
+    <div class="sg-puan-p">${Object.keys(PUAN_AD).filter(k=>bu.P[k]!=null).map(k=>`<span><i style="width:${Math.round(100*bu.P[k])}%;background:${puanRenk(100*bu.P[k])}"></i><em>${PUAN_AD[k]}</em><b>${Math.round(100*bu.P[k])}</b></span>`).join('')}</div></div>`;}
+S.puanAc=()=>{const HB=[];let h=haftaBas(bugun());for(let i=0;i<12;i++){HB.unshift(h);h=gEkle(h,-7);}const R=HB.map(haftaPuan);
+  pencere('sg-m-puan','🏅 Haftalık sağlık puanı',`${grafikCubuk({etiket:HB.map(trK),uzun:HB.map((x,i)=>trK(x)+' haftası'+(i===HB.length-1?' (sürüyor)':'')),seriler:[{ad:'Puan',renk:v=>puanRenk(v),v:R.map(r=>r.puan||0)}],h:130})}
+    <div class="sg-liste" style="margin-top:8px">${Object.keys(PUAN_AD).map(k=>`<div class="sg-sat"><div class="ana">${PUAN_AD[k]}<small>${{uyku:'ortalama uyku / '+ayar().hedef.uyku+' sa hedef',adim:'ortalama adım / '+n1(ayar().hedef.adim,0)+' hedef',spor:'spor yapılan gün / haftada '+ayar().hedef.spor,ilac:'alınan / planlanan doz',atak:'günde atak azaldıkça artar',kalori:'hedef kalorinin üstüne çıkılmayan günler',su:'ortalama bardak / '+ayar().hedef.su}[k]}</small></div>${R.slice(-4).map(r=>`<div class="sag" style="min-width:34px;color:${r.P[k]!=null?puanRenk(100*r.P[k]):'var(--text3)'}">${r.P[k]!=null?Math.round(100*r.P[k]):'—'}</div>`).join('')}</div>`).join('')}</div>
+    <div class="sg-not">Sağdaki dört sütun son dört hafta (en sağdaki bu hafta). Puan, verisi olan alanların ortalamasıdır; veri girilmeyen alan puanı düşürmez.</div>`);
+  setTimeout(()=>grBagla(document.getElementById('sg-m-puan')),50);};
+
+// Kalori dengesi: alınan (Foodvisor/öğün) – harcanan (saat) → beklenen ve gerçek kilo değişimi
+function harcananG(g){const r=gunluk(g);if(r&&r.toplam_kcal)return Number(r.toplam_kcal);const H=ayar().hedef;const kg=kiloAtG(g);if(!(r&&r.aktif_kcal)||!kg||!H.boy)return null;
+  return 10*kg+6.25*H.boy-5*(H.yas||35)+5+Number(r.aktif_kcal);}
+function kaloriDengesiHtml(){const G=gunler(S.aralik).filter(g=>{const a=kcalG(g);return a&&a>=800&&harcananG(g);});
+  if(G.length<2)return `<div class="sg-bolum"><h4>⚖️ Kalori dengesi <small>alınan ↔ harcanan</small></h4>${bosGrafik('Foodvisor öğünlerinin ve saatin kalorisinin birlikte olduğu günlerde çizilir (en az 2 gün).')}</div>`;
+  const al=G.map(kcalG),hr=G.map(harcananG);const net=G.map((g,i)=>hr[i]-al[i]);
+  const cub=grafikCubuk({etiket:G.map(g=>trK(g).replace(/\s.+/,'')),uzun:G.map(g=>tUzun(gTs(g))),seriler:[{ad:'Alınan',renk:'var(--amber)',v:al},{ad:'Harcanan',renk:'var(--cy)',v:hr}],yigin:false,birim:'kcal',h:130,ana:G.map((g,i)=>hr[i]-al[i]),anaAd:'açık (harcanan − alınan)'});
+  let t=0;const bek=G.map((g,i)=>{t+=net[i]/7700;return [gTs(g),-t];});const k0=kiloAtG(G[0]);
+  const ger=k0!=null?G.map(g=>{const k=kiloAtG(g);return k!=null?[gTs(g),k-k0]:null;}).filter(Boolean):[];
+  const cz=grafikCizgi({seriler:[{ad:'Beklenen',renk:'var(--cy)',n:bek,kesik:true,nokta:false},{ad:'Gerçek',renk:'var(--mg)',n:ger}],bas:gTs(G[0]),bit:gTs(G[G.length-1]),birim:'kg',h:120});
+  const topNet=top(net);return `<div class="sg-bolum"><h4>⚖️ Kalori dengesi <small>${G.length} günün verisi</small></h4>${cub}
+    <div class="sg-ozetler" style="margin:8px 0"><div class="sg-oz"><span>Günlük ort. açık</span><b style="color:${topNet>0?'var(--green)':'var(--red)'}">${n1(topNet/G.length,0)}</b><small> kcal</small></div><div class="sg-oz"><span>Beklenen</span><b>${n1(-topNet/7700,1)}</b><small> kg</small></div><div class="sg-oz"><span>Gerçek</span><b>${ger.length?n1(ger[ger.length-1][1],1):'—'}</b><small> kg</small></div></div>
+    <h4 style="margin-top:6px">Beklenen ↔ gerçek kilo değişimi</h4>${cz}<div class="sg-not">7.700 kcal açık ≈ 1 kg yağ. Gerçek kayıp beklenenden çok azsa öğünlerin bir kısmı girilmemiş ya da saat harcamayı fazla sayıyor olabilir; çok fazlaysa ilk haftaların su kaybıdır. Yalnız 800 kcal üstü girilmiş günler sayılır.</div></div>`;}
+
 // ── Özet: panel kartları
 function ozetHtml(){
   const A=ayar();
@@ -367,7 +489,7 @@ function ozetHtml(){
     return `<div class="sg-bolum"><h4>Ana sayfayı düzenle <button class="sg-btn ana" onclick="SGL.duzenleBitir()">Bitti</button></h4><div class="sg-not" style="margin-bottom:6px">Göz ile paneli aç/kapat, oklarla sırala.</div>${sira.map((p,i)=>{const on=A.paneller.includes(p);
       return `<div class="sg-duz ${on?'':'kapali'}"><button onclick="SGL.panelGoster('${p}')">${on?'👁':'○'}</button><span class="ad">${esc(PANELLER[p].ad)}</span>${on?`<button onclick="SGL.panelTasi('${p}',-1)">↑</button><button onclick="SGL.panelTasi('${p}',1)">↓</button>`:''}</div>`;}).join('')}</div>`;}
   const kartlar=A.paneller.map(p=>{try{return panelHtml(p);}catch(e){console.warn('panel',p,e);return '';}}).join('');
-  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div><div class="sg-bolum"><h4>⌚ Saat ve Foodvisor <small>Health Connect</small></h4><div id="sg-hc">${hcKartHtml()}</div></div><div class="sg-bolum"><h4>🗺️ Strava <small>yürüyüş, koşu, bisiklet, trekking</small></h4><div id="sg-st">${stKartHtml()}</div></div>`;
+  return `<div class="sg-izgara">${haftaPuanHtml()}${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div><div class="sg-bolum"><h4>⌚ Saat ve Foodvisor <small>Health Connect</small></h4><div id="sg-hc">${hcKartHtml()}</div></div><div class="sg-bolum"><h4>🗺️ Strava <small>yürüyüş, koşu, bisiklet, trekking</small></h4><div id="sg-st">${stKartHtml()}</div></div>`;
 }
 S.duzenleAc=()=>{S.duzenle=true;ciz();};S.duzenleBitir=()=>{S.duzenle=false;ciz();};
 S.panelGoster=async p=>{const A=ayar();let L=A.paneller.slice();if(L.includes(p))L=L.filter(x=>x!==p);else L.push(p);S.v.ayar={veri:Object.assign({},(S.v.ayar||{}).veri,{paneller:L})};ciz();try{await ayarKaydet({paneller:L});}catch(e){toast('Kaydedilemedi','red');}};
@@ -380,27 +502,27 @@ function panelHtml(p){
     if(s)return kart(p,`<div class="sg-alt">✓ Bugün dolduruldu · uyku ${s.uyku_kalite||'—'}/10 · uyanış ${s.uyanis||'—'}/5${s.kilo?' · '+n1(s.kilo)+' kg':''}${s.tansiyon_b?' · '+s.tansiyon_b+'/'+s.tansiyon_k:''}</div><div class="sg-alt" style="color:var(--text3)">Seri: ${formSeri()} gün</div>`,`<button onclick="SGL.sabahAc(true)">Düzenle</button>`);
     return kart(p,`<div class="sg-alt">${h<9?'09:00\'da hatırlatırım.':'Henüz doldurulmadı.'} Uyku, kahvaltı, kahve, sabah ilaçları, tartı ve tansiyon.</div>`,`<button class="on" onclick="SGL.sabahAc()">☀️ Şimdi doldur</button>`);}
   case 'ruh':{const at=atakG(g);const son=(S.v.atak||[]).slice(-1)[0];const c=ckG(g)||ckG(gEkle(g,-1));const at7=G7.map(x=>atakG(x).length);
-    return kart(p,`<div style="display:flex;gap:14px;align-items:flex-end"><div><div class="sg-buyuk" style="color:${at.length?'var(--mg)':'var(--text)'}">${at.length}<small>atak bugün</small></div><div class="sg-alt">${son?'Son: '+trT(zGun(son.zaman))+' '+saat(son.zaman)+(son.siddet?' · şiddet '+son.siddet:''):'Kayıt yok'}</div></div><div style="flex:1">${sparkCubuk(at7,'var(--mg)')}</div></div>
+    return kart(p,`<div style="display:flex;gap:14px;align-items:flex-end"><div><div class="sg-buyuk" style="color:${at.length?'var(--mg)':'var(--text)'}">${at.length}<small>atak bugün</small></div><div class="sg-alt">${son?'Son: '+trT(zGun(son.zaman))+' '+saat(son.zaman)+(son.siddet?' · şiddet '+son.siddet:''):'Kayıt yok'}</div>${fark(haftaTop(x=>atakG(x).length),haftaTop(x=>atakG(x).length,1),0,-1,' atak')}</div><div style="flex:1">${sparkCubuk(at7,'var(--mg)')}</div></div>
       <div class="sg-ozetler" style="grid-template-columns:repeat(4,1fr)"><div class="sg-oz"><span>Mod</span><b>${c?c.ruh:'—'}</b><small>/10</small></div><div class="sg-oz"><span>Stres</span><b>${c?c.stres:'—'}</b><small>/10</small></div><div class="sg-oz"><span>Mutluluk</span><b>${c?c.eglence:'—'}</b><small>/10</small></div><div class="sg-oz"><span>Kaygı</span><b>${c?c.kaygi:'—'}</b><small>/10</small></div></div>`,
       `<button class="kirmizi" onclick="SGL.atakAc()">⚡ Atak kaydet</button><button onclick="SGL.checkinAc()">🧠 Check-in</button>${krizIlac()?`<button onclick="SGL.krizEkle()">💊 ${esc(krizIlac().ad.split(' ')[0])} ${krizG(g).length}/${krizIlac().max_gunluk||2}</button>`:''}`);}
   case 'ilac':{const P=ilacPlan(g);const uy=ilacUyum(gunler(7,gEkle(g,-1)));
     const sat=P.map(x=>{const r=alimBul(x.ilac.id,g,x.dilim);const ok=r&&r.alindi;return `<button class="${ok?'on':r?'kirmizi':''}" onclick="SGL.ilacTik(${x.ilac.id},'${x.dilim}')">${ok?'✓':r?'✕':'○'} ${x.dilim==='sabah'?'☀️':x.dilim==='aksam'?'🌙':'🕛'} ${esc(x.ilac.ad.split(' ')[0])}${x.ilac.tur==='takviye'&&r&&r.secim?' ('+esc(r.secim)+')':''}</button>`;}).join('');
     return kart(p,`<div class="sg-alt">${P.length?P.filter(x=>{const r=alimBul(x.ilac.id,g,x.dilim);return r&&r.alindi;}).length+'/'+P.length+' alındı bugün':'İlaç listesi boş.'}${uy!=null?' · son 7 gün uyum %'+n1(uy*100,0):''} · seri ${ilacSeri()} gün</div>`,sat+(krizIlac()?`<button onclick="SGL.krizEkle()">⚠️ Kriz ${krizG(g).length}/${krizIlac().max_gunluk||2}</button>`:''));}
   case 'adim':{const a=adimG(g);const d=G7.map(adimG);const mes=gunluk(g)?.mesafe_m;
-    return kart(p,`<div class="sg-buyuk">${a!=null?n1(a,0):'—'}<small>/ ${n1(H.adim,0)}</small></div><div class="sg-alt">${mes?n1(mes/1000,1)+' km · ':''}${gunluk(g)?.aktif_kcal?n1(gunluk(g).aktif_kcal,0)+' kcal':'Saatten gelecek'}</div>${sparkCubuk(d,'var(--cy)',H.adim)}`,`<button onclick="SGL.adimAc()">＋ Adım</button>`);}
+    return kart(p,`<div class="sg-buyuk">${a!=null?n1(a,0):'—'}<small>/ ${n1(H.adim,0)}</small></div><div class="sg-alt">${mes?n1(mes/1000,1)+' km · ':''}${gunluk(g)?.aktif_kcal?n1(gunluk(g).aktif_kcal,0)+' kcal':'Saatten gelecek'}</div>${fark(haftaOrt(adimG),haftaOrt(adimG,1),0,1)}${sparkCubuk(d,'var(--cy)',H.adim)}`,`<button onclick="SGL.adimAc()">＋ Adım</button>`);}
   case 'kilo':{const s=sonOlcum('kilo');const L=olcumler('kilo');const ilk=L[0];
     let hiz='';if(L.length>1){const once=L.filter(o=>new Date(o.zaman)<=new Date(Date.now()-7*864e5)).slice(-1)[0]||L[0];const gun=Math.max(1,(new Date(s.zaman)-new Date(once.zaman))/864e5);hiz=n1((s.deger-once.deger)/gun*7,2)+' kg/hafta';}
-    return kart(p,`<div class="sg-buyuk">${s?n1(s.deger):'—'}<small>kg</small></div><div class="sg-alt">${s?(H.kilo?'Hedefe '+n1(s.deger-H.kilo)+' kg':'Hedef yok')+(vki(s.deger)?' · VKİ '+n1(vki(s.deger)):''):'Kilo gir'}${hiz?'<br>'+hiz:''}</div>${spark(L.slice(-12).map(o=>Number(o.deger)),'var(--mg)')}`,`<button onclick="SGL.kiloAc()">＋ Kilo</button>`);}
+    return kart(p,`<div class="sg-buyuk">${s?n1(s.deger):'—'}<small>kg</small></div><div class="sg-alt">${s?(H.kilo?'Hedefe '+n1(s.deger-H.kilo)+' kg':'Hedef yok')+(vki(s.deger)?' · VKİ '+n1(vki(s.deger)):''):'Kilo gir'}${hiz?'<br>'+hiz:''}</div>${s?fark(Number(s.deger),kiloAtG(gEkle(g,-7)),1,-1,' kg'):''}${spark(L.slice(-12).map(o=>Number(o.deger)),'var(--mg)')}`,`<button onclick="SGL.kiloAc()">＋ Kilo</button>`);}
   case 'dis':{const L=aktiviteler().filter(a=>DIS_TURLER.includes(a.tur));const son=L[L.length-1];const hb=haftaBas(g);const km=top(L.filter(a=>zGun(a.baslangic)>=hb).map(a=>(a.mesafe_m||0)/1000));
     return kart(p,`<div class="sg-buyuk">${n1(km,1)}<small>km bu hafta</small></div><div class="sg-alt">${son?TUR_AD[son.tur]+' · '+trK(zGun(son.baslangic))+(son.mesafe_m?' · '+n1(son.mesafe_m/1000,2)+' km':''):'Strava bağlanınca otomatik gelir'}</div>`,`<button onclick="SGL.aktiviteAc()">＋ Aktivite</button>`);}
   case 'ev':{const H8=evHaftalar(1)[0];return kart(p,`<div class="sg-buyuk">${H8.gun}<small>/ ${H.spor} gün bu hafta</small></div><div class="sg-alt">Seri: ${evSeri()} hafta hedefte</div><div class="sg-ilerleme"><i style="width:${Math.min(100,100*H8.gun/H.spor)}%"></i></div>`,`<button onclick="SGL.evAc()">＋ Antrenman</button>`);}
-  case 'uyku':{const u=uykuSaatG(g);const s=sabahG(g);return kart(p,`<div class="sg-buyuk">${u!=null?n1(u,1):'—'}<small>saat</small></div><div class="sg-alt">${s?'Kalite '+s.uyku_kalite+'/10 · uyanış '+s.uyanis+'/5':'Sabah formunda sorulur'}</div>${spark(G7.map(uykuSaatG),'var(--purple)',H.uyku)}`);}
+  case 'uyku':{const u=uykuSaatG(g);const s=sabahG(g);return kart(p,`<div class="sg-buyuk">${u!=null?n1(u,1):'—'}<small>saat</small></div><div class="sg-alt">${s?'Kalite '+s.uyku_kalite+'/10 · uyanış '+s.uyanis+'/5':'Sabah formunda sorulur'}</div>${fark(haftaOrt(uykuSaatG),haftaOrt(uykuSaatG,1),1,1,' sa')}${spark(G7.map(uykuSaatG),'var(--purple)',H.uyku)}`);}
   case 'nabiz':{const r=gunluk(g)||(S.v.gunluk||[]).slice(-1)[0];const o=sonOlcum('tansiyon');const v=r&&r.nabiz_dinlenik||(o&&o.deger3);
-    return kart(p,`<div class="sg-buyuk">${v||'—'}<small>bpm dinlenik</small></div><div class="sg-alt">${r&&r.nabiz_min?'Bugün '+r.nabiz_min+'–'+r.nabiz_max:'Saatten gelecek'}</div>${spark(G7.map(x=>gunluk(x)?.nabiz_dinlenik??null),'var(--red)')}`);}
+    return kart(p,`<div class="sg-buyuk">${v||'—'}<small>bpm dinlenik</small></div><div class="sg-alt">${r&&r.nabiz_min?'Bugün '+r.nabiz_min+'–'+r.nabiz_max:'Saatten gelecek'}</div>${fark(haftaOrt(x=>gunluk(x)?.nabiz_dinlenik??null),haftaOrt(x=>gunluk(x)?.nabiz_dinlenik??null,1),0,-1)}${spark(G7.map(x=>gunluk(x)?.nabiz_dinlenik??null),'var(--red)')}`);}
   case 'tansiyon':{const o=sonOlcum('tansiyon');const L=olcumler('tansiyon').slice(-10);
     return kart(p,`<div class="sg-buyuk" style="color:${o&&(o.deger>=140||o.deger2>=90)?'var(--red)':o&&(o.deger>=130||o.deger2>=85)?'var(--amber)':'var(--text)'}">${o?o.deger+'/'+o.deger2:'—'}<small>${o&&o.deger3?o.deger3+' bpm':''}</small></div><div class="sg-alt">${o?trK(zGun(o.zaman))+' '+saat(o.zaman)+(o.baglam?' · '+o.baglam:''):'Ölçüm yok'}</div>${spark(L.map(x=>Number(x.deger)),'var(--amber)')}`,`<button onclick="SGL.tansiyonAc()">＋ Ölçüm</button>`);}
-  case 'beslenme':{const k=kcalG(g);const r=gunluk(g);return kart(p,`<div class="sg-buyuk">${k?n1(k,0):'—'}<small>/ ${n1(H.kcal,0)} kcal</small></div><div class="sg-alt">${r&&r.protein_g?'P '+n1(r.protein_g,0)+' · K '+n1(r.karb_g,0)+' · Y '+n1(r.yag_g,0)+' g':girisG('ogun',g).length+' öğün girildi'}</div>${sparkCubuk(G7.map(kcalG),'var(--amber)',H.kcal)}`,`<button onclick="SGL.ogunAc()">＋ Öğün</button>`);}
-  case 'su':{const s=suG(g);return kart(p,`<div class="sg-buyuk">${n1(s)}<small>/ ${H.su} bardak</small></div><div class="sg-ilerleme"><i style="width:${Math.min(100,100*s/H.su)}%"></i></div>`,`<button class="on" onclick="SGL.suEkle(1)">＋1 bardak</button><button onclick="SGL.suEkle(-1)">−</button>`);}
+  case 'beslenme':{const k=kcalG(g);const r=gunluk(g);return kart(p,`<div class="sg-buyuk">${k?n1(k,0):'—'}<small>/ ${n1(H.kcal,0)} kcal</small></div><div class="sg-alt">${r&&r.protein_g?'P '+n1(r.protein_g,0)+' · K '+n1(r.karb_g,0)+' · Y '+n1(r.yag_g,0)+' g':girisG('ogun',g).length+' öğün girildi'}</div>${fark(haftaOrt(kcalG),haftaOrt(kcalG,1),0,0,' kcal')}${sparkCubuk(G7.map(kcalG),'var(--amber)',H.kcal)}`,`<button onclick="SGL.ogunAc()">＋ Öğün</button>`);}
+  case 'su':{const s=suG(g);return kart(p,`<div class="sg-buyuk">${n1(s)}<small>/ ${H.su} bardak</small></div><div class="sg-ilerleme"><i style="width:${Math.min(100,100*s/H.su)}%"></i></div>${fark(haftaOrt(suG),haftaOrt(suG,1),1,1,' bardak')}`,`<button class="on" onclick="SGL.suEkle(1)">＋1 bardak</button><button onclick="SGL.suEkle(-1)">−</button>`);}
   case 'kafein':{const k=kafeinG(g);return kart(p,`<div class="sg-buyuk" style="color:${k.top>H.kafein?'var(--amber)':'var(--text)'}">${n1(k.top)}<small>fincan</small></div><div class="sg-alt">${k.ac?'<b style="color:var(--red)">'+k.ac+' aç karnına</b>':'Aç karnına yok'}</div>`,`<button onclick="SGL.kafeinAc()">＋ Kahve</button>`);}
   case 'sigara':{const d=sigaraGun();const s=A.sigara;if(d==null)return kart(p,'<div class="sg-alt">Bırakma tarihini gir.</div>',`<button onclick="SGL.sigaraAyarAc()">⚙️ Ayarla</button>`);const tas=d!=null?d*s.gunlukPaket*s.paketFiyat:null;
     return kart(p,`<div class="sg-buyuk" style="color:var(--green)">${d!=null?d:'—'}<small>gün</small></div><div class="sg-alt">${tas!=null?'≈ '+n1(tas,0)+' ₺ cebinde kaldı':''}<br><span style="color:var(--text3)">${sigaraKazanim(d)}</span></div>`,`<button onclick="SGL.sigaraAyarAc()">⚙️</button>`);}
@@ -431,7 +553,7 @@ function yolculukHtml(kisa){const A=ayar(),H=A.hedef;const L=olcumler('kilo');if
 function aktiviteHtml(){
   const H=ayar().hedef;const K=kovalar();let h=aralikSec();
   const adim=kovaTop(adimG);const dolu=adim.filter(x=>x>0);
-  h+=`<div class="sg-bolum"><h4>👣 Adım <small>${dolu.length?'ort. '+n1(ort(dolu),0)+' / gün':''}</small></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Adım',renk:(v)=>v>=H.adim?'var(--green)':'var(--cy)',v:adim}],hedef:{v:H.adim,ad:n1(H.adim,0)},bos:'Adım verisi saat bağlanınca gelir; şimdilik elle girebilirsin.'})}</div>`;
+  h+=`<div class="sg-bolum"><h4>👣 Adım <small>${dolu.length?'ort. '+n1(ort(dolu),0)+' / gün':''}</small></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Adım',renk:(v)=>v>=H.adim?'var(--green)':'var(--cy)',v:adim}],hedef:{v:H.adim,ad:n1(H.adim,0)},ort:S.aralik<=90,bos:'Adım verisi saat bağlanınca gelir; şimdilik elle girebilirsin.'})}</div>`;
   const L=aktiviteler();const ab=gEkle(bugun(),-(S.aralik-1));const LA=L.filter(a=>zGun(a.baslangic)>=ab);
   if(!(ST.durum&&ST.durum.bagli))h+=`<div class="sg-bolum"><h4>🗺️ Strava</h4><div id="sg-st">${stKartHtml()}</div></div>`;
   // haftalık km, spor türüne göre
@@ -465,18 +587,24 @@ function aktiviteHtml(){
 }
 function sureYaz(sn){sn=Math.round(sn);const s=Math.floor(sn/3600),d=Math.floor(sn%3600/60),k=sn%60;return (s?s+' sa ':'')+d+' dk'+(s?'':' '+pad(k)+' sn');}
 function aktiviteKart(a){const km=a.mesafe_m?a.mesafe_m/1000:null;const tempo=km&&a.sure_sn?a.sure_sn/60/km:null;const atk=(S.v.atak||[]).filter(x=>x.aktivite_id===a.id);
-  return `<div class="sg-sat"><div class="ana sg-tik" onclick="SGL.aktiviteDetay(${a.id})"><b>${TUR_AD[a.tur]||a.tur}</b>${a.rota?' <span class="sg-ek">🗺️</span>':''} ${a.ad?'· '+esc(a.ad):''} <span class="sg-ek">${saat(a.baslangic)} · ${esc(a.kaynak)}</span>
+  return `<div class="sg-sat"><div class="ana sg-acil" onclick="SGL.aktiviteDetay(${a.id})"><b>${TUR_AD[a.tur]||a.tur}</b>${a.rota?' <span class="sg-ek">🗺️</span>':''} ${a.ad?'· '+esc(a.ad):''} <span class="sg-ek">${saat(a.baslangic)} · ${esc(a.kaynak)}</span>
     <small>${[km?n1(km,2)+' km':'',a.sure_sn?sureYaz(a.sure_sn):'',tempo&&a.tur!=='bisiklet'?n1(tempo,1)+' dk/km':'',km&&a.sure_sn&&a.tur==='bisiklet'?n1(km/(a.sure_sn/3600),1)+' km/sa':'',a.irtifa_m?'↗ '+n1(a.irtifa_m,0)+' m':'',a.nabiz_ort?'❤️ '+a.nabiz_ort+(a.nabiz_max?'/'+a.nabiz_max:''):'',a.kcal?n1(a.kcal,0)+' kcal':''].filter(Boolean).join(' · ')}</small>
     ${(a.hareketler||[]).length?`<small>${esc(a.hareketler.map(x=>x.ad+' '+(x.set||'')+'×'+(x.tekrar||'')).join(' · '))}</small>`:''}${atk.length?`<small style="color:var(--mg)">⚡ Bu aktiviteyle eşleşen ${atk.length} atak</small>`:''}</div>${a.kaynak==='elle'?`<button class="sg-x" onclick="SGL.silAktivite(${a.id})">🗑</button>`:''}</div>`;}
 S.gunSec=g=>{S.gun=g;ciz();};
 
 // ── Vücut ve uyku
+function kiloTahmin(){const H=ayar().hedef;const L=olcumler('kilo').map(o=>[new Date(o.zaman).getTime(),Number(o.deger)]);if(L.length<4||!H.kilo)return null;
+  const son=L[L.length-1][0];const P=L.filter(p=>p[0]>=son-28*864e5);if(P.length<4)return null;const mx=ort(P.map(p=>p[0])),my=ort(P.map(p=>p[1]));
+  const b=top(P.map(p=>(p[0]-mx)*(p[1]-my)))/top(P.map(p=>(p[0]-mx)**2));if(!isFinite(b))return null;const hafta=b*7*864e5;const simdi=my+b*(son-mx);
+  if(hafta>=-0.05)return {hafta,simdi,son};const t=son+(simdi-H.kilo)/(-b);return {hafta,simdi,son,t,hedefT:H.kiloTarih?gTs(H.kiloTarih):null};}
 function vucutHtml(){
-  const H=ayar().hedef;let h=aralikSec();const L=olcumler('kilo');const bas=ARALIK_BAS(),bit=Math.max(ARALIK_BIT(),S.aralik>=365&&H.kiloTarih?gTs(H.kiloTarih):0);
+  const H=ayar().hedef;let h=aralikSec();const L=olcumler('kilo');const KT=kiloTahmin();const bas=ARALIK_BAS(),bit=Math.max(ARALIK_BIT()+(S.aralik<=90?S.aralik*0.3*864e5:0),S.aralik>=365&&H.kiloTarih?gTs(H.kiloTarih):0);
   const n=L.map(o=>[new Date(o.zaman).getTime(),Number(o.deger)]).filter(p=>p[0]>=bas);
   const ilk=L[0];const ideal=ilk&&H.kilo&&H.kiloTarih?[[new Date(ilk.zaman).getTime(),Number(ilk.deger)],[gTs(H.kiloTarih),H.kilo]]:[];
   const idealN=ideal.length?[ideal[0][0]<bas?[bas,ideal[0][1]+(ideal[1][1]-ideal[0][1])*(bas-ideal[0][0])/(ideal[1][0]-ideal[0][0])]:ideal[0],[bit,ideal[0][1]+(ideal[1][1]-ideal[0][1])*(Math.min(bit,ideal[1][0])-ideal[0][0])/(ideal[1][0]-ideal[0][0])]]:[];
-  h+=`<div class="sg-bolum"><h4>⚖️ Kilo <button class="sg-btn" onclick="SGL.kiloAc()">＋ Kilo</button></h4>${grafikCizgi({seriler:[{ad:'Kilo',renk:'var(--mg)',n},{ad:'İdeal yol',renk:'var(--text2)',n:idealN,kesik:true,nokta:false,kalin:1.2}],hedef:H.kilo?[{v:H.kilo,ad:H.kilo+' kg hedef'}]:[],bas,bit,birim:'kg',bos:'Kilo kaydı yok.'})}${yolculukHtml(false)}</div>`;
+  const tah=KT&&KT.t?[[KT.son,KT.simdi],[Math.min(bit,KT.t),KT.simdi+KT.hafta/7/864e5*(Math.min(bit,KT.t)-KT.son)]]:[];
+  const tYaz=KT?(KT.t?`Son 4 haftanın hızıyla (<b>${n1(KT.hafta,2)} kg/hafta</b>) ${H.kilo} kg'a <b>${new Date(KT.t).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})}</b> civarı ulaşırsın${KT.hedefT?(KT.t<=KT.hedefT?` · hedef tarihten <b style="color:var(--green)">${Math.round((KT.hedefT-KT.t)/(7*864e5))} hafta önce</b> ✓`:` · hedef tarihten <b style="color:var(--amber)">${Math.round((KT.t-KT.hedefT)/(7*864e5))} hafta sonra</b>; haftada ${n1((L[L.length-1].deger-H.kilo)/Math.max(1,(KT.hedefT-Date.now())/(7*864e5)),2)} kg gerekiyor`):''}.`:`Son 4 haftada kilo ${KT.hafta>0.05?'artıyor':'yerinde sayıyor'} (${n1(KT.hafta,2)} kg/hafta).`):'';
+  h+=`<div class="sg-bolum"><h4>⚖️ Kilo <button class="sg-btn" onclick="SGL.kiloAc()">＋ Kilo</button></h4>${grafikCizgi({seriler:[{ad:'Kilo',renk:'var(--mg)',n,trend:7},{ad:'İdeal yol',renk:'var(--text3)',n:idealN,kesik:true,nokta:false,kalin:1},{ad:'Bu hızla',renk:'var(--mg)',n:tah,kesik:true,nokta:false,kalin:1.4}],hedef:H.kilo?[{v:H.kilo,ad:H.kilo+' kg hedef'}]:[],yakin:S.aralik<365,bugunCizgi:true,bas,bit,birim:'kg',bos:'Kilo kaydı yok.',altYazi:tYaz})}${yolculukHtml(false)}</div>`;
   // haftalık kayıp
   const hk=[];let hb=haftaBas(gEkle(bugun(),-(Math.max(S.aralik,56)-1)));const km=kiloGun();const gk=Object.keys(km).sort();
   const kiloAt=g=>{let v=null;gk.forEach(x=>{if(x<=g)v=km[x];});return v;};
@@ -489,10 +617,10 @@ function vucutHtml(){
   const K=kovalar();const ud=kovalar().map(k=>{const L2=[];for(let g=k.bas;g<=k.son;g=gEkle(g,1)){const r=gunluk(g);if(r&&r.uyku_dk)L2.push(r);}return L2;});
   const evre=(alan)=>ud.map(L2=>L2.length?ort(L2.map(r=>(r[alan]||0)/60)):0);const evreVar=ud.some(L2=>L2.some(r=>r.uyku_derin_dk||r.uyku_rem_dk));
   const sure=kovaTop(uykuSaatG).map((v,i)=>S.aralik>90?v:v);
-  h+=`<div class="sg-bolum"><h4>😴 Uyku süresi <small>${evreVar?'evreler saatten':'sabah formu / saat'}</small></h4>${evreVar?grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Derin',renk:'#3D2AD6',v:evre('uyku_derin_dk')},{ad:'Hafif',renk:'#7C4DFF',v:evre('uyku_hafif_dk')},{ad:'REM',renk:'#00E5FF',v:evre('uyku_rem_dk')},{ad:'Uyanık',renk:'#FFAB00',v:evre('uyku_uyanik_dk')}],hedef:{v:H.uyku,ad:H.uyku+' sa'}})
-    :grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Saat',renk:(v)=>v>=H.uyku?'var(--green)':'var(--purple)',v:sure}],hedef:{v:H.uyku,ad:H.uyku+' sa'},bos:'Uyku süresi sabah formundan veya saatten gelir.'})}</div>`;
+  h+=`<div class="sg-bolum"><h4>😴 Uyku süresi <small>${evreVar?'evreler saatten':'sabah formu / saat'}</small></h4>${evreVar?grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Derin',renk:'#3D2AD6',v:evre('uyku_derin_dk')},{ad:'Hafif',renk:'#7C4DFF',v:evre('uyku_hafif_dk')},{ad:'REM',renk:'#00E5FF',v:evre('uyku_rem_dk')},{ad:'Uyanık',renk:'#FFAB00',v:evre('uyku_uyanik_dk')}],hedef:{v:H.uyku,ad:H.uyku+' sa'},ort:S.aralik<=90})
+    :grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Saat',renk:(v)=>v>=H.uyku?'var(--green)':'var(--purple)',v:sure}],hedef:{v:H.uyku,ad:H.uyku+' sa'},ort:S.aralik<=90,bos:'Uyku süresi sabah formundan veya saatten gelir.'})}</div>`;
   const kal=(S.v.sabah||[]).filter(r=>r.uyku_kalite&&gTs(r.tarih)>=bas).map(r=>[gTs(r.tarih),r.uyku_kalite]);const uy=(S.v.sabah||[]).filter(r=>r.uyanis&&gTs(r.tarih)>=bas).map(r=>[gTs(r.tarih),r.uyanis*2]);
-  h+=`<div class="sg-bolum"><h4>🌙 Uyku kalitesi ve uyanış</h4>${grafikCizgi({seriler:[{ad:'Kalite (1–10)',renk:'var(--purple)',n:kal},{ad:'Uyanış hissi (×2)',renk:'var(--cy)',n:uy}],y:[0,10.5],bas,bit:ARALIK_BIT(),bos:'Sabah formu doldukça çizilir.'})}</div>`;
+  h+=`<div class="sg-bolum"><h4>🌙 Uyku kalitesi ve uyanış</h4>${grafikCizgi({seriler:[{ad:'Kalite (1–10)',renk:'var(--purple)',n:kal,trend:7},{ad:'Uyanış hissi (×2)',renk:'var(--cy)',n:uy,trend:7}],y:[0,10.5],bas,bit:ARALIK_BIT(),bos:'Sabah formu doldukça çizilir.'})}</div>`;
   const ol=(S.v.olcum||[]).filter(o=>['kilo','bel','yag'].includes(o.tur)).slice(-15).reverse();
   h+=`<div class="sg-bolum"><h4>📋 Son ölçümler</h4><div class="sg-liste">${ol.map(o=>`<div class="sg-sat"><div class="ana">${o.tur==='kilo'?'⚖️ Kilo':o.tur==='bel'?'📏 Bel':'Yağ oranı'}<small>${trT(zGun(o.zaman))} ${saat(o.zaman)} · ${esc(o.kaynak)}${o.baglam?' · '+esc(o.baglam):''}</small></div><div class="sag">${n1(o.deger)} ${o.tur==='kilo'?'kg':o.tur==='bel'?'cm':'%'}</div><button class="sg-x" onclick="SGL.silOlcum(${o.id})">🗑</button></div>`).join('')||bosGrafik('Ölçüm yok.')}</div></div>`;
   return h;
@@ -507,7 +635,9 @@ function kalpHtml(){let h=aralikSec();const bas=ARALIK_BAS(),bit=ARALIK_BIT();co
     <div class="sg-ozetler" style="margin-top:8px"><div class="sg-oz"><span>Sabah ort.</span><b>${sab.length?n1(ort(sab.map(o=>+o.deger)),0)+'/'+n1(ort(sab.map(o=>+o.deger2)),0):'—'}</b></div><div class="sg-oz"><span>Akşam ort.</span><b>${aks.length?n1(ort(aks.map(o=>+o.deger)),0)+'/'+n1(ort(aks.map(o=>+o.deger2)),0):'—'}</b></div><div class="sg-oz"><span>Ölçüm</span><b>${T.length}</b></div></div>
     <div class="sg-not">Yeşil bant normal aralık. Ölçümü 5 dk oturup dinlendikten sonra, kahve ve sigaradan 30 dk sonra yap; 2 ölçüm al.</div></div>`;
   const nd=(S.v.gunluk||[]).filter(r=>r.nabiz_dinlenik&&gTs(r.tarih)>=bas).map(r=>[gTs(r.tarih),r.nabiz_dinlenik]);const nt=T.filter(o=>o.deger3).map(o=>[new Date(o.zaman).getTime(),Number(o.deger3),renk(o)]);
-  h+=`<div class="sg-bolum"><h4>❤️ Nabız</h4>${grafikCizgi({seriler:[{ad:'Dinlenik (saat)',renk:'var(--red)',n:nd},{ad:'Ölçümde',renk:'var(--mg)',n:nt,cizgi:false}],bant:[60,100],bas,bit,birim:'bpm',bos:'Nabız saatten ya da tansiyon ölçümünden gelir.'})}</div>`;
+  const pi=isaretIlac();const NDT=(S.v.gunluk||[]).filter(r=>r.nabiz_dinlenik).map(r=>[r.tarih,Number(r.nabiz_dinlenik)]);
+  const ndOz=NDT.length>=10?(()=>{const a=ort(NDT.slice(0,7).map(x=>x[1])),b=ort(NDT.slice(-7).map(x=>x[1]));return `İlk 7 kayıt ort. <b>${n1(a,0)}</b> → son 7 gün ort. <b>${n1(b,0)}</b> bpm <b style="color:${b<a?'var(--green)':b>a?'var(--amber)':'var(--text3)'}">(${b<=a?'':'+'}${n1(b-a,1)})</b>. Kilo verdikçe ve kondisyon arttıkça dinlenik nabız düşer; kalp sağlığının en iyi göstergelerinden biri.`;})():'Dinlenik nabız saatten gelir; eğilim için en az 10 gün gerekir.';
+  h+=`<div class="sg-bolum"><h4>❤️ Dinlenik nabız</h4>${grafikCizgi({seriler:[{ad:'Dinlenik (saat)',renk:'var(--red)',n:nd,trend:7},{ad:'Ölçümde',renk:'var(--mg)',n:nt,cizgi:false}],bant:[60,100],yakin:true,dikey:pi?[{t:gTs(pi.baslangic),ad:pi.ad.split(' ')[0]+' başladı'}]:[],bas,bit,birim:'bpm',bos:'Nabız saatten ya da tansiyon ölçümünden gelir.',altYazi:ndOz})}</div>`;
   const son=olcumler('tansiyon').slice(-20).reverse();
   h+=`<div class="sg-bolum"><h4>📋 Ölçümler</h4><div class="sg-liste">${son.map(o=>`<div class="sg-sat"><div class="ana">${trT(zGun(o.zaman))} ${saat(o.zaman)}<small>${esc(o.baglam||'')} ${o.notu?'· '+esc(o.notu):''}</small></div><div class="sag" style="color:${o.deger>=140||o.deger2>=90?'var(--red)':o.deger>=130||o.deger2>=85?'var(--amber)':'inherit'}">${o.deger}/${o.deger2}${o.deger3?' · '+o.deger3:''}</div><button class="sg-x" onclick="SGL.silOlcum(${o.id})">🗑</button></div>`).join('')||bosGrafik('Ölçüm yok.')}</div></div>`;
   return h;}
@@ -515,9 +645,14 @@ function kalpHtml(){let h=aralikSec();const bas=ARALIK_BAS(),bit=ARALIK_BIT();co
 // ── Ruh hali ve ataklar
 function ruhHtml(){let h=aralikSec();const bas=ARALIK_BAS(),bit=ARALIK_BIT();const pi=isaretIlac(),pb=pi&&pi.baslangic;const dik=pb?[{t:gTs(pb),ad:pi.ad.split(' ')[0]+' başladı'}]:[];
   const ck=(S.v.ck||[]).filter(c=>c.ruh>0&&gTs(c.tarih)>=bas);
-  h+=`<div class="sg-bolum"><h4>🧠 Mod · stres · mutluluk <button class="sg-btn" onclick="SGL.checkinAc()">Check-in</button></h4>${grafikCizgi({seriler:[{ad:'Mod',renk:'var(--cy)',n:ck.map(c=>[gTs(c.tarih),c.ruh])},{ad:'Stres',renk:'var(--red)',n:ck.map(c=>[gTs(c.tarih),c.stres])},{gizli:true,ad:'Mutluluk',renk:'var(--green)',n:ck.map(c=>[gTs(c.tarih),c.eglence])},{gizli:true,ad:'Kaygı',renk:'var(--amber)',n:ck.map(c=>[gTs(c.tarih),c.kaygi]),kesik:true}],y:[0.5,10.5],dikey:dik,bas,bit,bos:'Akşam check-in\'leri doldukça çizilir.'})}</div>`;
-  const K=kovalar();const atk=kovaTop(g=>atakG(g).length);
-  h+=`<div class="sg-bolum"><h4>⚡ Günlük ataklar <button class="sg-btn" onclick="SGL.atakAc()">＋ Atak</button></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Atak',renk:'var(--mg)',v:atk}],bos:'Bu aralıkta atak kaydı yok. 👍'})}${pb?`<div class="sg-not">${ilacEtki()}</div>`:''}</div>`;
+  // günün şeridi
+  const SG=gunler(21);if(!S.sgun)S.sgun=bugun();
+  h+=`<div class="sg-bolum"><h4>🕒 Günün şeridi <small>atak öncesi ne vardı?</small></h4><div class="sg-gunler" id="sg-gunler">${SG.map(g=>`<button class="${S.sgun===g?'on':''}" onclick="SGL.seritGun('${g}')">${trGun(g)}<b>${Number(g.slice(8))}</b><i class="${atakG(g).length?'var atk':''}"></i></button>`).join('')}</div><div style="margin-top:8px">${seritHtml(S.sgun)}</div></div>`;
+  h+=`<div class="sg-bolum"><h4>🧠 Mod · stres · mutluluk <button class="sg-btn" onclick="SGL.checkinAc()">Check-in</button></h4>${grafikCizgi({seriler:[{ad:'Mod',renk:'var(--cy)',n:ck.map(c=>[gTs(c.tarih),c.ruh]),trend:7},{ad:'Stres',renk:'var(--red)',n:ck.map(c=>[gTs(c.tarih),c.stres]),trend:7},{gizli:true,ad:'Mutluluk',renk:'var(--green)',n:ck.map(c=>[gTs(c.tarih),c.eglence]),trend:7},{gizli:true,ad:'Kaygı',renk:'var(--amber)',n:ck.map(c=>[gTs(c.tarih),c.kaygi]),trend:7}],y:[0.5,10.5],dikey:dik,bas,bit,bos:'Akşam check-in\'leri doldukça çizilir.',altYazi:'Kalın çizgi 7 günlük ortalama, noktalar günlük değer. Alttaki düğmelerle seri aç/kapat.'})}</div>`;
+  const atB=haftaTop(x=>atakG(x).length),atO=haftaTop(x=>atakG(x).length,1);
+  h+=`<div class="sg-bolum"><h4>⚡ Atak takvimi <button class="sg-btn" onclick="SGL.atakAc()">＋ Atak</button></h4>${takvimIsi({gun:Math.max(S.aralik,35),deger:g=>{const L=atakG(g);return L.length?{v:L.length,s:Math.max(0,...L.map(a=>a.siddet||0)),k:L.some(a=>a.kriz_ilac)}:null;},
+      renk:(x,d)=>`rgba(232,25,122,${(0.22+0.78*x).toFixed(2)})`,et:(d,g)=>d.v?`${d.v} atak${d.s?' <small>en yüksek şiddet '+d.s+'</small>':''}${d.k?' <small>· kriz ilacı</small>':''}`:(g<=bugun()?'Atak yok':'—'),
+      ozet:`<div>Bu hafta <b>${atB}</b></div><div>Geçen hafta <b>${atO}</b></div>`})}${pb?`<div class="sg-not">${ilacEtki()}</div>`:''}</div>`;
   const A=(S.v.atak||[]).filter(a=>new Date(a.zaman).getTime()>=bas);
   const M=[0,1,2,3,4,5,6].map(()=>Array(24).fill(0));A.forEach(a=>{const d=new Date(a.zaman);M[(d.getDay()+6)%7][d.getHours()]++;});
   h+=`<div class="sg-bolum"><h4>🕐 Saatlere göre ataklar</h4>${A.length?isiHarita(M,['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],[...Array(24).keys()].map(String)):bosGrafik('Atak kaydı yok.')}</div>`;
@@ -531,13 +666,19 @@ function ruhHtml(){let h=aralikSec();const bas=ARALIK_BAS(),bit=ARALIK_BIT();con
   h+=`<div class="sg-bolum"><h4>🗓️ Aylık özet</h4><div class="sg-liste">${Object.keys(ay).sort().reverse().slice(0,8).map(k=>{const L=ay[k];return `<div class="sg-sat"><div class="ana">${new Date(k+'-01T12:00').toLocaleDateString('tr-TR',{month:'long',year:'numeric'})}<small>ort. şiddet ${n1(ort(L.map(a=>a.siddet)))} · ort. süre ${n1(ort(L.map(a=>a.sure_dk)),0)} dk · ${L.filter(a=>a.kriz_ilac).length} kez kriz ilacı</small></div><div class="sag">${L.length} atak</div></div>`;}).join('')||bosGrafik('Atak kaydı yok.')}</div></div>`;
   // ilişki: uyku+kafein ↔ atak
   const G=gunler(Math.max(30,S.aralik));
-  h+=`<div class="sg-bolum"><h4>🔗 Uyku ↔ ertesi gün atak</h4>${grafikNokta({n:G.map(g=>[sabahG(g)?.uyku_kalite??null,sabahG(g)?atakG(g).length:null]),xAd:'uyku kalitesi',yAd:'atak sayısı',renk:'var(--purple)'})}</div>`;
+  h+=uykuErtesiHtml(G);
   h+=`<div class="sg-bolum"><h4>🔗 Aç karnına kahve ↔ atak</h4>${grafikNokta({n:G.map(g=>{const k=girisG('kafein',g);return [k.length||sabahG(g)?kafeinG(g).ac:null,k.length||sabahG(g)?atakG(g).length:null];}),xAd:'aç kahve',yAd:'atak sayısı',renk:'var(--amber)'})}</div>`;
   // liste
   const son=(S.v.atak||[]).slice(-25).reverse();
   h+=`<div class="sg-bolum"><h4>📋 Atak günlüğü</h4><div class="sg-liste">${son.map(a=>{const ak=a.aktivite_id&&(S.v.aktivite||[]).find(x=>x.id===a.aktivite_id);return `<div class="sg-sat"><div class="ana"><b>${trT(zGun(a.zaman))} ${saat(a.zaman)}</b> ${a.siddet?'<span class="sg-ek">şiddet '+a.siddet+'</span>':''} ${a.sure_dk?'<span class="sg-ek">'+a.sure_dk+' dk</span>':''}${a.kriz_ilac?' <span class="sg-ek">💊 kriz ilacı</span>':''}
     <small>${esc([(a.belirtiler||[]).join(', '),(a.tetikleyiciler||[]).length?'tetik: '+a.tetikleyiciler.join(', '):'',a.durum,a.tansiyon_b?'TA '+a.tansiyon_b+'/'+a.tansiyon_k:'',a.nabiz?'nabız '+a.nabiz:'',a.iyi_gelen?'iyi gelen: '+a.iyi_gelen:'',ak?'aktivite: '+(TUR_AD[ak.tur]||ak.tur):'',a.notu].filter(Boolean).join(' · '))}</small></div><button class="sg-x" onclick="SGL.atakAc(${a.id})">✏️</button></div>`;}).join('')||bosGrafik('Atak kaydı yok.')}</div></div>`;
   return h;}
+function uykuErtesiHtml(G){const K=[['6 saatten az',0,6],['6–7 saat',6,7],['7–8 saat',7,8],['8 saat ve üstü',8,99]];
+  const R=K.map(([ad,a,b])=>{const L=G.filter(g=>{const u=uykuSaatG(g);return u!=null&&u>=a&&u<b;});return {ad,n:L.length,atak:L.length?ort(L.map(g=>atakG(g).length)):null,mod:ort(L.map(g=>ckG(g)?.ruh)),stres:ort(L.map(g=>ckG(g)?.stres))};}).filter(r=>r.n);
+  if(top(R.map(r=>r.n))<5)return `<div class="sg-bolum"><h4>😴 Uyku → o günün atak ve modu</h4>${bosGrafik('Uyku süresi olan en az 5 gün gerekiyor.')}</div>`;
+  const mxA=Math.max(0.5,...R.map(r=>r.atak||0));
+  return `<div class="sg-bolum"><h4>😴 Uyku → o günün atak ve modu <small>gece uykusuna göre</small></h4><div class="sg-ub">${R.map(r=>`<div class="sg-ub-s"><div class="ad">${r.ad}<small>${r.n} gün</small></div><div class="ct"><i style="width:${100*(r.atak||0)/mxA}%"></i><b>${n1(r.atak,1)} atak</b></div><div class="md">${r.mod!=null?'mod <b>'+n1(r.mod,1)+'</b>':''}${r.stres!=null?' · stres <b>'+n1(r.stres,1)+'</b>':''}</div></div>`).join('')}</div>
+    <div class="sg-not">Her satır, o gece o kadar uyuduğun günlerin ortalaması. Az uyunan günlerde atak artıyorsa uyku önceliğin olmalı.</div></div>`;}
 function ilacEtki(){const pi=isaretIlac();if(!pi)return '';const pb=pi.baslangic,ad=pi.ad.split(' ')[0];const g=bugun();const sonra=Math.min(gFark(pb,g)+1,28);if(sonra<3)return ad+' '+trT(pb)+'\'de başladı. Etkisini görmek için önce ve sonra en az 1–2 hafta kayıt gerekir.';
   const once=gunler(sonra,gEkle(pb,-1)),son=gunler(sonra,g);const o=top(once.map(x=>atakG(x).length))/sonra,s=top(son.map(x=>atakG(x).length))/sonra;
   return `${ad} öncesi ${sonra} gün: günde ${n1(o,1)} atak · sonrası ${sonra} gün: günde ${n1(s,1)} atak.`;}
@@ -546,9 +687,12 @@ function atakAnalizHtml(A){if(A.length<2)return `<div class="sg-bolum"><h4>🔍 
   const sat=(ad,fn,bir,d)=>{const a=ort(atakli.map(fn)),b=ort(atsiz.map(fn));return `<div class="sg-sat"><div class="ana">${ad}</div><div class="sag" style="color:var(--mg)">${n1(a,d)}${bir}</div><div class="sag" style="color:var(--text3);min-width:62px">${n1(b,d)}${bir}</div></div>`;};
   const ac=A.filter(a=>(a.tetikleyiciler||[]).some(t=>/aç|açlık/i.test(t))).length;const eff=A.filter(a=>a.aktivite_id||(a.tetikleyiciler||[]).includes('Efor')).length;
   const saatOrt=ort(A.map(a=>new Date(a.zaman).getHours()+new Date(a.zaman).getMinutes()/60));
-  return `<div class="sg-bolum"><h4>🔍 Atak analizi <small>atak olan / olmayan günler</small></h4><div class="sg-liste">
-    <div class="sg-sat" style="font-size:11px;color:var(--text3)"><div class="ana"></div><div class="sag">ataklı</div><div class="sag" style="min-width:62px">ataksız</div></div>
-    ${sat('Uyku kalitesi',g=>sabahG(g)?.uyku_kalite,'/10',1)}${sat('Uyku süresi',uykuSaatG,' sa',1)}${sat('Aç karnına kahve',g=>kafeinG(g).ac,'',1)}${sat('Toplam kahve',g=>kafeinG(g).top,'',1)}${sat('Adım',adimG,'',0)}${sat('Uyanış hissi',g=>sabahG(g)?.uyanis,'/5',1)}${sat('Stres (check-in)',g=>ckG(g)?.stres,'/10',1)}</div>
+  const ks=(ad,fn,bir,d,kotu,mx)=>({ad,a:ort(atakli.map(fn)),b:ort(atsiz.map(fn)),bir,d,kotu,mx});
+  return `<div class="sg-bolum"><h4>🔍 Atak olan ve olmayan günler <small>${atakli.length} / ${atsiz.length} gün</small></h4>${karsilastirma([
+    ks('Uyku süresi',uykuSaatG,' sa',1,-1),ks('Uyku kalitesi',g=>sabahG(g)?.uyku_kalite,'/10',1,-1,10),ks('Derin uyku',g=>gunluk(g)?.uyku_derin_dk!=null?gunluk(g).uyku_derin_dk/60:null,' sa',1,-1),
+    ks('Aç karnına kahve',g=>kafeinG(g).ac,'',1,1),ks('Toplam kahve',g=>kafeinG(g).top,'',1,1),ks('Adım',adimG,'',0,-1),ks('Dinlenik nabız',g=>gunluk(g)?.nabiz_dinlenik,'',0,1),
+    ks('Stres (check-in)',g=>ckG(g)?.stres,'/10',1,1,10),ks('Uyanış hissi',g=>sabahG(g)?.uyanis,'/5',1,-1,5),ks('Kalori',kcalG,'',0,0)].filter(r=>r.a!=null&&r.b!=null),'Atak olan günler','Olmayan günler')}
+    <div class="sg-not">Her satırda solda atak olan günlerin, sağda olmayan günlerin ortalaması. Çubuk farkın yüzdesi: pembe = atak olan günlerde daha kötü, yeşil = daha iyi. %15 ve üstü farklar belirgindir.</div>
     <div class="sg-not">${A.length} atak · ${ac} tanesi açlık veya aç kahveyle · ${eff} tanesi efor/aktiviteyle eşleşti · ortalama saat ${saatOrt!=null?pad(Math.floor(saatOrt))+':'+pad(Math.round(saatOrt%1*60)):'—'}. Nabız ve tansiyon ölçülen ataklarda: ${n1(ort(A.map(a=>a.tansiyon_b)),0)}/${n1(ort(A.map(a=>a.tansiyon_k)),0)}, nabız ${n1(ort(A.map(a=>a.nabiz)),0)}.</div></div>`;}
 
 // ── İlaçlar
@@ -571,6 +715,9 @@ function ilacHtml(){const g=bugun();let h=`<div style="display:flex;justify-cont
   return h;}
 
 // ── Tahliller ve doktor
+function tahlilKiloTablo(){const TS=['Ürik asit','Trigliserid','HDL','ALT','HbA1c','Glukoz'].filter(t=>tahlilSeri(t).length);if(!TS.length)return '';
+  const tar=[...new Set((S.v.tahlil||[]).filter(t=>TS.includes(t.test)&&t.deger!=null).map(t=>t.tarih))].sort();const bul=(t,g)=>(S.v.tahlil||[]).find(x=>x.test===t&&x.tarih===g&&x.deger!=null);
+  return `<div class="sg-tablo"><table><thead><tr><th>Tarih</th><th>Kilo</th>${TS.map(t=>`<th>${esc(t)}</th>`).join('')}</tr></thead><tbody>${tar.map(g=>`<tr><td>${trT(g)}</td><td>${kiloAtG(g)!=null&&kiloAtG(g)!==undefined&&Object.keys(kiloGun()).some(x=>x<=g&&gFark(x,g)<=21)?n1(kiloAtG(g)):'—'}</td>${TS.map(t=>{const x=bul(t,g);return `<td style="color:${x?DURUM_RENK[tahlilDurum(x)]:'var(--text3)'}">${x?n1(Number(x.deger),2)+DURUM_IS[tahlilDurum(x)]:'·'}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div><div class="sg-not">Her tahlil gününde (±3 hafta içindeki) kilonla birlikte. Renk: yeşil normal, kırmızı yüksek, sarı düşük/sınırda.</div>`;}
 function tahlilHtml(){let h=`<button class="sg-btn ana" style="align-self:stretch;padding:11px" onclick="SGL.doktorAc()">📄 Doktor özeti · göster, kopyala, yazdır</button>`;const T=S.v.tahlil||[];const testler=[...new Set(T.map(t=>t.test))];
   const sira=testler.sort((a,b)=>{const ia=ONEMLI_TEST.indexOf(a),ib=ONEMLI_TEST.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
   const grup={};sira.forEach(t=>{const g=(T.find(x=>x.test===t)||{}).grup||'Diğer';(grup[g]=grup[g]||[]).push(t);});
@@ -580,7 +727,7 @@ function tahlilHtml(){let h=`<button class="sg-btn ana" style="align-self:stretc
   const km=kiloGun();const gk=Object.keys(km).sort();const kiloAt=g=>{let v=null;gk.forEach(x=>{if(x<=g)v=km[x];});return v;};
   const ur=tahlilSeri('Ürik asit'),tg=tahlilSeri('Trigliserid');
   if(ur.length||tg.length){const bas=gTs((T[0]||{}).tarih||bugun());const kn=olcumler('kilo').map(o=>[new Date(o.zaman).getTime(),Number(o.deger)]);
-    h+=`<div class="sg-bolum"><h4>🔗 Kilo ↔ ürik asit ve trigliserid</h4>${grafikCizgi({seriler:[{ad:'Ürik asit',renk:'var(--amber)',n:ur.map(t=>[gTs(t.tarih),Number(t.deger)])}],bant:[3.4,7],bas,bit:Date.now(),h:120})}${grafikCizgi({seriler:[{ad:'Trigliserid',renk:'var(--red)',n:tg.map(t=>[gTs(t.tarih),Number(t.deger)])}],hedef:[{v:150,ad:'150'}],bas,bit:Date.now(),h:120})}${grafikCizgi({seriler:[{ad:'Kilo',renk:'var(--mg)',n:kn}],bas,bit:Date.now(),h:110,bos:'Kilo kaydı yok.'})}<div class="sg-not">Kilo kaybı bu değerlerin ikisini de düşürür; bir sonraki tahlilde aynı zaman çizgisinde görürüz.</div></div>`;}
+    h+=`<div class="sg-bolum"><h4>🔗 Kilo ↔ ürik asit ve trigliserid</h4>${grafikCizgi({seriler:[{ad:'Ürik asit',renk:'var(--amber)',n:ur.map(t=>[gTs(t.tarih),Number(t.deger)])}],bant:[3.4,7],bas,bit:Date.now(),h:120})}${grafikCizgi({seriler:[{ad:'Trigliserid',renk:'var(--red)',n:tg.map(t=>[gTs(t.tarih),Number(t.deger)])}],hedef:[{v:150,ad:'150'}],bas,bit:Date.now(),h:120})}${grafikCizgi({seriler:[{ad:'Kilo',renk:'var(--mg)',n:kn}],bas,bit:Date.now(),h:110,bos:'Kilo kaydı yok.'})}<div class="sg-not">Kilo kaybı bu değerlerin ikisini de düşürür; bir sonraki tahlilde aynı zaman çizgisinde görürüz.</div>${tahlilKiloTablo()}</div>`;}
   Object.keys(grup).forEach(g=>{const L=grup[g].filter(t=>!onemli.includes(t));if(L.length)h+=`<div class="sg-bolum"><h4>${esc(g)}</h4>${L.map(t=>tahlilSatir(t,false)).join('')}</div>`;});
   // randevular ve tetkikler
   const R=S.v.randevu||[];const yap=R.filter(r=>r.durum==='bekliyor');
@@ -598,7 +745,8 @@ S.tahlilAcKapa=t=>{t=t.replace(/&#39;/g,"'").replace(/&amp;/g,'&');S.acik[t]=!(S
 
 // ── Beslenme
 function beslenmeHtml(){const H=ayar().hedef;let h=aralikSec();const K=kovalar();
-  h+=`<div class="sg-bolum"><h4>🔥 Kalori <button class="sg-btn" onclick="SGL.ogunAc()">＋ Öğün</button></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'kcal',renk:(v)=>v>H.kcal?'var(--amber)':'var(--green)',v:kovaTop(kcalG)}],hedef:{v:H.kcal,ad:n1(H.kcal,0),ust:true},bos:'Foodvisor Health Connect\'e bağlanınca veya öğün girince çizilir.'})}</div>`;
+  h+=`<div class="sg-bolum"><h4>🔥 Kalori <button class="sg-btn" onclick="SGL.ogunAc()">＋ Öğün</button></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'kcal',renk:(v)=>v>H.kcal?'var(--amber)':'var(--green)',v:kovaTop(kcalG)}],hedef:{v:H.kcal,ad:n1(H.kcal,0),ust:true},ort:S.aralik<=90,bos:'Foodvisor Health Connect\'e bağlanınca veya öğün girince çizilir.'})}</div>`;
+  h+=kaloriDengesiHtml();
   const G=gunler(S.aralik).map(gunluk).filter(r=>r&&(r.protein_g||r.karb_g||r.yag_g));
   h+=`<div class="sg-bolum"><h4>🥗 Makrolar <small>${S.aralik===7?'son 7 gün':'aralık'} ortalaması</small></h4>${G.length?halka([{ad:'Protein',v:ort(G.map(r=>+r.protein_g||0)),renk:'#E8197A'},{ad:'Karbonhidrat',v:ort(G.map(r=>+r.karb_g||0)),renk:'#00E5FF'},{ad:'Yağ',v:ort(G.map(r=>+r.yag_g||0)),renk:'#FFAB00'}],n1(ort(G.map(r=>+r.kcal_alinan||0)),0),'kcal/gün'):bosGrafik('Makrolar Foodvisor\'dan (Health Connect) gelecek.')}</div>`;
   h+=`<div class="sg-bolum"><h4>💧 Su <button class="sg-btn" onclick="SGL.suEkle(1)">＋1</button></h4>${grafikCubuk({etiket:K.map(k=>k.et),uzun:K.map(k=>k.uz),seriler:[{ad:'Bardak',renk:(v)=>v>=H.su?'var(--green)':'var(--cy)',v:kovaTop(suG)}],hedef:{v:H.su,ad:H.su+' bardak'},bos:'Su kaydı yok.'})}</div>`;
