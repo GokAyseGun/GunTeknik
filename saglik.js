@@ -958,6 +958,7 @@ function hcBagli(){const d=HC.durum;return !!(d&&d.sdk===2&&(d.izinler||[]).leng
 function gruplar(L){const m={};L.forEach(r=>{const k=Object.keys(r).sort().join(',');(m[k]=m[k]||[]).push(r);});return Object.values(m);}
 async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyor=true;S.hcMesaj='Eşitleniyor…';if(S.sekme==='ozet'||S.sekme==='aktivite')hcKartGuncelle();
   try{const r=await andYerel('saglikOku',{gun:gun||30});let nG=0,nO=0,nA=0;
+    await yukle(true); // yarıda kalan önceki eşitlemenin yazdıkları tekrar yazılmasın
     // günlük toplamlar: yalnız Health Connect'te olan alanlar yazılır (elle girilenler korunur)
     const G=(r.gunluk||[]).map(x=>{const o={tarih:x.tarih,kaynak:'hc',guncelleme:new Date().toISOString()};Object.keys(x).forEach(k=>{if(k!=='tarih'&&x[k]!=null)o[k]=x[k];});['adim','kat','uyku_dk','uyku_derin_dk','uyku_rem_dk','uyku_hafif_dk','uyku_uyanik_dk','nabiz_dinlenik','nabiz_min','nabiz_max','nabiz_ort'].forEach(k=>{if(o[k]!=null)o[k]=Math.round(o[k]);});return o;}).filter(o=>Object.keys(o).length>3);
     for(const grp of gruplar(G)){await sbFetch('saglik_gunluk?on_conflict=kullanici_id,tarih',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:JSON.stringify(grp)});nG+=grp.length;}
@@ -968,8 +969,8 @@ async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyo
     const A=(r.aktivite||[]).filter(a=>!varA.has(a.dis_id)).map(a=>{const t=new Date(a.baslangic).getTime();
       const ikiz=diger.find(x=>Math.abs(new Date(x.baslangic).getTime()-t)<=15*60000&&(x.tur===a.tur||x.tur==='diger'||a.tur==='diger'));
       const o={kaynak:'hc',dis_id:a.dis_id,tur:a.tur,baslangic:a.baslangic,bitis:a.bitis,sure_sn:a.sure_sn,ad:a.ad||null,mesafe_m:a.mesafe_m??null,kcal:a.kcal??null,nabiz_ort:a.nabiz_ort!=null?Math.round(a.nabiz_ort):null,nabiz_max:a.nabiz_max!=null?Math.round(a.nabiz_max):null,ikiz_id:ikiz?ikiz.id:null};
-      if(o.mesafe_m&&o.sure_sn)o.hiz_ort=Math.round(o.mesafe_m/o.sure_sn*36)/10;return o;});
-    if(A.length){await sbFetch('saglik_aktivite',{method:'POST',prefer:'return=minimal',body:JSON.stringify(A)});nA=A.length;}
+      o.hiz_ort=o.mesafe_m&&o.sure_sn?Math.round(o.mesafe_m/o.sure_sn*36)/10:null;return o;});
+    for(const grp of gruplar(A)){await sbFetch('saglik_aktivite',{method:'POST',prefer:'return=minimal',body:JSON.stringify(grp)});nA+=grp.length;}
     try{localStorage.setItem('sg_hc_son',String(Date.now()));}catch(e){}
     await yukle(true);S.hcMesaj='Son eşitleme: '+saat(Date.now())+' · '+nG+' gün'+(nO?' · '+nO+' ölçüm':'')+(nA?' · '+nA+' aktivite':'');
     if(!sessiz)toast('⌚ Eşitlendi: '+nG+' gün'+(nO?', '+nO+' ölçüm':'')+(nA?', '+nA+' aktivite':''),'green');ciz();hatirlatPlanla();}
