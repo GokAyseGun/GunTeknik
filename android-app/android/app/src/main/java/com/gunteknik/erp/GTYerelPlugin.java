@@ -44,6 +44,13 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.ActivityCallback;
+import androidx.activity.result.ActivityResult;
+import android.print.PrintAttributes;
+import android.print.PrintManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -555,6 +562,76 @@ public class GTYerelPlugin extends Plugin {
             } catch (Exception e) {
                 JSObject r = new JSObject(); r.put("ok", false); r.put("mesaj", String.valueOf(e.getMessage())); call.resolve(r);
             }
+        });
+    }
+
+    // ---------------------------------------------------------------- Sağlık (Health Connect, salt okuma)
+    private void saglikCoz(PluginCall call, String json, String hata) {
+        if (hata != null) { call.reject(hata); return; }
+        try { call.resolve(JSObject.fromJSONObject(new JSONObject(json))); } catch (Exception e) { call.reject(String.valueOf(e.getMessage())); }
+    }
+
+    /** {sdk: 0 yok | 1 güncellenmeli | 2 hazır, izinler: [...], tam: bool} */
+    @PluginMethod
+    public void saglikDurum(PluginCall call) {
+        try { SaglikHC.durum(getContext(), (json, hata) -> saglikCoz(call, json, hata)); }
+        catch (Throwable e) { call.reject(String.valueOf(e.getMessage())); }
+    }
+
+    /** Health Connect izin ekranı; dönüşte saglikDurum ile aynı sonuç. */
+    @PluginMethod
+    public void saglikIzin(PluginCall call) {
+        try {
+            int d = SaglikHC.sdk(getContext());
+            if (d != 2) {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata"));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try { getContext().startActivity(i); } catch (ActivityNotFoundException ignored) {}
+                JSObject r = new JSObject(); r.put("sdk", d); call.resolve(r); return;
+            }
+            startActivityForResult(call, SaglikHC.izinIntent(getContext()), "saglikIzinSonuc");
+        } catch (Throwable e) { call.reject(String.valueOf(e.getMessage())); }
+    }
+
+    @ActivityCallback
+    private void saglikIzinSonuc(PluginCall call, ActivityResult sonuc) {
+        if (call == null) return;
+        SaglikHC.durum(getContext(), (json, hata) -> saglikCoz(call, json, hata));
+    }
+
+    /** {gun: 60} → {gunluk:[...], olcum:[...], aktivite:[...]} */
+    @PluginMethod
+    public void saglikOku(PluginCall call) {
+        int gun = call.getInt("gun", 30);
+        try { SaglikHC.oku(getContext(), gun, (json, hata) -> saglikCoz(call, json, hata)); }
+        catch (Throwable e) { call.reject(String.valueOf(e.getMessage())); }
+    }
+
+    // ---------------------------------------------------------------- yazdır / PDF (Android yazdırma penceresi)
+    private WebView yaziciWeb;
+
+    /** {html, ad} → sistem yazdırma ekranı ("PDF olarak kaydet" dahil) */
+    @PluginMethod
+    public void yazdir(PluginCall call) {
+        String html = call.getString("html", "");
+        String ad = call.getString("ad", "Gun Teknik");
+        Activity a = getActivity();
+        a.runOnUiThread(() -> {
+            try {
+                WebView w = new WebView(a);
+                yaziciWeb = w;
+                w.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        try {
+                            PrintManager pm = (PrintManager) a.getSystemService(android.content.Context.PRINT_SERVICE);
+                            pm.print(ad, view.createPrintDocumentAdapter(ad), new PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build());
+                            JSObject r = new JSObject(); r.put("ok", true); call.resolve(r);
+                        } catch (Exception e) { call.reject(String.valueOf(e.getMessage())); }
+                    }
+                });
+                w.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+            } catch (Exception e) { call.reject(String.valueOf(e.getMessage())); }
         });
     }
 }
