@@ -5405,10 +5405,11 @@ async function pushPlanla(zorla){
 // bildirime / kısayola dokununca: ?arama=YYYY-MM-DD|bugun · ?sayfa=evrak · ?islem=ID
 function bildirimUrlIsle(href){
   let u;try{u=new URL(href,location.href);}catch(e){return;}const p=u.searchParams;
-  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin'),randevu=p.get('randevu'),sabah=p.get('sabah');if(!arama&&!sayfa&&!islem&&!checkin&&!randevu&&!sabah)return;
+  const arama=p.get('arama'),sayfa=p.get('sayfa'),islem=p.get('islem'),checkin=p.get('checkin'),randevu=p.get('randevu'),sabah=p.get('sabah'),ilac=p.get('ilac');if(!arama&&!sayfa&&!islem&&!checkin&&!randevu&&!sabah&&!ilac)return;
   try{if(location.search)history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
   if(checkin){(async()=>{try{if(PS.checkinler==null&&!GF.ekZaman)await gfEkYukle(true);}catch(e){}ckModalAc();})();return;}
   if(sabah){(async()=>{try{if(await sglYukle())SGL.sabahAc();}catch(e){console.warn('sabah formu',e);}})();return;}
+  if(ilac){(async()=>{try{if(await sglYukle()){if(!SGL.yuklendi)await SGL.yenile();SGL.ilacHizli(ilac==='sabah'?'sabah':'aksam');}}catch(e){console.warn('ilaç',e);}})();return;}
   if(arama){rkAramaGirAc(arama==='bugun'?localToday():arama);return;}
   if(randevu){try{goPage('takvim');}catch(e){}setTimeout(()=>{try{ustRandevuEkle();}catch(e){}},350);return;}
   if(islem){try{showIslemDetay(Number(islem));}catch(e){}return;}
@@ -10204,7 +10205,7 @@ function sglYukle(){
   if(window.SGL&&SGL.baslat)return Promise.resolve(true);
   if(_sglYuk)return _sglYuk;
   _sglYuk=(async()=>{await sglSahipOku();if(!sglSahibiMi())return false;
-    await perfScriptYukle('saglik.js?v=2');return !!(window.SGL&&SGL.baslat);})().catch(e=>{console.warn('saglik.js',e);_sglYuk=null;return false;});
+    await perfScriptYukle('saglik.js?v=3');return !!(window.SGL&&SGL.baslat);})().catch(e=>{console.warn('saglik.js',e);_sglYuk=null;return false;});
   return _sglYuk;
 }
 async function sglBaslat(){
