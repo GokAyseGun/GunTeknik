@@ -97,7 +97,8 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon -PgtVersionCode=${{ github.run_number }}
-          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/GunTeknik.apk"
+          # imzalıysa app-release.apk, PR denetiminde (imzasız) app-release-unsigned.apk
+          cp "$(ls app/build/outputs/apk/release/*.apk | head -1)" "$GITHUB_WORKSPACE/GunTeknik.apk"
 
       - name: Releases'a yükle
         if: github.event_name != 'pull_request'
