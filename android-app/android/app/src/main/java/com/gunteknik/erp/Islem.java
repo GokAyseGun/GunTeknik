@@ -35,6 +35,39 @@ public final class Islem {
         return Sunucu.metin(Sunucu.rpc("arama_spam", new JSONObject().put("p_token", token(c)).put("p_numara", numara == null ? "" : numara).put("p_zaman", zaman == null ? "" : zaman)));
     }
 
+    /** Sağlık (yalnız sağlık sahibinin cihazında çalışır): su ekle → güncel sağlık özeti */
+    public static JSONObject suEkle(Context c, int ml) throws Exception {
+        return new JSONObject(Sunucu.rpc("saglik_su_ekle", new JSONObject().put("p_token", token(c)).put("p_ml", ml)));
+    }
+
+    /** baglam: dinlenme · gunluk · hafif · agir · atak */
+    public static JSONObject nabizEkle(Context c, int deger, String baglam) throws Exception {
+        return new JSONObject(Sunucu.rpc("saglik_nabiz_ekle", new JSONObject().put("p_token", token(c)).put("p_deger", deger).put("p_baglam", baglam)));
+    }
+
+    /** Sunucudan gelen sağlık özetini widget önbelleğine yaz ve widget'ları çiz. */
+    public static synchronized void saglikYaz(Context c, JSONObject saglik) {
+        try {
+            JSONObject v = Veri.oku(c);
+            if (v == null || saglik == null) return;
+            v.put("saglik", saglik);
+            Ayar.veriYerel(c, v.toString());
+            WidgetCizici.hepsi(c);
+        } catch (Exception ignored) {}
+    }
+
+    /** İyimser su: önbellekteki bugünkü miktarı hemen artır (üst üste dokunuşlar anında görünsün). */
+    public static synchronized void suYerel(Context c, int ml) {
+        try {
+            JSONObject v = Veri.oku(c);
+            JSONObject s = v != null ? v.optJSONObject("saglik") : null;
+            if (s == null) return;
+            s.put("su_ml", s.optInt("su_ml") + ml);
+            Ayar.veriYerel(c, v.toString());
+            WidgetCizici.hepsi(c);
+        } catch (Exception ignored) {}
+    }
+
     /** 21:00 hatırlatmasındaki "Arama gelmedi" */
     public static String aramaYok(Context c, String tarih) throws Exception {
         return Sunucu.metin(Sunucu.rpc("push_arama_yok", new JSONObject().put("p_token", token(c)).put("p_tarih", tarih)));

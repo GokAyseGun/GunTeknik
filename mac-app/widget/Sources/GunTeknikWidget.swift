@@ -135,6 +135,13 @@ struct Ozet {
     var zaman: Date = .distantPast
     var ajanda: [AjandaSatir] = []
     var evrak: [EvrakSatir] = []
+    // sağlık (yalnız sağlık sahibinin cihaz anahtarında dolu gelir)
+    var saglik = false
+    var atak = 0
+    var suMl = 0
+    var suHedef = 3000
+    var nabiz: Int?
+    var nabizAn = ""
 
     static func bugun() -> String {
         let f = DateFormatter()
@@ -178,6 +185,17 @@ struct Ozet {
             gtFiyat = Ozet.sayi(gt["fiyat"]) ?? 0
             gtOnce = Ozet.sayi(gt["once"]) ?? 0
         }
+        if let sg = v["saglik"] as? [String: Any] {
+            saglik = true
+            let bugunMu = (sg["bugun"] as? String)?.prefix(10) == Substring(bg)
+            atak = bugunMu ? Int(Ozet.sayi(sg["atak"]) ?? 0) : 0
+            suMl = bugunMu ? Int(Ozet.sayi(sg["su_ml"]) ?? 0) : 0
+            suHedef = Int(Ozet.sayi(sg["su_hedef"]) ?? 3000)
+            if let n = sg["nabiz"] as? [String: Any] {
+                nabiz = Ozet.sayi(n["deger"]).map { Int($0) }
+                nabizAn = n["baglam"] as? String ?? ""
+            }
+        }
         guard let snap = v["snap"] as? [String: Any] else { return }
         var a1 = 0, a10 = 0, e1 = 0, e5 = 0, e15 = 0, gc = 0
         var aj: [AjandaSatir] = []
@@ -213,6 +231,7 @@ struct Ozet {
         o.arama = 7; o.aj1 = 3; o.aj10 = 9; o.ev1 = 1; o.ev5 = 2; o.ev15 = 4; o.gec = 0
         o.kasa = 17413; o.gtFiyat = 972.4; o.gtOnce = 965.1; o.zaman = Date()
         o.ajanda = [AjandaSatir(fark: 0, g: "", saat: "10:30", baslik: "Klima bakımı", kisi: "Dalyan")]
+        o.saglik = true; o.atak = 1; o.suMl = 1400; o.nabiz = 74; o.nabizAn = "dinlenme"
         return o
     }
 }
@@ -297,6 +316,26 @@ struct GeriAl: AppIntent {
             _ = await Sunucu.rpc("arama_sil", ["p_token": t, "p_id": id])
             if let yeni = await Sunucu.widgetVeri(t) { Depo.onbellekYaz(yeni) }
         }
+        return .result()
+    }
+}
+
+struct SuEkle: AppIntent {
+    static let title: LocalizedStringResource = "200 ml su ekle"
+    static let isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        let (t, v) = Depo.durum()
+        guard let t else { return .result() }
+        // iyimser: üst üste dokunuşlar hemen görünsün
+        if var v, var sg = v["saglik"] as? [String: Any] {
+            sg["su_ml"] = Int(Ozet.sayi(sg["su_ml"]) ?? 0) + 200
+            v["saglik"] = sg
+            v["zaman"] = ISO8601DateFormatter().string(from: Date())
+            Depo.onbellekYaz(v)
+        }
+        _ = await Sunucu.rpc("saglik_su_ekle", ["p_token": t, "p_ml": 200])
+        if let yeni = await Sunucu.widgetVeri(t) { Depo.onbellekYaz(yeni) }
         return .result()
     }
 }
@@ -562,6 +601,85 @@ struct KasaGoster: View {
     }
 }
 
+func litre(_ ml: Int) -> String {
+    String(format: "%.1f L", Double(ml) / 1000).replacingOccurrences(of: ".", with: ",")
+}
+
+func nabizAd(_ b: String) -> String {
+    switch b {
+    case "dinlenme": return "dinlenme"
+    case "gunluk": return "gündelik"
+    case "hafif": return "hafif akt."
+    case "agir": return "ağır akt."
+    case "atak": return "atak"
+    default: return ""
+    }
+}
+
+/// Sağlık düğmesi: büyük simge + başlık + alt bilgi
+struct SaglikDugme: View {
+    let simge: String
+    let baslik: String
+    let alt: String
+    let renk: Color
+    var altRenk: Color? = nil
+
+    var body: some View {
+        Kutu(dolgu: renk.opacity(0.16), kenar: renk) {
+            VStack(spacing: 2) {
+                Text(simge).font(.system(size: 20))
+                Text(baslik).font(.system(size: 12.5, weight: .bold)).foregroundColor(.metin).lineLimit(1).minimumScaleFactor(0.7)
+                Text(alt).font(.system(size: 10.5, weight: .semibold)).monospacedDigit().foregroundColor(altRenk ?? renk).lineLimit(1).minimumScaleFactor(0.6)
+            }
+        }
+    }
+}
+
+/// Alt yarı: Atak (ERP'de tam form) · Nabız (ERP'de nabız penceresi) · Su +200 ml (araçtan, uygulama açılmadan)
+struct SaglikSatir: View {
+    let o: Ozet
+    var body: some View {
+        HStack(spacing: 6) {
+            Link(destination: baglanti("./?saglik=atak")) {
+                SaglikDugme(simge: "⚡", baslik: "Atak", alt: "bugün \(o.atak)", renk: .mg)
+            }
+            Link(destination: baglanti("./?saglik=nabiz")) {
+                SaglikDugme(simge: "❤️", baslik: "Nabız", alt: o.nabiz.map { "\($0) · \(nabizAd(o.nabizAn))" } ?? "elle gir", renk: .kirmizi)
+            }
+            Button(intent: SuEkle()) {
+                SaglikDugme(simge: "💧", baslik: "＋200 ml", alt: "\(litre(o.suMl)) / \(litre(o.suHedef))", renk: .cyanR, altRenk: o.suMl >= o.suHedef ? .yesil : .cyanR)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+/// Üst yarı (sağlık varken): işletme kutuları küçük, 2 satır
+struct IzgaraKucuk: View {
+    let e: Giris
+    var body: some View {
+        let o = e.o
+        VStack(spacing: 5) {
+            HStack(spacing: 5) {
+                AramaEkle(); AramaBugun(o: o); GeriAlDugme(e: e); RandevuEkle()
+            }
+            HStack(spacing: 5) {
+                AjandaKutu(deger: o.aj1, etiket: "Ajanda · bugün")
+                AjandaKutu(deger: o.aj10, etiket: "Ajanda · 10 gün")
+                EvrakBugun(o: o)
+                EvrakKutu(deger: o.ev15, etiket: "Evrak · 15 gün")
+            }
+            GeometryReader { g in
+                HStack(spacing: 5) {
+                    KasaKutu(e: e).frame(width: (g.size.width - 5) * 0.72)
+                    KasaGoster(e: e)
+                }
+            }
+            .frame(maxHeight: 30)
+        }
+    }
+}
+
 /// Büyük araç: Android'deki 4×3 düzen
 struct Izgara: View {
     let e: Giris
@@ -642,6 +760,9 @@ struct Orta: View {
                         AjandaKutu(deger: o.aj1, etiket: "Ajanda · bugün")
                         EvrakBugun(o: o)
                     }
+                    if o.saglik {
+                        SaglikSatir(o: o)
+                    } else {
                     HStack(spacing: 6) {
                         RandevuEkle()
                         AjandaKutu(deger: o.aj10, etiket: "Ajanda · 10 gün")
@@ -651,6 +772,7 @@ struct Orta: View {
                             Sayi(deger: km.0, etiket: e.kasaAcik ? "Kasa · gizle" : "Kasa · göster", renk: km.1, boyut: 15)
                         }
                         .buttonStyle(.plain)
+                    }
                     }
                 }
             }
@@ -666,6 +788,9 @@ struct Buyuk: View {
             Baslik(e: e)
             if !e.o.giris {
                 GirisYok()
+            } else if e.o.saglik {
+                IzgaraKucuk(e: e).frame(maxHeight: .infinity)
+                SaglikSatir(o: e.o).frame(maxHeight: .infinity)
             } else {
                 Izgara(e: e)
                 if e.o.gtFiyat > 0 { Link(destination: baglanti("./?sayfa=bet")) { GTSatir(o: e.o) } }
@@ -685,7 +810,12 @@ struct CokBuyuk: View {
             } else {
                 HStack(spacing: 10) {
                     VStack(spacing: 7) {
-                        Izgara(e: e)
+                        if e.o.saglik {
+                            IzgaraKucuk(e: e).frame(maxHeight: .infinity)
+                            SaglikSatir(o: e.o).frame(maxHeight: .infinity)
+                        } else {
+                            Izgara(e: e)
+                        }
                         if e.o.gtFiyat > 0 { Link(destination: baglanti("./?sayfa=bet")) { GTSatir(o: e.o) } }
                     }
                     VStack(alignment: .leading, spacing: 8) {

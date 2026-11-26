@@ -21,6 +21,7 @@ public class EylemAlici extends BroadcastReceiver {
     public static final String GERI = "com.gunteknik.erp.GERI";
     public static final String YENILE = "com.gunteknik.erp.YENILE";
     public static final String KASA_GOZ = "com.gunteknik.erp.KASA_GOZ";
+    public static final String SU = "com.gunteknik.erp.SU";
 
     @Override
     public void onReceive(Context ctx, Intent i) {
@@ -40,6 +41,7 @@ public class EylemAlici extends BroadcastReceiver {
             WidgetCizici.hepsi(c);
             return;
         }
+        if (SU.equals(eylem)) Islem.suYerel(c, 200);
         final PendingResult pr = goAsync();
         new Thread(() -> {
             try {
@@ -76,6 +78,17 @@ public class EylemAlici extends BroadcastReceiver {
                 Ayar.sonArama(c, 0);
                 tost(c, "tamam".equals(r) ? "↶ Son kayıt geri alındı" : "Geri alınamadı (" + r + ")");
                 Veri.yenile(c);
+                break;
+            }
+            case SU: {
+                try {
+                    JSONObject r = Islem.suEkle(c, 200);
+                    Islem.saglikYaz(c, r);
+                    tost(c, "💧 +200 ml · bugün " + WidgetCizici.litre(r.optInt("su_ml")));
+                } catch (Exception x) {
+                    Islem.suYerel(c, -200);
+                    throw x;
+                }
                 break;
             }
             case YENILE: {
