@@ -300,6 +300,7 @@ function stilEkle(){if(document.getElementById('sg-stil'))return;const st=docume
 .sg-im-c{stroke:var(--text3);stroke-width:1;stroke-dasharray:3 3}.sg-im-k{fill:var(--text);opacity:.05}
 .sg-svg.secili .sg-cb{opacity:.35;transition:opacity .12s}.sg-svg.secili .sg-cb.on{opacity:1}
 .sg-lej-sec span{cursor:pointer;padding:3px 9px;border-radius:999px;border:1px solid var(--border2);color:var(--text2)}.sg-lej-sec span.kapali{opacity:.4;border-style:dashed}.sg-lej-sec span.ek{border:none;cursor:default;padding:3px 0}
+.sg-dk h2{font:700 17px var(--fu);margin:0}.sg-dk .dk-alt{font-size:12px;color:var(--text3);margin-bottom:4px}.sg-dk h3{font:700 12px var(--fu);color:var(--mg);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 4px}.sg-dk ul,.sg-dk ol{margin:0;padding-left:18px;font-size:13px;line-height:1.5}.sg-dk table{width:100%;border-collapse:collapse;font-size:11.5px}.sg-dk th,.sg-dk td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--border)}.sg-dk th{color:var(--text3);font-weight:600}
 .sg-gb.kk{min-height:0;margin:2px 0 0}.sg-gb.kk .sg-gb-sol{flex-direction:row;align-items:baseline;gap:8px}.sg-gb.kk .sg-gb-sol b{font-size:13px;font-weight:600}
 .sg-gb{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:0 0 6px;min-height:44px}
 .sg-gb-sol{display:flex;flex-direction:column;min-width:0}.sg-gb-t{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -362,7 +363,7 @@ function ozetHtml(){
     return `<div class="sg-bolum"><h4>Ana sayfayı düzenle <button class="sg-btn ana" onclick="SGL.duzenleBitir()">Bitti</button></h4><div class="sg-not" style="margin-bottom:6px">Göz ile paneli aç/kapat, oklarla sırala.</div>${sira.map((p,i)=>{const on=A.paneller.includes(p);
       return `<div class="sg-duz ${on?'':'kapali'}"><button onclick="SGL.panelGoster('${p}')">${on?'👁':'○'}</button><span class="ad">${esc(PANELLER[p].ad)}</span>${on?`<button onclick="SGL.panelTasi('${p}',-1)">↑</button><button onclick="SGL.panelTasi('${p}',1)">↓</button>`:''}</div>`;}).join('')}</div>`;}
   const kartlar=A.paneller.map(p=>{try{return panelHtml(p);}catch(e){console.warn('panel',p,e);return '';}}).join('');
-  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button></div>`;
+  return `<div class="sg-izgara">${kartlar}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="sg-btn" onclick="SGL.duzenleAc()">✏️ Ana sayfayı düzenle</button><button class="sg-btn" onclick="SGL.hedefAc()">🎯 Hedefler</button><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div>`;
 }
 S.duzenleAc=()=>{S.duzenle=true;ciz();};S.duzenleBitir=()=>{S.duzenle=false;ciz();};
 S.panelGoster=async p=>{const A=ayar();let L=A.paneller.slice();if(L.includes(p))L=L.filter(x=>x!==p);else L.push(p);S.v.ayar={veri:Object.assign({},(S.v.ayar||{}).veri,{paneller:L})};ciz();try{await ayarKaydet({paneller:L});}catch(e){toast('Kaydedilemedi','red');}};
@@ -546,7 +547,7 @@ function atakAnalizHtml(A){if(A.length<2)return `<div class="sg-bolum"><h4>🔍 
     <div class="sg-not">${A.length} atak · ${ac} tanesi açlık veya aç kahveyle · ${eff} tanesi efor/aktiviteyle eşleşti · ortalama saat ${saatOrt!=null?pad(Math.floor(saatOrt))+':'+pad(Math.round(saatOrt%1*60)):'—'}. Nabız ve tansiyon ölçülen ataklarda: ${n1(ort(A.map(a=>a.tansiyon_b)),0)}/${n1(ort(A.map(a=>a.tansiyon_k)),0)}, nabız ${n1(ort(A.map(a=>a.nabiz)),0)}.</div></div>`;}
 
 // ── İlaçlar
-function ilacHtml(){const g=bugun();let h='';const P=ilacPlan(g);
+function ilacHtml(){const g=bugun();let h=`<div style="display:flex;justify-content:flex-end"><button class="sg-btn" onclick="SGL.hatirlatAc()">🔔 Hatırlatmalar</button></div>`;const P=ilacPlan(g);
   const grp=d=>P.filter(x=>x.dilim===d);
   const satir=x=>{const r=alimBul(x.ilac.id,g,x.dilim);return `<div class="sg-ilac"><button class="sg-tik ${r?(r.alindi?'ok':'no'):''}" onclick="SGL.ilacTik(${x.ilac.id},'${x.dilim}')">${r?(r.alindi?'✓':'✕'):''}</button><div class="ad">${esc(x.ilac.ad)}${x.ilac.doz?' <span class="sg-ek">'+esc(x.ilac.doz)+'</span>':''}<small>${r&&r.alindi?'alındı '+saat(r.zaman):''}${r&&r.secim?' · '+esc(r.secim):''}${x.ilac.notu?' · '+esc(x.ilac.notu):''}</small></div></div>`;};
   h+=`<div class="sg-bolum"><h4>💊 Bugün <small>${trT(g)}</small></h4>${['sabah','ogle','aksam'].filter(d=>grp(d).length).map(d=>`<div class="sg-fb">${d==='sabah'?'☀️ Sabah':d==='ogle'?'🕛 Öğle':'🌙 Akşam'}</div>${grp(d).map(satir).join('')}`).join('')||bosGrafik('Aktif ilaç yok.')}</div>`;
@@ -565,7 +566,7 @@ function ilacHtml(){const g=bugun();let h='';const P=ilacPlan(g);
   return h;}
 
 // ── Tahliller ve doktor
-function tahlilHtml(){let h='';const T=S.v.tahlil||[];const testler=[...new Set(T.map(t=>t.test))];
+function tahlilHtml(){let h=`<button class="sg-btn ana" style="align-self:stretch;padding:11px" onclick="SGL.doktorAc()">📄 Doktor özeti · göster, kopyala, yazdır</button>`;const T=S.v.tahlil||[];const testler=[...new Set(T.map(t=>t.test))];
   const sira=testler.sort((a,b)=>{const ia=ONEMLI_TEST.indexOf(a),ib=ONEMLI_TEST.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
   const grup={};sira.forEach(t=>{const g=(T.find(x=>x.test===t)||{}).grup||'Diğer';(grup[g]=grup[g]||[]).push(t);});
   const onemli=sira.filter(t=>ONEMLI_TEST.includes(t));
@@ -640,7 +641,7 @@ S.P={};S.puanSec=(on,k,v,n)=>{(S.P[on]=S.P[on]||{})[k]=v;document.querySelectorA
 function chipsHtml(on,k,liste,secili){return `<div class="sg-chips" id="${on}-${k}">${liste.map(x=>`<button type="button" class="${(secili||[]).includes(x)?'on':''}" data-x="${esc(x)}" onclick="SGL.chipSec('${on}','${k}',this)">${esc(x)}</button>`).join('')}</div>`;}
 S.C={};S.chipSec=(on,k,b,tek)=>{const S2=(S.C[on]=S.C[on]||{});const L=S2[k]=S2[k]||[];const x=b.dataset.x;const i=L.indexOf(x);if(i>=0)L.splice(i,1);else{if(tek)L.length=0;L.push(x);}
   document.querySelectorAll('#'+on+'-'+k+' button').forEach(y=>y.classList.toggle('on',L.includes(y.dataset.x)));if(S._durum)S._durum();};
-async function kaydetVeCiz(fn,mesaj,pid){try{await fn();if(pid)kapat(pid);toast(mesaj||'Kaydedildi','green');ciz();try{if(typeof renderDashBugun==='function'&&document.getElementById('page-dashboard')?.classList.contains('active'))renderDashBugun();}catch(e){}}catch(e){console.error(e);toast('Kaydedilemedi: '+(e.message||e),'red');}}
+async function kaydetVeCiz(fn,mesaj,pid){try{await fn();if(pid)kapat(pid);toast(mesaj||'Kaydedildi','green');ciz();hatirlatPlanla();try{if(typeof renderDashBugun==='function'&&document.getElementById('page-dashboard')?.classList.contains('active'))renderDashBugun();}catch(e){}}catch(e){console.error(e);toast('Kaydedilemedi: '+(e.message||e),'red');}}
 
 // ───────────────────────────────────────── hızlı kayıt
 S.hizliMenu=()=>{const L=[['⚡ Atak','SGL.atakAc()'],['☀️ Sabah formu','SGL.sabahAc(true)'],['⚖️ Kilo','SGL.kiloAc()'],['🩺 Tansiyon','SGL.tansiyonAc()'],['💧 +1 su','SGL.suEkle(1)'],['☕ Kahve','SGL.kafeinAc()'],['🍽️ Öğün','SGL.ogunAc()'],['🏋️ Ev antrenmanı','SGL.evAc()'],['🗺️ Aktivite','SGL.aktiviteAc()'],['👣 Adım','SGL.adimAc()'],['📏 Bel','SGL.kiloAc(\'bel\')'],['🧪 Tahlil değeri','SGL.tahlilAc()'],['🩻 Randevu','SGL.randevuAc(null,\'randevu\')'],['💬 Claude\'a sor','SGL.sorAc()']];
@@ -851,8 +852,98 @@ S.aksamSayi=()=>S.aksamPlan().length;
 S.aksamKaydet=async()=>{for(const x of S.aksamPlan()){const v=(S.akIlac||{})[x.ilac.id];if(v)await alimYaz(x.ilac.id,bugun(),'aksam',v==='ok',null);}};
 
 // ───────────────────────────────────────── başlat
-S.baslat=async()=>{stilEkle();try{await yukle();}catch(e){console.warn('sağlık yükle',e);}
-  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(sabahKontrol,1500);});
+// ───────────────────────────────────────── hatırlatmalar (push_kuyruk; yalnız sahibe)
+// ERP açıkken ileriye dönük bildirimler planlanır; Supabase ERP kapalıyken de gönderir (sessiz saatler sunucuda).
+function hatirlatAyar(){const a=((S.v.ayar||{}).veri||{}).hatirlat||{};return Object.assign({sabahIlac:false,sabahSaat:'10:00',aksamIlac:true,aksamSaat:'21:00',yuruyus:true,yuruyusDk:20,randevu:true},a);}
+function saatTs(g,hhmm){const [h,m]=String(hhmm||'00:00').split(':').map(Number);return new Date(gTs(g)+((h||0)*60+(m||0))*60000);}
+function hatirlatPlan(){const H=hatirlatAyar(),L=[],simdi=Date.now();
+  [bugun(),gEkle(bugun(),1)].forEach(g=>{[['sabah',H.sabahIlac,H.sabahSaat,'☀️ Sabah ilaçları'],['aksam',H.aksamIlac,H.aksamSaat,'🌙 Akşam ilaçları']].forEach(([d,acik,st,bas])=>{if(!acik)return;
+    const z=saatTs(g,st);if(z.getTime()<=simdi)return;const bek=ilacPlan(g).filter(x=>x.dilim===d&&!(alimBul(x.ilac.id,g,d)||{}).alindi);if(!bek.length)return;
+    L.push({anahtar:'ilac:'+g+':'+d,zaman:z.toISOString(),baslik:bas,govde:bek.length+' ilaç henüz işaretlenmedi. Dokun, alındı olarak işaretle.',url:'./?ilac='+d});});});
+  if(H.yuruyus)(S.v.giris||[]).filter(r=>r.tur==='ogun'&&r.alt!=='ara').forEach(r=>{const t=new Date(r.zaman).getTime();const z=t+(H.yuruyusDk||20)*60000;if(z<=simdi||z-simdi>6*3600e3)return;
+    if(aktiviteler().some(a=>{const b=new Date(a.baslangic).getTime();return b>=t&&b<=z;}))return;
+    L.push({anahtar:'yuruyus:'+r.id,zaman:new Date(z).toISOString(),baslik:'🚶 Yemek sonrası yürüyüş',govde:'10–15 dakika yürümek tokluk şekerini dengeler. Hadi kısa bir tur!',url:'./?sayfa=saglik'});});
+  if(H.randevu)(S.v.randevu||[]).filter(r=>r.tur==='randevu'&&r.durum==='bekliyor'&&r.tarih&&r.tarih>=bugun()&&gFark(bugun(),r.tarih)<=7).forEach(r=>{
+    const ne=r.baslik+(r.saat?' · '+String(r.saat).slice(0,5):'')+(r.yer?' · '+r.yer:'');
+    const z1=saatTs(gEkle(r.tarih,-1),'20:00');if(z1.getTime()>simdi)L.push({anahtar:'randevu:'+r.id+':once',zaman:z1.toISOString(),baslik:'🩺 Yarın randevun var',govde:ne+'. Sorularını Sağlık → Tahliller ve doktor bölümünden kopyalayabilirsin.',url:'./?sayfa=saglik'});
+    if(r.saat){const z2=new Date(saatTs(r.tarih,String(r.saat).slice(0,5)).getTime()-2*3600e3);if(z2.getTime()>simdi)L.push({anahtar:'randevu:'+r.id+':gun',zaman:z2.toISOString(),baslik:'🩺 Bugün randevun var',govde:ne,url:'./?sayfa=saglik'});}});
+  return L;}
+let planZ=null,planHata=false;
+function hatirlatPlanla(hemen){if(planHata)return;clearTimeout(planZ);planZ=setTimeout(async()=>{try{if(typeof sglSahibiMi==='function'&&!sglSahibiMi())return;
+  await sbFetch('rpc/saglik_push_planla',{method:'POST',body:JSON.stringify({p:hatirlatPlan()})});}catch(e){console.warn('sağlık hatırlatma planı',e);if(/404|PGRST202|could not find/i.test(String(e.message||e)))planHata=true;}},hemen?200:2500);}
+S.hatirlatPlanla=hatirlatPlanla;S.hatirlatPlan=hatirlatPlan;
+S.hatirlatAc=()=>{const H=hatirlatAyar();const k=(id,ad,on)=>`<label style="display:flex;align-items:center;gap:8px;font-size:13.5px;margin:6px 0"><input type="checkbox" id="sg-ht-${id}" ${on?'checked':''} style="width:20px;height:20px"> ${ad}</label>`;
+  pencere('sg-m-ht','🔔 Hatırlatmalar',`<div class="sg-not" style="margin-bottom:10px">Bildirimler yalnız senin telefonuna gelir. 23:00–07:00 arası susar.</div>
+  <div class="sg-fb">İlaç</div>${k('aksamIlac','Akşam ilaçları işaretlenmediyse hatırlat',H.aksamIlac)}<div class="sg-f"><label>Akşam saati</label><input id="sg-ht-aksamSaat" type="time" value="${esc(H.aksamSaat)}"></div>
+  ${k('sabahIlac','Sabah ilaçları için ayrıca hatırlat (sabah formu zaten soruyor)',H.sabahIlac)}<div class="sg-f"><label>Sabah saati</label><input id="sg-ht-sabahSaat" type="time" value="${esc(H.sabahSaat)}"></div>
+  <div class="sg-fb">Yürüyüş</div>${k('yuruyus','Öğün girince yemek sonrası yürüyüş hatırlat',H.yuruyus)}<div class="sg-f"><label>Kaç dakika sonra</label><input id="sg-ht-yuruyusDk" type="number" inputmode="numeric" value="${H.yuruyusDk}"></div>
+  <div class="sg-fb">Doktor</div>${k('randevu','Randevudan bir gün önce 20:00\'de ve 2 saat önce hatırlat',H.randevu)}`,
+  `<button class="btn btn-primary btn-full" onclick="SGL.hatirlatKaydet()">Kaydet</button>`);};
+S.hatirlatKaydet=()=>{const c=id=>!!document.getElementById('sg-ht-'+id)?.checked;const h={aksamIlac:c('aksamIlac'),sabahIlac:c('sabahIlac'),yuruyus:c('yuruyus'),randevu:c('randevu'),
+  aksamSaat:deg('sg-ht-aksamSaat')||'21:00',sabahSaat:deg('sg-ht-sabahSaat')||'10:00',yuruyusDk:Math.max(5,Math.min(120,sayi(deg('sg-ht-yuruyusDk'))||20))};
+  kaydetVeCiz(()=>ayarKaydet({hatirlat:h}),'Hatırlatmalar kaydedildi','sg-m-ht');};
+
+// Bildirimden açılan hızlı ilaç penceresi (?ilac=sabah|aksam)
+S.ilacHizli=(dilim)=>{const g=bugun();const P=ilacPlan(g).filter(x=>x.dilim===dilim);
+  const satir=x=>{const r=alimBul(x.ilac.id,g,dilim);const d=r?(r.alindi?'ok':'no'):'';return `<div class="sg-ilac"><button class="sg-tik ${d}" onclick="SGL.ilacHizliTik(${x.ilac.id},'${dilim}')">${d==='ok'?'✓':d==='no'?'✕':''}</button><div class="ad">${esc(x.ilac.ad)}<small>${esc([x.ilac.doz&&!x.ilac.ad.includes(x.ilac.doz)?x.ilac.doz:'',r&&r.secim].filter(Boolean).join(' · '))}</small></div></div>`;};
+  const bek=P.filter(x=>!(alimBul(x.ilac.id,g,dilim)||{}).alindi).length;
+  pencere('sg-m-ih',(dilim==='sabah'?'☀️ Sabah':'🌙 Akşam')+' ilaçları',P.length?`<div class="sg-liste">${P.map(satir).join('')}</div><div class="sg-not" style="margin-top:8px">Dokununca: alındı → atlandı → boş.</div>`:bosGrafik('Bu saat için ilaç yok.'),
+    `<button class="btn btn-secondary" style="flex:1" onclick="closeModal('sg-m-ih')">Kapat</button>${bek?`<button class="btn btn-primary" style="flex:2" onclick="SGL.ilacHepsi('${dilim}')">Hepsini aldım (${bek})</button>`:''}`);};
+S.ilacHizliTik=async(id,dilim)=>{const i=(S.v.ilac||[]).find(x=>x.id===id);const g=bugun();const r=alimBul(id,g,dilim);
+  if(i&&i.tur==='takviye'&&!(r&&r.alindi)){kapat('sg-m-ih');S.takviyeAc(id,dilim,g);return;}
+  try{if(!r)await ekle('alim','saglik_ilac_alim',{ilac_id:id,tarih:g,dilim,alindi:true});else if(r.alindi)await guncelle('alim','saglik_ilac_alim',r.id,{alindi:false,zaman:new Date().toISOString()});else await sil('alim','saglik_ilac_alim',r.id);
+    S.ilacHizli(dilim);ciz();hatirlatPlanla();}catch(e){toast('Kaydedilemedi: '+(e.message||e),'red');}};
+S.ilacHepsi=async(dilim)=>{const g=bugun();try{for(const x of ilacPlan(g).filter(x=>x.dilim===dilim)){const r=alimBul(x.ilac.id,g,dilim);if(r&&r.alindi)continue;
+    let secim=null;if(x.ilac.tur==='takviye'){const once=(S.v.alim||[]).filter(a=>a.ilac_id===x.ilac.id&&a.alindi&&a.secim).sort((a,b)=>a.tarih<b.tarih?1:-1)[0];secim=once?once.secim:null;}
+    await alimYaz(x.ilac.id,g,dilim,true,secim);}
+  kapat('sg-m-ih');toast('✓ '+(dilim==='sabah'?'Sabah':'Akşam')+' ilaçları alındı','green');ciz();hatirlatPlanla();}catch(e){toast('Kaydedilemedi: '+(e.message||e),'red');}};
+
+// ───────────────────────────────────────── doktor özeti (ekranda göster, metin kopyala, yazdır/PDF)
+function doktorOzet(gunSay){const G=gunler(gunSay),bas=G[0],A=ayar(),H=A.hedef;const B=[];const ic=(z)=>zGun(z)>=bas;
+  const ek=(baslik,satir)=>{satir=satir.filter(Boolean);if(satir.length)B.push({baslik,satir});};
+  const kL=olcumler('kilo');const kA=kL.filter(o=>ic(o.zaman));const kS=kL[kL.length-1];
+  ek('Kilo',[kS&&`Güncel: ${n1(kS.deger)} kg (${trT(zGun(kS.zaman))})${H.boy?' · VKİ '+n1(vki(Number(kS.deger))):''}`,kA.length>1&&`Son ${gunSay} gün: ${n1(kA[0].deger)} → ${n1(kA[kA.length-1].deger)} kg (${n1(kA[kA.length-1].deger-kA[0].deger)} kg)`,kL.length>1&&`Takip başından beri: ${n1(kL[0].deger)} kg (${trT(zGun(kL[0].zaman))}) → ${n1(kS.deger)} kg`]);
+  const T=olcumler('tansiyon').filter(o=>ic(o.zaman));const tO=L=>L.length?`${n1(ort(L.map(o=>Number(o.deger))),0)}/${n1(ort(L.map(o=>Number(o.deger2))),0)} mmHg (${L.length} ölçüm)`:null;
+  const sb=T.filter(o=>o.baglam==='sabah'),ak=T.filter(o=>o.baglam==='aksam');const mx=T.slice().sort((a,b)=>b.deger-a.deger)[0];
+  ek('Tansiyon ve nabız',[sb.length&&'Sabah ortalaması: '+tO(sb),ak.length&&'Akşam ortalaması: '+tO(ak),!sb.length&&!ak.length&&T.length&&'Ortalama: '+tO(T),mx&&`En yüksek: ${mx.deger}/${mx.deger2} (${trT(zGun(mx.zaman))})`,
+    (()=>{const v=ort(G.map(g=>(gunluk(g)||{}).nabiz_dinlenik).filter(Boolean));return v?'Dinlenik nabız ortalaması: '+n1(v,0)+' bpm':null;})()]);
+  const At=(S.v.atak||[]).filter(a=>ic(a.zaman));const say=(k)=>{const m={};At.forEach(a=>(a[k]||[]).forEach(x=>m[x]=(m[x]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([x,n])=>x+' ('+n+')').join(', ');};
+  const kr=krizIlac();const krS=kr?(S.v.alim||[]).filter(a=>a.ilac_id===kr.id&&a.dilim==='kriz'&&a.alindi&&a.tarih>=bas).length:0;
+  ek('Kaygı atakları',[`Son ${gunSay} günde ${At.length} atak · günde ortalama ${n1(At.length/gunSay)}`,At.length&&'Ortalama şiddet: '+n1(ort(At.map(a=>a.siddet)))+'/10 · ortalama süre: '+n1(ort(At.map(a=>a.sure_dk)),0)+' dk',
+    At.length&&'Sık belirtiler: '+say('belirtiler'),At.length&&'Sık tetikleyiciler: '+say('tetikleyiciler'),kr&&`Kriz ilacı (${kr.ad}): ${krS} kez`,(()=>{const pi=isaretIlac();return pi?ilacEtki():null;})()]);
+  const ck=G.map(ckG).filter(Boolean);ek('Ruh hali (akşam check-in, 1–10)',[ck.length&&`Mod ${n1(ort(ck.map(c=>c.ruh)))} · stres ${n1(ort(ck.map(c=>c.stres)))} · kaygı ${n1(ort(ck.map(c=>c.kaygi)))} (${ck.length} gün)`]);
+  const sbL=G.map(sabahG).filter(Boolean);const uy=ort(G.map(uykuSaatG));ek('Uyku',[uy&&'Ortalama uyku: '+n1(uy)+' saat',sbL.length&&'Uyku kalitesi: '+n1(ort(sbL.map(s=>s.uyku_kalite)))+'/10 · uyanış hissi: '+n1(ort(sbL.map(s=>s.uyanis)))+'/5',sbL.filter(s=>s.gece_atak).length&&'Gece atak olan gün: '+sbL.filter(s=>s.gece_atak).length]);
+  const kf=G.map(kafeinG);ek('Kafein, adım, beslenme',[`Kahve: günde ${n1(ort(kf.map(k=>k.top)))} fincan · aç karnına ${n1(top(kf.map(k=>k.ac)),0)} kez`,(()=>{const v=ort(G.map(adimG));return v?'Adım ortalaması: '+n1(v,0)+'/gün':null;})(),
+    (()=>{const d=new Set(aktiviteler().filter(a=>ic(a.baslangic)).map(a=>zGun(a.baslangic))).size;return d?'Spor/yürüyüş yapılan gün: '+d:null;})(),(()=>{const v=ort(G.map(kcalG));return v?'Kalori ortalaması: '+n1(v,0)+' kcal':null;})()]);
+  const Il=(S.v.ilac||[]).filter(i=>i.aktif);const uy2=ilacUyum(G.slice(0,-1));
+  ek('Kullandığı ilaçlar',Il.map(i=>`${i.ad}${i.doz&&!i.ad.includes(i.doz)?' '+i.doz:''}${i.etken?' ('+i.etken+')':''} · ${i.tur==='gerektiginde'?'gerektiğinde, en fazla '+(i.max_gunluk||'?')+'/gün':i.tur==='takviye'?'takviye':(i.zamanlar||[]).map(z=>({sabah:'sabah',ogle:'öğle',aksam:'akşam'}[z]||z)).join(' + ')}${i.baslangic?' · başlangıç '+trT(i.baslangic):''}${i.bitis?' · bitiş '+trT(i.bitis):''}`).concat(uy2!=null?['Son '+gunSay+' gün ilaç uyumu: %'+n1(uy2*100,0)]:[]));
+  const th=sonTahliller().filter(t=>tahlilDurum(t)!=='normal'||ONEMLI_TEST.includes(t.test)).sort((a,b)=>(ONEMLI_TEST.indexOf(a.test)+99)%99-(ONEMLI_TEST.indexOf(b.test)+99)%99);
+  const tah=th.map(t=>{const d=tahlilDurum(t);const s=tahlilSeri(t.test);const on=s.length>1?s[s.length-2]:null;return {test:t.test,deger:(t.deger!=null?n1(t.deger,2):t.deger_metin)+' '+(t.birim||''),ref:t.ref_metin||(t.ref_alt!=null&&t.ref_ust!=null?t.ref_alt+'–'+t.ref_ust:t.ref_ust!=null?'<'+t.ref_ust:t.ref_alt!=null?'>'+t.ref_alt:''),tarih:trT(t.tarih),durum:d,onceki:on?n1(on.deger,2)+' ('+trT(on.tarih)+')':''};});
+  const sor=(S.v.randevu||[]).filter(r=>r.tur==='soru'&&r.durum==='bekliyor').map(r=>r.baslik+(r.notu?' ('+r.notu+')':''));
+  return {bas,bit:bugun(),gunSay,B,tah,sor};}
+function doktorMetin(o){let t=`SAĞLIK ÖZETİ · ${trT(o.bas)} – ${trT(o.bit)} (son ${o.gunSay} gün)\n`;
+  o.B.forEach(b=>{t+=`\n${b.baslik.toLocaleUpperCase('tr-TR')}\n`+b.satir.map(s=>'• '+s).join('\n')+'\n';});
+  if(o.tah.length)t+='\nTAHLİLLER (son değerler)\n'+o.tah.map(x=>`• ${x.test}: ${x.deger}${x.durum!=='normal'?' '+DURUM_IS[x.durum]:''} · ref ${x.ref||'—'} · ${x.tarih}${x.onceki?' · önceki '+x.onceki:''}`).join('\n')+'\n';
+  if(o.sor.length)t+='\nSORULARIM\n'+o.sor.map((s,i)=>(i+1)+'. '+s).join('\n')+'\n';return t;}
+function doktorHtml(o,baski){const DR={yuksek:'#d32f2f',dusuk:'#ef6c00',sinir:'#ef6c00',normal:'#2e7d32'};
+  let h=`<div class="dk"><h2>Sağlık özeti</h2><div class="dk-alt">${trT(o.bas)} – ${trT(o.bit)} · son ${o.gunSay} gün</div>`;
+  o.B.forEach(b=>{h+=`<h3>${esc(b.baslik)}</h3><ul>${b.satir.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`;});
+  if(o.tah.length)h+=`<h3>Tahliller (son değerler)</h3><table><tr><th>Test</th><th>Değer</th><th>Referans</th><th>Tarih</th><th>Önceki</th></tr>${o.tah.map(x=>`<tr><td>${esc(x.test)}</td><td style="color:${DR[x.durum]};font-weight:700">${esc(x.deger)} ${DURUM_IS[x.durum]||''}</td><td>${esc(x.ref||'—')}</td><td>${x.tarih}</td><td>${esc(x.onceki)}</td></tr>`).join('')}</table>`;
+  if(o.sor.length)h+=`<h3>Sorularım</h3><ol>${o.sor.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
+  return h+'</div>';}
+S.doktorGun=30;
+S.doktorAc=(gun)=>{if(gun)S.doktorGun=gun;const o=doktorOzet(S.doktorGun);S.doktorSon=o;
+  pencere('sg-m-dk','📄 Doktor özeti',`<div class="sg-aralik gf-seg" style="margin-bottom:10px">${[[30,'30 gün'],[90,'90 gün'],[180,'6 ay']].map(([v,a])=>`<button class="gf-seg-b${S.doktorGun===v?' on':''}" onclick="SGL.doktorAc(${v})">${a}</button>`).join('')}</div><div class="sg-dk">${doktorHtml(o)}</div>`,
+  `<button class="btn btn-secondary" style="flex:1" onclick="SGL.doktorKopyala()">📋 Metni kopyala</button><button class="btn btn-primary" style="flex:1" onclick="SGL.doktorYazdir()">🖨️ Yazdır / PDF</button>`);};
+S.doktorKopyala=async()=>{const t=doktorMetin(S.doktorSon||doktorOzet(S.doktorGun));if(await panoya(t)){toast('Özet kopyalandı','green');return;}
+  pencere('sg-m-kop','📋 Doktor özeti',`<div class="sg-not" style="margin-bottom:8px">Otomatik kopyalanamadı. Metne uzun basıp tümünü seç ve kopyala.</div><textarea readonly rows="16" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border2);border-radius:10px;background:var(--surface2);color:var(--text);font:12.5px var(--fu)">${esc(t)}</textarea>`,`<button class="btn btn-secondary" onclick="closeModal('sg-m-kop')">Kapat</button>`);};
+S.doktorYazdir=()=>{const o=S.doktorSon||doktorOzet(S.doktorGun);
+  const html=`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sağlık özeti ${trT(o.bit)}</title><style>body{font:13px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;max-width:760px;margin:24px auto;padding:0 18px}h2{margin:0;font-size:20px}h3{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}.dk-alt{color:#666;margin-bottom:6px}ul,ol{margin:4px 0;padding-left:20px}li{margin:2px 0}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #eee}th{background:#f5f5f5}.bar{position:sticky;top:0;background:#fff;padding:8px 0;margin-bottom:8px}@media print{.bar{display:none}body{margin:0}}</style></head><body><div class="bar"><button onclick="window.print()" style="padding:9px 18px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:600">🖨️ Yazdır / PDF olarak kaydet</button></div>${doktorHtml(o,true)}<script>setTimeout(function(){window.print()},500)<\/script></body></html>`;
+  try{if(typeof macAktif==='function'&&macAktif()){macCagir('belge_ac',{html});return;}}catch(e){}
+  if(typeof andAktif==='function'&&andAktif()){toast('Uygulama içinden yazdırma bir sonraki uygulama güncellemesiyle gelecek. Şimdilik "Metni kopyala"yı kullan ya da ERP\'yi Chrome\'da aç.','amber');return;}
+  const u=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));const w=window.open(u,'_blank');if(!w)toast('Açılır pencere engellendi','amber');setTimeout(()=>URL.revokeObjectURL(u),60000);};
+S.baslat=async()=>{stilEkle();try{await yukle();hatirlatPlanla(true);}catch(e){console.warn('sağlık yükle',e);}
+  setTimeout(sabahKontrol,3500);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(sabahKontrol,1500);else if(S.yuklendi)hatirlatPlanla(true);});
   setInterval(()=>{if(document.visibilityState==='visible')sabahKontrol();},5*60*1000);
   if(document.getElementById('page-saglik')?.classList.contains('active'))ciz();};
 S.yenile=async()=>{await yukle(true);ciz();};
