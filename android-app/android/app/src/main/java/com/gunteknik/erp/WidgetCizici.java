@@ -77,7 +77,7 @@ public final class WidgetCizici {
         rv.setOnClickPendingIntent(R.id.w_baslik, Bildirimci.ac(c, "./", 6001));
         rv.setTextViewText(R.id.w_alt, altYazi(c));
         rv.setOnClickPendingIntent(R.id.w_alt, yayin(c, EylemAlici.YENILE, 6002));
-        aramaBagla(c, rv, v, 6010, "Arama · bugün");
+        aramaBagla(c, rv, v, 6010, "Arama");
 
         JSONObject snap = v != null ? v.optJSONObject("snap") : null;
         boolean veri = snap != null;
@@ -107,12 +107,12 @@ public final class WidgetCizici {
         }
         String yok = "—";
         rv.setOnClickPendingIntent(R.id.w_randevu, Bildirimci.ac(c, "./?randevu=yeni", 6020));
-        rv.setTextViewText(R.id.w_aj1, kutu(veri ? String.valueOf(aj1) : yok, "Ajanda · bugün", AMBER));
-        rv.setTextViewText(R.id.w_aj10, kutu(veri ? String.valueOf(aj10) : yok, "Ajanda · 10 gün", AMBER));
-        rv.setTextViewText(R.id.w_ev1, kutu(veri ? String.valueOf(ev1 + evGec) : yok, evGec > 0 ? "Evrak · " + evGec + " gecikmiş" : "Evrak · bugün", evGec > 0 ? KIRMIZI : MG));
+        rv.setTextViewText(R.id.w_aj1, kutu(veri ? String.valueOf(aj1) : yok, "Ajanda", AMBER));
+        rv.setTextViewText(R.id.w_aj10, kutu(veri ? String.valueOf(aj10) : yok, "10 gün", AMBER));
+        rv.setTextViewText(R.id.w_ev1, kutu(veri ? String.valueOf(ev1 + evGec) : yok, evGec > 0 ? evGec + " gecikti" : "Evrak", evGec > 0 ? KIRMIZI : MG));
         rv.setInt(R.id.w_ev1, "setBackgroundResource", evGec > 0 ? R.drawable.w_kutu_kirmizi : R.drawable.w_kutu);
-        rv.setTextViewText(R.id.w_ev5, kutu(veri ? String.valueOf(ev5) : yok, "Evrak · 5 gün", MG));
-        rv.setTextViewText(R.id.w_ev15, kutu(veri ? String.valueOf(ev15) : yok, "Evrak · 15 gün", MG));
+        rv.setTextViewText(R.id.w_ev5, kutu(veri ? String.valueOf(ev5) : yok, "5 gün", MG));
+        rv.setTextViewText(R.id.w_ev15, kutu(veri ? String.valueOf(ev15) : yok, "15 gün", MG));
         rv.setOnClickPendingIntent(R.id.w_aj1, Bildirimci.ac(c, "./?sayfa=takvim", 6021));
         rv.setOnClickPendingIntent(R.id.w_aj10, Bildirimci.ac(c, "./?sayfa=takvim", 6022));
         rv.setOnClickPendingIntent(R.id.w_ev1, Bildirimci.ac(c, "./?sayfa=evrak", 6023));
@@ -122,17 +122,52 @@ public final class WidgetCizici {
         // kasa: dokununca özet sayfası, 👁 gizle / göster
         boolean acik = Ayar.kasaAcik(c);
         JSONObject k = veri ? snap.optJSONObject("kasa") : null;
-        SpannableStringBuilder ks = renkli("💰 Kasa   ", METIN2, false, 1f);
-        if (k == null) ks.append(renkli("—", METIN3, true, 1.25f));
+        SpannableStringBuilder ks = renkli("💰 Kasa  ", METIN2, false, 1f);
+        if (k == null) ks.append(renkli("—", METIN3, true, 1.15f));
         else {
             double top = k.optDouble("top", 0);
-            ks.append(renkli(acik ? isaretli(top) : "••••• ₺", acik && top < 0 ? KIRMIZI : YESIL, true, 1.3f));
+            ks.append(renkli(acik ? isaretli(top) : "••••• ₺", acik && top < 0 ? KIRMIZI : YESIL, true, 1.15f));
         }
         rv.setTextViewText(R.id.w_kasa, ks);
         rv.setOnClickPendingIntent(R.id.w_kasa, Bildirimci.ac(c, "./", 6031));
-        rv.setTextViewText(R.id.w_goz, renkli(acik ? "🙈" : "👁", METIN, false, 1.2f).append("\n").append(renkli(acik ? "Gizle" : "Göster", METIN2, false, 0.85f)));
+        rv.setTextViewText(R.id.w_goz, renkli(acik ? "🙈 Gizle" : "👁 Göster", METIN, false, 1f));
         rv.setOnClickPendingIntent(R.id.w_goz, yayin(c, EylemAlici.KASA_GOZ, 6032));
+        saglikBagla(c, rv, v);
         return rv;
+    }
+
+    // ---------------------------------------------------------------- Pano alt yarısı: sağlık (yalnız sağlık sahibinin cihazı)
+    private static void saglikBagla(Context c, RemoteViews rv, JSONObject v) {
+        JSONObject s = v != null ? v.optJSONObject("saglik") : null;
+        if (s == null) { rv.setViewVisibility(R.id.w_saglik, android.view.View.GONE); return; }
+        rv.setViewVisibility(R.id.w_saglik, android.view.View.VISIBLE);
+        boolean bugunMu = bugun().equals(s.optString("bugun"));
+        int atak = bugunMu ? s.optInt("atak") : 0, su = bugunMu ? s.optInt("su_ml") : 0, hedef = s.optInt("su_hedef", 3000);
+        rv.setTextViewText(R.id.w_atak, renkli("⚡ Atak", METIN, true, 1.15f).append("\n").append(renkli("bugün " + atak, MG, true, 0.95f)));
+        JSONObject n = s.optJSONObject("nabiz");
+        String ns = n != null ? n.optInt("deger") + " · " + nabizAd(n.optString("baglam")) : "elle gir";
+        rv.setTextViewText(R.id.w_nabiz, renkli("❤️ Nabız", METIN, true, 1.15f).append("\n").append(renkli(ns, 0xFFFF8A80, false, 0.85f)));
+        rv.setTextViewText(R.id.w_su, renkli("💧 ＋200 ml", METIN, true, 1.15f).append("\n")
+            .append(renkli(litre(su), su >= hedef ? YESIL : CYAN, true, 1.05f)).append(renkli(" / " + litre(hedef), METIN2, false, 0.85f)));
+        rv.setOnClickPendingIntent(R.id.w_atak, Bildirimci.ac(c, "./?saglik=atak", 6041));
+        Intent ni = new Intent(c, NabizPenceresi.class).setAction("gt.nabiz").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        rv.setOnClickPendingIntent(R.id.w_nabiz, PendingIntent.getActivity(c, 6042, ni, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        rv.setOnClickPendingIntent(R.id.w_su, yayin(c, EylemAlici.SU, 6043));
+    }
+
+    static String nabizAd(String b) {
+        switch (b == null ? "" : b) {
+            case "dinlenme": return "dinlenme";
+            case "gunluk": return "gündelik";
+            case "hafif": return "hafif akt.";
+            case "agir": return "ağır akt.";
+            case "atak": return "atak";
+            default: return "";
+        }
+    }
+
+    static String litre(int ml) {
+        return String.format(TR, "%.1f L", ml / 1000.0);
     }
 
     // ---------------------------------------------------------------- ortak parçalar
@@ -163,7 +198,7 @@ public final class WidgetCizici {
     }
 
     private static CharSequence kutu(String sayi, String etiket, int renk) {
-        return renkli(sayi, renk, true, 1.6f).append("\n").append(renkli(etiket, METIN2, false, 0.85f));
+        return renkli(sayi, renk, true, 1.45f).append("\n").append(renkli(etiket, METIN2, false, 0.85f));
     }
 
     /** Önbellekteki arama sayıları bugüne aitse döndür (gece yarısından sonra eski sayı gösterilmesin). */
