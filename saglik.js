@@ -955,6 +955,11 @@ function hcSon(){try{return +localStorage.getItem('sg_hc_son')||0;}catch(e){retu
 async function hcDurum(){if(!hcVar())return null;try{HC.durum=await andYerel('saglikDurum');}catch(e){HC.durum={eski:/not implemented|unimplemented|bulunamad/i.test(String(e.message||e)),hata:String(e.message||e)};}return HC.durum;}
 function hcBagli(){const d=HC.durum;return !!(d&&d.sdk===2&&(d.izinler||[]).length);}
 // aynı anahtar takımına sahip satırları birlikte gönder (PostgREST toplu yazımda anahtarlar ortak olmalı)
+// toplu yaz; bir grup reddedilirse satır satır dene, bozuk satır tüm eşitlemeyi durdurmasın
+async function topluYaz(yol,L,prefer){let n=0;const hata=[];
+  for(const grp of gruplar(L)){try{await sbFetch(yol,{method:'POST',prefer,body:JSON.stringify(grp)});n+=grp.length;}
+    catch(e){for(const r of grp){try{await sbFetch(yol,{method:'POST',prefer,body:JSON.stringify(r)});n++;}catch(e2){hata.push(String(e2.message||e2).slice(0,160));console.warn('HC satır',yol,r,e2);}}}}
+  return {n,hata};}
 function gruplar(L){const m={};L.forEach(r=>{const k=Object.keys(r).sort().join(',');(m[k]=m[k]||[]).push(r);});return Object.values(m);}
 async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyor=true;S.hcMesaj='Eşitleniyor…';if(S.sekme==='ozet'||S.sekme==='aktivite')hcKartGuncelle();
   try{const r=await andYerel('saglikOku',{gun:gun||30});let nG=0,nO=0,nA=0;
@@ -964,15 +969,15 @@ async function hcEsitle(gun,sessiz){if(HC.calisiyor||!hcVar())return;HC.calisiyo
     for(const grp of gruplar(G)){await sbFetch('saglik_gunluk?on_conflict=kullanici_id,tarih',{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:JSON.stringify(grp)});nG+=grp.length;}
     const varO=new Set((S.v.olcum||[]).map(o=>o.dis_id).filter(Boolean));
     const O=(r.olcum||[]).filter(o=>!varO.has(o.dis_id)).map(o=>Object.assign({kaynak:'hc'},o,o.tur==='kilo'||o.tur==='tansiyon'?{baglam:new Date(o.zaman).getHours()<12?'sabah':'aksam'}:{}));
-    for(const grp of gruplar(O)){await sbFetch('saglik_olcum',{method:'POST',prefer:'return=minimal',body:JSON.stringify(grp)});nO+=grp.length;}
+    const yO=await topluYaz('saglik_olcum',O,'return=minimal');nO=yO.n;const atlanan=yO.hata.slice();
     const varA=new Set((S.v.aktivite||[]).filter(a=>a.kaynak==='hc').map(a=>a.dis_id));const diger=(S.v.aktivite||[]).filter(a=>a.kaynak!=='hc');
     const A=(r.aktivite||[]).filter(a=>!varA.has(a.dis_id)).map(a=>{const t=new Date(a.baslangic).getTime();
       const ikiz=diger.find(x=>Math.abs(new Date(x.baslangic).getTime()-t)<=15*60000&&(x.tur===a.tur||x.tur==='diger'||a.tur==='diger'));
       const o={kaynak:'hc',dis_id:a.dis_id,tur:a.tur,baslangic:a.baslangic,bitis:a.bitis,sure_sn:a.sure_sn,ad:a.ad||null,mesafe_m:a.mesafe_m??null,kcal:a.kcal??null,nabiz_ort:a.nabiz_ort!=null?Math.round(a.nabiz_ort):null,nabiz_max:a.nabiz_max!=null?Math.round(a.nabiz_max):null,ikiz_id:ikiz?ikiz.id:null};
       o.hiz_ort=o.mesafe_m&&o.sure_sn?Math.round(o.mesafe_m/o.sure_sn*36)/10:null;return o;});
-    for(const grp of gruplar(A)){await sbFetch('saglik_aktivite',{method:'POST',prefer:'return=minimal',body:JSON.stringify(grp)});nA+=grp.length;}
+    const yA=await topluYaz('saglik_aktivite',A,'return=minimal');nA=yA.n;atlanan.push(...yA.hata);if(atlanan.length)console.warn('HC atlanan',atlanan);
     try{localStorage.setItem('sg_hc_son',String(Date.now()));}catch(e){}
-    await yukle(true);S.hcMesaj='Son eşitleme: '+saat(Date.now())+' · '+nG+' gün'+(nO?' · '+nO+' ölçüm':'')+(nA?' · '+nA+' aktivite':'');
+    await yukle(true);S.hcMesaj='Son eşitleme: '+saat(Date.now())+' · '+nG+' gün'+(nO?' · '+nO+' ölçüm':'')+(nA?' · '+nA+' aktivite':'')+(atlanan.length?' · '+atlanan.length+' kayıt atlandı ('+atlanan[0].slice(0,70)+')':'');
     if(!sessiz)toast('⌚ Eşitlendi: '+nG+' gün'+(nO?', '+nO+' ölçüm':'')+(nA?', '+nA+' aktivite':''),'green');ciz();hatirlatPlanla();}
   catch(e){console.warn('Health Connect',e);S.hcMesaj='Eşitlenemedi: '+String(e.message||e).slice(0,90);if(!sessiz)toast(S.hcMesaj,'red');hcKartGuncelle();}
   finally{HC.calisiyor=false;}}
