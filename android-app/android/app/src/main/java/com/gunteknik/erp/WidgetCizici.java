@@ -149,7 +149,8 @@ public final class WidgetCizici {
         rv.setTextViewText(R.id.w_nabiz, renkli("❤️ Nabız", METIN, true, 1.15f).append("\n").append(renkli(ns, 0xFFFF8A80, false, 0.85f)));
         rv.setTextViewText(R.id.w_su, renkli("💧 ＋200 ml", METIN, true, 1.15f).append("\n")
             .append(renkli(litre(su), su >= hedef ? YESIL : CYAN, true, 1.05f)).append(renkli(" / " + litre(hedef), METIN2, false, 0.85f)));
-        rv.setOnClickPendingIntent(R.id.w_atak, Bildirimci.ac(c, "./?saglik=atak", 6041));
+        Intent ai = new Intent(c, AtakPenceresi.class).setAction("gt.atak").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        rv.setOnClickPendingIntent(R.id.w_atak, PendingIntent.getActivity(c, 6041, ai, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         Intent ni = new Intent(c, NabizPenceresi.class).setAction("gt.nabiz").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         rv.setOnClickPendingIntent(R.id.w_nabiz, PendingIntent.getActivity(c, 6042, ni, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         rv.setOnClickPendingIntent(R.id.w_su, yayin(c, EylemAlici.SU, 6043));
