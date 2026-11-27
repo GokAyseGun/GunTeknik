@@ -142,6 +142,10 @@ struct Ozet {
     var suHedef = 3000
     var nabiz: Int?
     var nabizAn = ""
+    var suAdet = 0
+    var suSon = ""
+    var atakListe: [(saat: String, siddet: Int, kriz: Bool)] = []
+    var nabizListe: [(saat: String, deger: Int, baglam: String)] = []
 
     static func bugun() -> String {
         let f = DateFormatter()
@@ -195,6 +199,18 @@ struct Ozet {
                 nabiz = Ozet.sayi(n["deger"]).map { Int($0) }
                 nabizAn = n["baglam"] as? String ?? ""
             }
+            if bugunMu {
+                suAdet = Int(Ozet.sayi(sg["su_adet"]) ?? Double(suMl / 200))
+                suSon = sg["su_son"] as? String ?? ""
+                for a in (sg["atak_liste"] as? [[String: Any]]) ?? [] {
+                    let k = a["kriz"]
+                    let kriz = (k as? Bool) ?? ((k as? String).map { !$0.isEmpty && $0 != "false" } ?? false)
+                    atakListe.append((a["saat"] as? String ?? "", Int(Ozet.sayi(a["siddet"]) ?? 0), kriz))
+                }
+                for n in (sg["nabiz_liste"] as? [[String: Any]]) ?? [] {
+                    nabizListe.append((n["saat"] as? String ?? "", Int(Ozet.sayi(n["deger"]) ?? 0), n["baglam"] as? String ?? ""))
+                }
+            }
         }
         guard let snap = v["snap"] as? [String: Any] else { return }
         var a1 = 0, a10 = 0, e1 = 0, e5 = 0, e15 = 0, gc = 0
@@ -232,6 +248,8 @@ struct Ozet {
         o.kasa = 17413; o.gtFiyat = 972.4; o.gtOnce = 965.1; o.zaman = Date()
         o.ajanda = [AjandaSatir(fark: 0, g: "", saat: "10:30", baslik: "Klima bakımı", kisi: "Dalyan")]
         o.saglik = true; o.atak = 1; o.suMl = 1400; o.nabiz = 74; o.nabizAn = "dinlenme"
+        o.suAdet = 7; o.suSon = "13:10"
+        o.atakListe = [("11:20", 6, true)]; o.nabizListe = [("09:05", 74, "dinlenme")]
         return o
     }
 }
@@ -330,6 +348,9 @@ struct SuEkle: AppIntent {
         // iyimser: üst üste dokunuşlar hemen görünsün
         if var v, var sg = v["saglik"] as? [String: Any] {
             sg["su_ml"] = Int(Ozet.sayi(sg["su_ml"]) ?? 0) + 200
+            sg["su_adet"] = Int(Ozet.sayi(sg["su_adet"]) ?? 0) + 1
+            let f = DateFormatter(); f.dateFormat = "HH:mm"
+            sg["su_son"] = f.string(from: Date())
             v["saglik"] = sg
             v["zaman"] = ISO8601DateFormatter().string(from: Date())
             Depo.onbellekYaz(v)
@@ -635,21 +656,93 @@ struct SaglikDugme: View {
     }
 }
 
-/// Alt yarı: Atak (ERP'de tam form) · Nabız (ERP'de nabız penceresi) · Su +200 ml (araçtan, uygulama açılmadan)
+/// Küçük sağlık düğmesi (tek satır)
+struct SaglikDugmeKucuk: View {
+    let metin: String
+    let renk: Color
+    var body: some View {
+        Kutu(dolgu: renk.opacity(0.16), kenar: renk) {
+            Text(metin).font(.system(size: 12, weight: .bold)).foregroundColor(.metin).lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(height: 30)
+    }
+}
+
+/// Düğmenin altındaki günlük bilgi kutusu
+struct SaglikBilgi<Icerik: View>: View {
+    @ViewBuilder let icerik: () -> Icerik
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1.5) { icerik() }
+            .font(.system(size: 10.5)).monospacedDigit()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(6)
+            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.white.opacity(0.12), lineWidth: 1))
+    }
+}
+
+/// Alt yarı: Atak (ERP'de tam form) · Nabız (ERP'de nabız penceresi) · Su +200 ml (araçtan, uygulama açılmadan).
+/// detay: düğmelerin altında o günün kayıtları
 struct SaglikSatir: View {
     let o: Ozet
+    var detay = false
     var body: some View {
-        HStack(spacing: 6) {
-            Link(destination: baglanti("./?saglik=atak")) {
-                SaglikDugme(simge: "⚡", baslik: "Atak", alt: "bugün \(o.atak)", renk: .mg)
+        if detay {
+            VStack(spacing: 5) {
+                HStack(spacing: 6) {
+                    Link(destination: baglanti("./?saglik=atak")) { SaglikDugmeKucuk(metin: "⚡ Atak", renk: .mg) }
+                    Link(destination: baglanti("./?saglik=nabiz")) { SaglikDugmeKucuk(metin: "❤️ Nabız", renk: .kirmizi) }
+                    Button(intent: SuEkle()) { SaglikDugmeKucuk(metin: "💧 ＋200 ml", renk: .cyanR) }.buttonStyle(.plain)
+                }
+                HStack(spacing: 6) {
+                    Link(destination: baglanti("./?saglik=ruh")) {
+                        SaglikBilgi {
+                            Text("Bugün \(o.atak)").font(.system(size: 12, weight: .bold)).foregroundColor(.mg)
+                            if o.atakListe.isEmpty && o.atak == 0 { Text("Atak yok 🌿").foregroundColor(.metin2) }
+                            ForEach(Array(o.atakListe.prefix(5).enumerated()), id: \.offset) { _, a in
+                                Text("\(a.saat) · ş\(a.siddet)\(a.kriz ? " 💊" : "")").foregroundColor(.metin2).lineLimit(1)
+                            }
+                        }
+                    }
+                    Link(destination: baglanti("./?saglik=kalp")) {
+                        SaglikBilgi {
+                            if o.nabizListe.isEmpty {
+                                Text("Bugün yok").font(.system(size: 12, weight: .bold)).foregroundColor(.kirmizi)
+                                if let n = o.nabiz { Text("son: \(n) · \(nabizAd(o.nabizAn))").foregroundColor(.metin2).lineLimit(1) }
+                            }
+                            ForEach(Array(o.nabizListe.prefix(5).enumerated()), id: \.offset) { _, n in
+                                (Text("\(n.saat) · ").foregroundColor(.metin2)
+                                 + Text("\(n.deger)").bold().foregroundColor(.kirmizi)
+                                 + Text(" · \(nabizAd(n.baglam))").foregroundColor(.metin2)).lineLimit(1).minimumScaleFactor(0.8)
+                            }
+                        }
+                    }
+                    Button(intent: SuEkle()) {
+                        SaglikBilgi {
+                            (Text(litre(o.suMl)).font(.system(size: 12, weight: .bold)).foregroundColor(o.suMl >= o.suHedef ? .yesil : .cyanR)
+                             + Text(" / \(litre(o.suHedef))").foregroundColor(.metin2))
+                            Text("\(o.suAdet) × 200 ml").foregroundColor(.metin2)
+                            if !o.suSon.isEmpty { Text("son \(o.suSon)").foregroundColor(.metin2) }
+                            let kalan = o.suHedef - o.suMl
+                            Text(kalan > 0 ? "kalan \(litre(kalan))" : "hedef tamam ✓").foregroundColor(kalan > 0 ? Color.metin2.opacity(0.7) : Color.yesil)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            Link(destination: baglanti("./?saglik=nabiz")) {
-                SaglikDugme(simge: "❤️", baslik: "Nabız", alt: o.nabiz.map { "\($0) · \(nabizAd(o.nabizAn))" } ?? "elle gir", renk: .kirmizi)
+        } else {
+            HStack(spacing: 6) {
+                Link(destination: baglanti("./?saglik=atak")) {
+                    SaglikDugme(simge: "⚡", baslik: "Atak", alt: "bugün \(o.atak)", renk: .mg)
+                }
+                Link(destination: baglanti("./?saglik=nabiz")) {
+                    SaglikDugme(simge: "❤️", baslik: "Nabız", alt: o.nabiz.map { "\($0) · \(nabizAd(o.nabizAn))" } ?? "elle gir", renk: .kirmizi)
+                }
+                Button(intent: SuEkle()) {
+                    SaglikDugme(simge: "💧", baslik: "＋200 ml", alt: "\(litre(o.suMl)) / \(litre(o.suHedef))", renk: .cyanR, altRenk: o.suMl >= o.suHedef ? .yesil : .cyanR)
+                }
+                .buttonStyle(.plain)
             }
-            Button(intent: SuEkle()) {
-                SaglikDugme(simge: "💧", baslik: "＋200 ml", alt: "\(litre(o.suMl)) / \(litre(o.suHedef))", renk: .cyanR, altRenk: o.suMl >= o.suHedef ? .yesil : .cyanR)
-            }
-            .buttonStyle(.plain)
         }
     }
 }
@@ -790,7 +883,7 @@ struct Buyuk: View {
                 GirisYok()
             } else if e.o.saglik {
                 IzgaraKucuk(e: e).frame(maxHeight: .infinity)
-                SaglikSatir(o: e.o).frame(maxHeight: .infinity)
+                SaglikSatir(o: e.o, detay: true).frame(maxHeight: .infinity)
             } else {
                 Izgara(e: e)
                 if e.o.gtFiyat > 0 { Link(destination: baglanti("./?sayfa=bet")) { GTSatir(o: e.o) } }
@@ -812,7 +905,7 @@ struct CokBuyuk: View {
                     VStack(spacing: 7) {
                         if e.o.saglik {
                             IzgaraKucuk(e: e).frame(maxHeight: .infinity)
-                            SaglikSatir(o: e.o).frame(maxHeight: .infinity)
+                            SaglikSatir(o: e.o, detay: true).frame(maxHeight: .infinity)
                         } else {
                             Izgara(e: e)
                         }

@@ -143,17 +143,65 @@ public final class WidgetCizici {
         rv.setViewVisibility(R.id.w_saglik, android.view.View.VISIBLE);
         boolean bugunMu = bugun().equals(s.optString("bugun"));
         int atak = bugunMu ? s.optInt("atak") : 0, su = bugunMu ? s.optInt("su_ml") : 0, hedef = s.optInt("su_hedef", 3000);
-        rv.setTextViewText(R.id.w_atak, renkli("⚡ Atak", METIN, true, 1.15f).append("\n").append(renkli("bugün " + atak, MG, true, 0.95f)));
-        JSONObject n = s.optJSONObject("nabiz");
-        String ns = n != null ? n.optInt("deger") + " · " + nabizAd(n.optString("baglam")) : "elle gir";
-        rv.setTextViewText(R.id.w_nabiz, renkli("❤️ Nabız", METIN, true, 1.15f).append("\n").append(renkli(ns, 0xFFFF8A80, false, 0.85f)));
-        rv.setTextViewText(R.id.w_su, renkli("💧 ＋200 ml", METIN, true, 1.15f).append("\n")
-            .append(renkli(litre(su), su >= hedef ? YESIL : CYAN, true, 1.05f)).append(renkli(" / " + litre(hedef), METIN2, false, 0.85f)));
+        rv.setTextViewText(R.id.w_atak, renkli("⚡ Atak", METIN, true, 1f));
+        rv.setTextViewText(R.id.w_nabiz, renkli("❤️ Nabız", METIN, true, 1f));
+        rv.setTextViewText(R.id.w_su, renkli("💧 ＋200 ml", METIN, true, 1f));
+
+        // Atak: bugün N + saat · şiddet (💊 kriz ilacı)
+        SpannableStringBuilder ag = renkli("Bugün " + atak, MG, true, 1.1f);
+        org.json.JSONArray al = bugunMu ? s.optJSONArray("atak_liste") : null;
+        if (al == null || al.length() == 0) ag.append("\n").append(renkli(atak > 0 ? "" : "Atak yok 🌿", METIN2, false, 1f));
+        else for (int i = 0; i < al.length(); i++) {
+            JSONObject o = al.optJSONObject(i);
+            if (o == null) continue;
+            ag.append("\n").append(renkli(o.optString("saat") + " · ş" + o.optInt("siddet") + (krizMi(o.opt("kriz")) ? " 💊" : ""), METIN2, false, 1f));
+        }
+        rv.setTextViewText(R.id.w_atak_gun, ag);
+
+        // Nabız: saat · değer · an
+        org.json.JSONArray nl = bugunMu ? s.optJSONArray("nabiz_liste") : null;
+        SpannableStringBuilder ng;
+        if (nl == null || nl.length() == 0) {
+            JSONObject n = s.optJSONObject("nabiz");
+            ng = renkli("Bugün yok", 0xFFFF8A80, true, 1.1f);
+            if (n != null) ng.append("\n").append(renkli("son: " + n.optInt("deger") + " · " + nabizAd(n.optString("baglam")), METIN2, false, 1f));
+        } else {
+            ng = new SpannableStringBuilder();
+            for (int i = 0; i < nl.length(); i++) {
+                JSONObject o = nl.optJSONObject(i);
+                if (o == null) continue;
+                if (ng.length() > 0) ng.append("\n");
+                ng.append(renkli(o.optString("saat") + " · ", METIN2, false, 1f))
+                  .append(renkli(String.valueOf(o.optInt("deger")), 0xFFFF8A80, true, 1f))
+                  .append(renkli(" · " + nabizAd(o.optString("baglam")), METIN2, false, 0.95f));
+            }
+        }
+        rv.setTextViewText(R.id.w_nabiz_gun, ng);
+
+        // Su: toplam / hedef, bardak sayısı, son içme
+        int adet = bugunMu ? s.optInt("su_adet", su / 200) : 0;
+        SpannableStringBuilder sg = renkli(litre(su), su >= hedef ? YESIL : CYAN, true, 1.1f).append(renkli(" / " + litre(hedef), METIN2, false, 1f));
+        sg.append("\n").append(renkli(adet + " × 200 ml", METIN2, false, 1f));
+        String son = bugunMu ? s.optString("su_son", "") : "";
+        if (!son.isEmpty() && !"null".equals(son)) sg.append("\n").append(renkli("son " + son, METIN2, false, 1f));
+        int kalan = hedef - su;
+        sg.append("\n").append(renkli(kalan > 0 ? "kalan " + litre(kalan) : "hedef tamam ✓", kalan > 0 ? METIN3 : YESIL, false, 1f));
+        rv.setTextViewText(R.id.w_su_gun, sg);
         Intent ai = new Intent(c, AtakPenceresi.class).setAction("gt.atak").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         rv.setOnClickPendingIntent(R.id.w_atak, PendingIntent.getActivity(c, 6041, ai, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         Intent ni = new Intent(c, NabizPenceresi.class).setAction("gt.nabiz").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         rv.setOnClickPendingIntent(R.id.w_nabiz, PendingIntent.getActivity(c, 6042, ni, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         rv.setOnClickPendingIntent(R.id.w_su, yayin(c, EylemAlici.SU, 6043));
+        rv.setOnClickPendingIntent(R.id.w_atak_gun, Bildirimci.ac(c, "./?saglik=ruh", 6044));
+        rv.setOnClickPendingIntent(R.id.w_nabiz_gun, Bildirimci.ac(c, "./?saglik=kalp", 6045));
+        rv.setOnClickPendingIntent(R.id.w_su_gun, yayin(c, EylemAlici.SU, 6046));
+    }
+
+    private static boolean krizMi(Object k) {
+        if (k == null || k == JSONObject.NULL) return false;
+        if (k instanceof Boolean) return (Boolean) k;
+        String t = k.toString().trim();
+        return !t.isEmpty() && !"false".equals(t) && !"0".equals(t);
     }
 
     static String nabizAd(String b) {

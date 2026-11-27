@@ -63,6 +63,8 @@ public final class Islem {
             JSONObject s = v != null ? v.optJSONObject("saglik") : null;
             if (s == null) return;
             s.put("su_ml", s.optInt("su_ml") + ml);
+            s.put("su_adet", s.optInt("su_adet") + 1);
+            s.put("su_son", new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date()));
             Ayar.veriYerel(c, v.toString());
             WidgetCizici.hepsi(c);
         } catch (Exception ignored) {}
